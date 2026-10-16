@@ -1,0 +1,818 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#3B34E8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Platformika"><meta name="apple-mobile-web-app-status-bar-style" content="default"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>פלטפורמיקה</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="פלטפורמה אחת. כולם מחוברים. היוצרים קודם.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: social super-app. Desktop = nav column (start) · feed · rail (end). Phone = top bar + feed + bottom tab bar. RTL throughout. */
+:root{
+  --canvas:#F1F1F7;        /* page ground, faint violet bias */
+  --surface:#FFFFFF;       /* cards, bars */
+  --surface-2:#F6F6FB;     /* inputs, hovers (inset) */
+  --surface-3:#ECECF5;     /* pressed, chips */
+  --ink:#16152B;           /* primary text */
+  --ink-2:#4C4B68;         /* secondary text */
+  --muted:#8C8BA6;         /* meta */
+  --line:rgba(22,21,43,.09);
+  --line-2:rgba(22,21,43,.16);
+  --brand:#3B34E8;         /* Platformika blue-violet: actions, links, active nav */
+  --brand-ink:#FFFFFF;
+  --brand-soft:rgba(59,52,232,.10);
+  --gold:#E9A800;          /* creator money: the 99% */
+  --gold-soft:rgba(233,168,0,.14);
+  --gold-ink:#7A5600;
+  --like:#E8344E;
+  --online:#14A673;
+  --chat-me:#DDDBFF;       /* my bubble */
+  --chat-wall:#EBEAF4;
+  --scrim:rgba(14,13,30,.55);
+  --shadow:0 0 0 1px rgba(22,21,43,.05),0 1px 2px rgba(22,21,43,.05),0 4px 14px rgba(22,21,43,.05);
+  --shadow-pop:0 0 0 1px rgba(22,21,43,.06),0 12px 40px rgba(22,21,43,.18);
+
+  --font-display:"Fredoka","IBM Plex Sans Hebrew","Arial Hebrew",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans Hebrew","Arial Hebrew","Segoe UI",system-ui,sans-serif;
+
+  --r-s:10px; --r-m:16px; --r-l:22px;
+  --nav-w:248px; --rail-w:320px; --feed-w:620px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --canvas:#0D0D19; --surface:#161629; --surface-2:#1D1D34; --surface-3:#26263F;
+  --ink:#EDEDF9; --ink-2:#B7B6D3; --muted:#7E7D9E;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+  --brand:#7C77FF; --brand-ink:#0D0D19; --brand-soft:rgba(124,119,255,.16);
+  --gold:#FFC93C; --gold-soft:rgba(255,201,60,.14); --gold-ink:#FFD978;
+  --like:#FF5A72; --online:#33D196; --chat-me:#2F2B6E; --chat-wall:#111122;
+  --scrim:rgba(0,0,0,.65);
+  --shadow:0 0 0 1px rgba(255,255,255,.06);
+  --shadow-pop:0 0 0 1px rgba(255,255,255,.09),0 16px 48px rgba(0,0,0,.5);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --canvas:#0D0D19; --surface:#161629; --surface-2:#1D1D34; --surface-3:#26263F;
+  --ink:#EDEDF9; --ink-2:#B7B6D3; --muted:#7E7D9E;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+  --brand:#7C77FF; --brand-ink:#0D0D19; --brand-soft:rgba(124,119,255,.16);
+  --gold:#FFC93C; --gold-soft:rgba(255,201,60,.14); --gold-ink:#FFD978;
+  --like:#FF5A72; --online:#33D196; --chat-me:#2F2B6E; --chat-wall:#111122;
+  --scrim:rgba(0,0,0,.65);
+  --shadow:0 0 0 1px rgba(255,255,255,.06);
+  --shadow-pop:0 0 0 1px rgba(255,255,255,.09),0 16px 48px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+a{color:var(--brand)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+svg.i{width:22px;height:22px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{text-wrap:pretty;margin:0}
+
+/* ---------- shell ---------- */
+.app{min-height:100%;display:grid;grid-template-columns:var(--nav-w) minmax(0,1fr) var(--rail-w);gap:28px;max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;max-height:100dvh;display:flex;flex-direction:column;gap:4px;padding-block:22px}
+.logo{display:flex;align-items:center;gap:10px;padding:6px 12px 22px;font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.mark{width:34px;height:34px;flex:none}
+.nav a.item{display:flex;align-items:center;gap:14px;padding:11px 14px;border-radius:14px;text-decoration:none;color:var(--ink-2);font-weight:500;font-size:16px;position:relative;transition:background .15s}
+.nav a.item:hover{background:var(--surface-3);color:var(--ink)}
+.nav a.item[aria-current="page"]{color:var(--ink);font-weight:700;background:var(--surface)}
+.nav a.item[aria-current="page"] svg{stroke:var(--brand)}
+.nav .badge{margin-inline-start:auto}
+.nav .spacer{flex:1}
+.nav .me-chip{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;text-decoration:none;color:var(--ink)}
+.nav .me-chip:hover{background:var(--surface-3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:15px;transition:transform .1s,background .15s,opacity .15s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--brand);color:var(--brand-ink)}
+.btn.primary:hover{opacity:.92}
+.btn.ghost{background:var(--surface-3);color:var(--ink)}
+.btn.ghost:hover{background:var(--line-2)}
+.btn.gold{background:var(--gold);color:#241900}
+.btn.block{width:100%}
+.btn.sm{height:36px;padding:0 14px;font-size:14px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.nav .btn.primary{margin-top:14px;height:50px;font-size:16px}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--like);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+
+main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:18px;max-width:var(--feed-w);width:100%;justify-self:center}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;max-height:100dvh;overflow-y:auto;padding-block:22px;display:flex;flex-direction:column;gap:16px;scrollbar-width:none}
+
+/* top bar + tab bar (phone) */
+.topbar,.tabbar{display:none}
+
+.card{background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow)}
+.search{display:flex;align-items:center;gap:10px;height:44px;padding:0 16px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow);color:var(--muted)}
+.search input{border:0;outline:0;background:none;flex:1;min-width:0;color:var(--ink)}
+.search input::placeholder{color:var(--muted)}
+.page-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.page-h h1{font-family:var(--font-display);font-weight:600;font-size:28px;letter-spacing:-.01em}
+
+/* avatar */
+.av{--s:44px;width:var(--s);height:var(--s);border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:calc(var(--s)*.42);color:#fff;background:hsl(var(--h,246) 70% 52%);overflow:hidden;position:relative}
+.av img{width:100%;height:100%;object-fit:cover}
+.av.s32{--s:32px}.av.s36{--s:36px}.av.s56{--s:56px}.av.s96{--s:96px}.av.s120{--s:120px}
+
+/* ---------- stories ---------- */
+.stories{display:flex;gap:14px;overflow-x:auto;padding:16px;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.story{display:flex;flex-direction:column;align-items:center;gap:6px;width:76px;flex:none;font-size:12.5px;color:var(--ink-2)}
+.story .ring{width:70px;height:70px;border-radius:50%;padding:3px;background:conic-gradient(from 200deg,var(--brand),#9C5BFF,var(--gold),var(--brand));display:grid;place-items:center}
+.story .ring.seen{background:var(--line-2)}
+.story .ring>.inner{width:100%;height:100%;border-radius:50%;border:3px solid var(--surface);overflow:hidden;display:grid;place-items:center;font-size:12px;font-weight:600;color:#fff;text-align:center;line-height:1.15;padding:6px}
+.story .ring.add{background:none;border:2px dashed var(--line-2)}
+.story .ring.add>.inner{border:0;background:var(--surface-2);color:var(--brand)}
+.story span{max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- composer ---------- */
+.composer{padding:16px;display:flex;flex-direction:column;gap:12px}
+.composer .row{display:flex;gap:12px;align-items:center}
+.composer .fake{flex:1;text-align:start;height:46px;padding:0 18px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:15.5px}
+.composer .fake:hover{background:var(--surface-3)}
+.composer .acts{display:flex;gap:4px;border-top:1px solid var(--line);padding-top:10px}
+.composer .acts button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;border-radius:12px;color:var(--ink-2);font-weight:500;font-size:14px}
+.composer .acts button:hover{background:var(--surface-2)}
+
+/* ---------- post ---------- */
+.post{overflow:hidden}
+.post-h{display:flex;align-items:center;gap:12px;padding:14px 16px 10px}
+.post-h .who{min-width:0;flex:1;line-height:1.25}
+.post-h .who b{display:block;font-weight:600}
+.post-h .who small{color:var(--muted);font-size:13px}
+.iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);flex:none}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+.post-text{padding:0 16px 12px;font-size:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.post-text.big{font-family:var(--font-display);font-size:24px;font-weight:500;line-height:1.3}
+.post-img{display:block;width:100%;max-height:640px;object-fit:cover;background:var(--surface-2)}
+.post-stats{display:flex;gap:14px;padding:10px 16px 0;color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums}
+.post-acts{display:flex;gap:2px;padding:6px 8px 8px}
+.post-acts button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:12px;color:var(--ink-2);font-weight:500;font-size:14px}
+.post-acts button:hover{background:var(--surface-2)}
+.post-acts button.on{color:var(--like)}
+.post-acts button.on svg{fill:var(--like);stroke:var(--like)}
+.post-acts button.tip{color:var(--gold-ink)}
+.post-acts button.tip:hover{background:var(--gold-soft)}
+.pop{animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+.comments{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.cmt{display:flex;gap:10px;align-items:flex-start}
+.cmt .bub{background:var(--surface-2);border-radius:16px;padding:8px 12px;min-width:0}
+.cmt .bub b{font-size:13.5px;display:block}
+.cmt .bub p{overflow-wrap:anywhere;white-space:pre-wrap}
+.cmt-in{display:flex;gap:10px;align-items:center}
+.cmt-in input{flex:1;min-width:0;height:40px;border-radius:999px;border:0;outline:0;background:var(--surface-2);padding:0 16px}
+.cmt-in input:focus{box-shadow:0 0 0 2px var(--brand-soft)}
+
+/* menu */
+.menu{position:absolute;inset-inline-end:12px;top:52px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-pop);padding:6px;z-index:5;min-width:200px}
+.menu button{display:flex;gap:10px;align-items:center;width:100%;padding:10px 12px;border-radius:10px;text-align:start}
+.menu button:hover{background:var(--surface-2)}
+.menu .danger{color:var(--like)}
+
+/* ---------- empty state ---------- */
+.empty{padding:40px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.empty .art{width:84px;height:84px;border-radius:26px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);margin-bottom:6px}
+.empty .art svg{width:38px;height:38px}
+.empty h2{font-family:var(--font-display);font-weight:600;font-size:21px}
+.empty p{color:var(--ink-2);max-width:40ch}
+.empty .btn{margin-top:10px}
+
+/* ---------- rail ---------- */
+.wallet{padding:20px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+.wallet .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.wallet .lbl{color:var(--ink-2);font-size:13.5px;font-weight:500}
+.wallet .amt{font-family:var(--font-display);font-weight:600;font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums}
+.split{display:flex;align-items:center;gap:12px}
+.split .bar{flex:1;height:10px;border-radius:999px;background:var(--surface-3);overflow:hidden;display:flex}
+.split .bar i{display:block;height:100%}
+.split .bar i.c{width:99%;background:var(--gold)}
+.split .bar i.o{width:1%;background:var(--muted)}
+.legend{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2)}
+.legend b{color:var(--ink);font-variant-numeric:tabular-nums}
+.sec-h{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 6px}
+.sec-h h3{font-size:15px;font-weight:600}
+.sec-h a,.sec-h button{font-size:13.5px;color:var(--brand);font-weight:500;text-decoration:none}
+.invite{padding:18px;display:flex;flex-direction:column;gap:12px}
+.invite h3{font-family:var(--font-display);font-weight:600;font-size:19px}
+.invite p{color:var(--ink-2);font-size:14px}
+.linkbox{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;padding-inline-start:12px;border-radius:12px;background:var(--surface-2);min-width:0}
+.linkbox code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--ink-2);direction:ltr;text-align:left;user-select:all}
+.foot{font-size:12.5px;color:var(--muted);padding:4px 6px;line-height:1.7}
+
+/* chat list */
+.clist{display:flex;flex-direction:column;padding:6px}
+.citem{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;text-decoration:none;color:var(--ink);text-align:start;width:100%}
+.citem:hover{background:var(--surface-2)}
+.citem .meta{flex:1;min-width:0}
+.citem .meta b{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.citem .meta b small{color:var(--muted);font-weight:400;font-size:12.5px;font-variant-numeric:tabular-nums}
+.citem .meta span{display:block;color:var(--ink-2);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av.saved{background:var(--brand)}
+.av.saved svg{width:22px;height:22px}
+
+/* ---------- chat view ---------- */
+.chat{display:flex;flex-direction:column;height:calc(100dvh - 44px);min-height:420px;overflow:hidden}
+.chat-h{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+.chat-h .who{flex:1;min-width:0;line-height:1.25}
+.chat-h .who small{color:var(--muted);font-size:13px}
+.chat-body{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:6px;background-color:var(--chat-wall);background-image:radial-gradient(var(--line) 1px,transparent 1.2px);background-size:18px 18px}
+.msg{max-width:78%;padding:8px 12px 6px;border-radius:16px;background:var(--surface);box-shadow:0 1px 1px rgba(0,0,0,.04);align-self:flex-start;display:flex;flex-direction:column}
+.msg.me{background:var(--chat-me);align-self:flex-end;border-end-end-radius:6px}
+.msg p{white-space:pre-wrap;overflow-wrap:anywhere}
+.msg small{align-self:flex-end;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;margin-top:2px}
+.day{align-self:center;background:var(--surface);color:var(--ink-2);font-size:12.5px;padding:4px 12px;border-radius:999px;margin:8px 0;box-shadow:var(--shadow)}
+.chat-in{display:flex;gap:8px;align-items:flex-end;padding:10px 12px;background:var(--surface);border-top:1px solid var(--line)}
+.chat-in textarea{flex:1;min-width:0;resize:none;border:0;outline:0;background:var(--surface-2);border-radius:22px;padding:11px 16px;max-height:120px;line-height:1.4}
+.send{width:44px;height:44px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;flex:none}
+.send svg{transform:scaleX(-1)}
+
+/* ---------- clips ---------- */
+.clips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.clip{aspect-ratio:9/16;max-width:100%;border-radius:16px;overflow:hidden;background:#000;position:relative}
+.clip video{width:100%;height:100%;object-fit:cover;display:block}
+.clip .cap{position:absolute;inset-inline:0;bottom:0;padding:24px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:13px}
+.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--brand-soft);color:var(--ink-2);font-size:14px}
+.note svg{color:var(--brand);width:20px;height:20px;margin-top:1px}
+
+/* ---------- profile ---------- */
+.cover{height:170px;background:linear-gradient(120deg,var(--brand),#8E54FF 55%,var(--gold));border-radius:var(--r-l) var(--r-l) 0 0;position:relative;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover}
+.prof{padding:0 20px 20px;display:flex;flex-direction:column;gap:12px}
+.prof .head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:-52px}
+.prof .av.s120{border:5px solid var(--surface)}
+.prof h1{font-family:var(--font-display);font-weight:600;font-size:28px}
+.prof .handle{color:var(--muted);direction:ltr;text-align:right}
+.prof .bio{color:var(--ink-2);white-space:pre-wrap}
+.counts{display:flex;gap:22px;font-size:14.5px;color:var(--ink-2)}
+.counts b{color:var(--ink);font-size:17px;font-variant-numeric:tabular-nums;margin-inline-end:4px}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
+.tabs button{flex:1;padding:14px 8px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--brand)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:3px}
+.cell{text-decoration:none;aspect-ratio:1;max-width:100%;background:var(--surface-2);overflow:hidden;display:grid;place-items:center;padding:10px;font-size:13px;color:var(--ink-2);text-align:center;border-radius:4px}
+.cell img{width:100%;height:100%;object-fit:cover}
+.cell.has-img{padding:0}
+
+/* ---------- creators ---------- */
+.hero-split{padding:24px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+.donut{width:150px;height:150px;position:relative}
+.donut .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center;line-height:1.05}
+.donut .c b{font-family:var(--font-display);font-size:40px;font-weight:600;color:var(--gold-ink)}
+.donut .c small{display:block;font-size:13px;color:var(--ink-2)}
+.hero-split h2{font-family:var(--font-display);font-size:26px;font-weight:600;line-height:1.2;margin-bottom:8px}
+.hero-split p{color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat{padding:16px;display:flex;flex-direction:column;gap:4px}
+.stat small{color:var(--ink-2);font-size:13px}
+.stat b{font-family:var(--font-display);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.steps{padding:8px 20px 20px;display:flex;flex-direction:column}
+.step{display:grid;grid-template-columns:36px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.step:last-child{border:0}
+.step .n{width:32px;height:32px;border-radius:50%;background:var(--gold-soft);color:var(--gold-ink);display:grid;place-items:center;font-weight:700;font-family:var(--font-display)}
+.step b{display:block;margin-bottom:2px}
+.step p{color:var(--ink-2);font-size:14.5px}
+
+/* ---------- sheets / modals ---------- */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;display:grid;place-items:center;padding:20px;animation:fade .18s ease-out}
+@keyframes fade{from{opacity:0}}
+.sheet{background:var(--surface);border-radius:24px;box-shadow:var(--shadow-pop);width:100%;max-width:540px;max-height:calc(100dvh - 40px);overflow:auto;animation:rise .28s cubic-bezier(.2,.9,.3,1)}
+@keyframes rise{from{transform:translateY(16px) scale(.98);opacity:0}}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 10px 14px;border-bottom:1px solid var(--line)}
+.sheet-h h2{font-size:18px;font-weight:600;flex:1;text-align:center}
+.sheet-b{padding:18px;display:flex;flex-direction:column;gap:14px}
+.sheet textarea.big{width:100%;min-height:140px;border:0;outline:0;resize:vertical;background:none;font-size:20px;line-height:1.45}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:14px}
+.field input,.field textarea{height:48px;border-radius:14px;border:1px solid var(--line-2);background:var(--surface-2);padding:0 14px;outline:0}
+.field textarea{height:auto;min-height:90px;padding:12px 14px;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.field .hint{color:var(--muted);font-size:13px}
+.field .err{color:var(--like);font-size:13px}
+.prev{position:relative;border-radius:16px;overflow:hidden}
+.prev img{display:block;width:100%;max-height:340px;object-fit:cover}
+.prev .iconbtn{position:absolute;top:8px;inset-inline-end:8px;background:rgba(0,0,0,.55);color:#fff}
+.tools{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+.tools .grow{flex:1}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:38px;height:38px;border-radius:50%;border:3px solid transparent}
+.sw[aria-pressed="true"]{border-color:var(--ink)}
+.story-prev{aspect-ratio:9/14;max-width:100%;max-height:52dvh;margin:0 auto;border-radius:18px;display:grid;place-items:center;padding:24px;color:#fff;font-family:var(--font-display);font-size:26px;font-weight:600;text-align:center;line-height:1.3;width:100%;overflow-wrap:anywhere}
+
+.onb{max-width:460px}
+.onb .hero{padding:30px 26px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.onb .hero .mark{width:64px;height:64px}
+.onb .hero h1{font-family:var(--font-display);font-weight:700;font-size:34px}
+.onb .hero p{color:var(--ink-2)}
+.onb .tag{font-family:var(--font-display);font-weight:500;color:var(--brand);direction:ltr}
+
+/* story viewer */
+.viewer{position:fixed;inset:0;z-index:50;background:#000;display:grid;place-items:center}
+.viewer .frame{position:relative;width:min(100%,calc(100dvh*9/16));height:100%;max-height:100dvh;display:grid;place-items:center;padding:60px 28px;color:#fff;font-family:var(--font-display);font-size:30px;font-weight:600;text-align:center;line-height:1.3;overflow-wrap:anywhere}
+.viewer .bars{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));inset-inline:12px;display:flex;gap:4px}
+.viewer .bars i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden}
+.viewer .bars i b{display:block;height:100%;width:0;background:#fff}
+.viewer .vh{position:absolute;top:calc(24px + env(safe-area-inset-top,0px));inset-inline:12px;display:flex;align-items:center;gap:10px;font-family:var(--font-body);font-size:14px;font-weight:600}
+.viewer .vh small{opacity:.75;font-weight:400}
+.viewer .vh .x{margin-inline-start:auto;color:#fff}
+.viewer .tapzone{position:absolute;top:80px;bottom:0;width:40%}
+.viewer .tapzone.next{inset-inline-end:0}
+.viewer .tapzone.prev{inset-inline-start:0}
+
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));inset-inline-start:50%;transform:translateX(50%);background:var(--ink);color:var(--canvas);padding:12px 18px;border-radius:14px;font-weight:500;z-index:60;box-shadow:var(--shadow-pop);max-width:calc(100% - 32px);animation:rise .25s ease-out}
+
+/* ---------- responsive ---------- */
+@media (min-width:1181px){.search.desk{display:none}}
+@media (max-width:1180px){
+  .app{grid-template-columns:84px minmax(0,1fr)}
+  .rail{display:none}
+  .nav .logo span,.nav a.item span,.nav .me-chip .meta,.nav .btn.primary span{display:none}
+  .nav .logo{justify-content:center;padding-inline:0}
+  .nav a.item{justify-content:center;padding:12px}
+  .nav .badge{position:absolute;top:4px;inset-inline-end:8px;margin:0}
+  .nav .btn.primary{width:52px;padding:0;align-self:center}
+  .nav .me-chip{justify-content:center}
+}
+@media (max-width:720px){
+  .app{display:block;padding-left:0;padding-right:0}
+  .nav{display:none}
+  .topbar{display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:20;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));background:color-mix(in srgb,var(--canvas) 82%,transparent);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%)}
+  .topbar .logo{padding:0;font-size:23px;flex:1}
+  .topbar .mark{width:30px;height:30px}
+  .topbar .iconbtn{position:relative;background:var(--surface);box-shadow:var(--shadow)}
+  .topbar .badge{position:absolute;top:-3px;inset-inline-end:-3px;min-width:18px;height:18px;font-size:11px}
+  main{padding:4px max(12px,env(safe-area-inset-right,0px)) calc(96px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:12px}
+  .tabbar{display:flex;position:fixed;inset-inline:0;bottom:0;z-index:20;padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));background:color-mix(in srgb,var(--surface) 86%,transparent);backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);border-top:1px solid var(--line)}
+  .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--muted);text-decoration:none;font-size:11px;font-weight:500;position:relative}
+  .tabbar a[aria-current="page"]{color:var(--ink)}
+  .tabbar a[aria-current="page"] svg{stroke:var(--brand)}
+  .tabbar .plus{width:48px;height:36px;border-radius:12px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;margin-top:2px}
+  .tabbar .badge{position:absolute;top:0;inset-inline-start:calc(50% + 4px);min-width:17px;height:17px;font-size:10.5px}
+  .page-h h1{font-size:24px}
+  .card,.post{border-radius:18px}
+  .hero-split{grid-template-columns:1fr;justify-items:center;text-align:center;padding:20px}
+  .stats{gap:8px}.stat{padding:12px}.stat b{font-size:21px}
+  .chat{height:calc(100dvh - 160px - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px))}
+  .scrim{place-items:end center;padding:0}
+  .sheet{border-radius:24px 24px 0 0;max-height:94dvh;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .clips{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .search.desk{display:none}
+  .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  .search.desk.show{display:flex}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></symbol>
+  <symbol id="i-clips" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10.5 11.5 4 2.5-4 2.5z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.3z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-coins" viewBox="0 0 24 24"><circle cx="9" cy="9" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.4 18.1"/><path d="M8 7h1.5v4M8 11h3"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.1a5 5 0 1 1 7.5 6.5z"/></symbol>
+  <symbol id="i-comment" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M14 9V5l7 7-7 7v-4c-5 0-8 1.5-11 5 1-5 4-10 11-11z"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="3"/><path d="m22 8-6 4 6 4z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 3.5a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></symbol>
+  <symbol id="i-story" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-3h6l2 3h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="var(--brand)" stroke="none"/><path d="M14 29V11h7.5a6 6 0 0 1 0 12H14" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="27.5" cy="28.5" r="3.2" fill="var(--gold)" stroke="none"/></symbol>
+</svg>
+
+<div class="app" dir="rtl" lang="he">
+  <nav class="nav" aria-label="ניווט ראשי">
+    <a class="logo" href="#home"><svg class="mark"><use href="#logo"/></svg><span>פלטפורמיקה</span></a>
+    <a class="item" href="#home" data-r="home"><svg class="i"><use href="#i-home"/></svg><span>בית</span></a>
+    <a class="item" href="#clips" data-r="clips"><svg class="i"><use href="#i-clips"/></svg><span>קליפים</span></a>
+    <a class="item" href="#chats" data-r="chats"><svg class="i"><use href="#i-chat"/></svg><span>צ'אטים</span></a>
+    <a class="item" href="#alerts" data-r="alerts"><svg class="i"><use href="#i-bell"/></svg><span>התראות</span><b class="badge" data-badge hidden></b></a>
+    <a class="item" href="#creators" data-r="creators"><svg class="i"><use href="#i-coins"/></svg><span>מרכז היוצרים</span></a>
+    <a class="item" href="#profile" data-r="profile"><svg class="i"><use href="#i-user"/></svg><span>הפרופיל שלי</span></a>
+    <button class="btn primary" data-act="compose"><svg class="i"><use href="#i-plus"/></svg><span>יצירת פוסט</span></button>
+    <div class="spacer"></div>
+    <a class="me-chip" href="#profile" id="navMe"></a>
+  </nav>
+
+  <header class="topbar">
+    <a class="logo" href="#home"><svg class="mark"><use href="#logo"/></svg><span>פלטפורמיקה</span></a>
+    <button class="iconbtn" data-act="search" aria-label="חיפוש"><svg class="i"><use href="#i-search"/></svg></button>
+    <a class="iconbtn" href="#alerts" aria-label="התראות"><svg class="i"><use href="#i-bell"/></svg><b class="badge" data-badge hidden></b></a>
+    <a class="iconbtn" href="#chats" aria-label="צ'אטים"><svg class="i"><use href="#i-chat"/></svg></a>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <aside class="rail" id="rail" aria-label="מידע נוסף"></aside>
+
+  <nav class="tabbar" aria-label="ניווט">
+    <a href="#home" data-r="home"><svg class="i"><use href="#i-home"/></svg>בית</a>
+    <a href="#clips" data-r="clips"><svg class="i"><use href="#i-clips"/></svg>קליפים</a>
+    <a href="#home" data-act="compose" aria-label="יצירת פוסט"><span class="plus"><svg class="i"><use href="#i-plus"/></svg></span></a>
+    <a href="#creators" data-r="creators"><svg class="i"><use href="#i-coins"/></svg>יוצרים</a>
+    <a href="#profile" data-r="profile"><svg class="i"><use href="#i-user"/></svg>אני</a>
+  </nav>
+</div>
+<div id="layer" dir="rtl" lang="he"></div>
+
+<script>
+(()=>{
+const KEY='platformika.v1';
+const SITE='https://barusik.com/platformika/';
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ic=(n,c='i')=>`<svg class="${c}"><use href="#i-${n}"/></svg>`;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+/* ---------- state ---------- */
+const blank={me:null,posts:[],stories:[],notes:[],alerts:[],seenAlerts:0,storySeen:{}};
+let S=load();
+let clips=[]; // session-only (video files are too big for device storage)
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&typeof v==='object'?Object.assign(structuredClone(blank),v):structuredClone(blank)}catch(e){return structuredClone(blank)}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){toast('האחסון במכשיר מלא. מחקו פוסט עם תמונה כדי לפנות מקום.');return false}}
+function alert_(text,icon='bell'){S.alerts.unshift({id:uid(),text,icon,ts:Date.now()});S.alerts=S.alerts.slice(0,60)}
+
+/* ---------- helpers ---------- */
+function rel(ts){const d=(Date.now()-ts)/1000;if(d<60)return'עכשיו';if(d<3600)return`לפני ${Math.floor(d/60)} דק׳`;if(d<86400)return`לפני ${Math.floor(d/3600)} שע׳`;if(d<172800)return'אתמול';return new Date(ts).toLocaleDateString('he-IL',{day:'numeric',month:'short'})}
+const hm=ts=>new Date(ts).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+function dayLabel(ts){const d=new Date(ts),t=new Date();const k=x=>x.toDateString();if(k(d)===k(t))return'היום';const y=new Date(t);y.setDate(t.getDate()-1);if(k(d)===k(y))return'אתמול';return d.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'})}
+function av(me,size=''){if(!me)return`<span class="av ${size}"></span>`;return`<span class="av ${size}" style="--h:${me.hue}">${me.photo?`<img src="${me.photo}" alt="">`:esc([...me.name.trim()][0]||'?')}</span>`}
+function toast(t){$('.toast')?.remove();const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2600)}
+async function copy(text,btn){try{await navigator.clipboard.writeText(text);toast('הקישור הועתק')}catch(e){const c=btn?.closest('.linkbox')?.querySelector('code');if(c){const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast('סמנו את הקישור והעתיקו אותו')}}
+function compress(file,max=1280,q=.82){return new Promise((res,rej)=>{if(!file||!file.type.startsWith('image/'))return rej(new Error('type'));const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q))};im.onerror=rej;im.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+function pickFile(accept){return new Promise(r=>{const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>r(i.files[0]||null);i.click()})}
+const refLink=()=>SITE+'?ref='+encodeURIComponent(S.me?.handle||'');
+const fmt=n=>new Intl.NumberFormat('he-IL').format(n);
+const likesTotal=()=>S.posts.reduce((a,p)=>a+(p.liked?1:0),0);
+const activeStories=()=>S.stories.filter(s=>Date.now()-s.ts<86400000);
+
+/* ---------- layers (sheets) ---------- */
+function openLayer(html,{onMount,cls=''}={}){const L=$('#layer');L.innerHTML=`<div class="scrim" data-scrim><div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;const sc=$('[data-scrim]',L);sc.addEventListener('click',e=>{if(e.target===sc&&!sc.dataset.lock)closeLayer()});onMount?.($('.sheet',L));const f=$('[autofocus]',L)||$('input,textarea,button',L);f?.focus()}
+function closeLayer(){$('#layer').innerHTML='';stopStory()}
+addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#layer').innerHTML&&!$('[data-scrim][data-lock]')){closeLayer()}});
+
+/* ---------- onboarding ---------- */
+function onboarding(){
+  openLayer(`
+  <div class="hero"><svg class="mark"><use href="#logo"/></svg><h1>ברוכים הבאים</h1>
+  <p>פלטפורמה אחת לפוסטים, סטוריז, קליפים וצ'אטים, שבה 99% מהרווח הולך ליוצרים.</p>
+  <span class="tag">One Platform. Everyone Connected. Creators First.</span></div>
+  <form class="sheet-b" id="onbForm" novalidate>
+    <div class="field"><label for="onbName">איך קוראים לך?</label><input id="onbName" autocomplete="name" placeholder="השם שיופיע בפרופיל" maxlength="40" autofocus></div>
+    <div class="field"><label for="onbHandle">שם משתמש</label><input id="onbHandle" dir="ltr" autocomplete="username" placeholder="yourname" maxlength="24"><span class="hint">אותיות באנגלית, מספרים, נקודה וקו תחתון</span><span class="err" id="onbErr" hidden></span></div>
+    <button class="btn primary block" type="submit">יצירת פרופיל</button>
+    <p class="foot" style="text-align:center">הפרופיל נשמר במכשיר הזה. סנכרון בין מכשירים יגיע עם השרת.</p>
+  </form>`,{cls:'onb',onMount:sh=>{
+    $('[data-scrim]').dataset.lock='1';
+    const n=$('#onbName',sh),h=$('#onbHandle',sh);
+    n.addEventListener('input',()=>{if(!h.dataset.touched)h.value=''});
+    h.addEventListener('input',()=>{h.dataset.touched=1;h.value=h.value.toLowerCase().replace(/[^a-z0-9._]/g,'')});
+    $('#onbForm',sh).addEventListener('submit',e=>{e.preventDefault();const err=$('#onbErr',sh);
+      if(!n.value.trim()){err.hidden=false;err.textContent='כתבו שם כדי שחברים יזהו אתכם';n.focus();return}
+      if(h.value.length<3){err.hidden=false;err.textContent='שם המשתמש צריך לפחות 3 תווים';h.focus();return}
+      S.me={name:n.value.trim(),handle:h.value,bio:'',hue:Math.floor(Math.random()*360),photo:null,cover:null,joined:Date.now()};
+      alert_('ברוכים הבאים לפלטפורמיקה. הזמינו חברים כדי שהפיד שלכם יתמלא.','users');
+      save();closeLayer();render();toast('הפרופיל נוצר');
+    });
+  }});
+}
+
+/* ---------- compose ---------- */
+function compose(){
+  let img=null;
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>פוסט חדש</h2><span style="width:40px"></span></div>
+  <div class="sheet-b">
+    <div style="display:flex;gap:12px;align-items:center">${av(S.me)}<div><b>${esc(S.me.name)}</b><div style="color:var(--muted);font-size:13px">ציבורי</div></div></div>
+    <label for="cmpText" class="sr">תוכן הפוסט</label>
+    <textarea id="cmpText" class="big" placeholder="מה חדש, ${esc(S.me.name.split(' ')[0])}?" maxlength="2200" autofocus></textarea>
+    <div id="cmpPrev"></div>
+    <div class="tools">
+      <button class="btn ghost sm" id="cmpImg">${ic('image')}תמונה</button>
+      <span class="grow"></span>
+      <button class="btn primary" id="cmpPost" disabled>פרסום</button>
+    </div>
+  </div>`,{onMount:sh=>{
+    const t=$('#cmpText',sh),b=$('#cmpPost',sh),pv=$('#cmpPrev',sh);
+    const upd=()=>{b.disabled=!t.value.trim()&&!img};
+    t.addEventListener('input',upd);
+    const showPrev=()=>{pv.innerHTML=img?`<div class="prev"><img src="${img}" alt="תצוגה מקדימה"><button class="iconbtn" id="rmImg" aria-label="הסרת התמונה">${ic('x')}</button></div>`:'';$('#rmImg',pv)?.addEventListener('click',()=>{img=null;showPrev();upd()})};
+    $('#cmpImg',sh).addEventListener('click',async()=>{const f=await pickFile('image/*');if(!f)return;try{img=await compress(f);showPrev();upd()}catch(e){toast('לא הצלחנו לפתוח את הקובץ. בחרו תמונה מסוג JPG או PNG.')}});
+    b.addEventListener('click',()=>{const p={id:uid(),text:t.value.trim(),img,ts:Date.now(),liked:false,comments:[],saved:false};S.posts.unshift(p);if(!save()){S.posts.shift();return}closeLayer();go('home');toast('הפוסט פורסם')});
+  }});
+}
+
+/* ---------- stories ---------- */
+const BGS=['linear-gradient(150deg,#3B34E8,#9C5BFF)','linear-gradient(150deg,#FF6A3D,#E9A800)','linear-gradient(150deg,#0E9F6E,#1E6FD9)','linear-gradient(150deg,#16152B,#4C4B68)','linear-gradient(150deg,#E8344E,#9C5BFF)'];
+function storyCompose(){
+  let bg=0;
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>סטורי חדש</h2><span style="width:40px"></span></div>
+  <div class="sheet-b">
+    <div class="story-prev" id="stPrev" style="background:${BGS[0]}">כתבו משהו…</div>
+    <label for="stText" class="sr">טקסט הסטורי</label>
+    <div class="field"><input id="stText" placeholder="מה רוצים לשתף ל-24 שעות?" maxlength="140" autofocus></div>
+    <div class="swatches" role="group" aria-label="רקע">${BGS.map((g,i)=>`<button class="sw" style="background:${g}" aria-pressed="${i===0}" data-bg="${i}" aria-label="רקע ${i+1}"></button>`).join('')}</div>
+    <button class="btn primary block" id="stPost" disabled>שיתוף לסטורי</button>
+  </div>`,{onMount:sh=>{
+    const t=$('#stText',sh),pv=$('#stPrev',sh),b=$('#stPost',sh);
+    t.addEventListener('input',()=>{pv.textContent=t.value||'כתבו משהו…';b.disabled=!t.value.trim()});
+    $$('.sw',sh).forEach(s=>s.addEventListener('click',()=>{bg=+s.dataset.bg;pv.style.background=BGS[bg];$$('.sw',sh).forEach(x=>x.setAttribute('aria-pressed',x===s))}));
+    b.addEventListener('click',()=>{S.stories.push({id:uid(),text:t.value.trim(),bg,ts:Date.now()});save();closeLayer();render();toast('הסטורי עלה ל-24 שעות')});
+  }});
+}
+let stTimer=null;
+function stopStory(){cancelAnimationFrame(stTimer);stTimer=null}
+function viewStories(start=0){
+  const list=activeStories();if(!list.length)return;
+  let i=start;const L=$('#layer');
+  const show=()=>{
+    stopStory();const s=list[i];S.storySeen[s.id]=1;save();
+    L.innerHTML=`<div class="viewer" role="dialog" aria-modal="true" aria-label="צפייה בסטורי">
+      <div class="frame" style="background:${BGS[s.bg]||BGS[0]}">${esc(s.text)}
+        <div class="bars">${list.map((_,k)=>`<i><b style="width:${k<i?100:0}%"></b></i>`).join('')}</div>
+        <div class="vh">${av(S.me,'s32')}<span>${esc(S.me.name)} <small>${rel(s.ts)}</small></span><button class="iconbtn x" data-close aria-label="סגירה">${ic('x')}</button></div>
+        <button class="tapzone prev" aria-label="הקודם"></button><button class="tapzone next" aria-label="הבא"></button>
+      </div></div>`;
+    const bar=$$('.bars b',L)[i];const t0=performance.now(),D=5000;
+    const tick=now=>{const p=Math.min(1,(now-t0)/D);bar.style.width=p*100+'%';if(p<1)stTimer=requestAnimationFrame(tick);else next()};
+    stTimer=requestAnimationFrame(tick);
+    $('.tapzone.next',L).onclick=next;$('.tapzone.prev',L).onclick=()=>{i=Math.max(0,i-1);show()};
+  };
+  const next=()=>{if(i<list.length-1){i++;show()}else{closeLayer();render()}};
+  show();
+}
+
+/* ---------- views ---------- */
+function storiesTray(){
+  const st=activeStories();const seen=st.length&&st.every(s=>S.storySeen[s.id]);
+  return`<section class="card" aria-label="סטוריז"><div class="stories">
+    <button class="story" data-act="story-new"><span class="ring add"><span class="inner">${ic('plus')}</span></span><span>הוספת סטורי</span></button>
+    ${st.length?`<button class="story" data-act="story-view"><span class="ring ${seen?'seen':''}"><span class="inner" style="background:${BGS[st[st.length-1].bg]}">${esc(st[st.length-1].text.slice(0,26))}</span></span><span>הסטורי שלך</span></button>`:''}
+  </div></section>`;
+}
+function composer(){return`<section class="card composer" aria-label="יצירת פוסט"><div class="row">${av(S.me)}<button class="fake" data-act="compose">מה חדש, ${esc(S.me.name.split(' ')[0])}?</button></div>
+  <div class="acts"><button data-act="compose-img">${ic('image')}תמונה</button><button data-act="story-new">${ic('story')}סטורי</button><button data-act="clip-new">${ic('video')}קליפ</button></div></section>`}
+function postHTML(p){
+  const big=!p.img&&p.text.length<90;
+  return`<article class="card post" data-post="${p.id}" style="position:relative">
+  <div class="post-h">${av(S.me)}<div class="who"><b>${esc(S.me.name)}</b><small>${rel(p.ts)} · ציבורי</small></div><button class="iconbtn" data-act="post-menu" aria-label="אפשרויות" aria-haspopup="menu">${ic('more')}</button></div>
+  ${p.text?`<p class="post-text ${big?'big':''}" dir="auto">${esc(p.text)}</p>`:''}
+  ${p.img?`<img class="post-img" src="${p.img}" alt="תמונה מהפוסט" loading="lazy">`:''}
+  ${(p.liked||p.comments.length)?`<div class="post-stats">${p.liked?`<span>${ic('heart','i')}</span><span>אהבת את זה</span>`:''}${p.comments.length?`<span style="margin-inline-start:auto">${p.comments.length===1?'תגובה אחת':fmt(p.comments.length)+' תגובות'}</span>`:''}</div>`.replace(/<svg class="i">/,'<svg class="i" style="width:16px;height:16px;fill:var(--like);stroke:var(--like);vertical-align:-3px">'):''}
+  <div class="post-acts">
+    <button class="${p.liked?'on':''}" data-act="like" aria-pressed="${p.liked}">${ic('heart')}אהבתי</button>
+    <button data-act="comment">${ic('comment')}תגובה</button>
+    <button data-act="share">${ic('share')}שיתוף</button>
+    <button class="tip" data-act="tip">${ic('gift')}תמיכה</button>
+  </div>
+  <div class="comments" ${p.open?'':'hidden'}>
+    ${p.comments.map(c=>`<div class="cmt">${av(S.me,'s32')}<div class="bub"><b>${esc(S.me.name)}</b><p dir="auto">${esc(c.text)}</p></div></div>`).join('')}
+    <form class="cmt-in" data-act="cmt-form">${av(S.me,'s32')}<label class="sr" for="c-${p.id}">תגובה</label><input id="c-${p.id}" placeholder="כתבו תגובה…" maxlength="500"><button class="iconbtn" aria-label="שליחת תגובה">${ic('send')}</button></form>
+  </div></article>`;
+}
+function vHome(){
+  const q=(state.q||'').trim();
+  const posts=q?S.posts.filter(p=>p.text.includes(q)):S.posts;
+  return`
+  <label class="search desk ${q||state.showSearch?'show':''}" for="q">${ic('search')}<input id="q" placeholder="חיפוש בפלטפורמיקה" value="${esc(q)}" autocomplete="off"></label>
+  ${q?'':storiesTray()}
+  ${q?'':composer()}
+  ${posts.length?posts.map(postHTML).join(''):q?`<section class="card empty"><div class="art">${ic('search')}</div><h2>לא נמצאו תוצאות ל"${esc(q)}"</h2><p>החיפוש עובר כרגע על הפוסטים שלכם. חיפוש אנשים ייפתח כשחברים יצטרפו.</p></section>`:
+  `<section class="card empty"><div class="art">${ic('users')}</div><h2>הפיד שלכם מחכה לחברים</h2><p>כשחברים יצטרפו ויפרסמו, הפוסטים שלהם יופיעו כאן. בינתיים אפשר לפרסם את הפוסט הראשון.</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn primary" data-act="compose">כתיבת פוסט ראשון</button><button class="btn ghost" data-act="invite">הזמנת חברים</button></div></section>`}`;
+}
+function vClips(){
+  return`<div class="page-h"><h1>קליפים</h1><button class="btn primary sm" data-act="clip-new">${ic('plus')}העלאת קליפ</button></div>
+  ${clips.length?`<div class="note">${ic('info')}<span>קליפים נשמרים רק לתצוגה בחלון הזה עד שהשרת יעלה. רענון הדף ינקה אותם.</span></div>
+  <div class="clips">${clips.map(c=>`<div class="clip"><video src="${c.url}" muted loop playsinline preload="metadata" data-clip></video>${c.cap?`<div class="cap">${esc(c.cap)}</div>`:''}</div>`).join('')}</div>`:
+  `<section class="card empty"><div class="art">${ic('clips')}</div><h2>עוד אין כאן קליפים</h2><p>סרטונים אנכיים קצרים מכם ומהחברים שלכם יופיעו כאן, אחד אחרי השני.</p><button class="btn primary" data-act="clip-new">${ic('video')}העלאת קליפ</button></section>`}`;
+}
+function chatListHTML(){
+  const last=S.notes[S.notes.length-1];
+  return`<div class="clist">
+    <a class="citem" href="#chat-saved"><span class="av saved">${ic('bookmark','i')}</span><span class="meta"><b>הודעות לעצמי${last?`<small>${hm(last.ts)}</small>`:''}</b><span>${last?esc(last.text):'מקום לרשימות, קישורים ותזכורות'}</span></span></a>
+    <button class="citem" data-act="invite"><span class="av" style="background:var(--surface-3);color:var(--brand)">${ic('plus','i')}</span><span class="meta"><b>צ'אט חדש</b><span>הזמינו חבר כדי להתחיל לשוחח</span></span></button>
+  </div>`;
+}
+function vChats(){
+  return`<div class="page-h"><h1>צ'אטים</h1></div>
+  <section class="card">${chatListHTML()}</section>
+  <section class="card empty"><div class="art">${ic('chat')}</div><h2>השיחות שלכם יופיעו כאן</h2><p>צ'אט אישי וקבוצתי עם כל מי שמצטרף לפלטפורמיקה. שלחו לחברים את הקישור האישי שלכם.</p><button class="btn primary" data-act="invite">${ic('link')}הזמנת חברים</button></section>`;
+}
+function vChat(){
+  let prev='';
+  const body=S.notes.map(n=>{const d=dayLabel(n.ts);const sep=d!==prev?`<div class="day">${d}</div>`:'';prev=d;return sep+`<div class="msg me"><p dir="auto">${esc(n.text)}</p><small>${hm(n.ts)}</small></div>`}).join('');
+  return`<section class="card chat">
+    <div class="chat-h"><a class="iconbtn" href="#chats" aria-label="חזרה לצ'אטים">${ic('back')}</a><span class="av saved s36">${ic('bookmark','i')}</span><div class="who"><b>הודעות לעצמי</b><br><small>רק אתם רואים את השיחה הזו</small></div></div>
+    <div class="chat-body" id="chatBody">${body||`<div class="day">כתבו לעצמכם רעיון, קישור או משימה</div>`}</div>
+    <form class="chat-in" id="chatForm"><label class="sr" for="chatText">הודעה</label><textarea id="chatText" rows="1" placeholder="הודעה" maxlength="2000"></textarea><button class="send" aria-label="שליחה">${ic('send')}</button></form>
+  </section>`;
+}
+const ALERT_IC={bell:'bell',users:'users',heart:'heart',coins:'coins'};
+function vAlerts(){
+  return`<div class="page-h"><h1>התראות</h1></div>
+  ${S.alerts.length?`<section class="card"><div class="clist">${S.alerts.map(a=>`<div class="citem"><span class="av" style="background:var(--brand-soft);color:var(--brand)">${ic(ALERT_IC[a.icon]||'bell','i')}</span><span class="meta"><span style="white-space:normal;color:var(--ink)">${esc(a.text)}</span><small style="color:var(--muted);font-size:12.5px">${rel(a.ts)}</small></span></div>`).join('')}</div></section>`:''}
+  <section class="card empty"><div class="art">${ic('bell')}</div><h2>אין התראות חדשות</h2><p>לייקים, תגובות, עוקבים חדשים ותמיכה מהקהל שלכם יגיעו לכאן.</p></section>`;
+}
+function vCreators(){
+  const np=S.posts.length,nc=S.posts.reduce((a,p)=>a+p.comments.length,0);
+  return`<div class="page-h"><h1>מרכז היוצרים</h1></div>
+  <section class="card hero-split">
+    <div class="donut" role="img" aria-label="99 אחוז מהרווח הנקי ליוצרים, 1 אחוז לפלטפורמה">
+      <svg viewBox="0 0 120 120" width="150" height="150" style="transform:rotate(-90deg)"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface-3)" stroke-width="16"/><circle cx="60" cy="60" r="50" fill="none" stroke="var(--gold)" stroke-width="16" stroke-dasharray="${(2*Math.PI*50*.99).toFixed(1)} ${(2*Math.PI*50).toFixed(1)}" stroke-linecap="butt"/></svg>
+      <div class="c"><div><b>99%</b><small>ליוצרים</small></div></div>
+    </div>
+    <div><h2>הרווח שלכם, לא שלנו</h2><p>99% מהרווח הנקי של הפלטפורמה מתחלק בין היוצרים. 1% נשאר להפעלה. תרומות מהקהל עוברות אליכם בלי עמלה בכלל.</p></div>
+  </section>
+  <div class="stats">
+    <div class="card stat"><small>יתרה</small><b>₪0.00</b></div>
+    <div class="card stat"><small>פוסטים</small><b>${fmt(np)}</b></div>
+    <div class="card stat"><small>תגובות</small><b>${fmt(nc)}</b></div>
+  </div>
+  <section class="card">
+    <div class="sec-h"><h3>איך מרוויחים</h3></div>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><div><b>יוצרים תוכן</b><p>פוסטים, סטוריז וקליפים. כל צפייה ותגובה נספרות לחלק שלכם ברווח.</p></div></div>
+      <div class="step"><span class="n">2</span><div><b>הקהל תומך</b><p>כפתור "תמיכה" על כל פוסט שולח לכם תרומה ישירה, 0% עמלה.</p></div></div>
+      <div class="step"><span class="n">3</span><div><b>מקבלים תשלום</b><p>היתרה מתעדכנת אחת לחודש ואפשר למשוך אותה לחשבון הבנק.</p></div></div>
+    </div>
+  </section>
+  <section class="card invite"><h3>חבר מביא חבר</h3><p>כל חבר שמצטרף דרך הקישור שלכם מגדיל את הקהל שלכם מהיום הראשון.</p>${linkBox()}</section>`;
+}
+function linkBox(){return`<div class="linkbox"><code>${esc(refLink())}</code><button class="btn primary sm" data-act="copy-ref">${ic('copy')}העתקה</button></div>`}
+function vProfile(){
+  const tab=state.ptab||'posts';const ps=S.posts;const imgs=ps.filter(p=>p.img);
+  const list=tab==='media'?imgs:ps;
+  return`<section class="card" style="overflow:hidden">
+    <div class="cover">${S.me.cover?`<img src="${S.me.cover}" alt="">`:''}</div>
+    <div class="prof">
+      <div class="head">${av(S.me,'s120')}<div style="display:flex;gap:8px;margin-bottom:6px"><button class="btn ghost sm" data-act="edit-profile">${ic('edit')}עריכת פרופיל</button></div></div>
+      <div><h1>${esc(S.me.name)}</h1><div class="handle">@${esc(S.me.handle)}</div></div>
+      ${S.me.bio?`<p class="bio" dir="auto">${esc(S.me.bio)}</p>`:`<button class="btn ghost sm" style="align-self:flex-start" data-act="edit-profile">הוספת ביו</button>`}
+      <div class="counts"><span><b>${fmt(ps.length)}</b>פוסטים</span><span><b>0</b>עוקבים</span><span><b>0</b>במעקב</span></div>
+    </div>
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='posts'}" data-ptab="posts">פוסטים</button><button role="tab" aria-selected="${tab==='media'}" data-ptab="media">תמונות</button></div>
+    ${list.length?`<div class="grid">${list.map(p=>`<a class="cell ${p.img?'has-img':''}" href="#home" data-jump="${p.id}">${p.img?`<img src="${p.img}" alt="" loading="lazy">`:esc(p.text.slice(0,80))}</a>`).join('')}</div>`:
+    `<div class="empty"><div class="art">${ic(tab==='media'?'camera':'edit')}</div><h2>${tab==='media'?'עוד אין תמונות':'עוד אין פוסטים'}</h2><p>${tab==='media'?'תמונות שתפרסמו יוצגו כאן ברשת.':'הפוסטים שתפרסמו יופיעו כאן.'}</p><button class="btn primary" data-act="${tab==='media'?'compose-img':'compose'}">יצירת פוסט</button></div>`}
+  </section>`;
+}
+function editProfile(){
+  let photo=S.me.photo,cover=S.me.cover;
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>עריכת פרופיל</h2><span style="width:40px"></span></div>
+  <form class="sheet-b" id="epForm">
+    <div style="display:flex;gap:14px;align-items:center"><span id="epAv">${av(S.me,'s96')}</span><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn ghost sm" id="epPhoto">${ic('camera')}תמונת פרופיל</button><button type="button" class="btn ghost sm" id="epCover">${ic('image')}תמונת נושא</button></div></div>
+    <div class="field"><label for="epName">שם</label><input id="epName" value="${esc(S.me.name)}" maxlength="40"></div>
+    <div class="field"><label for="epBio">ביו</label><textarea id="epBio" maxlength="160" placeholder="כמה מילים עליכם">${esc(S.me.bio)}</textarea><span class="hint">עד 160 תווים</span></div>
+    <button class="btn primary block">שמירה</button>
+  </form>`,{onMount:sh=>{
+    $('#epPhoto',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{photo=await compress(f,320,.85);$('#epAv',sh).innerHTML=av({...S.me,photo},'s96')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
+    $('#epCover',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{cover=await compress(f,1400,.8);toast('תמונת הנושא נבחרה')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
+    $('#epForm',sh).onsubmit=e=>{e.preventDefault();const n=$('#epName',sh).value.trim();if(!n){toast('השם לא יכול להיות ריק');return}const old={...S.me};Object.assign(S.me,{name:n,bio:$('#epBio',sh).value.trim(),photo,cover});if(!save()){S.me=old;return}closeLayer();render();toast('הפרופיל נשמר')};
+  }});
+}
+function inviteSheet(){
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>הזמנת חברים</h2><span style="width:40px"></span></div>
+  <div class="sheet-b">
+    <p style="color:var(--ink-2)">שלחו את הקישור האישי שלכם בוואטסאפ, בהודעה או במייל. מי שמצטרף דרכו יתחבר אליכם אוטומטית.</p>
+    ${linkBox()}
+  </div>`);
+}
+function tipSheet(){
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>תמיכה ביוצר</h2><span style="width:40px"></span></div>
+  <div class="sheet-b">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${[5,10,20,50].map(v=>`<button class="btn ghost" disabled>₪${v}</button>`).join('')}</div>
+    <div class="note">${ic('info')}<span>תשלומים ייפתחו עם השקת הפלטפורמה. כל שקל שתתרמו יגיע ליוצר במלואו, 0% עמלה.</span></div>
+    <button class="btn ghost block" data-close>הבנתי</button>
+  </div>`);
+}
+function clipNew(){
+  let file=null;
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>קליפ חדש</h2><span style="width:40px"></span></div>
+  <div class="sheet-b">
+    <button class="btn ghost block" id="clFile">${ic('video')}בחירת סרטון מהמכשיר</button>
+    <div id="clPrev"></div>
+    <div class="field"><label for="clCap">כיתוב</label><input id="clCap" maxlength="120" placeholder="על מה הקליפ?"></div>
+    <button class="btn primary block" id="clPost" disabled>פרסום קליפ</button>
+  </div>`,{onMount:sh=>{
+    $('#clFile',sh).onclick=async()=>{const f=await pickFile('video/*');if(!f)return;if(!f.type.startsWith('video/')){toast('בחרו קובץ וידאו');return}file=f;const u=URL.createObjectURL(f);$('#clPrev',sh).innerHTML=`<div class="clip" style="max-width:220px;margin:0 auto"><video src="${u}" muted autoplay loop playsinline></video></div>`;$('#clPost',sh).disabled=false};
+    $('#clPost',sh).onclick=()=>{clips.unshift({url:URL.createObjectURL(file),cap:$('#clCap',sh).value.trim()});closeLayer();go('clips');toast('הקליפ פורסם')};
+  }});
+}
+
+/* ---------- rail ---------- */
+function railHTML(){
+  return`
+  <label class="search" for="qr">${ic('search')}<input id="qr" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
+  <section class="card wallet" aria-label="ארנק יוצרים">
+    <div class="top"><div><div class="lbl">הארנק שלי</div><div class="amt">₪0.00</div></div><span class="av s36" style="background:var(--gold-soft);color:var(--gold-ink)">${ic('coins','i')}</span></div>
+    <div class="split"><div class="bar" aria-hidden="true"><i class="c"></i><i class="o"></i></div></div>
+    <div class="legend"><span><b>99%</b> ליוצרים</span><span><b>1%</b> לפלטפורמה</span></div>
+    <a class="btn ghost sm" href="#creators">למרכז היוצרים</a>
+  </section>
+  <section class="card"><div class="sec-h"><h3>צ'אטים</h3><a href="#chats">הכול</a></div>${chatListHTML()}</section>
+  <section class="card invite"><h3>חבר מביא חבר</h3><p>פלטפורמיקה גדלה מחברים. שלחו את הקישור לחמישה אנשים שאתם סומכים עליהם.</p>${linkBox()}</section>
+  <p class="foot">פלטפורמיקה · מבית <a href="/">Barusik Platforms</a><br>© ${new Date().getFullYear()} כל הזכויות שמורות</p>`;
+}
+
+/* ---------- router ---------- */
+const state={route:'home',q:'',ptab:'posts'};
+const VIEWS={home:vHome,clips:vClips,chats:vChats,'chat-saved':vChat,alerts:vAlerts,creators:vCreators,profile:vProfile};
+function go(r){if(location.hash!=='#'+r)location.hash=r;else render()}
+function render(){
+  const r=(location.hash.slice(1)||'home');state.route=VIEWS[r]?r:'home';
+  if(!S.me){$('#view').innerHTML='';$('#rail').innerHTML='';onboarding();return}
+  if(state.route==='alerts'){S.seenAlerts=S.alerts.length;save()}
+  $('#view').innerHTML=VIEWS[state.route]();
+  $('#rail').innerHTML=railHTML();
+  const navKey=state.route==='chat-saved'?'chats':state.route;
+  $$('[data-r]').forEach(a=>a.dataset.r===navKey?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  const unread=Math.max(0,S.alerts.length-(S.seenAlerts||0));
+  $$('[data-badge]').forEach(b=>{b.hidden=!unread;b.textContent=unread});
+  $('#navMe').innerHTML=`${av(S.me,'s36')}<span class="meta" style="min-width:0;line-height:1.2"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(S.me.name)}</b><small style="color:var(--muted);direction:ltr;display:block;text-align:right">@${esc(S.me.handle)}</small></span>`;
+  if(state.route==='chat-saved'){const b=$('#chatBody');b.scrollTop=b.scrollHeight;bindChat()}
+  $$('[data-clip]').forEach(v=>{v.play?.().catch(()=>{})});
+  document.title=({home:'פלטפורמיקה',clips:'קליפים · פלטפורמיקה',chats:"צ'אטים · פלטפורמיקה",'chat-saved':'הודעות לעצמי · פלטפורמיקה',alerts:'התראות · פלטפורמיקה',creators:'מרכז היוצרים · פלטפורמיקה',profile:`${S.me.name} · פלטפורמיקה`})[state.route];
+}
+addEventListener('hashchange',()=>{render();scrollTo(0,0)});
+
+function bindChat(){
+  const f=$('#chatForm'),t=$('#chatText');
+  const grow=()=>{t.style.height='auto';t.style.height=Math.min(120,t.scrollHeight)+'px'};
+  t.addEventListener('input',grow);
+  t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();f.requestSubmit()}});
+  f.addEventListener('submit',e=>{e.preventDefault();const v=t.value.trim();if(!v)return;S.notes.push({text:v,ts:Date.now()});if(!save()){S.notes.pop();return}render();$('#chatText')?.focus()});
+}
+
+/* ---------- events ---------- */
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'||e.target.id==='qr'){state.q=e.target.value;const id=e.target.id,pos=e.target.selectionStart;if(state.route!=='home'){location.hash='home'}render();const el=$('#'+id);if(el){el.focus();el.setSelectionRange(pos,pos)}}
+});
+document.addEventListener('submit',e=>{
+  const f=e.target.closest('[data-act="cmt-form"]');if(!f)return;e.preventDefault();
+  const id=f.closest('[data-post]').dataset.post,p=S.posts.find(x=>x.id===id),inp=$('input',f),v=inp.value.trim();if(!v)return;
+  p.comments.push({text:v,ts:Date.now()});p.open=true;save();render();$('#c-'+id)?.focus();
+});
+document.addEventListener('click',async e=>{
+  const close=e.target.closest('[data-close]');if(close){closeLayer();return}
+  if(!e.target.closest('.menu'))$$('.menu').forEach(m=>m.remove());
+  const pt=e.target.closest('[data-ptab]');if(pt){state.ptab=pt.dataset.ptab;render();return}
+  const jump=e.target.closest('[data-jump]');if(jump){e.preventDefault();state.q='';go('home');setTimeout(()=>{$(`[data-post="${jump.dataset.jump}"]`)?.scrollIntoView({block:'center',behavior:'smooth'})},30);return}
+  const a=e.target.closest('[data-act]');if(!a)return;
+  const act=a.dataset.act;const postEl=a.closest('[data-post]');const p=postEl&&S.posts.find(x=>x.id===postEl.dataset.post);
+  if(a.tagName==='A')e.preventDefault();
+  switch(act){
+    case'compose':compose();break;
+    case'compose-img':compose();setTimeout(()=>$('#cmpImg')?.click(),60);break;
+    case'story-new':storyCompose();break;
+    case'story-view':viewStories(0);break;
+    case'clip-new':clipNew();break;
+    case'invite':inviteSheet();break;
+    case'tip':tipSheet();break;
+    case'search':state.showSearch=!state.showSearch;go('home');setTimeout(()=>$('#q')?.focus(),30);break;
+    case'copy-ref':copy(refLink(),a);break;
+    case'edit-profile':editProfile();break;
+    case'like':p.liked=!p.liked;save();render();if(p.liked)$(`[data-post="${p.id}"] [data-act="like"] svg`)?.classList.add('pop');break;
+    case'comment':p.open=!p.open;render();if(p.open)$('#c-'+p.id)?.focus();break;
+    case'share':copy(SITE+'#post-'+p.id,a);break;
+    case'post-menu':{const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
+      m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}העתקת קישור</button><button role="menuitem" class="danger" data-m="del">${ic('trash')}מחיקת הפוסט</button>`;
+      postEl.append(m);m.querySelector('button').focus();
+      m.addEventListener('click',ev=>{const b=ev.target.closest('[data-m]');if(!b)return;
+        if(b.dataset.m==='copy'){copy(SITE+'#post-'+p.id);m.remove()}
+        else if(b.dataset.m==='del'){
+          if(!b.dataset.sure){b.dataset.sure=1;b.innerHTML=`${ic('trash')}ללחוץ שוב כדי למחוק`;return}
+          S.posts=S.posts.filter(x=>x.id!==p.id);save();render();toast('הפוסט נמחק')}
+      });break}
+  }
+});
+
+render();
+})();
+</script>
+
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.0.0').catch(()=>{}));</script>
+</body></html>
