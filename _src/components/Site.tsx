@@ -8,6 +8,7 @@ import { CONTACT, LANGS, LANG_NAMES, RTL, type Dict, type Lang } from '../lib/i1
 import { world, type PlatformId } from '../lib/store';
 import { Cursor, LangSwitch, MagneticButton, MagneticLink, Words } from './ui';
 import InstallSheet, { type AppInfo } from './InstallSheet';
+import Account from './Account';
 
 const Scene = dynamic(() => import('./Scene'), { ssr: false });
 
@@ -15,7 +16,8 @@ const APPS: Record<'pk' | 'cx', Omit<AppInfo, 'name'>> = {
   pk: { id: 'pk', path: '/platformika/', color: '#6A63FF', ink: '#FFFFFF' },
   cx: { id: 'cx', path: '/complichess/', color: '#D8AE57', ink: '#1A1208' },
 };
-const ACCENT: Record<PlatformId, string> = { pk: '#6A63FF', cx: '#D8AE57', cr: '#49E8C8' };
+const ACCENT: Record<PlatformId, string> = { pk: '#6A63FF', cx: '#D8AE57', cr: '#49E8C8', lr: '#FF7A59' };
+const IDS: PlatformId[] = ['pk', 'cx', 'cr', 'lr'];
 
 export function Mark({ size = 28 }: { size?: number }) {
   return (
@@ -149,7 +151,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
   const curtain = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
 
-  const cursorLabels = useMemo(() => ({ pk: d.pk.name, cx: d.cx.name, cr: d.soon }), [d]);
+  const cursorLabels = useMemo(() => ({ pk: d.pk.name, cx: d.cx.name, cr: d.soon, lr: `${d.lr.name} · ${d.soon}` }), [d]);
 
   const scrollToY = useCallback((y: number) => {
     if (lenisRef.current) lenisRef.current.scrollTo(y, { duration: 1.6, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
@@ -181,7 +183,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
     const setMobile = () => { world.mobile = innerWidth < 768; };
     setMobile(); addEventListener('resize', setMobile);
     setGl(hasWebGL());
-    world.onPick = (id) => toChapter(['pk', 'cx', 'cr'].indexOf(id));
+    world.onPick = (id) => toChapter(IDS.indexOf(id));
 
     gsap.registerPlugin(ScrollTrigger);
     let lenis: Lenis | null = null;
@@ -193,7 +195,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
       gsap.ticker.add(raf); gsap.ticker.lagSmoothing(0);
     }
 
-    // scroll → story progress (0 overview … 3 crypto … 4 gone)
+    // scroll → story progress (0 overview … 4 Cramika … 5 gone)
     let anchors: number[] = [];
     const measure = () => {
       const ch = [...document.querySelectorAll<HTMLElement>('[data-chapter]')];
@@ -206,8 +208,8 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
       const y = window.scrollY; let p = 0;
       for (let i = 0; i < anchors.length - 1; i++) { if (y >= anchors[i]) p = i + Math.min(1, (y - anchors[i]) / Math.max(1, anchors[i + 1] - anchors[i])); }
       world.progress = p;
-      const a = p < 0.5 ? 0 : Math.min(3, Math.round(p)); if (a !== lastActive) { lastActive = a; setActive(a); }
-      if (canvasWrap.current) canvasWrap.current.style.opacity = String(Math.max(0, Math.min(1, 1 - (p - 3.35) * 1.6)));
+      const a = p < 0.5 ? 0 : Math.min(IDS.length, Math.round(p)); if (a !== lastActive) { lastActive = a; setActive(a); }
+      if (canvasWrap.current) canvasWrap.current.style.opacity = String(Math.max(0, Math.min(1, 1 - (p - (IDS.length + 0.35)) * 1.6)));
       setScrolled(y > 40);
     };
     gsap.ticker.add(tick);
@@ -246,7 +248,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
   useEffect(() => { if (sheet) lenisRef.current?.stop(); else lenisRef.current?.start(); }, [sheet]);
 
   const appInfo: AppInfo | null = sheet ? { ...APPS[sheet], name: sheet === 'pk' ? d.pk.name : d.cx.name } : null;
-  const navItems = [d.pk.name, d.cx.name, d.cr.name];
+  const navItems = [d.pk.name, d.cx.name, d.cr.name, d.lr.name];
 
   return (
     <>
@@ -275,17 +277,17 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
               <a key={id} href={`#${id}`} onClick={toId(id)} className="rounded-full px-4 py-2 text-paper/80 transition-colors hover:bg-white/10 hover:text-paper">{t}</a>
             ))}
           </nav>
-          <LangSwitch lang={lang} label={d.nav.lang} onGo={goLang} />
+          <div className="flex items-center gap-2"><Account d={d} lang={lang} /><LangSwitch lang={lang} label={d.nav.lang} onGo={goLang} /></div>
         </div>
       </header>
 
       {/* story index: which platform is in front */}
-      <nav aria-label={d.nav.platforms} className={`fixed end-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col gap-3 transition-opacity duration-500 md:flex ${active >= 1 && active <= 3 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+      <nav aria-label={d.nav.platforms} className={`fixed end-5 top-1/2 z-40 hidden -translate-y-1/2 flex-col gap-3 transition-opacity duration-500 md:flex ${active >= 1 && active <= IDS.length ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
         {navItems.map((n, i) => (
           <button key={i} type="button" onClick={() => toChapter(i)} aria-current={active === i + 1 ? 'true' : undefined}
             className="group flex items-center justify-end gap-3 text-sm font-bold">
             <span className={`transition-all duration-500 ${active === i + 1 ? 'opacity-100' : 'translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-70 rtl:-translate-x-2'}`}>{n}</span>
-            <span className="h-2.5 rounded-full transition-all duration-500 ease-out-expo" style={{ width: active === i + 1 ? 28 : 10, background: active === i + 1 ? Object.values(ACCENT)[i] : '#A3A5CB66' }} />
+            <span className="h-2.5 rounded-full transition-all duration-500 ease-out-expo" style={{ width: active === i + 1 ? 28 : 10, background: active === i + 1 ? ACCENT[IDS[i]] : '#A3A5CB66' }} />
           </button>
         ))}
       </nav>
@@ -296,12 +298,15 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
             <p className="hero-fade flex items-center gap-2 text-sm font-medium text-mist"><Mark size={16} />{d.count}</p>
             <h1 className="hero-title mt-4 max-w-[14ch] font-black leading-[.95] tracking-tight" style={{ fontSize: 'clamp(40px, 6.2vw, 92px)' }}><Words text={d.heroTitle} /></h1>
             <p className="hero-fade mt-5 max-w-[42ch] text-[17px] leading-relaxed text-paper/80 md:text-lg">{d.heroSub}</p>
+            <p className="hero-fade drag-hint mt-3 hidden items-center gap-2 text-sm text-mist [@media(pointer:fine)]:flex">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11.5v-2a1.5 1.5 0 0 1 3 0V12M14 10.5a1.5 1.5 0 0 1 3 0V12M17 11.5a1.5 1.5 0 0 1 3 0V16a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4.3 15a1.5 1.5 0 0 1 2.5-1.7L8 15" /></svg>{d.drag}
+            </p>
             <div className="hero-fade mt-7 flex flex-wrap gap-2">
-              {(['pk', 'cx', 'cr'] as PlatformId[]).map((id, i) => (
+              {IDS.map((id, i) => (
                 <button key={id} type="button" onClick={() => toChapter(i)} data-cursor="grow"
                   className="glass flex h-11 items-center gap-2 rounded-full ps-3 pe-4 text-[15px] font-bold transition-colors hover:bg-white/10">
                   <span className="h-2.5 w-2.5 rotate-45 rounded-[3px]" style={{ background: ACCENT[id] }} />{navItems[i]}
-                  {id === 'cr' ? <span className="text-xs font-medium text-mist">· {d.soon}</span> : null}
+                  {id === 'cr' || id === 'lr' ? <span className="text-xs font-medium text-mist">· {d.soon}</span> : null}
                 </button>
               ))}
             </div>
@@ -319,16 +324,18 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
           <Chapter id="pk" index={0} d={d} data={d.pk} live onInstall={() => setSheet('pk')} />
           <Chapter id="cx" index={1} d={d} data={d.cx} live onInstall={() => setSheet('cx')} />
           <Chapter id="cr" index={2} d={d} data={d.cr} live={false} />
+          <Chapter id="lr" index={3} d={d} data={d.lr} live={false} />
         </div>
 
         <section id="install" className="relative px-5 pb-24 pt-32 md:px-[4vw]" style={{ background: 'linear-gradient(to bottom, transparent, #090B1F 22%)' }}>
           <div className="mx-auto max-w-6xl">
             <h2 className="install-title max-w-[16ch] font-black leading-[.98] tracking-tight" style={{ fontSize: 'clamp(38px, 5.4vw, 76px)' }}><Words text={d.installTitle} /></h2>
             <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-paper/75">{d.installSub}</p>
-            <div className="mt-14 grid gap-5 md:grid-cols-3" style={{ perspective: '1200px' }}>
+            <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4" style={{ perspective: '1200px' }}>
               <AppCard id="pk" d={d} data={d.pk} live onInstall={() => setSheet('pk')} />
               <AppCard id="cx" d={d} data={d.cx} live onInstall={() => setSheet('cx')} />
               <AppCard id="cr" d={d} data={d.cr} live={false} />
+              <AppCard id="lr" d={d} data={d.lr} live={false} />
             </div>
             <p className="mt-6 text-[15px] text-mist">{d.updatesNote}</p>
           </div>

@@ -44,3 +44,7 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
 }
 .page-in { animation: pageIn .9s cubic-bezier(.7,0,.2,1) .05s both; }
 @keyframes pageIn { from { clip-path: circle(150% at 50% 0%); } to { clip-path: circle(0% at 50% 0%); } }
+
+/* grabbing parts of the 3D platforms */
+html[data-grab] body { cursor: grab; }
+html[data-drag], html[data-drag] * { cursor: grabbing; user-select: none; -webkit-user-select: none; }

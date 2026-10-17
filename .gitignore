@@ -1,0 +1,4 @@
+_src/node_modules/
+_src/.next/
+_src/out/
+_src/tsconfig.tsbuildinfo

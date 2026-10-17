@@ -1,15 +1,15 @@
 'use client';
 /* The three floating platforms. The camera flies from one to the next as the page scrolls
    (world.progress), leans toward the pointer, and each platform reacts to hover and click. */
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Environment, Lightformer, RoundedBox, Edges } from '@react-three/drei';
-import { useMemo, useRef, useLayoutEffect } from 'react';
+import { useMemo, useRef, useLayoutEffect, useEffect } from 'react';
 import * as THREE from 'three';
 import { world, PLATFORMS, smooth, clamp, type PlatformId } from '../lib/store';
 
 const C = {
   night: '#090B1F', pk: '#5B54FF', pkDeep: '#2A238F', gold: '#F2B705', felt: '#1F4A3B', cream: '#E9DFC6',
-  brass: '#D8AE57', ebony: '#1A1715', mint: '#49E8C8', crSlab: '#0E1A33',
+  brass: '#D8AE57', ebony: '#1A1715', mint: '#49E8C8', crSlab: '#0E1A33', coral: '#FF7A59', lrSlab: '#3A1626',
 };
 
 /* ---------- camera path ---------- */
@@ -19,9 +19,9 @@ function keyframe(i: number) {
   if (i <= 0) return world.mobile
     ? { pos: V(0, -1.2, 33), look: V(0, -0.5, -1.6) }
     : { pos: V(side * 3.6, -1.0, 24), look: V(side * 4.4, -1.15, -1.6) };
-  const p = PLATFORMS[Math.min(2, i - 1)].pos;
+  const p = PLATFORMS[Math.min(PLATFORMS.length - 1, i - 1)].pos;
   const sx = world.mobile ? 0 : side * 2.25;
-  if (i >= 4) return { pos: V(p[0] + sx, p[1] - 3.5, p[2] + 11), look: V(p[0] + sx, p[1] - 5, p[2]) };
+  if (i >= PLATFORMS.length + 1) return { pos: V(p[0] + sx, p[1] - 3.5, p[2] + 11), look: V(p[0] + sx, p[1] - 5, p[2]) };
   if (world.mobile) return { pos: V(p[0], p[1] + 1.2, p[2] + 13.5), look: V(p[0], p[1] - 1.7, p[2]) };
   return { pos: V(p[0] + sx * 0.75, p[1] + 2.1, p[2] + 9.6), look: V(p[0] + sx, p[1] + 0.45, p[2]) };
 }
@@ -31,7 +31,7 @@ function CameraRig() {
   const tmpP = useMemo(() => new THREE.Vector3(), []);
   const tmpL = useMemo(() => new THREE.Vector3(), []);
   useFrame((_, dt) => {
-    const p = clamp(world.progress, 0, 4);
+    const p = clamp(world.progress, 0, PLATFORMS.length + 1);
     const i = Math.floor(p), f = smooth(p - i);
     const a = keyframe(i), b = keyframe(i + 1);
     tmpP.lerpVectors(a.pos, b.pos, f); tmpL.lerpVectors(a.look, b.look, f);
@@ -61,6 +61,72 @@ function Glow({ color, size = 6, y = -0.6, opacity = 0.55 }: { color: string; si
   );
 }
 
+/* Grab any part of a platform with the mouse: it follows the pointer on a plane facing the camera,
+   and when released it springs back to its place and keeps floating with the rest. */
+const _hit = new THREE.Vector3(), _n = new THREE.Vector3(), _loc = new THREE.Vector3();
+/* the scene listens on the whole page, so ignore pointers that are really on text, buttons or panels */
+const UI = 'a,button,input,textarea,select,label,[role=menu],.panel,.card,header,nav,footer,#install,#contact';
+export const overUI = (e: ThreeEvent<PointerEvent | MouseEvent>) => !!(e.nativeEvent.target as Element | null)?.closest?.(UI);
+export function Drag({ children, position = [0, 0, 0], rotation, scale }: {
+  children: React.ReactNode; position?: [number, number, number]; rotation?: [number, number, number]; scale?: number;
+}) {
+  const g = useRef<THREE.Group>(null!);
+  const { camera } = useThree();
+  const st = useMemo(() => ({
+    on: false, id: -1, moved: false, rest: new THREE.Vector3(...position), grab: new THREE.Vector3(),
+    vel: new THREE.Vector3(), plane: new THREE.Plane(), spin: 0, spinV: 0,
+  }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { st.rest.set(...position); }, [position, st]);
+  const toLocal = (v: THREE.Vector3) => g.current.parent!.worldToLocal(v);
+  const down = (e: ThreeEvent<PointerEvent>) => {
+    if (e.pointerType === 'touch' || world.reduced || e.button !== 0 || overUI(e)) return;  // touch keeps scrolling the page
+    e.stopPropagation();
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    camera.getWorldDirection(_n);
+    st.plane.setFromNormalAndCoplanarPoint(_n, e.point);
+    st.grab.copy(toLocal(_loc.copy(e.point))).sub(g.current.position);
+    st.on = true; st.id = e.pointerId; st.moved = false; st.vel.set(0, 0, 0);
+    world.dragging = true; document.documentElement.dataset.drag = '1';
+  };
+  const move = (e: ThreeEvent<PointerEvent>) => {
+    if (!st.on || e.pointerId !== st.id) return;
+    e.stopPropagation();
+    if (!e.ray.intersectPlane(st.plane, _hit)) return;
+    const next = toLocal(_hit).sub(st.grab);
+    st.vel.copy(next).sub(g.current.position);                        // fling speed for the release
+    if (g.current.position.distanceToSquared(next) > 1e-6) st.moved = true;
+    g.current.position.copy(next);
+    st.spinV += st.vel.x * 0.8;
+  };
+  const up = (e: ThreeEvent<PointerEvent>) => {
+    if (!st.on || e.pointerId !== st.id) return;
+    e.stopPropagation();
+    (e.target as Element).releasePointerCapture?.(e.pointerId);
+    st.on = false; world.dragging = false; delete document.documentElement.dataset.drag;
+    if (st.moved) world.dragEnd = performance.now();
+    st.vel.multiplyScalar(30);                                        // keep a little momentum, then spring home
+  };
+  useFrame((_, dt) => {
+    const d = Math.min(dt, 1 / 30);
+    if (!st.on) {
+      // damped spring toward the rest position: a soft overshoot, then it settles and floats again
+      _loc.copy(st.rest).sub(g.current.position).multiplyScalar(90 * d);
+      st.vel.add(_loc).multiplyScalar(Math.pow(0.001, d));
+      g.current.position.addScaledVector(st.vel, d);
+    }
+    st.spinV *= Math.pow(0.05, d); st.spin += st.spinV * d; st.spin *= Math.pow(st.on ? 0.6 : 0.08, d);
+    g.current.rotation.z = (rotation?.[2] ?? 0) + st.spin * 0.6;
+  });
+  return (
+    <group ref={g} position={position} rotation={rotation} scale={scale}
+      onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+      onPointerOver={(e) => { if (e.pointerType !== 'touch' && !world.reduced && !overUI(e)) document.documentElement.dataset.grab = '1'; }}
+      onPointerOut={() => { delete document.documentElement.dataset.grab; }}>
+      {children}
+    </group>
+  );
+}
+
 /* Hover/click + float wrapper used by every platform */
 function PlatformShell({ id, index, children }: { id: PlatformId; index: number; children: React.ReactNode }) {
   const g = useRef<THREE.Group>(null!);
@@ -68,7 +134,7 @@ function PlatformShell({ id, index, children }: { id: PlatformId; index: number;
   const tmp = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ clock }, dt) => {
     const t = clock.elapsedTime + index * 1.7;
-    const hovered = world.hover === id;
+    const hovered = world.hover === id && !world.dragging;
     const focus = 1 - Math.min(1, Math.abs(world.progress - (index + 1)));
     const s = 1 + (hovered ? 0.045 : 0) + focus * 0.02;
     const k = 1 - Math.pow(0.002, dt);
@@ -82,9 +148,9 @@ function PlatformShell({ id, index, children }: { id: PlatformId; index: number;
   });
   return (
     <group ref={g}
-      onPointerOver={(e) => { e.stopPropagation(); world.hover = id; document.documentElement.dataset.hover = id; }}
+      onPointerOver={(e) => { e.stopPropagation(); if (overUI(e)) return; world.hover = id; document.documentElement.dataset.hover = id; }}
       onPointerOut={() => { if (world.hover === id) { world.hover = null; delete document.documentElement.dataset.hover; } }}
-      onClick={(e) => { e.stopPropagation(); world.onPick?.(id); }}>
+      onClick={(e) => { e.stopPropagation(); if (overUI(e) || performance.now() - world.dragEnd < 350) return; world.onPick?.(id); }}>
       {children}
     </group>
   );
@@ -118,23 +184,29 @@ function Platformika() {
   return (
     <PlatformShell id="pk" index={0}>
       <Glow color={C.pk} size={7.5} />
-      <Slab color={C.pkDeep} />
-      <RoundedBox args={[2.1, 0.22, 2.1]} radius={0.28} smoothness={5} position={[0, 0.28, 0]}>
-        <meshPhysicalMaterial color={C.pk} roughness={0.2} metalness={0.15} clearcoat={1} />
-      </RoundedBox>
-      <mesh geometry={geo} position={[-0.08, 0.95, 0]} rotation={[-0.35, 0, 0]} scale={0.62} castShadow>
-        <meshPhysicalMaterial color="#FFFFFF" roughness={0.15} clearcoat={1} />
-      </mesh>
-      <mesh position={[0.62, 0.62, 0.45]} castShadow>
-        <sphereGeometry args={[0.2, 32, 32]} />
-        <meshStandardMaterial color={C.gold} emissive={C.gold} emissiveIntensity={0.6} metalness={0.6} roughness={0.25} />
-      </mesh>
+      <Drag><Slab color={C.pkDeep} /></Drag>
+      <Drag position={[0, 0.28, 0]}>
+        <RoundedBox args={[2.1, 0.22, 2.1]} radius={0.28} smoothness={5}>
+          <meshPhysicalMaterial color={C.pk} roughness={0.2} metalness={0.15} clearcoat={1} />
+        </RoundedBox>
+      </Drag>
+      <Drag position={[-0.08, 0.95, 0]}>
+        <mesh geometry={geo} rotation={[-0.35, 0, 0]} scale={0.62} castShadow>
+          <meshPhysicalMaterial color="#FFFFFF" roughness={0.15} clearcoat={1} />
+        </mesh>
+      </Drag>
+      <Drag position={[0.62, 0.62, 0.45]}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.2, 32, 32]} />
+          <meshStandardMaterial color={C.gold} emissive={C.gold} emissiveIntensity={0.6} metalness={0.6} roughness={0.25} />
+        </mesh>
+      </Drag>
       <group ref={orbit}>
         {people.map((p, i) => (
-          <group key={i} position={[Math.cos(p.a) * p.r, p.y, Math.sin(p.a) * p.r]}>
+          <Drag key={i} position={[Math.cos(p.a) * p.r, p.y, Math.sin(p.a) * p.r]}>
             <mesh><sphereGeometry args={[0.14, 24, 24]} /><meshStandardMaterial color={p.c} emissive={p.c} emissiveIntensity={0.35} roughness={0.35} /></mesh>
             <mesh position={[0, -0.2, 0]}><capsuleGeometry args={[0.1, 0.12, 6, 12]} /><meshStandardMaterial color={p.c} roughness={0.5} /></mesh>
-          </group>
+          </Drag>
         ))}
       </group>
     </PlatformShell>
@@ -153,13 +225,13 @@ function Piece({ kind, at, side }: { kind: 'P' | 'K' | 'Q'; at: [number, number]
     ? <meshPhysicalMaterial color={C.brass} metalness={0.85} roughness={0.22} clearcoat={0.6} />
     : <meshPhysicalMaterial color={C.ebony} metalness={0.3} roughness={0.25} clearcoat={1} />;
   return (
-    <group position={[x, 0.21, z]} scale={0.42}>
+    <Drag position={[x, 0.21, z]} scale={0.42}>
       <mesh geometry={geo} castShadow>{mat}</mesh>
       {kind === 'K' ? (<group position={[0, 1.36, 0]}>
         <mesh castShadow><boxGeometry args={[0.07, 0.3, 0.07]} />{mat}</mesh>
         <mesh position={[0, 0.04, 0]} castShadow><boxGeometry args={[0.22, 0.07, 0.07]} />{mat}</mesh>
       </group>) : null}
-    </group>
+    </Drag>
   );
 }
 function Complichess() {
@@ -182,15 +254,17 @@ function Complichess() {
   return (
     <PlatformShell id="cx" index={1}>
       <Glow color={C.brass} size={7} opacity={0.42} />
-      <Slab color="#14261F" />
-      <instancedMesh ref={tiles} args={[undefined, undefined, 64]} receiveShadow>
-        <boxGeometry args={[0.37, 0.04, 0.37]} />
-        <meshStandardMaterial roughness={0.75} />
-      </instancedMesh>
+      <Drag>
+        <Slab color="#14261F" />
+        <instancedMesh ref={tiles} args={[undefined, undefined, 64]} receiveShadow>
+          <boxGeometry args={[0.37, 0.04, 0.37]} />
+          <meshStandardMaterial roughness={0.75} />
+        </instancedMesh>
+      </Drag>
       <Piece kind="K" at={[4, 0]} side="w" /><Piece kind="Q" at={[3, 0]} side="w" />
       <Piece kind="P" at={[2, 2]} side="w" /><Piece kind="P" at={[5, 3]} side="w" /><Piece kind="P" at={[4, 1]} side="w" />
       <Piece kind="K" at={[4, 7]} side="b" /><Piece kind="P" at={[3, 5]} side="b" /><Piece kind="P" at={[6, 6]} side="b" /><Piece kind="Q" at={[2, 7]} side="b" />
-      <mesh ref={ropeRef} geometry={rope} castShadow><meshStandardMaterial color="#C99A5B" roughness={0.6} /></mesh>
+      <Drag><mesh ref={ropeRef} geometry={rope} castShadow><meshStandardMaterial color="#C99A5B" roughness={0.6} /></mesh></Drag>
     </PlatformShell>
   );
 }
@@ -209,21 +283,82 @@ function Crypto() {
   return (
     <PlatformShell id="cr" index={2}>
       <Glow color={C.mint} size={6.5} opacity={0.35} />
-      <RoundedBox args={[3.5, 0.34, 3.5]} radius={0.14} smoothness={3}>
-        <meshPhysicalMaterial color={C.crSlab} transparent opacity={0.45} roughness={0.1} transmission={0} />
-        <Edges color={C.mint} threshold={15} />
-      </RoundedBox>
-      <group ref={coin} position={[0, 1.15, 0]} rotation={[0.25, 0, 0.2]}>
+      <Drag>
+        <RoundedBox args={[3.5, 0.34, 3.5]} radius={0.14} smoothness={3}>
+          <meshPhysicalMaterial color={C.crSlab} transparent opacity={0.45} roughness={0.1} transmission={0} />
+          <Edges color={C.mint} threshold={15} />
+        </RoundedBox>
+      </Drag>
+      <Drag position={[0, 1.15, 0]}>
+      <group ref={coin} rotation={[0.25, 0, 0.2]}>
         <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
           <cylinderGeometry args={[0.78, 0.78, 0.13, 64]} />
           <meshPhysicalMaterial color={C.gold} metalness={0.75} roughness={0.22} clearcoat={1} emissive={C.gold} emissiveIntensity={0.18} />
         </mesh>
         <mesh><torusGeometry args={[0.6, 0.035, 12, 64]} /><meshStandardMaterial color={C.mint} emissive={C.mint} emissiveIntensity={1.4} toneMapped={false} /></mesh>
       </group>
+      </Drag>
       <mesh ref={ring} position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.95, 1, 64]} />
         <meshBasicMaterial color={C.mint} transparent opacity={0.6} toneMapped={false} side={THREE.DoubleSide} />
       </mesh>
+    </PlatformShell>
+  );
+}
+
+/* ---------- 4. Cramika: an open book, a graduation cap, a video screen and orbiting flashcards (coming soon) ---------- */
+function Cramika() {
+  const cards = useRef<THREE.Group>(null!);
+  const play = useRef<THREE.Mesh>(null!);
+  const tri = useMemo(() => {
+    const s = new THREE.Shape(); s.moveTo(-0.13, -0.16); s.lineTo(0.19, 0); s.lineTo(-0.13, 0.16); s.lineTo(-0.13, -0.16);
+    return new THREE.ShapeGeometry(s);
+  }, []);
+  const flash = useMemo(() => Array.from({ length: 6 }, (_, i) => ({ a: (i / 6) * Math.PI * 2, y: 0.75 + (i % 2) * 0.4, c: ['#FFFFFF', '#FFD9CC', '#FFE9A8'][i % 3] })), []);
+  useFrame(({ clock }, dt) => {
+    if (world.reduced) return;
+    cards.current.rotation.y -= dt * 0.3;
+    (play.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.9 + Math.sin(clock.elapsedTime * 3) * 0.4;
+  });
+  const page = <meshPhysicalMaterial color="#FFF6E8" roughness={0.55} clearcoat={0.2} />;
+  return (
+    <PlatformShell id="lr" index={3}>
+      <Glow color={C.coral} size={7} opacity={0.4} />
+      <Drag>
+        <RoundedBox args={[3.5, 0.34, 3.5]} radius={0.14} smoothness={4} castShadow receiveShadow>
+          <meshPhysicalMaterial color={C.lrSlab} roughness={0.35} metalness={0.35} clearcoat={1} clearcoatRoughness={0.25} />
+          <Edges color={C.coral} threshold={15} />
+        </RoundedBox>
+      </Drag>
+      {/* open book */}
+      <Drag position={[-0.55, 0.3, 0.45]} rotation={[0, 0.5, 0]}>
+        <group rotation={[0, 0, 0.16]} position={[-0.36, 0.05, 0]}><RoundedBox args={[0.72, 0.07, 0.95]} radius={0.03} castShadow>{page}</RoundedBox></group>
+        <group rotation={[0, 0, -0.16]} position={[0.36, 0.05, 0]}><RoundedBox args={[0.72, 0.07, 0.95]} radius={0.03} castShadow>{page}</RoundedBox></group>
+        <mesh position={[0, -0.01, 0]}><boxGeometry args={[1.56, 0.04, 1.02]} /><meshStandardMaterial color={C.coral} roughness={0.5} /></mesh>
+      </Drag>
+      {/* graduation cap */}
+      <Drag position={[0.75, 0.62, -0.55]} rotation={[0.12, -0.4, 0]}>
+        <mesh position={[0, -0.12, 0]} castShadow><cylinderGeometry args={[0.28, 0.32, 0.26, 32]} /><meshStandardMaterial color="#1B1424" roughness={0.45} /></mesh>
+        <mesh rotation={[0, Math.PI / 4, 0]} castShadow><boxGeometry args={[0.9, 0.05, 0.9]} /><meshPhysicalMaterial color="#1B1424" roughness={0.35} clearcoat={1} /></mesh>
+        <mesh position={[0.32, -0.12, 0.32]}><cylinderGeometry args={[0.02, 0.02, 0.26, 8]} /><meshStandardMaterial color={C.gold} emissive={C.gold} emissiveIntensity={0.5} /></mesh>
+        <mesh position={[0.32, -0.28, 0.32]}><sphereGeometry args={[0.05, 16, 16]} /><meshStandardMaterial color={C.gold} emissive={C.gold} emissiveIntensity={0.6} /></mesh>
+      </Drag>
+      {/* the video screen */}
+      <Drag position={[0.55, 0.85, 0.75]} rotation={[-0.12, -0.25, 0]}>
+        <RoundedBox args={[1.05, 0.68, 0.07]} radius={0.05} castShadow><meshPhysicalMaterial color="#120B16" roughness={0.2} clearcoat={1} /></RoundedBox>
+        <mesh position={[0, 0, 0.045]}><planeGeometry args={[0.92, 0.55]} /><meshStandardMaterial color="#2A1420" emissive={C.coral} emissiveIntensity={0.18} /></mesh>
+        <mesh ref={play} geometry={tri} position={[0.02, 0, 0.05]}><meshStandardMaterial color="#FFFFFF" emissive={C.coral} emissiveIntensity={1} toneMapped={false} /></mesh>
+      </Drag>
+      {/* flashcards */}
+      <group ref={cards}>
+        {flash.map((f, i) => (
+          <Drag key={i} position={[Math.cos(f.a) * 2.05, f.y, Math.sin(f.a) * 2.05]} rotation={[0.2, -f.a, 0.15]}>
+            <RoundedBox args={[0.42, 0.28, 0.02]} radius={0.02}><meshStandardMaterial color={f.c} roughness={0.5} /></RoundedBox>
+            <mesh position={[0, 0.04, 0.012]}><planeGeometry args={[0.28, 0.03]} /><meshBasicMaterial color={C.coral} /></mesh>
+            <mesh position={[-0.03, -0.04, 0.012]}><planeGeometry args={[0.22, 0.025]} /><meshBasicMaterial color="#C9B8B0" /></mesh>
+          </Drag>
+        ))}
+      </group>
     </PlatformShell>
   );
 }
@@ -253,7 +388,9 @@ export default function Scene() {
       camera={{ fov: 35, near: 0.1, far: 80, position: [0, -2.2, 16.5] }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.05; }}
-      onPointerMissed={() => { world.hover = null; delete document.documentElement.dataset.hover; }}
+      eventSource={typeof document !== 'undefined' ? document.body : undefined}
+      eventPrefix="client"
+      onPointerMissed={() => { world.hover = null; delete document.documentElement.dataset.hover; delete document.documentElement.dataset.grab; }}
       aria-hidden
     >
       <fog attach="fog" args={[C.night, 14, 40]} />
@@ -261,6 +398,7 @@ export default function Scene() {
       <directionalLight position={[5, 8, 6]} intensity={1.6} castShadow shadow-mapSize={[1024, 1024]} />
       <pointLight position={[-6, -2, 4]} intensity={30} color={C.pk} />
       <pointLight position={[6, -6, 2]} intensity={24} color={C.brass} />
+      <pointLight position={[7, -11, 0]} intensity={22} color={C.coral} />
       <Environment resolution={128} frames={1}>
         <Lightformer form="rect" intensity={2.4} position={[0, 5, -6]} scale={[12, 4, 1]} color="#ffffff" />
         <Lightformer form="rect" intensity={1.6} position={[-6, 1, 2]} rotation-y={Math.PI / 2} scale={[8, 3, 1]} color="#8E85FF" />
@@ -271,6 +409,7 @@ export default function Scene() {
       <Platformika />
       <Complichess />
       <Crypto />
+      <Cramika />
       <Dust count={world.mobile ? 500 : 1100} />
     </Canvas>
   );
