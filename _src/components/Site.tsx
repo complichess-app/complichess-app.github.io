@@ -16,8 +16,11 @@ const APPS: Record<'pk' | 'cx', Omit<AppInfo, 'name'>> = {
   pk: { id: 'pk', path: '/platformika/', color: '#6A63FF', ink: '#FFFFFF' },
   cx: { id: 'cx', path: '/complichess/', color: '#D8AE57', ink: '#1A1208' },
 };
-const ACCENT: Record<PlatformId, string> = { pk: '#6A63FF', cx: '#D8AE57', cr: '#49E8C8', lr: '#FF7A59' };
-const IDS: PlatformId[] = ['pk', 'cx', 'cr', 'lr'];
+const ACCENT: Record<PlatformId, string> = { tr: '#38BDF8', pk: '#6A63FF', cx: '#D8AE57', cr: '#49E8C8', lr: '#FF7A59' };
+const IDS: PlatformId[] = ['tr', 'pk', 'cx', 'cr', 'lr'];
+const TRAVEL = { site: 'https://travel.barusik.com/', wa: 'https://wa.me/972556630709' };
+/* titles shrink to fit their box: the longest word decides (in container-width units) */
+const fitTitle = (name: string, k = 0.64) => { const n = Math.max(...name.split(/\s+/).map((w) => [...w].length)); return `${(100 / (n * k)).toFixed(2)}cqw`; };
 
 export function Mark({ size = 28 }: { size?: number }) {
   return (
@@ -71,14 +74,14 @@ function Chapter({ id, index, d, data, live, onInstall }: { id: PlatformId; inde
   return (
     <section id={`ch-${id}`} data-chapter={index} className="chapter relative h-[175svh]">
       <div className="sticky top-0 flex h-[100svh] items-end px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:items-center md:px-[6vw] md:pb-0">
-        <div className="panel glass w-full max-w-[31rem] rounded-[28px] p-6 md:p-9" style={{ ['--acc' as string]: accent }}>
+        <div className="panel glass w-full max-w-[31rem] rounded-[28px] p-6 md:p-9" style={{ ['--acc' as string]: accent, containerType: 'inline-size' }}>
           <div className="reveal flex items-center gap-3 text-sm">
             <span className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 font-bold" style={{ background: `${accent}22`, color: accent }}>
               <span className={`h-2 w-2 rounded-full ${live ? 'animate-pulse' : ''}`} style={{ background: accent }} />{live ? d.live : d.soon}
             </span>
             <span dir="ltr" className="font-display text-xs font-medium tracking-wide text-mist">{data.tag}</span>
           </div>
-          <h2 className="mt-4 font-black leading-[.95] tracking-tight" style={{ fontSize: 'clamp(44px, 7.4vw, 104px)' }}><Words text={data.name} /></h2>
+          <h2 className="mt-4 font-black leading-[.95] tracking-tight" style={{ fontSize: `clamp(30px, min(7.4vw, ${fitTitle(data.name)}), 104px)` }}><Words text={data.name} /></h2>
           <p className="reveal mt-5 max-w-[34ch] text-[17px] leading-relaxed text-paper/85 md:text-lg">{data.desc}</p>
           <ul className="reveal mt-5 hidden space-y-2 text-[15px] text-paper/80 md:block">
             {data.points.map((p, i) => (
@@ -86,7 +89,17 @@ function Chapter({ id, index, d, data, live, onInstall }: { id: PlatformId; inde
             ))}
           </ul>
           <div className="reveal mt-7 flex flex-wrap items-center gap-3">
-            {live && onInstall ? (<>
+            {id === 'tr' ? (<>
+              <MagneticLink href={TRAVEL.site} className="relative flex h-14 items-center gap-2 rounded-full px-7 text-base font-extrabold shadow-[0_10px_40px_-10px_var(--acc)]" >
+                <span className="pointer-events-none absolute inset-0 rounded-full" style={{ background: accent }} />
+                <span className="relative flex items-center gap-2 text-night">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden><path d="M2 16l20-8-6 12-3-5-5-2z" /></svg>{d.trVisit}
+                </span>
+              </MagneticLink>
+              <a href={TRAVEL.wa} target="_blank" rel="noopener" className="flex h-14 items-center gap-2 rounded-full border border-white/15 px-5 text-base font-bold text-paper/90 hover:bg-white/5 hover:text-paper">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.1-4.7-4-4.9-4.2-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.1.1.6-.1 1.1z" /></svg>{d.trWa}
+              </a>
+            </>) : live && onInstall ? (<>
               <MagneticButton onClick={onInstall} className="relative flex h-14 items-center gap-2 rounded-full px-7 text-base font-extrabold shadow-[0_10px_40px_-10px_var(--acc)]">
                 <span className="pointer-events-none absolute inset-0 rounded-full" style={{ background: accent }} />
                 <span className="relative flex items-center gap-2" style={{ color: id === 'cx' ? '#1A1208' : '#fff' }}>
@@ -121,17 +134,20 @@ function AppCard({ id, d, data, live, onInstall }: { id: PlatformId; d: Dict; da
   };
   return (
     <div ref={ref} onPointerMove={tilt} onPointerLeave={() => { if (ref.current) ref.current.style.transform = ''; }}
-      className="card group relative flex flex-col overflow-hidden rounded-[28px] border border-white/10 bg-deep/80 p-7 transition-transform duration-500 ease-out-expo will-change-transform"
-      style={{ ['--mx' as string]: '50%', ['--my' as string]: '0%' }}>
+      className="card group relative flex flex-col overflow-hidden rounded-[28px] border border-white/10 bg-deep/80 p-7"
+      style={{ ['--mx' as string]: '50%', ['--my' as string]: '0%', containerType: 'inline-size' }}>
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: `radial-gradient(420px circle at var(--mx) var(--my), ${accent}2e, transparent 60%)` }} />
       <div className="relative flex items-center justify-between">
-        <span dir="ltr" className="font-display text-xs font-medium tracking-wide text-mist">{data.tag.length > 24 ? data.name : data.tag}</span>
+        <span dir="ltr" className="truncate font-display text-xs font-medium tracking-wide text-mist">{data.tag.length > 24 ? data.name : data.tag}</span>
         <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ background: `${accent}22`, color: accent }}>{live ? d.live : d.soon}</span>
       </div>
-      <h3 className="relative mt-10 text-4xl font-black tracking-tight">{data.name}</h3>
+      <h3 className="relative mt-10 font-black leading-[1.05] tracking-tight" style={{ fontSize: `min(36px, ${fitTitle(data.name, 0.66)})` }}>{data.name}</h3>
       <p className="relative mt-3 flex-1 text-[15px] leading-relaxed text-paper/75">{data.desc}</p>
       <div className="relative mt-8 flex flex-wrap gap-2">
-        {live && onInstall ? (<>
+        {id === 'tr' ? (<>
+          <a href={TRAVEL.site} data-cursor="grow" className="flex h-12 items-center rounded-full px-6 text-[15px] font-extrabold text-night transition-transform active:scale-95" style={{ background: accent }}>{d.trVisit}</a>
+          <a href={TRAVEL.wa} target="_blank" rel="noopener" className="flex h-12 items-center rounded-full border border-white/15 px-5 text-[15px] font-bold hover:bg-white/5">{d.trWa}</a>
+        </>) : live && onInstall ? (<>
           <button type="button" onClick={onInstall} data-cursor="grow" className="h-12 rounded-full px-6 text-[15px] font-extrabold transition-transform active:scale-95" style={{ background: accent, color: id === 'cx' ? '#1A1208' : '#fff' }}>{d.install}</button>
           <a href={APPS[id as 'pk' | 'cx'].path} className="flex h-12 items-center rounded-full border border-white/15 px-5 text-[15px] font-bold hover:bg-white/5">{d.open}</a>
         </>) : (<span className="flex h-12 items-center rounded-full border px-6 text-[15px] font-bold" style={{ borderColor: `${accent}55`, color: accent }}>{d.soon}</span>)}
@@ -151,7 +167,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
   const curtain = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
 
-  const cursorLabels = useMemo(() => ({ pk: d.pk.name, cx: d.cx.name, cr: d.soon, lr: `${d.lr.name} · ${d.soon}` }), [d]);
+  const cursorLabels = useMemo(() => ({ tr: d.tr.name, pk: d.pk.name, cx: d.cx.name, cr: d.soon, lr: `${d.lr.name} · ${d.soon}`, drag: d.drag }), [d]);
 
   const scrollToY = useCallback((y: number) => {
     if (lenisRef.current) lenisRef.current.scrollTo(y, { duration: 1.6, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
@@ -195,7 +211,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
       gsap.ticker.add(raf); gsap.ticker.lagSmoothing(0);
     }
 
-    // scroll → story progress (0 overview … 4 Cramika … 5 gone)
+    // scroll → story progress (0 overview, 1 travel … 5 LearnLume, 6 gone)
     let anchors: number[] = [];
     const measure = () => {
       const ch = [...document.querySelectorAll<HTMLElement>('[data-chapter]')];
@@ -214,6 +230,14 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
     };
     gsap.ticker.add(tick);
 
+    // a mouse press on empty space (aiming for a 3D part and missing) must not start selecting text across the page
+    const noSelect = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      const t = e.target as Element | null;
+      if (!t || t.closest('input,textarea,select,[contenteditable],p,h1,h2,h3,h4,li,label,code,a,button,.panel,.card,footer')) return;
+      e.preventDefault();
+    };
+    addEventListener('mousedown', noSelect);
     const pm = (e: PointerEvent) => { world.pointer.x = (e.clientX / innerWidth) * 2 - 1; world.pointer.y = -((e.clientY / innerHeight) * 2 - 1); };
     addEventListener('pointermove', pm);
 
@@ -233,14 +257,14 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
           .from(ch.querySelectorAll('.reveal'), { opacity: 0, y: 26, duration: 0.9, stagger: 0.08, ease: 'expo.out' }, 0.1);
         gsap.fromTo(ch.querySelector('.panel'), { opacity: 1 }, { opacity: 0, y: -40, ease: 'none', scrollTrigger: { trigger: ch, start: 'bottom 85%', end: 'bottom 35%', scrub: true } });
       });
-      gsap.from('#install .card', { y: 80, opacity: 0, rotateX: -12, transformOrigin: '50% 100%', duration: 1.2, stagger: 0.12, ease: 'expo.out', scrollTrigger: { trigger: '#install', start: 'top 70%' } });
+      gsap.fromTo('#install .card', { y: 80, opacity: 0, rotateX: -12, transformOrigin: '50% 100%' }, { y: 0, opacity: 1, rotateX: 0, duration: 1.1, stagger: 0.1, ease: 'expo.out', clearProps: 'transform,opacity', scrollTrigger: { trigger: '#install .grid', start: 'top 85%', end: 'bottom 10%', toggleActions: 'play reverse play reverse' } });
       gsap.from('#install .install-title .word > span', { yPercent: 110, duration: 1.1, stagger: 0.05, ease: 'expo.out', scrollTrigger: { trigger: '#install', start: 'top 75%' } });
       gsap.from('.contact-mail', { clipPath: 'inset(0 0 100% 0)', y: 40, duration: 1.3, ease: 'expo.out', scrollTrigger: { trigger: '#contact', start: 'top 80%' } });
     });
 
     return () => {
       ctx.revert(); gsap.ticker.remove(tick); gsap.ticker.remove(raf); lenis?.destroy(); lenisRef.current = null;
-      removeEventListener('resize', setMobile); removeEventListener('resize', measure); removeEventListener('pointermove', pm);
+      removeEventListener('resize', setMobile); removeEventListener('resize', measure); removeEventListener('pointermove', pm); removeEventListener('mousedown', noSelect);
       world.onPick = null;
     };
   }, [lang, rtl, toChapter]);
@@ -248,7 +272,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
   useEffect(() => { if (sheet) lenisRef.current?.stop(); else lenisRef.current?.start(); }, [sheet]);
 
   const appInfo: AppInfo | null = sheet ? { ...APPS[sheet], name: sheet === 'pk' ? d.pk.name : d.cx.name } : null;
-  const navItems = [d.pk.name, d.cx.name, d.cr.name, d.lr.name];
+  const navItems = [d.tr.name, d.pk.name, d.cx.name, d.cr.name, d.lr.name];
 
   return (
     <>
@@ -321,17 +345,19 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
         </section>
 
         <div id="platforms">
-          <Chapter id="pk" index={0} d={d} data={d.pk} live onInstall={() => setSheet('pk')} />
-          <Chapter id="cx" index={1} d={d} data={d.cx} live onInstall={() => setSheet('cx')} />
-          <Chapter id="cr" index={2} d={d} data={d.cr} live={false} />
-          <Chapter id="lr" index={3} d={d} data={d.lr} live={false} />
+          <Chapter id="tr" index={0} d={d} data={d.tr} live />
+          <Chapter id="pk" index={1} d={d} data={d.pk} live onInstall={() => setSheet('pk')} />
+          <Chapter id="cx" index={2} d={d} data={d.cx} live onInstall={() => setSheet('cx')} />
+          <Chapter id="cr" index={3} d={d} data={d.cr} live={false} />
+          <Chapter id="lr" index={4} d={d} data={d.lr} live={false} />
         </div>
 
         <section id="install" className="relative px-5 pb-24 pt-32 md:px-[4vw]" style={{ background: 'linear-gradient(to bottom, transparent, #090B1F 22%)' }}>
           <div className="mx-auto max-w-6xl">
             <h2 className="install-title max-w-[16ch] font-black leading-[.98] tracking-tight" style={{ fontSize: 'clamp(38px, 5.4vw, 76px)' }}><Words text={d.installTitle} /></h2>
             <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-paper/75">{d.installSub}</p>
-            <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4" style={{ perspective: '1200px' }}>
+            <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-3" style={{ perspective: '1200px' }}>
+              <AppCard id="tr" d={d} data={d.tr} live />
               <AppCard id="pk" d={d} data={d.pk} live onInstall={() => setSheet('pk')} />
               <AppCard id="cx" d={d} data={d.cx} live onInstall={() => setSheet('cx')} />
               <AppCard id="cr" d={d} data={d.cr} live={false} />
@@ -345,8 +371,8 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
           <div className="mx-auto max-w-6xl">
             <h2 className="text-3xl font-black md:text-5xl">{d.contactTitle}</h2>
             <p className="mt-3 max-w-[48ch] text-lg text-paper/70">{d.contactSub}</p>
-            <MagneticLink href={`mailto:${CONTACT}`} className="contact-mail mt-10 inline-block break-all font-display font-bold tracking-tight text-paper decoration-gold decoration-[3px] underline-offset-8 hover:underline" >
-              <span dir="ltr" style={{ fontSize: 'clamp(22px, 4.4vw, 64px)' }}>{CONTACT}</span>
+            <MagneticLink href={`mailto:${CONTACT}`} className="contact-mail mt-10 inline-block max-w-full whitespace-nowrap font-display font-bold tracking-tight text-paper decoration-gold decoration-[3px] underline-offset-8 hover:underline" >
+              <span dir="ltr" style={{ fontSize: 'clamp(15px, calc((min(100vw, 1240px) - 56px) / 15.5), 60px)' }}>{CONTACT}</span>
             </MagneticLink>
             <div className="mt-20 flex flex-col gap-6 border-t border-white/10 pt-8 text-sm text-mist md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3"><Mark size={22} /><span>© {new Date().getFullYear()} Barusik · {d.rights}</span></div>
