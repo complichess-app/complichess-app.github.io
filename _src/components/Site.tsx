@@ -9,6 +9,8 @@ import { world, type PlatformId } from '../lib/store';
 import { Cursor, LangSwitch, MagneticButton, MagneticLink, Words } from './ui';
 import InstallSheet, { type AppInfo } from './InstallSheet';
 import Account from './Account';
+import A11yMenu from './A11yMenu';
+import { prefersStill, A11Y_T } from '../lib/a11y';
 
 const Scene = dynamic(() => import('./Scene'), { ssr: false });
 
@@ -42,7 +44,7 @@ function Wordmark() {
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const letters = [...el.querySelectorAll<HTMLSpanElement>('[data-l]')];
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { letters.forEach((l) => (l.style.fontVariationSettings = "'wght' 900")); return; }
+    if (prefersStill()) { letters.forEach((l) => (l.style.fontVariationSettings = "'wght' 900")); return; }
     let px = -1, raf = 0, last = 0;
     const fine = matchMedia('(pointer: fine)').matches;
     const move = (e: PointerEvent) => { px = e.clientX; last = performance.now(); };
@@ -195,7 +197,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
   useEffect(() => {
     try { localStorage.setItem('barusik.lang', lang); } catch {}
     world.rtl = rtl;
-    world.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    world.reduced = prefersStill();
     const setMobile = () => { world.mobile = innerWidth < 768; };
     setMobile(); addEventListener('resize', setMobile);
     setGl(hasWebGL());
@@ -337,7 +339,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
           </div>
           <div className="relative">
             <Wordmark />
-            <button type="button" onClick={() => toChapter(0)} className="hero-fade absolute bottom-[12%] end-5 hidden items-center gap-3 text-sm font-medium text-paper/70 md:flex md:end-[4vw]">
+            <button type="button" onClick={() => toChapter(0)} className="hero-fade absolute bottom-[12%] end-5 hidden items-center gap-3 text-sm font-medium text-paper/70 md:flex md:end-[calc(4vw+5rem)]">
               {d.scroll}
               <span className="relative h-10 w-6 rounded-full border border-paper/40"><span className="absolute start-1/2 top-2 h-2 w-1 -translate-x-1/2 animate-bounce rounded-full bg-paper rtl:translate-x-1/2" /></span>
             </button>
@@ -375,7 +377,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
               <span dir="ltr" style={{ fontSize: 'clamp(15px, calc((min(100vw, 1240px) - 56px) / 15.5), 60px)' }}>{CONTACT}</span>
             </MagneticLink>
             <div className="mt-20 flex flex-col gap-6 border-t border-white/10 pt-8 text-sm text-mist md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3"><Mark size={22} /><span>© {new Date().getFullYear()} Barusik · {d.rights}</span></div>
+              <div className="flex flex-wrap items-center gap-3"><Mark size={22} /><span>© {new Date().getFullYear()} Barusik · {d.rights}</span><a href={`/${lang}/accessibility/`} className="underline underline-offset-4 hover:text-paper">{A11Y_T[lang].statement}</a></div>
               <nav aria-label={d.nav.lang} className="flex flex-wrap gap-x-4 gap-y-2">
                 {LANGS.map((l) => (<a key={l} href={`/${l}/`} lang={l} onClick={(e) => { e.preventDefault(); goLang(l, e); }} className={l === lang ? 'text-paper' : 'hover:text-paper'}>{LANG_NAMES[l]}</a>))}
               </nav>
@@ -386,6 +388,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
 
       <InstallSheet app={appInfo} d={d} onClose={() => setSheet(null)} />
       <Cursor labels={cursorLabels} />
+      <A11yMenu lang={lang} />
       <div ref={curtain} aria-hidden className="fixed inset-0 z-[95] hidden" style={{ background: 'linear-gradient(135deg, #6A63FF, #2A238F)' }} />
       <div aria-hidden className="page-in pointer-events-none fixed inset-0 z-[94]" style={{ background: 'linear-gradient(135deg, #6A63FF, #2A238F)' }} />
     </>
