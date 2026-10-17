@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bar Lvovski Travel · טיסות, מלונות וחופשות</title>
+<meta name="description" content="Bar Lvovski Travel — חיפוש טיסות, מלונות, רכבים, חבילות נופש, טיולים מאורגנים וכרטיסים. מזמינים באתר ובר מאשר אישית.">
+<meta property="og:title" content="Bar Lvovski Travel"><meta property="og:image" content="https://barusik.com/og.png">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap">
+<style>
+:root{--bg:#F4F8FC;--ink:#0B1B33;--mute:#5B6B82;--line:#DCE5F0;--card:#fff;--pri:#0A66E8;--pri2:#0752BD;--sky:#38BDF8;--ok:#0E9F6E;--bad:#D93A3A;--wa:#1FAF54}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif}
+a{color:inherit}button,input,select,textarea{font:inherit}
+.skip{position:absolute;inset-inline-start:-999px;top:8px;background:#000;color:#fff;padding:8px 14px;border-radius:8px;z-index:9}.skip:focus{inset-inline-start:8px}
+:focus-visible{outline:3px solid #F59E0B;outline-offset:2px}
+header.top{display:flex;align-items:center;gap:12px;padding:12px max(16px,env(safe-area-inset-left));background:#fff;border-bottom:1px solid var(--line)}
+.logo{font-weight:800;letter-spacing:.06em;color:var(--pri);text-decoration:none;font-size:17px}.sp{flex:1}
+.wa{white-space:nowrap;direction:ltr;display:inline-flex;align-items:center;gap:8px;background:var(--wa);color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:9px 16px;font-size:15px}
+.hero{background:linear-gradient(160deg,#0A66E8 0%,#38BDF8 70%,#7DD3FC 100%);padding:28px 16px 90px;color:#fff}
+.hero h1{margin:0 auto;max-width:1100px;font-size:clamp(26px,4.5vw,40px);font-weight:800}.hero p{margin:6px auto 0;max-width:1100px;opacity:.92}
+main{max-width:1100px;margin:-70px auto 40px;padding:0 16px;display:flex;flex-direction:column;gap:16px}
+.box{background:var(--card);border-radius:20px;box-shadow:0 12px 40px -12px rgba(10,40,90,.25);overflow:hidden}
+.tabs{display:flex;overflow-x:auto;background:#EAF2FC;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:transparent;padding:14px 18px;font-weight:700;color:#35507A;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected=true]{background:#fff;color:var(--pri);border-radius:14px 14px 0 0}
+form.s{padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute);font-weight:500;position:relative}
+input,select,textarea{border:1px solid var(--line);background:#F7FAFE;border-radius:12px;padding:12px;color:var(--ink);font-size:16px;width:100%}
+textarea{min-height:80px;resize:vertical}
+.go{border:0;border-radius:12px;background:var(--pri);color:#fff;font-weight:800;padding:13px 20px;cursor:pointer;font-size:16px}.go:hover{background:var(--pri2)}.go:disabled{opacity:.6;cursor:wait}
+.row2{display:flex;gap:14px;align-items:center;grid-column:1/-1;flex-wrap:wrap;font-size:15px}.row2 label{flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:15px}.row2 input{width:auto}
+.note{grid-column:1/-1;margin:0;color:var(--mute);font-size:14px}
+.sug{position:absolute;top:100%;inset-inline:0;z-index:5;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px -10px rgba(0,0,0,.25);margin-top:4px;max-height:280px;overflow:auto;padding:4px;list-style:none}
+.sug li{padding:10px 12px;border-radius:8px;cursor:pointer;color:var(--ink);font-size:15px}.sug li[aria-selected=true],.sug li:hover{background:#EAF2FC}
+.sug small{color:var(--mute)}
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#FFF4E5;border:1px solid #F5C77E;color:#7A4A00;border-radius:16px;padding:14px 16px;font-weight:500}
+.status{color:var(--mute);text-align:center;padding:20px}
+.spin{width:34px;height:34px;border:4px solid #CFE0F6;border-top-color:var(--pri);border-radius:50%;animation:r 1s linear infinite;margin:0 auto 10px}@keyframes r{to{transform:rotate(360deg)}}
+.res{display:flex;flex-direction:column;gap:12px}
+.item{display:flex;gap:16px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;align-items:stretch}
+.item .pic{width:210px;flex:0 0 auto;border-radius:12px;object-fit:cover;background:#E5EEF8;min-height:140px}
+.item .logos{display:flex;gap:6px;flex-direction:column}.item .logos img{width:40px;height:40px;object-fit:contain}
+.item .body{flex:1;display:flex;flex-wrap:wrap;gap:4px 10px;align-content:flex-start;font-size:15px;line-height:1.5}
+.item .body span{white-space:nowrap}.item .body b{width:100%;font-size:17px}
+.item .buy{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:6px;min-width:160px;border-inline-start:1px solid var(--line);padding-inline-start:14px;text-align:center}
+.price{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}.price small{display:block;font-size:12px;color:var(--mute);font-weight:500}
+@media(max-width:700px){.item{flex-direction:column}.item .pic{width:100%;height:170px}.item .buy{border:0;border-top:1px solid var(--line);padding:12px 0 0}.item .logos{flex-direction:row}}
+dialog{border:0;border-radius:20px;padding:0;max-width:min(520px,94vw);width:100%;box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}dialog::backdrop{background:rgba(5,20,45,.55)}
+dialog form{padding:20px;display:flex;flex-direction:column;gap:10px}dialog h2{margin:0;font-size:20px}
+.sum{background:#F2F7FD;border-radius:12px;padding:10px 12px;font-size:14px;color:#2B4466}
+.x{position:absolute;top:10px;inset-inline-end:10px;border:0;background:#EEF3FA;border-radius:999px;width:36px;height:36px;cursor:pointer;font-size:18px}
+.err{color:var(--bad);font-size:14px;margin:0}.okmsg{text-align:center;padding:24px 20px}
+.more{align-self:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer}
+footer{text-align:center;color:var(--mute);font-size:13px;padding:10px 16px 40px}footer a{color:var(--pri)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header class="top"><a class="logo" href="/travel/">BAR LVOVSKI TRAVEL</a><span class="sp"></span>
+<a class="wa" href="https://wa.me/972556630709" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>055-6630709</a></header>
+<section class="hero"><h1>לאן טסים?</h1><p>מחפשים כאן, מזמינים כאן — ובר מאשר לכם אישית ושולח את כל הפרטים.</p></section>
+<main id="main">
+  <div id="banner"></div>
+  <div class="box">
+    <div class="tabs" role="tablist" aria-label="סוג החיפוש" id="tabs"></div>
+    <div id="panel" role="tabpanel"></div>
+  </div>
+  <section id="out" aria-live="polite"></section>
+</main>
+<footer>Bar Lvovski Travel · כל המחירים בש"ח וכוללים את השירות של בר · ההזמנה סופית רק אחרי אישור אישי · <a href="/he/accessibility/">הצהרת נגישות</a> · <a href="/">Barusik Platforms</a></footer>
+
+<dialog id="dlg"><div style="position:relative"><button class="x" type="button" aria-label="סגירה" id="dlgx">✕</button><div id="dlgc"></div></div></dialog>
+
+<script src="/lib/supabase.js"></script>
+<script>
+(()=>{
+const API='https://travel-api.barusik.com';
+const WA='972556630709';
+const OFFLINE='האתר כרגע לא פעיל, ניתן להזמין בפנייה לווצאפ 0556630709';
+const sb=window.supabase.createClient('https://iktmyrfbejtjsiehcrar.supabase.co','sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a',{auth:{persistSession:false,autoRefreshToken:false,storageKey:'bar-travel-anon'}});
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf=n=>new Intl.NumberFormat('he-IL').format(n);
+const iso=d=>d.toISOString().slice(0,10);
+const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const heD=s=>s?new Date(s+'T12:00:00').toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
+const TODAY=iso(new Date());
+let ONLINE=null;
+
+// Destinations people from Israel fly to most. Code | Hebrew | English
+const AIR=`TLV|תל אביב · נתב"ג|Tel Aviv Ben Gurion
+ETM|אילת · רמון|Eilat Ramon
+LON|לונדון (כל השדות)|London
+LHR|לונדון · הית'רו|London Heathrow
+LTN|לונדון · לוטון|London Luton
+STN|לונדון · סטנסטד|London Stansted
+PAR|פריז (כל השדות)|Paris
+CDG|פריז · שארל דה גול|Paris CDG
+ORY|פריז · אורלי|Paris Orly
+ROM|רומא (כל השדות)|Rome
+FCO|רומא · פיומיצ'ינו|Rome Fiumicino
+MIL|מילאנו (כל השדות)|Milan
+MXP|מילאנו · מלפנסה|Milan Malpensa
+BGY|מילאנו · ברגמו|Milan Bergamo
+VCE|ונציה|Venice
+NAP|נאפולי|Naples
+FLR|פירנצה|Florence
+PSA|פיזה|Pisa
+BLQ|בולוניה|Bologna
+CTA|קטניה · סיציליה|Catania Sicily
+PMO|פלרמו · סיציליה|Palermo
+OLB|אולביה · סרדיניה|Olbia Sardinia
+BRI|בארי|Bari
+ATH|אתונה|Athens
+SKG|סלוניקי|Thessaloniki
+HER|כרתים · הרקליון|Heraklion Crete
+CHQ|כרתים · חאניה|Chania Crete
+RHO|רודוס|Rhodes
+JMK|מיקונוס|Mykonos
+JTR|סנטוריני|Santorini
+KGS|קוס|Kos
+CFU|קורפו|Corfu
+ZTH|זקינתוס|Zakynthos
+LCA|לרנקה · קפריסין|Larnaca Cyprus
+PFO|פאפוס · קפריסין|Paphos Cyprus
+BCN|ברצלונה|Barcelona
+MAD|מדריד|Madrid
+AGP|מלגה|Malaga
+PMI|מיורקה|Palma de Mallorca
+IBZ|איביזה|Ibiza
+VLC|ולנסיה|Valencia
+SVQ|סביליה|Seville
+TFS|טנריף|Tenerife
+LIS|ליסבון|Lisbon
+OPO|פורטו|Porto
+FAO|פארו · אלגרבה|Faro
+AMS|אמסטרדם|Amsterdam
+BRU|בריסל|Brussels
+BER|ברלין|Berlin
+MUC|מינכן|Munich
+FRA|פרנקפורט|Frankfurt
+DUS|דיסלדורף|Dusseldorf
+HAM|המבורג|Hamburg
+VIE|וינה|Vienna
+SZG|זלצבורג|Salzburg
+ZRH|ציריך|Zurich
+GVA|ז'נבה|Geneva
+BSL|באזל|Basel
+PRG|פראג|Prague
+BUD|בודפשט|Budapest
+WAW|ורשה|Warsaw
+KRK|קרקוב|Krakow
+OTP|בוקרשט|Bucharest
+SOF|סופיה|Sofia
+VAR|וארנה|Varna
+BOJ|בורגס|Burgas
+BEG|בלגרד|Belgrade
+ZAG|זאגרב|Zagreb
+SPU|ספליט|Split
+DBV|דוברובניק|Dubrovnik
+TIV|טיבאט · מונטנגרו|Tivat
+TGD|פודגוריצה|Podgorica
+TIA|טירנה|Tirana
+LJU|לובליאנה|Ljubljana
+RMO|קישינב|Chisinau
+TBS|טביליסי|Tbilisi
+BUS|בטומי|Batumi
+EVN|ירוואן|Yerevan
+GYD|באקו|Baku
+IST|איסטנבול|Istanbul
+SAW|איסטנבול · סביחה|Istanbul Sabiha
+AYT|אנטליה|Antalya
+DLM|דלמן|Dalaman
+BJV|בודרום|Bodrum
+MLA|מלטה|Malta
+CPH|קופנהגן|Copenhagen
+ARN|סטוקהולם|Stockholm
+OSL|אוסלו|Oslo
+HEL|הלסינקי|Helsinki
+RVN|רובניימי · לפלנד|Rovaniemi
+KEF|רייקיאוויק · איסלנד|Reykjavik
+DUB|דבלין|Dublin
+EDI|אדינבורו|Edinburgh
+MAN|מנצ'סטר|Manchester
+NCE|ניס|Nice
+MRS|מרסיי|Marseille
+LYS|ליון|Lyon
+GNB|גרנובל|Grenoble
+RAK|מרקש|Marrakech
+CMN|קזבלנקה|Casablanca
+DXB|דובאי|Dubai
+AUH|אבו דאבי|Abu Dhabi
+BAH|בחריין|Bahrain
+AMM|עמאן|Amman
+CAI|קהיר|Cairo
+SSH|שארם א-שייח'|Sharm El Sheikh
+NYC|ניו יורק (כל השדות)|New York
+JFK|ניו יורק · JFK|New York JFK
+EWR|ניוארק|Newark
+MIA|מיאמי|Miami
+LAX|לוס אנג'לס|Los Angeles
+SFO|סן פרנסיסקו|San Francisco
+LAS|לאס וגאס|Las Vegas
+ORD|שיקגו|Chicago
+BOS|בוסטון|Boston
+YYZ|טורונטו|Toronto
+YUL|מונטריאול|Montreal
+MEX|מקסיקו סיטי|Mexico City
+CUN|קנקון|Cancun
+GRU|סאו פאולו|Sao Paulo
+GIG|ריו דה ז'נרו|Rio de Janeiro
+EZE|בואנוס איירס|Buenos Aires
+LIM|לימה|Lima
+BOG|בוגוטה|Bogota
+BKK|בנגקוק|Bangkok
+HKT|פוקט|Phuket
+USM|קוסמוי|Koh Samui
+CNX|צ'יאנג מאי|Chiang Mai
+HAN|האנוי|Hanoi
+SGN|הו צ'י מין|Ho Chi Minh
+DPS|באלי|Bali
+SIN|סינגפור|Singapore
+KUL|קואלה לומפור|Kuala Lumpur
+MNL|מנילה|Manila
+HKG|הונג קונג|Hong Kong
+PEK|בייג'ינג|Beijing
+PVG|שנגחאי|Shanghai
+NRT|טוקיו · נריטה|Tokyo Narita
+HND|טוקיו · הנדה|Tokyo Haneda
+KIX|אוסקה|Osaka
+ICN|סיאול|Seoul
+DEL|דלהי|Delhi
+BOM|מומבאי|Mumbai
+GOI|גואה|Goa
+KTM|קטמנדו|Kathmandu
+CMB|קולומבו · סרי לנקה|Colombo
+MLE|האיים המלדיביים|Maldives
+SEZ|סיישל|Seychelles
+MRU|מאוריציוס|Mauritius
+ZNZ|זנזיבר|Zanzibar
+NBO|ניירובי|Nairobi
+ADD|אדיס אבבה|Addis Ababa
+JNB|יוהנסבורג|Johannesburg
+CPT|קייפטאון|Cape Town
+SYD|סידני|Sydney
+MEL|מלבורן|Melbourne
+AKL|אוקלנד|Auckland`.split('\n').map(l=>{const[c,h,e]=l.split('|');return{c,h,e}});
+const airName=c=>(AIR.find(a=>a.c===c)||{h:c}).h;
+
+const TABS=[
+  {k:'flights',l:'טיסות',live:true},{k:'hotels',l:'מלונות',live:true},{k:'cars',l:'השכרת רכב'},
+  {k:'packages',l:'חבילות נופש'},{k:'tours',l:'טיולים מאורגנים'},{k:'tickets',l:'כרטיסים'}];
+let TAB=(location.hash.slice(1)&&TABS.some(t=>t.k===location.hash.slice(1)))?location.hash.slice(1):'flights';
+const STATE={from:'TLV',to:'',dep:iso(add(new Date(),21)),ret:iso(add(new Date(),26)),round:true,pax:2,cls:1,place:null,in:iso(add(new Date(),21)),out:iso(add(new Date(),26)),guests:2};
+
+function tabs(){
+  $('#tabs').innerHTML=TABS.map(t=>`<button role="tab" id="t-${t.k}" aria-selected="${TAB===t.k}" aria-controls="panel" tabindex="${TAB===t.k?0:-1}" data-k="${t.k}">${t.l}</button>`).join('');
+  $('#tabs').querySelectorAll('button').forEach(b=>{b.onclick=()=>{TAB=b.dataset.k;history.replaceState(null,'','#'+TAB);tabs();panel();$('#out').innerHTML=''};
+    b.onkeydown=e=>{const i=TABS.findIndex(t=>t.k===TAB);let j=null;if(e.key==='ArrowLeft')j=(i+1)%TABS.length;if(e.key==='ArrowRight')j=(i+TABS.length-1)%TABS.length;
+      if(j!==null){e.preventDefault();TAB=TABS[j].k;tabs();panel();$('#t-'+TAB).focus()}}});
+  $('#panel').setAttribute('aria-labelledby','t-'+TAB);
+}
+
+function panel(){
+  const t=TABS.find(x=>x.k===TAB);
+  if(t.live&&ONLINE===false){$('#panel').innerHTML=`<div style="padding:22px">${offlineBox()}</div>`;return}
+  if(TAB==='flights')flightsForm();else if(TAB==='hotels')hotelsForm();else requestForm(t);
+}
+function offlineBox(){return`<div class="banner" role="status"><span style="flex:1">${OFFLINE}</span><a class="wa" href="https://wa.me/${WA}" target="_blank" rel="noopener">לוואטסאפ</a></div>`}
+
+// ---------- airport picker ----------
+function airPicker(input,key){
+  let list=null,sel=-1;
+  const close=()=>{list&&list.remove();list=null;input.setAttribute('aria-expanded','false')};
+  const pick=a=>{STATE[key]=a.c;input.value=`${a.h} (${a.c})`;close()};
+  input.addEventListener('input',()=>{
+    STATE[key]='';const q=input.value.trim().toLowerCase();close();if(!q)return;
+    const m=AIR.filter(a=>a.c.toLowerCase()===q||a.h.toLowerCase().includes(q)||a.e.toLowerCase().includes(q)).slice(0,8);
+    if(!m.length)return;
+    list=document.createElement('ul');list.className='sug';list.id=key+'-list';list.setAttribute('role','listbox');
+    list.innerHTML=m.map((a,i)=>`<li role="option" id="${key}-o${i}" data-c="${a.c}">${esc(a.h)} <small dir="ltr">${a.c} · ${esc(a.e)}</small></li>`).join('');
+    input.parentElement.appendChild(list);input.setAttribute('aria-expanded','true');sel=-1;
+    list.querySelectorAll('li').forEach(li=>li.onmousedown=e=>{e.preventDefault();pick(AIR.find(a=>a.c===li.dataset.c))});
+  });
+  input.addEventListener('keydown',e=>{
+    if(!list)return;const it=[...list.querySelectorAll('li')];
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();sel=(sel+(e.key==='ArrowDown'?1:-1)+it.length)%it.length;it.forEach((li,i)=>li.setAttribute('aria-selected',i===sel));input.setAttribute('aria-activedescendant',it[sel].id)}
+    if(e.key==='Enter'&&it.length){e.preventDefault();pick(AIR.find(a=>a.c===it[Math.max(sel,0)].dataset.c))}
+    if(e.key==='Escape')close();
+  });
+  input.addEventListener('blur',()=>setTimeout(()=>{if(list&&!STATE[key]){const f=list.querySelector('li');if(f)pick(AIR.find(a=>a.c===f.dataset.c))}close()},120));
+}
+
+function flightsForm(){
+  $('#panel').innerHTML=`<form class="s" id="ff" novalidate>
+    <div class="row2" role="radiogroup" aria-label="סוג טיסה"><label><input type="radio" name="rt" value="1" ${STATE.round?'checked':''}> הלוך ושוב</label><label><input type="radio" name="rt" value="0" ${STATE.round?'':'checked'}> כיוון אחד</label></div>
+    <label>מאיפה<input id="from" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" value="${STATE.from?esc(airName(STATE.from))+' ('+STATE.from+')':''}" placeholder="עיר או שדה תעופה"></label>
+    <label>לאן<input id="to" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" value="${STATE.to?esc(airName(STATE.to))+' ('+STATE.to+')':''}" placeholder="לאן טסים?"></label>
+    <label>הלוך<input type="date" id="dep" min="${TODAY}" value="${STATE.dep}"></label>
+    <label id="retl" ${STATE.round?'':'hidden'}>חזור<input type="date" id="ret" min="${TODAY}" value="${STATE.ret}"></label>
+    <label>נוסעים<select id="pax">${[1,2,3,4,5,6,7,8,9].map(n=>`<option ${n===STATE.pax?'selected':''}>${n}</option>`).join('')}</select></label>
+    <label>מחלקה<select id="cls">${[[1,'תיירים'],[2,'פרימיום'],[3,'עסקים'],[4,'ראשונה']].map(([v,l])=>`<option value="${v}" ${v===STATE.cls?'selected':''}>${l}</option>`).join('')}</select></label>
+    <button class="go">חיפוש טיסות</button>
+    <p class="err" id="fe" role="alert"></p></form>`;
+  airPicker($('#from'),'from');airPicker($('#to'),'to');
+  document.querySelectorAll('[name=rt]').forEach(r=>r.onchange=()=>{STATE.round=document.querySelector('[name=rt]:checked').value==='1';$('#retl').hidden=!STATE.round});
+  $('#dep').onchange=()=>{if($('#ret').value<$('#dep').value)$('#ret').value=iso(add(new Date($('#dep').value),5))};
+  $('#ff').onsubmit=e=>{e.preventDefault();
+    Object.assign(STATE,{dep:$('#dep').value,ret:$('#ret').value,pax:+$('#pax').value,cls:+$('#cls').value});
+    const er=!STATE.from?'בחרו מאיפה טסים':!STATE.to?'בחרו לאן טסים (מהרשימה)':STATE.from===STATE.to?'המוצא והיעד זהים':!STATE.dep||STATE.dep<TODAY?'בחרו תאריך הלוך':STATE.round&&(!STATE.ret||STATE.ret<STATE.dep)?'תאריך החזור לפני ההלוך':'';
+    $('#fe').textContent=er;if(er)return;
+    const p={kind:'flights',from:STATE.from,to:STATE.to,dep:STATE.dep,adults:STATE.pax,cls:STATE.cls};if(STATE.round)p.ret=STATE.ret;
+    const title=`${airName(STATE.from)} ← ${airName(STATE.to)}`;
+    search(p,`${title} · ${heD(STATE.dep)}${STATE.round?'–'+heD(STATE.ret):' (כיוון אחד)'} · ${STATE.pax} נוסעים`,title);
+  };
+}
+
+// ---------- hotels ----------
+function placePicker(input){
+  let list=null,timer=0,sel=-1,items=[];
+  const close=()=>{list&&list.remove();list=null;input.setAttribute('aria-expanded','false')};
+  const pick=p=>{STATE.place=p;input.value=p.name;close()};
+  input.addEventListener('input',()=>{STATE.place=null;clearTimeout(timer);const q=input.value.trim();if(q.length<2){close();return}
+    timer=setTimeout(async()=>{
+      try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=he&q='+encodeURIComponent(q));items=(await r.json()).map(x=>({name:x.display_name.split(',').slice(0,3).join(','),lat:+x.lat,lng:+x.lon,type:x.addresstype||x.type}))}catch{items=[]}
+      close();if(!items.length||input.value.trim()!==q)return;
+      list=document.createElement('ul');list.className='sug';list.setAttribute('role','listbox');
+      list.innerHTML=items.map((p,i)=>`<li role="option" id="pl-o${i}" data-i="${i}">${esc(p.name)}</li>`).join('');
+      input.parentElement.appendChild(list);input.setAttribute('aria-expanded','true');sel=-1;
+      list.querySelectorAll('li').forEach(li=>li.onmousedown=e=>{e.preventDefault();pick(items[+li.dataset.i])});
+    },350)});
+  input.addEventListener('keydown',e=>{if(!list)return;const it=[...list.querySelectorAll('li')];
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();sel=(sel+(e.key==='ArrowDown'?1:-1)+it.length)%it.length;it.forEach((li,i)=>li.setAttribute('aria-selected',i===sel));input.setAttribute('aria-activedescendant',it[sel].id)}
+    if(e.key==='Enter'){e.preventDefault();pick(items[Math.max(sel,0)])}if(e.key==='Escape')close()});
+  input.addEventListener('blur',()=>setTimeout(()=>{if(list&&!STATE.place&&items[0])pick(items[0]);close()},150));
+}
+function hotelsForm(){
+  $('#panel').innerHTML=`<form class="s" id="hf" novalidate>
+    <label style="grid-column:span 2">יעד<input id="dest" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" value="${esc(STATE.place?.name||'')}" placeholder="עיר, אזור או מלון"></label>
+    <label>צ'ק-אין<input type="date" id="cin" min="${TODAY}" value="${STATE.in}"></label>
+    <label>צ'ק-אאוט<input type="date" id="cout" min="${TODAY}" value="${STATE.out}"></label>
+    <label>אורחים (חדר אחד)<select id="gs">${[1,2,3,4,5,6].map(n=>`<option ${n===STATE.guests?'selected':''}>${n}</option>`).join('')}</select></label>
+    <button class="go">חיפוש מלונות</button>
+    <p class="note">צריכים כמה חדרים או ילדים? כתבו לבר בהערות כשמזמינים.</p>
+    <p class="err" id="he" role="alert"></p></form>`;
+  placePicker($('#dest'));
+  $('#cin').onchange=()=>{if($('#cout').value<=$('#cin').value)$('#cout').value=iso(add(new Date($('#cin').value),3))};
+  $('#hf').onsubmit=e=>{e.preventDefault();
+    Object.assign(STATE,{in:$('#cin').value,out:$('#cout').value,guests:+$('#gs').value});
+    const er=!STATE.place?'בחרו יעד מהרשימה':!STATE.in||STATE.in<TODAY?'בחרו תאריך צ\'ק-אין':!STATE.out||STATE.out<=STATE.in?'הצ\'ק-אאוט צריך להיות אחרי הצ\'ק-אין':'';
+    $('#he').textContent=er;if(er)return;
+    const nights=Math.round((new Date(STATE.out)-new Date(STATE.in))/864e5);
+    search({kind:'hotels',lat:STATE.place.lat.toFixed(5),lng:STATE.place.lng.toFixed(5),in:STATE.in,out:STATE.out,adults:STATE.guests,radius:/city|town|state|region|county/.test(STATE.place.type)?5000:1500},
+      `${STATE.place.name} · ${heD(STATE.in)}–${heD(STATE.out)} (${nights} לילות) · ${STATE.guests} אורחים`,STATE.place.name);
+  };
+}
+
+// ---------- request forms (cars, packages, tours, tickets) ----------
+const REQ={
+  cars:{h:'איפה אוספים את הרכב?',p:'למשל: שדה התעופה ברומא',d1:'איסוף',d2:'החזרה',n:'נהגים',extra:'סוג רכב / גיל הנהג / החזרה במקום אחר'},
+  packages:{h:'לאן החופשה?',p:'למשל: יוון, אנטליה, תאילנד',d1:'יציאה',d2:'חזרה',n:'נוסעים',extra:'תקציב, סוג מלון, הכל כלול וכו\''},
+  tours:{h:'איזה אזור / טיול?',p:'למשל: טיול מאורגן לאיטליה',d1:'מתאריך',d2:'עד תאריך',n:'משתתפים',extra:'שפה, סגנון, תקציב'},
+  tickets:{h:'לאיזה אירוע?',p:'קבוצה, הופעה, מוזיאון, אטרקציה',d1:'מתאריך',d2:'עד תאריך',n:'כרטיסים',extra:'מקומות ישיבה, תקציב'}};
+function requestForm(t){
+  const r=REQ[t.k];
+  $('#panel').innerHTML=`<form class="s" id="rf" novalidate>
+    <p class="note" style="color:var(--ink)">שלחו מה אתם מחפשים — בר בודק את כל ההצעות במערכת ושולח לכם את האפשרויות הכי טובות.</p>
+    <label style="grid-column:span 2">${r.h}<input id="rq" placeholder="${esc(r.p)}" required></label>
+    <label>${r.d1}<input type="date" id="rd1" min="${TODAY}" value="${STATE.dep}"></label>
+    <label>${r.d2}<input type="date" id="rd2" min="${TODAY}" value="${STATE.ret}"></label>
+    <label>${r.n}<select id="rn">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option ${n===2?'selected':''}>${n}</option>`).join('')}</select></label>
+    <button class="go">המשך לפרטים</button>
+    <p class="err" id="re" role="alert"></p></form>`;
+  $('#rf').onsubmit=e=>{e.preventDefault();const q=$('#rq').value.trim();$('#re').textContent=q.length<2?'כתבו מה אתם מחפשים':'';if(q.length<2)return;
+    const s=`${q} · ${heD($('#rd1').value)}–${heD($('#rd2').value)} · ${$('#rn').value} ${r.n}`;
+    book({kind:t.k,title:t.l+': '+q,search:s,lines:[],price:null,notesPh:r.extra});};
+}
+
+// ---------- search + results ----------
+let RES=[],SHOWN=0,CUR=null;
+async function search(params,label,title){
+  const out=$('#out');
+  out.innerHTML=`<div class="box status"><div class="spin" aria-hidden="true"></div>מחפש את כל ההצעות… זה לוקח בדרך כלל 15–40 שניות</div>`;
+  out.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+  const b=document.querySelector('#panel .go');b&&(b.disabled=true);
+  try{
+    const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),90000);
+    const r=await fetch(API+'/search?'+new URLSearchParams(params),{signal:ctl.signal});clearTimeout(to);
+    if(r.status===429){out.innerHTML=`<div class="box status">יותר מדי חיפושים בזמן קצר — נסו שוב בעוד כמה דקות.</div>`;return}
+    if(r.status===500||r.status===400){out.innerHTML=`<div class="box status">החיפוש לא הצליח הפעם. נסו שוב, או שלחו לבר בוואטסאפ: <a href="https://wa.me/${WA}" target="_blank" rel="noopener">0556630709</a></div>`;return}
+    if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    CUR={params,label,title,kind:params.kind,link:d.link};RES=d.results||[];SHOWN=0;
+    if(!RES.length){out.innerHTML=`<div class="box status">לא נמצאו תוצאות לחיפוש הזה. נסו תאריכים אחרים או <a href="#" id="askbar">שלחו לבר בקשה</a>.</div>`;
+      $('#askbar').onclick=e=>{e.preventDefault();book({kind:params.kind,title,search:label,lines:[],price:null})};return}
+    out.innerHTML=`<h2 style="margin:6px 0 10px;font-size:19px">${nf(RES.length)} תוצאות · <span style="font-weight:500;color:var(--mute)">${esc(label)}</span></h2><div class="res" id="list"></div>`;
+    more();
+  }catch(e){
+    ONLINE=false;panel();out.innerHTML='';
+  }finally{b&&(b.disabled=false)}
+}
+function more(){
+  const list=$('#list');const part=RES.slice(SHOWN,SHOWN+10);
+  list.insertAdjacentHTML('beforeend',part.map((x,j)=>{const i=SHOWN+j;const hotel=CUR.kind==='hotels';
+    const lines=x.lines.filter(l=>!/^₪[\d,]+$/.test(l)&&!/סה.?כ לתשלום|החל מ/.test(l));
+    const name=hotel?(lines.find(l=>/[A-Za-z֐-׿]{3}/.test(l)&&!/^(מעולה|טוב|מצוין|נהדר|כמעט|מחיר)/.test(l)&&!/\d\.\d/.test(l))||''):'';
+    return`<article class="item" aria-label="${esc(hotel?name:'אפשרות '+(i+1))}">
+      ${hotel&&x.imgs[0]?`<img class="pic" src="${esc(x.imgs[0])}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}
+      ${!hotel&&x.imgs.length?`<div class="logos">${x.imgs.slice(0,2).map(s=>`<img src="${esc(s)}" alt="" loading="lazy" referrerpolicy="no-referrer">`).join('')}</div>`:''}
+      <div class="body">${hotel&&name?`<b>${esc(name)}</b>`:''}${lines.filter(l=>l!==name).map(l=>`<span>${esc(l)}</span>`).join('<span aria-hidden="true" style="color:#B9C6D8">·</span>')}</div>
+      <div class="buy"><div class="price">₪${nf(x.price)}<small>${hotel?'החל מ־ · לכל השהייה':'סה"כ לכל הנוסעים'}</small></div><button class="go" data-i="${i}">להזמנה</button></div></article>`}).join(''));
+  SHOWN+=part.length;
+  list.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const x=RES[+b.dataset.i];const hotel=CUR.kind==='hotels';
+    book({kind:CUR.kind,title:CUR.title,search:CUR.label,lines:x.lines,price:x.price,link:CUR.link,pick:hotel?(b.closest('article').getAttribute('aria-label')):null})});
+  $('#moreb')&&$('#moreb').remove();
+  if(SHOWN<RES.length)list.insertAdjacentHTML('afterend',`<button class="more" id="moreb">עוד תוצאות (${nf(RES.length-SHOWN)})</button>`),$('#moreb').onclick=more;
+}
+
+// ---------- booking ----------
+function book(o){
+  const dlg=$('#dlg');
+  $('#dlgc').innerHTML=`<form id="bf" novalidate><h2>${o.price?'הזמנה':'בקשת הצעה'}</h2>
+    <div class="sum"><b>${esc(o.pick||o.title)}</b><br>${esc(o.search)}${o.price?`<br><b style="font-size:18px">₪${nf(o.price)}</b>`:''}</div>
+    <label>שם מלא<input id="bn" autocomplete="name" required maxlength="80"></label>
+    <label>טלפון (וואטסאפ)<input id="bp" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" required maxlength="30" placeholder="05X-XXXXXXX"></label>
+    <label>מייל (לא חובה)<input id="be" type="email" dir="ltr" autocomplete="email" maxlength="120"></label>
+    <label>הערות לבר<textarea id="bt" maxlength="1500" placeholder="${esc(o.notesPh||'שמות הנוסעים, מזוודות, בקשות מיוחדות…')}"></textarea></label>
+    <p class="note" style="font-size:13px">${o.price?'המחיר נכון לרגע החיפוש. ההזמנה סופית רק אחרי שבר מאשר ושולח לכם פרטי תשלום — שום דבר לא מחויב עכשיו.':'בר יחזור אליכם עם הצעות מחיר. שום דבר לא מחויב עכשיו.'}</p>
+    <p class="err" id="bx" role="alert"></p>
+    <button class="go">${o.price?'שליחת ההזמנה לאישור':'שליחת הבקשה'}</button></form>`;
+  dlg.showModal();setTimeout(()=>$('#bn').focus(),30);
+  $('#bf').onsubmit=async e=>{e.preventDefault();
+    const name=$('#bn').value.trim(),phone=$('#bp').value.trim(),email=$('#be').value.trim(),notes=$('#bt').value.trim();
+    const er=name.length<2?'כתבו שם':phone.replace(/\D/g,'').length<9?'כתבו מספר טלפון תקין':email&&!/^\S+@\S+\.\S+$/.test(email)?'המייל לא תקין':'';
+    $('#bx').textContent=er;if(er)return;
+    const btn=e.target.querySelector('.go');btn.disabled=true;btn.textContent='שולח…';
+    const details={title:o.pick?`${o.pick} · ${o.title}`:o.title,search:o.search,lines:(o.lines||[]).slice(0,30),customer_price:o.price||null,link:o.link||null};
+    const{error}=await sb.from('travel_requests').insert({kind:o.kind,details,name,phone,email:email||null,notes:notes||null,lang:'he'});
+    const msg=`היי בר, ${o.price?'שלחתי הזמנה באתר':'שלחתי בקשה באתר'}:\n${details.title}\n${o.search}${o.price?`\nמחיר: ₪${nf(o.price)}`:''}\nשם: ${name}`;
+    const waL=`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`;
+    $('#dlgc').innerHTML=error
+      ?`<div class="okmsg"><h2>משהו השתבש בשליחה</h2><p>אפשר לשלוח לבר ישירות בוואטסאפ — הכל כבר כתוב:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`
+      :`<div class="okmsg"><div style="font-size:44px" aria-hidden="true">✈️</div><h2>${o.price?'ההזמנה נשלחה לבר':'הבקשה נשלחה לבר'}</h2><p>בר יאשר ויחזור אליכם בהקדם${phone?' ב־'+esc(phone):''}.<br>רוצים לזרז? שלחו לו הודעה:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`;
+  };
+}
+$('#dlgx').onclick=()=>$('#dlg').close();
+$('#dlg').addEventListener('click',e=>{if(e.target===$('#dlg'))$('#dlg').close()});
+
+// ---------- laptop status ----------
+function showBanner(){$('#banner').innerHTML=''}
+async function health(){
+  try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),9000);
+    const r=await fetch(API+'/health',{signal:ctl.signal,cache:'no-store'});const d=await r.json();ONLINE=!!d.ok}catch{ONLINE=false}
+  showBanner();if(ONLINE===false&&TABS.find(t=>t.k===TAB).live)panel();
+}
+tabs();panel();health();
+})();
+</script>
+</body>
+</html>
