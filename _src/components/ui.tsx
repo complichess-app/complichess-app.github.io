@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { LANGS, LANG_NAMES, type Lang } from '../lib/i18n';
+import { customCursorOff, prefersStill } from '../lib/a11y';
 
 /* Words wrapped for a rise-in reveal. Splits on spaces only, so Arabic and Hebrew letters keep their shapes. */
 export function Words({ text, className }: { text: string; className?: string }) {
@@ -18,7 +19,7 @@ export function useMagnetic<T extends HTMLElement>(strength = 0.35) {
   const ref = useRef<T>(null);
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    if (!matchMedia('(pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!matchMedia('(pointer: fine)').matches || prefersStill()) return;
     let raf = 0, tx = 0, ty = 0, x = 0, y = 0;
     const loop = () => { x += (tx - x) * 0.18; y += (ty - y) * 0.18; el.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`; if (Math.abs(tx - x) > 0.1 || Math.abs(ty - y) > 0.1) raf = requestAnimationFrame(loop); else raf = 0; };
     const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
@@ -45,7 +46,7 @@ export function Cursor({ labels }: { labels: Record<string, string> }) {
   const dot = useRef<HTMLDivElement>(null), ring = useRef<HTMLDivElement>(null), lab = useRef<HTMLSpanElement>(null);
   const [on, setOn] = useState(false);
   useEffect(() => {
-    if (!matchMedia('(pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!matchMedia('(pointer: fine)').matches || customCursorOff()) return;
     setOn(true); document.documentElement.classList.add('has-cursor');
     let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, s = 1, raf = 0, seen = false, frame = 0, glow = false;
     /* the cursor is drawn with a "difference" blend, which disappears over mid-tone colours (gold, light buttons…).

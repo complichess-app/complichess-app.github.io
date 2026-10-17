@@ -1,6 +1,7 @@
 import '../globals.css';
 import type { Metadata, Viewport } from 'next';
 import { LANGS, DICTS, RTL, type Lang } from '../../lib/i18n';
+import { A11Y_BOOT } from '../../lib/a11y';
 
 export function generateStaticParams() { return LANGS.map((lang) => ({ lang })); }
 export const dynamicParams = false;
@@ -22,6 +23,7 @@ export default async function LangLayout({ children, params }: { children: React
   return (
     <html lang={lang} dir={RTL[lang as Lang] ? 'rtl' : 'ltr'}>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: A11Y_BOOT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&family=Unbounded:wght@200..900&display=swap" />
