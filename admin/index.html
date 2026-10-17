@@ -46,7 +46,25 @@ const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const d=x=>x?new Date(x).toLocaleString('he-IL',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
 const n=x=>new Intl.NumberFormat('he-IL').format(x||0);
-let DATA=null,TAB='all',Q='',SORT={k:'created_at',dir:-1};
+let DATA=null,TAB='all',Q='',SORT={k:'created_at',dir:-1},TRQ=[],TRF='open',LIVE=null;
+const KIND={flights:'טיסות',hotels:'מלונות',cars:'השכרת רכב',packages:'חבילות נופש',tours:'טיולים מאורגנים',tickets:'כרטיסים'};
+const ST={new:['ממתין לאישור','n'],quoted:['אושר · נשלחה הצעה','y'],paid:['שולם','y'],closed:['הושלם','y'],cancelled:['בוטל','n']};
+const wa=p=>{let x=String(p||'').replace(/\D/g,'');if(x.startsWith('0'))x='972'+x.slice(1);return'https://wa.me/'+x};
+async function loadTravel(){const{data,error}=await sb.from('travel_requests').select('*').order('created_at',{ascending:false}).limit(300);TRQ=error?null:(data||[])}
+function travelHTML(){
+  if(TRQ===null)return`<section class="card"><h2>הזמנות Bar Lvovski Travel</h2><p class="err">לא הצלחתי לטעון את ההזמנות. אם זו הפעם הראשונה — צריך להריץ את travel.sql ב־Supabase.</p></section>`;
+  const open=TRQ.filter(r=>r.status==='new');
+  const list=TRF==='open'?open:TRQ;
+  const det=r=>{const x=r.details||{};const lines=(x.lines||[]).slice(0,14).map(esc).join(' · ');
+    return`${x.title?`<b>${esc(x.title)}</b><br>`:''}${x.search?`<span class="mute">${esc(x.search)}</span><br>`:''}${lines?`<span style="font-size:13px">${lines}</span><br>`:''}${x.customer_price?`<b>מחיר ללקוח: ₪${n(x.customer_price)}</b> <span class="mute">(מחיר סוכן בערך ₪${n(Math.round(x.customer_price/1.12))} · רווח בערך ₪${n(x.customer_price-Math.round(x.customer_price/1.12))})</span>`:''}${x.link?`<br><a href="${esc(x.link)}" target="_blank" rel="noopener" style="color:var(--cx)">פתיחת החיפוש ב־BeAgent ←</a>`:''}`};
+  return`<section class="card" id="trv"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><h2 style="margin:0">הזמנות Bar Lvovski Travel</h2>${open.length?`<span class="pill n">${open.length} ממתינות לאישור</span>`:''}<span class="sp"></span>
+    <div class="tabs">${[['open','ממתינות'],['all','הכל']].map(([k,l])=>`<button data-trf="${k}" aria-selected="${TRF===k}">${l}</button>`).join('')}</div></div>
+    <div class="list">${list.map(r=>`<div class="post" style="flex-wrap:wrap;align-items:flex-start;white-space:normal">
+      <small>${d(r.created_at)}</small><span class="pill y">${KIND[r.kind]||esc(r.kind)}</span>
+      <div style="flex:1;min-width:240px">${det(r)}${r.notes?`<br><span class="mute">הערות הלקוח:</span> ${esc(r.notes)}`:''}</div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:200px"><b>${esc(r.name)}</b><a class="l" style="color:var(--ok)" href="${wa(r.phone)}" target="_blank" rel="noopener">${esc(r.phone)} · וואטסאפ</a>${r.email?`<a class="l" style="color:var(--mute)" href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:''}
+      <select data-st="${r.id}" style="font:inherit;background:#0B0E28;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px">${Object.entries(ST).map(([k,[l]])=>`<option value="${k}" ${r.status===k?'selected':''}>${l}</option>`).join('')}</select></div></div>`).join('')||`<p class="mute">${TRF==='open'?'אין הזמנות שממתינות לאישור':'עוד אין הזמנות'}</p>`}</div></section>`;
+}
 
 function login(msg){
   app.innerHTML=`<form class="box card" id="f"><h1>ניהול Barusik</h1><p class="mute">הדף פתוח רק למשתמש של המנהל. התחברו עם המשתמש הכללי שלכם.</p>
@@ -66,7 +84,8 @@ async function load(){
   const{data,error}=await sb.rpc('admin_overview');
   if(error){if(/not allowed|42501|permission/i.test(error.message+error.code))denied(session.user.email);else app.innerHTML=`<div class="box card"><h1>שגיאה</h1><p class="err">${esc(error.message)}</p><p class="mute">אם זה "function does not exist" — צריך להריץ את קובץ ה־SQL של ברוסיק ב־Supabase.</p><button id="r">נסו שוב</button></div>`,document.getElementById('r')&&(document.getElementById('r').onclick=load);return}
   if(!data||!data.totals){app.innerHTML=`<div class="box card"><h1>אין נתונים</h1><p class="mute">השרת לא החזיר נתונים. נסו לרענן.</p><button id="r">רענון</button></div>`;document.getElementById('r').onclick=load;return}
-  DATA=data;draw(session.user.email);
+  DATA=data;await loadTravel();draw(session.user.email);
+  if(!LIVE&&TRQ!==null)LIVE=sb.channel('trq').on('postgres_changes',{event:'*',schema:'public',table:'travel_requests'},async()=>{await loadTravel();draw(session.user.email)}).subscribe();
 }
 function rows(){
   let u=DATA.users.map(x=>({...x,cxn:x.complichess?.username||'',pkh:x.platformika?.profile?.handle||'',rating:x.complichess?.rating??null,games:x.complichess?.games??0,
@@ -105,6 +124,7 @@ function draw(email){
   app.innerHTML=`
   <header><h1>ניהול · Barusik Platforms</h1><span class="sp"></span><span class="mute" dir="ltr">${esc(email)}</span><button class="ghost" id="rf">רענון</button><button class="ghost" id="out">התנתקות</button></header>
   <p class="mute" style="margin:0">נכון ל־${d(DATA.generated_at)}</p>
+  ${travelHTML()}
   <section class="grid">
     <div class="card stat"><small>משתמשים (כל הפלטפורמות)</small><b>${n(T.users)}</b></div>
     <div class="card stat"><small>נרשמו ב־7 ימים</small><b>${n(T.users_7d)}</b></div>
@@ -130,6 +150,9 @@ function draw(email){
   <p class="mute" style="font-size:13px">תוכן הודעות פרטיות לא מוצג כאן — רק כמה הודעות כל משתמש שלח. סיסמאות לא נשמרות אצלנו בכלל (Supabase שומר רק גיבוב).</p>`;
   document.getElementById('out').onclick=async()=>{await sb.auth.signOut();login()};
   document.getElementById('rf').onclick=load;
+  document.querySelectorAll('[data-trf]').forEach(b=>b.onclick=()=>{TRF=b.dataset.trf;draw(email)});
+  document.querySelectorAll('[data-st]').forEach(sel=>sel.onchange=async()=>{sel.disabled=true;const{error}=await sb.from('travel_requests').update({status:sel.value,updated_at:new Date().toISOString()}).eq('id',sel.dataset.st);
+    if(error){alert('שגיאה: '+error.message);sel.disabled=false;return}const r=TRQ.find(x=>x.id===sel.dataset.st);if(r)r.status=sel.value;draw(email)});
   document.getElementById('csv').onclick=csv;
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw(email)});
   document.querySelectorAll('th[data-k]').forEach(t=>t.onclick=()=>{const k=t.dataset.k;SORT=SORT.k===k?{k,dir:-SORT.dir}:{k,dir:-1};draw(email)});
