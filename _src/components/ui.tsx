@@ -51,14 +51,16 @@ export function Cursor({ labels }: { labels: Record<string, string> }) {
     const move = (e: PointerEvent) => { x = e.clientX; y = e.clientY; if (!seen) { seen = true; rx = x; ry = y; } };
     const loop = () => {
       rx += (x - rx) * 0.16; ry += (y - ry) * 0.16;
-      const hov = document.documentElement.dataset.hover;
+      const ds = document.documentElement.dataset;
+      const dragging = !!ds.drag, grab = !!ds.grab;
+      const hov = dragging ? undefined : ds.hover;
       const t = document.elementFromPoint(x, y) as HTMLElement | null;
       const grow = !!t?.closest('a,button,[data-cursor]');
-      const target = hov ? 3.2 : grow ? 1.9 : 1;
+      const target = dragging ? 0.75 : hov ? 3.2 : grow ? 1.9 : 1;
       s += (target - s) * 0.18;
       if (dot.current) dot.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
       if (ring.current) { ring.current.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%) scale(${s.toFixed(3)})`; ring.current.style.opacity = seen ? '1' : '0'; }
-      if (lab.current) { lab.current.textContent = hov ? labels[hov] || '' : ''; lab.current.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%)`; lab.current.style.opacity = hov ? '1' : '0'; }
+      if (lab.current) { lab.current.textContent = hov ? (grab ? `${labels[hov] || ''} · ✋` : labels[hov] || '') : ''; lab.current.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%)`; lab.current.style.opacity = hov ? '1' : '0'; }
       raf = requestAnimationFrame(loop);
     };
     addEventListener('pointermove', move); raf = requestAnimationFrame(loop);

@@ -434,78 +434,185 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 </div>
 <div id="layer" dir="rtl" lang="he"></div>
 
+<script src="/lib/supabase.js"></script>
 <script>
 (()=>{
-const KEY='platformika.v1';
+/* Platformika on the shared Barusik account. Posts, clips, stories, likes, comments and chats live on the server,
+   so what you publish on one device shows up on every other device right away (live updates). */
 const SITE='https://barusik.com/platformika/';
+const SB_URL='https://iktmyrfbejtjsiehcrar.supabase.co',SB_KEY='sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
+const BUCKET='pk-media',MAX_VIDEO=50*1024*1024;
+const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}}):null;
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ic=(n,c='i')=>`<svg class="${c}"><use href="#i-${n}"/></svg>`;
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const ts=x=>new Date(x).getTime();
 
-/* ---------- state ---------- */
-const blank={me:null,posts:[],stories:[],notes:[],alerts:[],seenAlerts:0,storySeen:{}};
-let S=load();
-let clips=[]; // session-only (video files are too big for device storage)
-function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&typeof v==='object'?Object.assign(structuredClone(blank),v):structuredClone(blank)}catch(e){return structuredClone(blank)}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));return true}catch(e){toast('האחסון במכשיר מלא. מחקו פוסט עם תמונה כדי לפנות מקום.');return false}}
-function alert_(text,icon='bell'){S.alerts.unshift({id:uid(),text,icon,ts:Date.now()});S.alerts=S.alerts.slice(0,60)}
+/* ---------- state (from the server) ---------- */
+let USER=null,ME=null,READY=false,OFFLINE=!sb,AUTHKNOWN=false;
+const PROF={};                        // id -> pk_profiles row
+let POSTS=[],LIKES=[],CMTS=[],MSGS=[];
+const OPEN={};                        // post id -> comments open
+try{const r=new URLSearchParams(location.search).get('ref');if(r)localStorage.setItem('platformika.ref',r)}catch(e){}
+
+const posts=k=>POSTS.filter(p=>p.kind===k);
+const likesOf=id=>LIKES.filter(l=>l.post===id);
+const likedByMe=id=>!!USER&&LIKES.some(l=>l.post===id&&l.uid===USER.id);
+const cmtsOf=id=>CMTS.filter(c=>c.post===id);
+const who=id=>PROF[id]||{id,name:'משתמש',handle:'',hue:200};
+const activeStories=()=>posts('story').filter(s=>Date.now()-ts(s.created_at)<86400000).sort((a,b)=>ts(a.created_at)-ts(b.created_at));
+
+async function loadProfiles(ids){
+  const need=[...new Set(ids)].filter(id=>id&&!PROF[id]);if(!need.length)return;
+  const{data}=await sb.from('pk_profiles').select('*').in('id',need);(data||[]).forEach(p=>PROF[p.id]=p);
+}
+async function loadAll(){
+  if(!sb)return;
+  const[pr,mr]=await Promise.all([
+    sb.from('pk_posts').select('*').order('created_at',{ascending:false}).limit(300),
+    USER?sb.from('pk_messages').select('*').or(`sender.eq.${USER.id},recipient.eq.${USER.id}`).order('created_at').limit(2000):Promise.resolve({data:[]})
+  ]);
+  if(pr.error){OFFLINE=true;return}
+  OFFLINE=false;POSTS=pr.data||[];MSGS=mr.data||[];
+  const ids=POSTS.map(p=>p.id);
+  if(ids.length){
+    const[lr,cr]=await Promise.all([sb.from('pk_likes').select('post,uid,created_at').in('post',ids),sb.from('pk_comments').select('*').in('post',ids).order('created_at')]);
+    LIKES=lr.data||[];CMTS=cr.data||[];
+  }else{LIKES=[];CMTS=[]}
+  await loadProfiles(POSTS.map(p=>p.author).concat(CMTS.map(c=>c.author),LIKES.map(l=>l.uid),MSGS.map(m=>m.sender),MSGS.map(m=>m.recipient)));
+}
+let reloadT=0;
+function reloadSoon(){clearTimeout(reloadT);reloadT=setTimeout(async()=>{await loadAll();render(true)},350)}
+let live=null;
+function goLive(){
+  if(!sb||live)return;
+  live=sb.channel('platformika')
+    .on('postgres_changes',{event:'*',schema:'public',table:'pk_posts'},reloadSoon)
+    .on('postgres_changes',{event:'*',schema:'public',table:'pk_comments'},reloadSoon)
+    .on('postgres_changes',{event:'*',schema:'public',table:'pk_likes'},reloadSoon)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'pk_messages'},reloadSoon)
+    .subscribe();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&READY)reloadSoon()});
 
 /* ---------- helpers ---------- */
-function rel(ts){const d=(Date.now()-ts)/1000;if(d<60)return'עכשיו';if(d<3600)return`לפני ${Math.floor(d/60)} דק׳`;if(d<86400)return`לפני ${Math.floor(d/3600)} שע׳`;if(d<172800)return'אתמול';return new Date(ts).toLocaleDateString('he-IL',{day:'numeric',month:'short'})}
-const hm=ts=>new Date(ts).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
-function dayLabel(ts){const d=new Date(ts),t=new Date();const k=x=>x.toDateString();if(k(d)===k(t))return'היום';const y=new Date(t);y.setDate(t.getDate()-1);if(k(d)===k(y))return'אתמול';return d.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'})}
-function av(me,size=''){if(!me)return`<span class="av ${size}"></span>`;return`<span class="av ${size}" style="--h:${me.hue}">${me.photo?`<img src="${me.photo}" alt="">`:esc([...me.name.trim()][0]||'?')}</span>`}
-function toast(t){$('.toast')?.remove();const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2600)}
+function rel(x){const d=(Date.now()-ts(x))/1000;if(d<60)return'עכשיו';if(d<3600)return`לפני ${Math.floor(d/60)} דק׳`;if(d<86400)return`לפני ${Math.floor(d/3600)} שע׳`;if(d<172800)return'אתמול';return new Date(x).toLocaleDateString('he-IL',{day:'numeric',month:'short'})}
+const hm=x=>new Date(x).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+function dayLabel(x){const d=new Date(x),t=new Date();const k=v=>v.toDateString();if(k(d)===k(t))return'היום';const y=new Date(t);y.setDate(t.getDate()-1);if(k(d)===k(y))return'אתמול';return d.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'})}
+function av(p,size=''){if(!p)return`<span class="av ${size}"></span>`;return`<span class="av ${size}" style="--h:${p.hue||200}">${p.avatar_url?`<img src="${esc(p.avatar_url)}" alt="">`:esc([...(p.name||'?').trim()][0]||'?')}</span>`}
+function toast(t){$('.toast')?.remove();const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2800)}
 async function copy(text,btn){try{await navigator.clipboard.writeText(text);toast('הקישור הועתק')}catch(e){const c=btn?.closest('.linkbox')?.querySelector('code');if(c){const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast('סמנו את הקישור והעתיקו אותו')}}
-function compress(file,max=1280,q=.82){return new Promise((res,rej)=>{if(!file||!file.type.startsWith('image/'))return rej(new Error('type'));const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q))};im.onerror=rej;im.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+function compress(file,max=1600,q=.84){return new Promise((res,rej)=>{if(!file||!file.type.startsWith('image/'))return rej(new Error('type'));const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('blob')),'image/jpeg',q)};im.onerror=rej;im.src=u})}
 function pickFile(accept){return new Promise(r=>{const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>r(i.files[0]||null);i.click()})}
-const refLink=()=>SITE+'?ref='+encodeURIComponent(S.me?.handle||'');
+const rid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));
+async function upload(blob,ext,type){
+  const path=`${USER.id}/${rid()}.${ext}`;
+  const{error}=await sb.storage.from(BUCKET).upload(path,blob,{contentType:type,cacheControl:'31536000',upsert:false});
+  if(error)throw error;
+  return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+function mediaPath(url){const k='/'+BUCKET+'/';const i=(url||'').indexOf(k);return i<0?null:decodeURIComponent(url.slice(i+k.length))}
+const refLink=()=>SITE+'?ref='+encodeURIComponent(ME?.handle||'');
 const fmt=n=>new Intl.NumberFormat('he-IL').format(n);
-const likesTotal=()=>S.posts.reduce((a,p)=>a+(p.liked?1:0),0);
-const activeStories=()=>S.stories.filter(s=>Date.now()-s.ts<86400000);
+function busy(btn,on,label){if(!btn)return;if(on){btn.dataset.l=btn.innerHTML;btn.disabled=true;btn.innerHTML=label||'רגע…'}else{btn.disabled=false;if(btn.dataset.l)btn.innerHTML=btn.dataset.l}}
+function errText(e){const m=String(e?.message||e||'').toLowerCase();
+  if(m.includes('invalid login'))return'מייל או סיסמה לא נכונים';
+  if(m.includes('already registered')||m.includes('already been registered'))return'המייל הזה כבר רשום — התחברו במקום להירשם';
+  if(m.includes('rate limit'))return'יותר מדי ניסיונות — חכו דקה ונסו שוב';
+  if(m.includes('duplicate')||m.includes('unique'))return'שם המשתמש הזה תפוס — בחרו אחר';
+  if(m.includes('payload too large')||m.includes('exceeded the maximum'))return'הקובץ גדול מדי (עד 50MB)';
+  if(m.includes('mime')||m.includes('not supported'))return'סוג הקובץ לא נתמך';
+  if(m.includes('fetch')||m.includes('network'))return'אין חיבור לשרת — בדקו את האינטרנט';
+  return'משהו השתבש: '+(e?.message||'נסו שוב')}
 
 /* ---------- layers (sheets) ---------- */
-function openLayer(html,{onMount,cls=''}={}){const L=$('#layer');L.innerHTML=`<div class="scrim" data-scrim><div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;const sc=$('[data-scrim]',L);sc.addEventListener('click',e=>{if(e.target===sc&&!sc.dataset.lock)closeLayer()});onMount?.($('.sheet',L));const f=$('[autofocus]',L)||$('input,textarea,button',L);f?.focus()}
+function openLayer(html,{onMount,cls='',lock=false}={}){const L=$('#layer');L.innerHTML=`<div class="scrim" data-scrim ${lock?'data-lock="1"':''}><div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;const sc=$('[data-scrim]',L);sc.addEventListener('click',e=>{if(e.target===sc&&!sc.dataset.lock)closeLayer()});onMount?.($('.sheet',L));const f=$('[autofocus]',L)||$('input,textarea,button',L);f?.focus()}
 function closeLayer(){$('#layer').innerHTML='';stopStory()}
 addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#layer').innerHTML&&!$('[data-scrim][data-lock]')){closeLayer()}});
 
-/* ---------- onboarding ---------- */
-function onboarding(){
+/* ---------- account (one Barusik account for every platform) ---------- */
+function authSheet(tab='login'){
   openLayer(`
-  <div class="hero"><svg class="mark"><use href="#logo"/></svg><h1>ברוכים הבאים</h1>
+  <div class="hero"><svg class="mark"><use href="#logo"/></svg><h1>${tab==='login'?'התחברות':'הרשמה'}</h1>
+  <p>משתמש אחד לכל הפלטפורמות של ברוסיק: פלטפורמיקה, קומפליצס ומה שיבוא. כבר יש לכם משתמש בקומפליצס? התחברו איתו.</p></div>
+  <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='login'}" data-auth="login">התחברות</button><button role="tab" aria-selected="${tab==='signup'}" data-auth="signup">הרשמה</button></div>
+  <form class="sheet-b" id="auForm" novalidate>
+    ${tab==='signup'?`<div class="field"><label for="auName">שם משתמש</label><input id="auName" dir="ltr" autocomplete="username" maxlength="20" placeholder="yourname"></div>`:''}
+    <div class="field"><label for="auMail">מייל</label><input id="auMail" type="email" dir="ltr" autocomplete="email" autofocus></div>
+    <div class="field"><label for="auPass">סיסמה</label><input id="auPass" type="password" dir="ltr" autocomplete="${tab==='login'?'current-password':'new-password'}" minlength="6"></div>
+    <span class="err" id="auErr" role="alert" hidden></span>
+    <button class="btn primary block" type="submit">${tab==='login'?'התחברות':'יצירת משתמש'}</button>
+    ${tab==='login'?`<button type="button" class="btn ghost sm" id="auReset" style="align-self:center">שכחתי סיסמה</button>`:''}
+  </form>`,{cls:'onb',lock:true,onMount:sh=>{
+    $$('[data-auth]',sh).forEach(b=>b.onclick=()=>authSheet(b.dataset.auth));
+    const err=$('#auErr',sh),say=t=>{err.hidden=!t;err.textContent=t||''};
+    $('#auReset',sh)?.addEventListener('click',async()=>{const m=$('#auMail',sh).value.trim();if(!/^\S+@\S+\.\S+$/.test(m)){say('כתבו קודם את המייל שלכם');return}
+      await sb.auth.resetPasswordForEmail(m,{redirectTo:SITE});say('');toast('אם המייל רשום — נשלח אליו קישור לאיפוס')});
+    $('#auForm',sh).addEventListener('submit',async e=>{e.preventDefault();const b=$('button[type=submit]',sh);
+      const mail=$('#auMail',sh).value.trim(),pass=$('#auPass',sh).value;
+      if(!/^\S+@\S+\.\S+$/.test(mail)){say('כתובת מייל לא תקינה');return}
+      if(pass.length<6){say('הסיסמה צריכה לפחות 6 תווים');return}
+      busy(b,true);
+      try{
+        if(tab==='signup'){
+          const name=$('#auName',sh).value.trim();
+          if(name.length<2||name.length>20){busy(b,false);say('שם המשתמש צריך 2–20 תווים');return}
+          const{data:free}=await sb.rpc('username_available',{p_name:name});
+          if(free===false){busy(b,false);say('שם המשתמש תפוס — נסו אחר');return}
+          const{data,error}=await sb.auth.signUp({email:mail,password:pass,options:{data:{username:name},emailRedirectTo:SITE}});
+          if(error)throw error;
+          if(!data.session){busy(b,false);say('');openLayer(`<div class="sheet-b" style="text-align:center"><div class="empty"><div class="art">${ic('send')}</div><h2>בדקו את המייל</h2><p>שלחנו קישור אימות ל־<b dir="ltr">${esc(mail)}</b>. אחרי שתאשרו — חזרו לכאן והתחברו.</p><button class="btn primary" id="auBack">להתחברות</button></div></div>`,{lock:true,onMount:s2=>{$('#auBack',s2).onclick=()=>authSheet('login')}});return}
+        }else{
+          const{error}=await sb.auth.signInWithPassword({email:mail,password:pass});if(error)throw error;
+        }
+      }catch(x){busy(b,false);say(errText(x))}
+    });
+  }});
+}
+function onboarding(suggest){
+  openLayer(`
+  <div class="hero"><svg class="mark"><use href="#logo"/></svg><h1>ברוכים הבאים לפלטפורמיקה</h1>
   <p>פלטפורמה אחת לפוסטים, סטוריז, קליפים וצ'אטים, שבה 99% מהרווח הולך ליוצרים.</p>
   <span class="tag">One Platform. Everyone Connected. Creators First.</span></div>
   <form class="sheet-b" id="onbForm" novalidate>
-    <div class="field"><label for="onbName">איך קוראים לך?</label><input id="onbName" autocomplete="name" placeholder="השם שיופיע בפרופיל" maxlength="40" autofocus></div>
-    <div class="field"><label for="onbHandle">שם משתמש</label><input id="onbHandle" dir="ltr" autocomplete="username" placeholder="yourname" maxlength="24"><span class="hint">אותיות באנגלית, מספרים, נקודה וקו תחתון</span><span class="err" id="onbErr" hidden></span></div>
+    <div class="field"><label for="onbName">איך קוראים לך?</label><input id="onbName" autocomplete="name" placeholder="השם שיופיע בפרופיל" maxlength="40" value="${esc(suggest||'')}" autofocus></div>
+    <div class="field"><label for="onbHandle">שם משתמש בפלטפורמיקה</label><input id="onbHandle" dir="ltr" autocomplete="username" placeholder="yourname" maxlength="24" value="${esc((suggest||'').toLowerCase().replace(/[^a-z0-9._]/g,''))}"><span class="hint">אותיות באנגלית, מספרים, נקודה וקו תחתון</span><span class="err" id="onbErr" hidden></span></div>
     <button class="btn primary block" type="submit">יצירת פרופיל</button>
-    <p class="foot" style="text-align:center">הפרופיל נשמר במכשיר הזה. סנכרון בין מכשירים יגיע עם השרת.</p>
-  </form>`,{cls:'onb',onMount:sh=>{
-    $('[data-scrim]').dataset.lock='1';
-    const n=$('#onbName',sh),h=$('#onbHandle',sh);
-    n.addEventListener('input',()=>{if(!h.dataset.touched)h.value=''});
-    h.addEventListener('input',()=>{h.dataset.touched=1;h.value=h.value.toLowerCase().replace(/[^a-z0-9._]/g,'')});
-    $('#onbForm',sh).addEventListener('submit',e=>{e.preventDefault();const err=$('#onbErr',sh);
+    <button class="btn ghost sm" type="button" id="onbOut" style="align-self:center">התנתקות</button>
+  </form>`,{cls:'onb',lock:true,onMount:sh=>{
+    const n=$('#onbName',sh),h=$('#onbHandle',sh),err=$('#onbErr',sh);
+    h.addEventListener('input',()=>{h.value=h.value.toLowerCase().replace(/[^a-z0-9._]/g,'')});
+    $('#onbOut',sh).onclick=()=>sb.auth.signOut();
+    $('#onbForm',sh).addEventListener('submit',async e=>{e.preventDefault();
       if(!n.value.trim()){err.hidden=false;err.textContent='כתבו שם כדי שחברים יזהו אתכם';n.focus();return}
       if(h.value.length<3){err.hidden=false;err.textContent='שם המשתמש צריך לפחות 3 תווים';h.focus();return}
-      S.me={name:n.value.trim(),handle:h.value,bio:'',hue:Math.floor(Math.random()*360),photo:null,cover:null,joined:Date.now()};
-      alert_('ברוכים הבאים לפלטפורמיקה. הזמינו חברים כדי שהפיד שלכם יתמלא.','users');
-      save();closeLayer();render();toast('הפרופיל נוצר');
+      const b=$('button[type=submit]',sh);busy(b,true);
+      const row={id:USER.id,name:n.value.trim(),handle:h.value,hue:Math.floor(Math.random()*360)};
+      const{data,error}=await sb.from('pk_profiles').insert(row).select().single();
+      if(error){busy(b,false);err.hidden=false;err.textContent=errText(error);return}
+      ME=PROF[USER.id]=data;closeLayer();render();toast('הפרופיל נוצר');
     });
   }});
+}
+async function signedIn(user){
+  USER=user;
+  const{data}=await sb.from('pk_profiles').select('*').eq('id',user.id).maybeSingle();
+  ME=data||null;if(ME)PROF[ME.id]=ME;
+  READY=true;await loadAll();goLive();render();
+  if(!ME){let s='';try{const r=await sb.from('profiles').select('username').eq('id',user.id).maybeSingle();s=r.data?.username||user.user_metadata?.username||''}catch(e){}onboarding(s)}
+  else if($('[data-scrim][data-lock]'))closeLayer();
 }
 
 /* ---------- compose ---------- */
 function compose(){
-  let img=null;
+  let blob=null,url=null;
   openLayer(`
   <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>פוסט חדש</h2><span style="width:40px"></span></div>
   <div class="sheet-b">
-    <div style="display:flex;gap:12px;align-items:center">${av(S.me)}<div><b>${esc(S.me.name)}</b><div style="color:var(--muted);font-size:13px">ציבורי</div></div></div>
+    <div style="display:flex;gap:12px;align-items:center">${av(ME)}<div><b>${esc(ME.name)}</b><div style="color:var(--muted);font-size:13px">ציבורי</div></div></div>
     <label for="cmpText" class="sr">תוכן הפוסט</label>
-    <textarea id="cmpText" class="big" placeholder="מה חדש, ${esc(S.me.name.split(' ')[0])}?" maxlength="2200" autofocus></textarea>
+    <textarea id="cmpText" class="big" placeholder="מה חדש, ${esc(ME.name.split(' ')[0])}?" maxlength="2200" autofocus></textarea>
     <div id="cmpPrev"></div>
     <div class="tools">
       <button class="btn ghost sm" id="cmpImg">${ic('image')}תמונה</button>
@@ -514,11 +621,14 @@ function compose(){
     </div>
   </div>`,{onMount:sh=>{
     const t=$('#cmpText',sh),b=$('#cmpPost',sh),pv=$('#cmpPrev',sh);
-    const upd=()=>{b.disabled=!t.value.trim()&&!img};
+    const upd=()=>{b.disabled=!t.value.trim()&&!blob};
     t.addEventListener('input',upd);
-    const showPrev=()=>{pv.innerHTML=img?`<div class="prev"><img src="${img}" alt="תצוגה מקדימה"><button class="iconbtn" id="rmImg" aria-label="הסרת התמונה">${ic('x')}</button></div>`:'';$('#rmImg',pv)?.addEventListener('click',()=>{img=null;showPrev();upd()})};
-    $('#cmpImg',sh).addEventListener('click',async()=>{const f=await pickFile('image/*');if(!f)return;try{img=await compress(f);showPrev();upd()}catch(e){toast('לא הצלחנו לפתוח את הקובץ. בחרו תמונה מסוג JPG או PNG.')}});
-    b.addEventListener('click',()=>{const p={id:uid(),text:t.value.trim(),img,ts:Date.now(),liked:false,comments:[],saved:false};S.posts.unshift(p);if(!save()){S.posts.shift();return}closeLayer();go('home');toast('הפוסט פורסם')});
+    const showPrev=()=>{pv.innerHTML=url?`<div class="prev"><img src="${url}" alt="תצוגה מקדימה"><button class="iconbtn" id="rmImg" aria-label="הסרת התמונה">${ic('x')}</button></div>`:'';$('#rmImg',pv)?.addEventListener('click',()=>{blob=null;url=null;showPrev();upd()})};
+    $('#cmpImg',sh).addEventListener('click',async()=>{const f=await pickFile('image/*');if(!f)return;try{blob=await compress(f);url=URL.createObjectURL(blob);showPrev();upd()}catch(e){toast('לא הצלחנו לפתוח את הקובץ. בחרו תמונה מסוג JPG או PNG.')}});
+    b.addEventListener('click',async()=>{busy(b,true,'מפרסם…');
+      try{const media=blob?await upload(blob,'jpg','image/jpeg'):null;
+        const{error}=await sb.from('pk_posts').insert({kind:'post',body:t.value.trim(),media_url:media,media_type:media?'image':null});if(error)throw error;
+        closeLayer();await loadAll();go('home');render();toast('הפוסט פורסם')}catch(x){busy(b,false);toast(errText(x))}});
   }});
 }
 
@@ -538,20 +648,22 @@ function storyCompose(){
     const t=$('#stText',sh),pv=$('#stPrev',sh),b=$('#stPost',sh);
     t.addEventListener('input',()=>{pv.textContent=t.value||'כתבו משהו…';b.disabled=!t.value.trim()});
     $$('.sw',sh).forEach(s=>s.addEventListener('click',()=>{bg=+s.dataset.bg;pv.style.background=BGS[bg];$$('.sw',sh).forEach(x=>x.setAttribute('aria-pressed',x===s))}));
-    b.addEventListener('click',()=>{S.stories.push({id:uid(),text:t.value.trim(),bg,ts:Date.now()});save();closeLayer();render();toast('הסטורי עלה ל-24 שעות')});
+    b.addEventListener('click',async()=>{busy(b,true);const{error}=await sb.from('pk_posts').insert({kind:'story',body:t.value.trim(),bg});if(error){busy(b,false);toast(errText(error));return}closeLayer();await loadAll();render();toast('הסטורי עלה ל-24 שעות')});
   }});
 }
 let stTimer=null;
+const storySeen=(()=>{try{return JSON.parse(localStorage.getItem('platformika.seen')||'{}')}catch(e){return{}}})();
 function stopStory(){cancelAnimationFrame(stTimer);stTimer=null}
-function viewStories(start=0){
-  const list=activeStories();if(!list.length)return;
-  let i=start;const L=$('#layer');
+function viewStories(author){
+  const list=activeStories().filter(s=>s.author===author);if(!list.length)return;
+  let i=Math.max(0,list.findIndex(s=>!storySeen[s.id]));const L=$('#layer');
   const show=()=>{
-    stopStory();const s=list[i];S.storySeen[s.id]=1;save();
+    stopStory();const s=list[i];storySeen[s.id]=1;try{localStorage.setItem('platformika.seen',JSON.stringify(storySeen))}catch(e){}
+    const w=who(s.author);
     L.innerHTML=`<div class="viewer" role="dialog" aria-modal="true" aria-label="צפייה בסטורי">
-      <div class="frame" style="background:${BGS[s.bg]||BGS[0]}">${esc(s.text)}
+      <div class="frame" style="background:${BGS[s.bg]||BGS[0]}">${esc(s.body)}
         <div class="bars">${list.map((_,k)=>`<i><b style="width:${k<i?100:0}%"></b></i>`).join('')}</div>
-        <div class="vh">${av(S.me,'s32')}<span>${esc(S.me.name)} <small>${rel(s.ts)}</small></span><button class="iconbtn x" data-close aria-label="סגירה">${ic('x')}</button></div>
+        <div class="vh">${av(w,'s32')}<span>${esc(w.name)} <small>${rel(s.created_at)}</small></span><button class="iconbtn x" data-close aria-label="סגירה">${ic('x')}</button></div>
         <button class="tapzone prev" aria-label="הקודם"></button><button class="tapzone next" aria-label="הבא"></button>
       </div></div>`;
     const bar=$$('.bars b',L)[i];const t0=performance.now(),D=5000;
@@ -565,77 +677,105 @@ function viewStories(start=0){
 
 /* ---------- views ---------- */
 function storiesTray(){
-  const st=activeStories();const seen=st.length&&st.every(s=>S.storySeen[s.id]);
+  const st=activeStories(),by=[];st.forEach(s=>{if(!by.includes(s.author))by.push(s.author)});
+  if(by.includes(USER.id))by.splice(by.indexOf(USER.id),1),by.unshift(USER.id);
   return`<section class="card" aria-label="סטוריז"><div class="stories">
     <button class="story" data-act="story-new"><span class="ring add"><span class="inner">${ic('plus')}</span></span><span>הוספת סטורי</span></button>
-    ${st.length?`<button class="story" data-act="story-view"><span class="ring ${seen?'seen':''}"><span class="inner" style="background:${BGS[st[st.length-1].bg]}">${esc(st[st.length-1].text.slice(0,26))}</span></span><span>הסטורי שלך</span></button>`:''}
+    ${by.map(a=>{const mine=st.filter(s=>s.author===a),last=mine[mine.length-1],seen=mine.every(s=>storySeen[s.id]),w=who(a);
+      return`<button class="story" data-act="story-view" data-author="${a}"><span class="ring ${seen?'seen':''}"><span class="inner" style="background:${BGS[last.bg]||BGS[0]}">${esc(last.body.slice(0,26))}</span></span><span>${a===USER.id?'הסטורי שלך':esc(w.name)}</span></button>`}).join('')}
   </div></section>`;
 }
-function composer(){return`<section class="card composer" aria-label="יצירת פוסט"><div class="row">${av(S.me)}<button class="fake" data-act="compose">מה חדש, ${esc(S.me.name.split(' ')[0])}?</button></div>
+function composer(){return`<section class="card composer" aria-label="יצירת פוסט"><div class="row">${av(ME)}<button class="fake" data-act="compose">מה חדש, ${esc(ME.name.split(' ')[0])}?</button></div>
   <div class="acts"><button data-act="compose-img">${ic('image')}תמונה</button><button data-act="story-new">${ic('story')}סטורי</button><button data-act="clip-new">${ic('video')}קליפ</button></div></section>`}
 function postHTML(p){
-  const big=!p.img&&p.text.length<90;
-  return`<article class="card post" data-post="${p.id}" style="position:relative">
-  <div class="post-h">${av(S.me)}<div class="who"><b>${esc(S.me.name)}</b><small>${rel(p.ts)} · ציבורי</small></div><button class="iconbtn" data-act="post-menu" aria-label="אפשרויות" aria-haspopup="menu">${ic('more')}</button></div>
-  ${p.text?`<p class="post-text ${big?'big':''}" dir="auto">${esc(p.text)}</p>`:''}
-  ${p.img?`<img class="post-img" src="${p.img}" alt="תמונה מהפוסט" loading="lazy">`:''}
-  ${(p.liked||p.comments.length)?`<div class="post-stats">${p.liked?`<span>${ic('heart','i')}</span><span>אהבת את זה</span>`:''}${p.comments.length?`<span style="margin-inline-start:auto">${p.comments.length===1?'תגובה אחת':fmt(p.comments.length)+' תגובות'}</span>`:''}</div>`.replace(/<svg class="i">/,'<svg class="i" style="width:16px;height:16px;fill:var(--like);stroke:var(--like);vertical-align:-3px">'):''}
+  const w=who(p.author),cs=cmtsOf(p.id),nl=likesOf(p.id).length,liked=likedByMe(p.id),big=!p.media_url&&p.body.length<90,mine=p.author===USER.id;
+  return`<article class="card post" data-post="${p.id}" id="post-${p.id}" style="position:relative">
+  <div class="post-h"><a href="#u-${esc(w.handle)}">${av(w)}</a><div class="who"><a href="#u-${esc(w.handle)}" style="color:inherit"><b>${esc(w.name)}</b></a><small>${rel(p.created_at)} · ציבורי</small></div><button class="iconbtn" data-act="post-menu" data-mine="${mine?1:''}" aria-label="אפשרויות" aria-haspopup="menu">${ic('more')}</button></div>
+  ${p.body?`<p class="post-text ${big?'big':''}" dir="auto">${esc(p.body)}</p>`:''}
+  ${p.media_type==='image'?`<img class="post-img" src="${esc(p.media_url)}" alt="תמונה מהפוסט" loading="lazy">`:''}
+  ${p.media_type==='video'?`<video class="post-img" src="${esc(p.media_url)}" controls playsinline preload="metadata"></video>`:''}
+  ${(nl||cs.length)?`<div class="post-stats">${nl?`<span><svg class="i" style="width:16px;height:16px;fill:var(--like);stroke:var(--like);vertical-align:-3px"><use href="#i-heart"/></svg></span><span>${liked?(nl===1?'אהבת את זה':`את/ה ועוד ${fmt(nl-1)}`):fmt(nl)}</span>`:''}${cs.length?`<span style="margin-inline-start:auto">${cs.length===1?'תגובה אחת':fmt(cs.length)+' תגובות'}</span>`:''}</div>`:''}
   <div class="post-acts">
-    <button class="${p.liked?'on':''}" data-act="like" aria-pressed="${p.liked}">${ic('heart')}אהבתי</button>
+    <button class="${liked?'on':''}" data-act="like" aria-pressed="${liked}">${ic('heart')}אהבתי</button>
     <button data-act="comment">${ic('comment')}תגובה</button>
     <button data-act="share">${ic('share')}שיתוף</button>
     <button class="tip" data-act="tip">${ic('gift')}תמיכה</button>
   </div>
-  <div class="comments" ${p.open?'':'hidden'}>
-    ${p.comments.map(c=>`<div class="cmt">${av(S.me,'s32')}<div class="bub"><b>${esc(S.me.name)}</b><p dir="auto">${esc(c.text)}</p></div></div>`).join('')}
-    <form class="cmt-in" data-act="cmt-form">${av(S.me,'s32')}<label class="sr" for="c-${p.id}">תגובה</label><input id="c-${p.id}" placeholder="כתבו תגובה…" maxlength="500"><button class="iconbtn" aria-label="שליחת תגובה">${ic('send')}</button></form>
+  <div class="comments" ${OPEN[p.id]?'':'hidden'}>
+    ${cs.map(c=>{const cw=who(c.author);return`<div class="cmt">${av(cw,'s32')}<div class="bub"><b>${esc(cw.name)}</b><p dir="auto">${esc(c.body)}</p></div></div>`}).join('')}
+    <form class="cmt-in" data-act="cmt-form">${av(ME,'s32')}<label class="sr" for="c-${p.id}">תגובה</label><input id="c-${p.id}" placeholder="כתבו תגובה…" maxlength="500"><button class="iconbtn" aria-label="שליחת תגובה">${ic('send')}</button></form>
   </div></article>`;
 }
 function vHome(){
-  const q=(state.q||'').trim();
-  const posts=q?S.posts.filter(p=>p.text.includes(q)):S.posts;
+  const q=(state.q||'').trim().toLowerCase();
+  const list=posts('post').concat(q?posts('clip'):[]).filter(p=>!q||p.body.toLowerCase().includes(q)||who(p.author).name.toLowerCase().includes(q)||(who(p.author).handle||'').includes(q)).sort((a,b)=>ts(b.created_at)-ts(a.created_at));
+  const people=q?Object.values(PROF).filter(u=>u.name.toLowerCase().includes(q)||(u.handle||'').includes(q)).slice(0,8):[];
   return`
-  <label class="search desk ${q||state.showSearch?'show':''}" for="q">${ic('search')}<input id="q" placeholder="חיפוש בפלטפורמיקה" value="${esc(q)}" autocomplete="off"></label>
+  <label class="search desk ${q||state.showSearch?'show':''}" for="q">${ic('search')}<input id="q" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
+  ${OFFLINE?`<div class="note">${ic('info')}<span>אין חיבור לשרת כרגע. בדקו את האינטרנט — הפיד יתעדכן לבד כשהחיבור יחזור.</span></div>`:''}
   ${q?'':storiesTray()}
   ${q?'':composer()}
-  ${posts.length?posts.map(postHTML).join(''):q?`<section class="card empty"><div class="art">${ic('search')}</div><h2>לא נמצאו תוצאות ל"${esc(q)}"</h2><p>החיפוש עובר כרגע על הפוסטים שלכם. חיפוש אנשים ייפתח כשחברים יצטרפו.</p></section>`:
-  `<section class="card empty"><div class="art">${ic('users')}</div><h2>הפיד שלכם מחכה לחברים</h2><p>כשחברים יצטרפו ויפרסמו, הפוסטים שלהם יופיעו כאן. בינתיים אפשר לפרסם את הפוסט הראשון.</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn primary" data-act="compose">כתיבת פוסט ראשון</button><button class="btn ghost" data-act="invite">הזמנת חברים</button></div></section>`}`;
+  ${people.length?`<section class="card"><div class="sec-h"><h3>אנשים</h3></div><div class="clist">${people.map(u=>`<a class="citem" href="#u-${esc(u.handle)}">${av(u)}<span class="meta"><b>${esc(u.name)}</b><span dir="ltr">@${esc(u.handle)}</span></span></a>`).join('')}</div></section>`:''}
+  ${list.length?list.map(postHTML).join(''):q?`<section class="card empty"><div class="art">${ic('search')}</div><h2>לא נמצאו תוצאות ל"${esc(state.q)}"</h2><p>נסו מילה אחרת, שם או שם משתמש.</p></section>`:
+  `<section class="card empty"><div class="art">${ic('users')}</div><h2>הפיד מחכה לפוסט הראשון</h2><p>מה שתפרסמו יופיע כאן — ובכל מכשיר שבו אתם או החברים שלכם מחוברים.</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn primary" data-act="compose">כתיבת פוסט ראשון</button><button class="btn ghost" data-act="invite">הזמנת חברים</button></div></section>`}`;
 }
 function vClips(){
+  const cl=posts('clip');
   return`<div class="page-h"><h1>קליפים</h1><button class="btn primary sm" data-act="clip-new">${ic('plus')}העלאת קליפ</button></div>
-  ${clips.length?`<div class="note">${ic('info')}<span>קליפים נשמרים רק לתצוגה בחלון הזה עד שהשרת יעלה. רענון הדף ינקה אותם.</span></div>
-  <div class="clips">${clips.map(c=>`<div class="clip"><video src="${c.url}" muted loop playsinline preload="metadata" data-clip></video>${c.cap?`<div class="cap">${esc(c.cap)}</div>`:''}</div>`).join('')}</div>`:
+  ${cl.length?`<div class="clips">${cl.map(c=>{const w=who(c.author);return`<div class="clip" data-post="${c.id}"><video src="${esc(c.media_url)}" muted loop playsinline preload="metadata" data-clip></video>
+    <div class="cap"><a href="#u-${esc(w.handle)}" style="color:#fff;font-weight:700">@${esc(w.handle)}</a>${c.body?' · '+esc(c.body):''}</div>
+    <button class="iconbtn" data-act="clip-sound" aria-label="הפעלת סאונד" style="position:absolute;top:8px;inset-inline-end:8px;background:rgba(0,0,0,.45);color:#fff">🔊</button>
+    <button class="iconbtn ${likedByMe(c.id)?'on':''}" data-act="like" aria-pressed="${likedByMe(c.id)}" aria-label="אהבתי" style="position:absolute;bottom:42px;inset-inline-end:8px;background:rgba(0,0,0,.45);color:${likedByMe(c.id)?'#ff5a72':'#fff'}">${ic('heart')}</button>
+    ${c.author===USER.id?`<button class="iconbtn" data-act="post-menu" data-mine="1" aria-label="אפשרויות" style="position:absolute;top:8px;inset-inline-start:8px;background:rgba(0,0,0,.45);color:#fff">${ic('more')}</button>`:''}</div>`}).join('')}</div>`:
   `<section class="card empty"><div class="art">${ic('clips')}</div><h2>עוד אין כאן קליפים</h2><p>סרטונים אנכיים קצרים מכם ומהחברים שלכם יופיעו כאן, אחד אחרי השני.</p><button class="btn primary" data-act="clip-new">${ic('video')}העלאת קליפ</button></section>`}`;
 }
-function chatListHTML(){
-  const last=S.notes[S.notes.length-1];
+function convos(){
+  const map={};MSGS.forEach(m=>{const other=m.sender===USER.id?m.recipient:m.sender;(map[other]=map[other]||[]).push(m)});
+  return Object.entries(map).map(([id,list])=>({id,last:list[list.length-1],unread:list.filter(m=>m.recipient===USER.id&&m.sender!==USER.id&&ts(m.created_at)>readAt(id)).length})).sort((a,b)=>ts(b.last.created_at)-ts(a.last.created_at));
+}
+const READ=(()=>{try{return JSON.parse(localStorage.getItem('platformika.read')||'{}')}catch(e){return{}}})();
+const readAt=id=>READ[id]||0;
+function markRead(id){READ[id]=Date.now();try{localStorage.setItem('platformika.read',JSON.stringify(READ))}catch(e){}}
+function chatListHTML(limit){
+  const cs=convos().filter(c=>c.id!==USER.id).slice(0,limit||99),self=MSGS.filter(m=>m.sender===USER.id&&m.recipient===USER.id),last=self[self.length-1];
   return`<div class="clist">
-    <a class="citem" href="#chat-saved"><span class="av saved">${ic('bookmark','i')}</span><span class="meta"><b>הודעות לעצמי${last?`<small>${hm(last.ts)}</small>`:''}</b><span>${last?esc(last.text):'מקום לרשימות, קישורים ותזכורות'}</span></span></a>
-    <button class="citem" data-act="invite"><span class="av" style="background:var(--surface-3);color:var(--brand)">${ic('plus','i')}</span><span class="meta"><b>צ'אט חדש</b><span>הזמינו חבר כדי להתחיל לשוחח</span></span></button>
+    ${cs.map(c=>{const w=who(c.id);return`<a class="citem" href="#chat-${c.id}">${av(w)}<span class="meta"><b>${esc(w.name)}<small>${hm(c.last.created_at)}</small></b><span>${c.last.sender===USER.id?'את/ה: ':''}${esc(c.last.body)}</span></span>${c.unread?`<b class="badge" style="position:static">${c.unread}</b>`:''}</a>`}).join('')}
+    <a class="citem" href="#chat-${USER.id}"><span class="av saved">${ic('bookmark','i')}</span><span class="meta"><b>הודעות לעצמי${last?`<small>${hm(last.created_at)}</small>`:''}</b><span>${last?esc(last.body):'מקום לרשימות, קישורים ותזכורות'}</span></span></a>
+    <button class="citem" data-act="chat-new"><span class="av" style="background:var(--surface-3);color:var(--brand)">${ic('plus','i')}</span><span class="meta"><b>צ'אט חדש</b><span>חפשו מישהו בפלטפורמיקה</span></span></button>
   </div>`;
 }
 function vChats(){
   return`<div class="page-h"><h1>צ'אטים</h1></div>
   <section class="card">${chatListHTML()}</section>
-  <section class="card empty"><div class="art">${ic('chat')}</div><h2>השיחות שלכם יופיעו כאן</h2><p>צ'אט אישי וקבוצתי עם כל מי שמצטרף לפלטפורמיקה. שלחו לחברים את הקישור האישי שלכם.</p><button class="btn primary" data-act="invite">${ic('link')}הזמנת חברים</button></section>`;
+  ${convos().filter(c=>c.id!==USER.id).length?'':`<section class="card empty"><div class="art">${ic('chat')}</div><h2>השיחות שלכם יופיעו כאן</h2><p>צ'אט אישי עם כל מי שמצטרף לפלטפורמיקה. שלחו לחברים את הקישור האישי שלכם.</p><button class="btn primary" data-act="invite">${ic('link')}הזמנת חברים</button></section>`}`;
 }
-function vChat(){
+function vChat(id){
+  const self=id===USER.id,w=who(id);markRead(id);
+  const list=MSGS.filter(m=>self?(m.sender===USER.id&&m.recipient===USER.id):((m.sender===id&&m.recipient===USER.id)||(m.sender===USER.id&&m.recipient===id)));
   let prev='';
-  const body=S.notes.map(n=>{const d=dayLabel(n.ts);const sep=d!==prev?`<div class="day">${d}</div>`:'';prev=d;return sep+`<div class="msg me"><p dir="auto">${esc(n.text)}</p><small>${hm(n.ts)}</small></div>`}).join('');
+  const body=list.map(n=>{const d=dayLabel(n.created_at);const sep=d!==prev?`<div class="day">${d}</div>`:'';prev=d;return sep+`<div class="msg ${n.sender===USER.id?'me':''}"><p dir="auto">${esc(n.body)}</p><small>${hm(n.created_at)}</small></div>`}).join('');
   return`<section class="card chat">
-    <div class="chat-h"><a class="iconbtn" href="#chats" aria-label="חזרה לצ'אטים">${ic('back')}</a><span class="av saved s36">${ic('bookmark','i')}</span><div class="who"><b>הודעות לעצמי</b><br><small>רק אתם רואים את השיחה הזו</small></div></div>
-    <div class="chat-body" id="chatBody">${body||`<div class="day">כתבו לעצמכם רעיון, קישור או משימה</div>`}</div>
-    <form class="chat-in" id="chatForm"><label class="sr" for="chatText">הודעה</label><textarea id="chatText" rows="1" placeholder="הודעה" maxlength="2000"></textarea><button class="send" aria-label="שליחה">${ic('send')}</button></form>
+    <div class="chat-h"><a class="iconbtn" href="#chats" aria-label="חזרה לצ'אטים">${ic('back')}</a>${self?`<span class="av saved s36">${ic('bookmark','i')}</span>`:`<a href="#u-${esc(w.handle)}">${av(w,'s36')}</a>`}<div class="who"><b>${self?'הודעות לעצמי':esc(w.name)}</b><br><small>${self?'רק אתם רואים את השיחה הזו':'@'+esc(w.handle)}</small></div></div>
+    <div class="chat-body" id="chatBody">${body||`<div class="day">${self?'כתבו לעצמכם רעיון, קישור או משימה':'שלחו הודעה ראשונה'}</div>`}</div>
+    <form class="chat-in" id="chatForm" data-to="${id}"><label class="sr" for="chatText">הודעה</label><textarea id="chatText" rows="1" placeholder="הודעה" maxlength="2000"></textarea><button class="send" aria-label="שליחה">${ic('send')}</button></form>
   </section>`;
 }
-const ALERT_IC={bell:'bell',users:'users',heart:'heart',coins:'coins'};
+function alerts(){
+  const mine=new Set(POSTS.filter(p=>p.author===USER.id).map(p=>p.id)),out=[];
+  LIKES.forEach(l=>{if(mine.has(l.post)&&l.uid!==USER.id)out.push({icon:'heart',text:`${who(l.uid).name} אהב/ה את הפוסט שלך`,at:l.created_at,href:'#home',post:l.post})});
+  CMTS.forEach(c=>{if(mine.has(c.post)&&c.author!==USER.id)out.push({icon:'comment',text:`${who(c.author).name} הגיב/ה: ${c.body.slice(0,60)}`,at:c.created_at,post:c.post})});
+  MSGS.forEach(m=>{if(m.recipient===USER.id&&m.sender!==USER.id)out.push({icon:'chat',text:`הודעה מ־${who(m.sender).name}: ${m.body.slice(0,60)}`,at:m.created_at,href:'#chat-'+m.sender})});
+  return out.sort((a,b)=>ts(b.at)-ts(a.at)).slice(0,80);
+}
+const seenAlerts=()=>{try{return+localStorage.getItem('platformika.alertsSeen')||0}catch(e){return 0}};
 function vAlerts(){
+  const list=alerts();
   return`<div class="page-h"><h1>התראות</h1></div>
-  ${S.alerts.length?`<section class="card"><div class="clist">${S.alerts.map(a=>`<div class="citem"><span class="av" style="background:var(--brand-soft);color:var(--brand)">${ic(ALERT_IC[a.icon]||'bell','i')}</span><span class="meta"><span style="white-space:normal;color:var(--ink)">${esc(a.text)}</span><small style="color:var(--muted);font-size:12.5px">${rel(a.ts)}</small></span></div>`).join('')}</div></section>`:''}
-  <section class="card empty"><div class="art">${ic('bell')}</div><h2>אין התראות חדשות</h2><p>לייקים, תגובות, עוקבים חדשים ותמיכה מהקהל שלכם יגיעו לכאן.</p></section>`;
+  ${list.length?`<section class="card"><div class="clist">${list.map(a=>`<a class="citem" href="${a.href||'#home'}" ${a.post?`data-jump="${a.post}"`:''}><span class="av" style="background:var(--brand-soft);color:var(--brand)">${ic(a.icon,'i')}</span><span class="meta"><span style="white-space:normal;color:var(--ink)">${esc(a.text)}</span><small style="color:var(--muted);font-size:12.5px">${rel(a.at)}</small></span></a>`).join('')}</div></section>`:
+  `<section class="card empty"><div class="art">${ic('bell')}</div><h2>אין התראות חדשות</h2><p>לייקים, תגובות והודעות מהקהל שלכם יגיעו לכאן.</p></section>`}`;
 }
 function vCreators(){
-  const np=S.posts.length,nc=S.posts.reduce((a,p)=>a+p.comments.length,0);
+  const my=POSTS.filter(p=>p.author===USER.id),ids=new Set(my.map(p=>p.id)),nl=LIKES.filter(l=>ids.has(l.post)&&l.uid!==USER.id).length,nc=CMTS.filter(c=>ids.has(c.post)&&c.author!==USER.id).length;
   return`<div class="page-h"><h1>מרכז היוצרים</h1></div>
   <section class="card hero-split">
     <div class="donut" role="img" aria-label="99 אחוז מהרווח הנקי ליוצרים, 1 אחוז לפלטפורמה">
@@ -646,8 +786,9 @@ function vCreators(){
   </section>
   <div class="stats">
     <div class="card stat"><small>יתרה</small><b>₪0.00</b></div>
-    <div class="card stat"><small>פוסטים</small><b>${fmt(np)}</b></div>
-    <div class="card stat"><small>תגובות</small><b>${fmt(nc)}</b></div>
+    <div class="card stat"><small>פרסומים</small><b>${fmt(my.length)}</b></div>
+    <div class="card stat"><small>לייקים שקיבלתם</small><b>${fmt(nl)}</b></div>
+    <div class="card stat"><small>תגובות שקיבלתם</small><b>${fmt(nc)}</b></div>
   </div>
   <section class="card">
     <div class="sec-h"><h3>איך מרוויחים</h3></div>
@@ -660,44 +801,68 @@ function vCreators(){
   <section class="card invite"><h3>חבר מביא חבר</h3><p>כל חבר שמצטרף דרך הקישור שלכם מגדיל את הקהל שלכם מהיום הראשון.</p>${linkBox()}</section>`;
 }
 function linkBox(){return`<div class="linkbox"><code>${esc(refLink())}</code><button class="btn primary sm" data-act="copy-ref">${ic('copy')}העתקה</button></div>`}
-function vProfile(){
-  const tab=state.ptab||'posts';const ps=S.posts;const imgs=ps.filter(p=>p.img);
-  const list=tab==='media'?imgs:ps;
+function vProfile(handle){
+  const u=handle?Object.values(PROF).find(p=>p.handle===handle):ME;
+  if(!u)return`<section class="card empty"><div class="art">${ic('user')}</div><h2>המשתמש לא נמצא</h2><p>אולי שם המשתמש השתנה.</p><a class="btn primary" href="#home">חזרה לבית</a></section>`;
+  const mine=u.id===USER.id,tab=state.ptab||'posts',ps=POSTS.filter(p=>p.author===u.id&&p.kind!=='story'),media=ps.filter(p=>p.media_url),list=tab==='media'?media:ps;
+  const got=LIKES.filter(l=>ps.some(p=>p.id===l.post)).length;
   return`<section class="card" style="overflow:hidden">
-    <div class="cover">${S.me.cover?`<img src="${S.me.cover}" alt="">`:''}</div>
+    <div class="cover">${u.cover_url?`<img src="${esc(u.cover_url)}" alt="">`:''}</div>
     <div class="prof">
-      <div class="head">${av(S.me,'s120')}<div style="display:flex;gap:8px;margin-bottom:6px"><button class="btn ghost sm" data-act="edit-profile">${ic('edit')}עריכת פרופיל</button></div></div>
-      <div><h1>${esc(S.me.name)}</h1><div class="handle">@${esc(S.me.handle)}</div></div>
-      ${S.me.bio?`<p class="bio" dir="auto">${esc(S.me.bio)}</p>`:`<button class="btn ghost sm" style="align-self:flex-start" data-act="edit-profile">הוספת ביו</button>`}
-      <div class="counts"><span><b>${fmt(ps.length)}</b>פוסטים</span><span><b>0</b>עוקבים</span><span><b>0</b>במעקב</span></div>
+      <div class="head">${av(u,'s120')}<div style="display:flex;gap:8px;margin-bottom:6px">${mine?`<button class="btn ghost sm" data-act="edit-profile">${ic('edit')}עריכת פרופיל</button><button class="btn ghost sm" data-act="logout">התנתקות</button>`:`<a class="btn primary sm" href="#chat-${u.id}">${ic('chat')}הודעה</a>`}</div></div>
+      <div><h1>${esc(u.name)}</h1><div class="handle">@${esc(u.handle)}</div></div>
+      ${u.bio?`<p class="bio" dir="auto">${esc(u.bio)}</p>`:mine?`<button class="btn ghost sm" style="align-self:flex-start" data-act="edit-profile">הוספת ביו</button>`:''}
+      <div class="counts"><span><b>${fmt(ps.length)}</b>פרסומים</span><span><b>${fmt(got)}</b>לייקים</span></div>
     </div>
-    <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='posts'}" data-ptab="posts">פוסטים</button><button role="tab" aria-selected="${tab==='media'}" data-ptab="media">תמונות</button></div>
-    ${list.length?`<div class="grid">${list.map(p=>`<a class="cell ${p.img?'has-img':''}" href="#home" data-jump="${p.id}">${p.img?`<img src="${p.img}" alt="" loading="lazy">`:esc(p.text.slice(0,80))}</a>`).join('')}</div>`:
-    `<div class="empty"><div class="art">${ic(tab==='media'?'camera':'edit')}</div><h2>${tab==='media'?'עוד אין תמונות':'עוד אין פוסטים'}</h2><p>${tab==='media'?'תמונות שתפרסמו יוצגו כאן ברשת.':'הפוסטים שתפרסמו יופיעו כאן.'}</p><button class="btn primary" data-act="${tab==='media'?'compose-img':'compose'}">יצירת פוסט</button></div>`}
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='posts'}" data-ptab="posts">פוסטים</button><button role="tab" aria-selected="${tab==='media'}" data-ptab="media">תמונות וסרטונים</button></div>
+    ${list.length?`<div class="grid">${list.map(p=>`<a class="cell ${p.media_url?'has-img':''}" href="${p.kind==='clip'?'#clips':'#home'}" data-jump="${p.kind==='clip'?'':p.id}">${p.media_type==='image'?`<img src="${esc(p.media_url)}" alt="" loading="lazy">`:p.media_type==='video'?`<video src="${esc(p.media_url)}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`:esc(p.body.slice(0,80))}</a>`).join('')}</div>`:
+    `<div class="empty"><div class="art">${ic(tab==='media'?'camera':'edit')}</div><h2>${tab==='media'?'עוד אין תמונות':'עוד אין פוסטים'}</h2>${mine?`<button class="btn primary" data-act="${tab==='media'?'compose-img':'compose'}">יצירת פוסט</button>`:''}</div>`}
   </section>`;
 }
 function editProfile(){
-  let photo=S.me.photo,cover=S.me.cover;
+  let photo=null,cover=null;
   openLayer(`
   <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>עריכת פרופיל</h2><span style="width:40px"></span></div>
   <form class="sheet-b" id="epForm">
-    <div style="display:flex;gap:14px;align-items:center"><span id="epAv">${av(S.me,'s96')}</span><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn ghost sm" id="epPhoto">${ic('camera')}תמונת פרופיל</button><button type="button" class="btn ghost sm" id="epCover">${ic('image')}תמונת נושא</button></div></div>
-    <div class="field"><label for="epName">שם</label><input id="epName" value="${esc(S.me.name)}" maxlength="40"></div>
-    <div class="field"><label for="epBio">ביו</label><textarea id="epBio" maxlength="160" placeholder="כמה מילים עליכם">${esc(S.me.bio)}</textarea><span class="hint">עד 160 תווים</span></div>
+    <div style="display:flex;gap:14px;align-items:center"><span id="epAv">${av(ME,'s96')}</span><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn ghost sm" id="epPhoto">${ic('camera')}תמונת פרופיל</button><button type="button" class="btn ghost sm" id="epCover">${ic('image')}תמונת נושא</button></div></div>
+    <div class="field"><label for="epName">שם</label><input id="epName" value="${esc(ME.name)}" maxlength="40"></div>
+    <div class="field"><label for="epBio">ביו</label><textarea id="epBio" maxlength="160" placeholder="כמה מילים עליכם">${esc(ME.bio)}</textarea><span class="hint">עד 160 תווים</span></div>
     <button class="btn primary block">שמירה</button>
   </form>`,{onMount:sh=>{
-    $('#epPhoto',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{photo=await compress(f,320,.85);$('#epAv',sh).innerHTML=av({...S.me,photo},'s96')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
-    $('#epCover',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{cover=await compress(f,1400,.8);toast('תמונת הנושא נבחרה')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
-    $('#epForm',sh).onsubmit=e=>{e.preventDefault();const n=$('#epName',sh).value.trim();if(!n){toast('השם לא יכול להיות ריק');return}const old={...S.me};Object.assign(S.me,{name:n,bio:$('#epBio',sh).value.trim(),photo,cover});if(!save()){S.me=old;return}closeLayer();render();toast('הפרופיל נשמר')};
+    $('#epPhoto',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{photo=await compress(f,400,.86);$('#epAv',sh).innerHTML=av({...ME,avatar_url:URL.createObjectURL(photo)},'s96')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
+    $('#epCover',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{cover=await compress(f,1600,.82);toast('תמונת הנושא נבחרה')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
+    $('#epForm',sh).onsubmit=async e=>{e.preventDefault();const n=$('#epName',sh).value.trim();if(!n){toast('השם לא יכול להיות ריק');return}
+      const b=$('button.primary',sh);busy(b,true,'שומר…');
+      try{const patch={name:n,bio:$('#epBio',sh).value.trim()};
+        if(photo)patch.avatar_url=await upload(photo,'jpg','image/jpeg');
+        if(cover)patch.cover_url=await upload(cover,'jpg','image/jpeg');
+        const{data,error}=await sb.from('pk_profiles').update(patch).eq('id',USER.id).select().single();if(error)throw error;
+        ME=PROF[USER.id]=data;closeLayer();render();toast('הפרופיל נשמר')}catch(x){busy(b,false);toast(errText(x))}};
   }});
 }
 function inviteSheet(){
   openLayer(`
   <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>הזמנת חברים</h2><span style="width:40px"></span></div>
   <div class="sheet-b">
-    <p style="color:var(--ink-2)">שלחו את הקישור האישי שלכם בוואטסאפ, בהודעה או במייל. מי שמצטרף דרכו יתחבר אליכם אוטומטית.</p>
+    <p style="color:var(--ink-2)">שלחו את הקישור האישי שלכם בוואטסאפ, בהודעה או במייל. מי שנרשם דרכו יראה את הפוסטים שלכם מהרגע הראשון.</p>
     ${linkBox()}
   </div>`);
+}
+function chatNew(){
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>צ'אט חדש</h2><span style="width:40px"></span></div>
+  <div class="sheet-b">
+    <div class="field"><label for="cnQ">חיפוש לפי שם או שם משתמש</label><input id="cnQ" autocomplete="off" autofocus></div>
+    <div class="clist" id="cnList"></div>
+  </div>`,{onMount:sh=>{
+    const q=$('#cnQ',sh),L=$('#cnList',sh);let t=0;
+    const run=async()=>{const v=q.value.trim().replace(/[%,()]/g,'');let rows=[];
+      if(v.length>=1){const{data}=await sb.from('pk_profiles').select('*').or(`handle.ilike.%${v.toLowerCase()}%,name.ilike.%${v}%`).neq('id',USER.id).limit(20);rows=data||[]}
+      else{const{data}=await sb.from('pk_profiles').select('*').neq('id',USER.id).order('created_at',{ascending:false}).limit(20);rows=data||[]}
+      rows.forEach(r=>PROF[r.id]=r);
+      L.innerHTML=rows.length?rows.map(u=>`<a class="citem" href="#chat-${u.id}" data-close>${av(u)}<span class="meta"><b>${esc(u.name)}</b><span dir="ltr">@${esc(u.handle)}</span></span></a>`).join(''):`<p style="color:var(--muted);text-align:center;padding:12px">לא נמצא אף אחד. שלחו לחבר את קישור ההזמנה.</p>`};
+    q.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(run,250)});run();
+  }});
 }
 function tipSheet(){
   openLayer(`
@@ -714,12 +879,20 @@ function clipNew(){
   <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>קליפ חדש</h2><span style="width:40px"></span></div>
   <div class="sheet-b">
     <button class="btn ghost block" id="clFile">${ic('video')}בחירת סרטון מהמכשיר</button>
+    <p class="hint" style="text-align:center;color:var(--muted);font-size:13px">MP4 או MOV, עד 50MB</p>
     <div id="clPrev"></div>
     <div class="field"><label for="clCap">כיתוב</label><input id="clCap" maxlength="120" placeholder="על מה הקליפ?"></div>
     <button class="btn primary block" id="clPost" disabled>פרסום קליפ</button>
   </div>`,{onMount:sh=>{
-    $('#clFile',sh).onclick=async()=>{const f=await pickFile('video/*');if(!f)return;if(!f.type.startsWith('video/')){toast('בחרו קובץ וידאו');return}file=f;const u=URL.createObjectURL(f);$('#clPrev',sh).innerHTML=`<div class="clip" style="max-width:220px;margin:0 auto"><video src="${u}" muted autoplay loop playsinline></video></div>`;$('#clPost',sh).disabled=false};
-    $('#clPost',sh).onclick=()=>{clips.unshift({url:URL.createObjectURL(file),cap:$('#clCap',sh).value.trim()});closeLayer();go('clips');toast('הקליפ פורסם')};
+    $('#clFile',sh).onclick=async()=>{const f=await pickFile('video/*');if(!f)return;if(!f.type.startsWith('video/')){toast('בחרו קובץ וידאו');return}
+      if(f.size>MAX_VIDEO){toast('הסרטון גדול מ־50MB. קצרו אותו או צלמו באיכות נמוכה יותר.');return}
+      file=f;const u=URL.createObjectURL(f);$('#clPrev',sh).innerHTML=`<div class="clip" style="max-width:220px;margin:0 auto"><video src="${u}" muted autoplay loop playsinline></video></div>`;$('#clPost',sh).disabled=false};
+    $('#clPost',sh).onclick=async()=>{const b=$('#clPost',sh);busy(b,true,'מעלה את הסרטון…');
+      try{const ext=(file.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
+        const type=file.type==='video/quicktime'||ext==='mov'?'video/quicktime':file.type==='video/webm'?'video/webm':'video/mp4';
+        const url=await upload(file,ext,type);
+        const{error}=await sb.from('pk_posts').insert({kind:'clip',body:$('#clCap',sh).value.trim(),media_url:url,media_type:'video'});if(error)throw error;
+        closeLayer();await loadAll();go('clips');render();toast('הקליפ פורסם')}catch(x){busy(b,false);toast(errText(x))}};
   }});
 }
 
@@ -733,86 +906,127 @@ function railHTML(){
     <div class="legend"><span><b>99%</b> ליוצרים</span><span><b>1%</b> לפלטפורמה</span></div>
     <a class="btn ghost sm" href="#creators">למרכז היוצרים</a>
   </section>
-  <section class="card"><div class="sec-h"><h3>צ'אטים</h3><a href="#chats">הכול</a></div>${chatListHTML()}</section>
+  <section class="card"><div class="sec-h"><h3>צ'אטים</h3><a href="#chats">הכול</a></div>${chatListHTML(4)}</section>
   <section class="card invite"><h3>חבר מביא חבר</h3><p>פלטפורמיקה גדלה מחברים. שלחו את הקישור לחמישה אנשים שאתם סומכים עליהם.</p>${linkBox()}</section>
-  <p class="foot">פלטפורמיקה · מבית <a href="/">Barusik Platforms</a><br>© ${new Date().getFullYear()} כל הזכויות שמורות</p>`;
+  <p class="foot">פלטפורמיקה · מבית <a href="/">Barusik Platforms</a><br>משתמש אחד לכל הפלטפורמות<br>© ${new Date().getFullYear()} כל הזכויות שמורות</p>`;
 }
 
 /* ---------- router ---------- */
 const state={route:'home',q:'',ptab:'posts'};
-const VIEWS={home:vHome,clips:vClips,chats:vChats,'chat-saved':vChat,alerts:vAlerts,creators:vCreators,profile:vProfile};
+const VIEWS={home:vHome,clips:vClips,chats:vChats,alerts:vAlerts,creators:vCreators,profile:()=>vProfile(null)};
 function go(r){if(location.hash!=='#'+r)location.hash=r;else render()}
-function render(){
-  const r=(location.hash.slice(1)||'home');state.route=VIEWS[r]?r:'home';
-  if(!S.me){$('#view').innerHTML='';$('#rail').innerHTML='';onboarding();return}
-  if(state.route==='alerts'){S.seenAlerts=S.alerts.length;save()}
-  $('#view').innerHTML=VIEWS[state.route]();
+function render(soft){
+  const raw=location.hash.slice(1)||'home';
+  if(!sb){$('#view').innerHTML=`<section class="card empty"><div class="art">${ic('info')}</div><h2>אין חיבור לאינטרנט</h2><p>פלטפורמיקה צריכה חיבור כדי לטעון את הפיד. נסו שוב בעוד רגע.</p><button class="btn primary" onclick="location.reload()">נסו שוב</button></section>`;return}
+  if(!READY){if(AUTHKNOWN&&!USER&&!$('#layer').innerHTML)authSheet('login');$('#view').innerHTML=`<section class="card empty"><div class="art">${ic('users')}</div><h2>פלטפורמיקה</h2><p>מתחברים…</p></section>`;$('#rail').innerHTML='';return}
+  if(!ME){$('#view').innerHTML='';$('#rail').innerHTML='';return}
+  if(raw.startsWith('post-')){const id=raw.slice(5);history.replaceState(null,'','#home');setTimeout(()=>{const el=document.getElementById('post-'+id);el?.scrollIntoView({block:'center'});el?.classList.add('flash')},60)}
+  const r=location.hash.slice(1)||'home';
+  let html,navKey=r;
+  if(r.startsWith('chat-')){html=vChat(r.slice(5));navKey='chats'}
+  else if(r.startsWith('u-')){html=vProfile(decodeURIComponent(r.slice(2)));navKey=r.slice(2)===ME.handle?'profile':''}
+  else{state.route=VIEWS[r]?r:'home';html=VIEWS[state.route]();navKey=state.route}
+  if(r==='alerts'){try{localStorage.setItem('platformika.alertsSeen',String(Date.now()))}catch(e){}}
+  // keep what the person is typing when live updates redraw the page
+  const ae=document.activeElement,keep=ae&&ae.id&&$('#view').contains(ae)?{id:ae.id,v:ae.value,s:ae.selectionStart}:null;
+  const chatAtEnd=(()=>{const b=$('#chatBody');return!b||b.scrollHeight-b.scrollTop-b.clientHeight<60})();
+  const y=scrollY;
+  $('#view').innerHTML=html;
   $('#rail').innerHTML=railHTML();
-  const navKey=state.route==='chat-saved'?'chats':state.route;
+  if(keep){const el=document.getElementById(keep.id);if(el){el.value=keep.v;el.focus();try{el.setSelectionRange(keep.s,keep.s)}catch(e){}}}
+  if(soft)scrollTo(0,y);
   $$('[data-r]').forEach(a=>a.dataset.r===navKey?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
-  const unread=Math.max(0,S.alerts.length-(S.seenAlerts||0));
+  const seen=seenAlerts(),unread=alerts().filter(a=>ts(a.at)>seen).length;
   $$('[data-badge]').forEach(b=>{b.hidden=!unread;b.textContent=unread});
-  $('#navMe').innerHTML=`${av(S.me,'s36')}<span class="meta" style="min-width:0;line-height:1.2"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(S.me.name)}</b><small style="color:var(--muted);direction:ltr;display:block;text-align:right">@${esc(S.me.handle)}</small></span>`;
-  if(state.route==='chat-saved'){const b=$('#chatBody');b.scrollTop=b.scrollHeight;bindChat()}
+  $('#navMe').innerHTML=`${av(ME,'s36')}<span class="meta" style="min-width:0;line-height:1.2"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ME.name)}</b><small style="color:var(--muted);direction:ltr;display:block;text-align:right">@${esc(ME.handle)}</small></span>`;
+  if(r.startsWith('chat-')){const b=$('#chatBody');if(chatAtEnd)b.scrollTop=b.scrollHeight;bindChat()}
   $$('[data-clip]').forEach(v=>{v.play?.().catch(()=>{})});
-  document.title=({home:'פלטפורמיקה',clips:'קליפים · פלטפורמיקה',chats:"צ'אטים · פלטפורמיקה",'chat-saved':'הודעות לעצמי · פלטפורמיקה',alerts:'התראות · פלטפורמיקה',creators:'מרכז היוצרים · פלטפורמיקה',profile:`${S.me.name} · פלטפורמיקה`})[state.route];
+  document.title=r.startsWith('chat-')?"צ'אט · פלטפורמיקה":r.startsWith('u-')?`${r.slice(2)} · פלטפורמיקה`:({home:'פלטפורמיקה',clips:'קליפים · פלטפורמיקה',chats:"צ'אטים · פלטפורמיקה",alerts:'התראות · פלטפורמיקה',creators:'מרכז היוצרים · פלטפורמיקה',profile:`${ME.name} · פלטפורמיקה`})[state.route]||'פלטפורמיקה';
 }
 addEventListener('hashchange',()=>{render();scrollTo(0,0)});
 
 function bindChat(){
-  const f=$('#chatForm'),t=$('#chatText');
+  const f=$('#chatForm'),t=$('#chatText');if(!f)return;
   const grow=()=>{t.style.height='auto';t.style.height=Math.min(120,t.scrollHeight)+'px'};
   t.addEventListener('input',grow);
   t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();f.requestSubmit()}});
-  f.addEventListener('submit',e=>{e.preventDefault();const v=t.value.trim();if(!v)return;S.notes.push({text:v,ts:Date.now()});if(!save()){S.notes.pop();return}render();$('#chatText')?.focus()});
+  f.addEventListener('submit',async e=>{e.preventDefault();const v=t.value.trim();if(!v)return;t.value='';
+    const tmp={id:'tmp'+Date.now(),sender:USER.id,recipient:f.dataset.to,body:v,created_at:new Date().toISOString()};MSGS.push(tmp);render(true);$('#chatText')?.focus();
+    const{error}=await sb.from('pk_messages').insert({recipient:f.dataset.to,body:v});
+    if(error){MSGS=MSGS.filter(m=>m!==tmp);render(true);toast(errText(error))}else reloadSoon()});
 }
 
 /* ---------- events ---------- */
 document.addEventListener('input',e=>{
-  if(e.target.id==='q'||e.target.id==='qr'){state.q=e.target.value;const id=e.target.id,pos=e.target.selectionStart;if(state.route!=='home'){location.hash='home'}render();const el=$('#'+id);if(el){el.focus();el.setSelectionRange(pos,pos)}}
+  if(e.target.id==='q'||e.target.id==='qr'){state.q=e.target.value;const id=e.target.id,pos=e.target.selectionStart;if((location.hash.slice(1)||'home')!=='home'){location.hash='home'}render();const el=$('#'+id);if(el){el.focus();el.setSelectionRange(pos,pos)}}
 });
-document.addEventListener('submit',e=>{
+document.addEventListener('submit',async e=>{
   const f=e.target.closest('[data-act="cmt-form"]');if(!f)return;e.preventDefault();
-  const id=f.closest('[data-post]').dataset.post,p=S.posts.find(x=>x.id===id),inp=$('input',f),v=inp.value.trim();if(!v)return;
-  p.comments.push({text:v,ts:Date.now()});p.open=true;save();render();$('#c-'+id)?.focus();
+  const id=f.closest('[data-post]').dataset.post,inp=$('input',f),v=inp.value.trim();if(!v)return;inp.value='';
+  OPEN[id]=true;CMTS.push({id:'tmp',post:id,author:USER.id,body:v,created_at:new Date().toISOString()});render(true);$('#c-'+id)?.focus();
+  const{error}=await sb.from('pk_comments').insert({post:id,body:v});if(error)toast(errText(error));reloadSoon();
 });
 document.addEventListener('click',async e=>{
-  const close=e.target.closest('[data-close]');if(close){closeLayer();return}
+  const close=e.target.closest('[data-close]');if(close){closeLayer();if(close.tagName!=='A')return}
   if(!e.target.closest('.menu'))$$('.menu').forEach(m=>m.remove());
-  const pt=e.target.closest('[data-ptab]');if(pt){state.ptab=pt.dataset.ptab;render();return}
-  const jump=e.target.closest('[data-jump]');if(jump){e.preventDefault();state.q='';go('home');setTimeout(()=>{$(`[data-post="${jump.dataset.jump}"]`)?.scrollIntoView({block:'center',behavior:'smooth'})},30);return}
+  const pt=e.target.closest('[data-ptab]');if(pt){state.ptab=pt.dataset.ptab;render(true);return}
+  const jump=e.target.closest('[data-jump]');if(jump&&jump.dataset.jump){e.preventDefault();state.q='';go('home');setTimeout(()=>{document.getElementById('post-'+jump.dataset.jump)?.scrollIntoView({block:'center',behavior:'smooth'})},40);return}
   const a=e.target.closest('[data-act]');if(!a)return;
-  const act=a.dataset.act;const postEl=a.closest('[data-post]');const p=postEl&&S.posts.find(x=>x.id===postEl.dataset.post);
+  const act=a.dataset.act;const postEl=a.closest('[data-post]');const p=postEl&&POSTS.find(x=>x.id===postEl.dataset.post);
   if(a.tagName==='A')e.preventDefault();
   switch(act){
     case'compose':compose();break;
     case'compose-img':compose();setTimeout(()=>$('#cmpImg')?.click(),60);break;
     case'story-new':storyCompose();break;
-    case'story-view':viewStories(0);break;
+    case'story-view':viewStories(a.dataset.author);break;
     case'clip-new':clipNew();break;
+    case'clip-sound':{const v=$('video',postEl);if(v){v.muted=!v.muted;a.textContent=v.muted?'🔊':'🔇';v.play?.().catch(()=>{})}break}
+    case'chat-new':chatNew();break;
     case'invite':inviteSheet();break;
     case'tip':tipSheet();break;
+    case'logout':await sb.auth.signOut();break;
     case'search':state.showSearch=!state.showSearch;go('home');setTimeout(()=>$('#q')?.focus(),30);break;
     case'copy-ref':copy(refLink(),a);break;
     case'edit-profile':editProfile();break;
-    case'like':p.liked=!p.liked;save();render();if(p.liked)$(`[data-post="${p.id}"] [data-act="like"] svg`)?.classList.add('pop');break;
-    case'comment':p.open=!p.open;render();if(p.open)$('#c-'+p.id)?.focus();break;
-    case'share':copy(SITE+'#post-'+p.id,a);break;
-    case'post-menu':{const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
-      m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}העתקת קישור</button><button role="menuitem" class="danger" data-m="del">${ic('trash')}מחיקת הפוסט</button>`;
+    case'like':{if(!p)break;const on=likedByMe(p.id);
+      if(on)LIKES=LIKES.filter(l=>!(l.post===p.id&&l.uid===USER.id));else LIKES.push({post:p.id,uid:USER.id,created_at:new Date().toISOString()});
+      render(true);if(!on)$(`[data-post="${p.id}"] [data-act="like"] svg`)?.classList.add('pop');
+      const r=on?await sb.from('pk_likes').delete().eq('post',p.id).eq('uid',USER.id):await sb.from('pk_likes').insert({post:p.id});
+      if(r.error&&!String(r.error.message).includes('duplicate')){toast(errText(r.error));reloadSoon()}break}
+    case'comment':if(!p)break;OPEN[p.id]=!OPEN[p.id];render(true);if(OPEN[p.id])$('#c-'+p.id)?.focus();break;
+    case'share':if(p)copy(SITE+'#post-'+p.id,a);break;
+    case'post-menu':{if(!p)break;const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
+      m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}העתקת קישור</button>${a.dataset.mine?`<button role="menuitem" class="danger" data-m="del">${ic('trash')}מחיקה</button>`:''}`;
       postEl.append(m);m.querySelector('button').focus();
-      m.addEventListener('click',ev=>{const b=ev.target.closest('[data-m]');if(!b)return;
+      m.addEventListener('click',async ev=>{const b=ev.target.closest('[data-m]');if(!b)return;
         if(b.dataset.m==='copy'){copy(SITE+'#post-'+p.id);m.remove()}
         else if(b.dataset.m==='del'){
           if(!b.dataset.sure){b.dataset.sure=1;b.innerHTML=`${ic('trash')}ללחוץ שוב כדי למחוק`;return}
-          S.posts=S.posts.filter(x=>x.id!==p.id);save();render();toast('הפוסט נמחק')}
+          const{error}=await sb.from('pk_posts').delete().eq('id',p.id);
+          if(error){toast(errText(error));return}
+          const path=mediaPath(p.media_url);if(path)sb.storage.from(BUCKET).remove([path]).catch(()=>{});
+          POSTS=POSTS.filter(x=>x.id!==p.id);render(true);toast('נמחק')}
       });break}
   }
 });
 
+/* ---------- start ---------- */
 render();
+if(sb){
+  sb.auth.onAuthStateChange((ev,session)=>{
+    const u=session?.user||null;AUTHKNOWN=true;
+    if(u&&(!USER||USER.id!==u.id)){signedIn(u)}
+    else if(!u&&USER){USER=null;ME=null;READY=false;closeLayer();render()}
+    else if(!u&&!USER){READY=false;render()}
+  });
+  // signed in from another tab or another Barusik platform: pick the session up without a reload
+  const recheck=()=>{if(USER)return;sb.auth.getSession().then(({data})=>{const u=data?.session?.user;if(u&&!USER)signedIn(u)}).catch(()=>{})};
+  addEventListener('storage',e=>{if(e.key==='complichess-auth')recheck()});
+  addEventListener('focus',recheck);document.addEventListener('visibilitychange',()=>{if(!document.hidden)recheck()});
+}
 })();
 </script>
 
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.0.0').catch(()=>{}));</script>
+
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.0.0').catch(()=>{}));</script>
 </body></html>
