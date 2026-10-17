@@ -48,3 +48,7 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
 /* grabbing parts of the 3D platforms */
 html[data-grab] body { cursor: grab; }
 html[data-drag], html[data-drag] * { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+
+/* custom cursor where the blended one would vanish (gold / light / mid-tone surfaces) */
+.cur-glow { mix-blend-mode: normal !important; border-color: #FF8A3D !important; box-shadow: 0 0 0 1.5px rgba(255,138,61,.55), 0 0 14px 2px rgba(255,138,61,.75); }
+.cur-glow.bg-paper, span.cur-glow:not(.border) { background: #FF8A3D !important; }

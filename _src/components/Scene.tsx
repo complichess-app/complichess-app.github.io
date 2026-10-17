@@ -9,7 +9,7 @@ import { world, PLATFORMS, smooth, clamp, type PlatformId } from '../lib/store';
 
 const C = {
   night: '#090B1F', pk: '#5B54FF', pkDeep: '#2A238F', gold: '#F2B705', felt: '#1F4A3B', cream: '#E9DFC6',
-  brass: '#D8AE57', ebony: '#1A1715', mint: '#49E8C8', crSlab: '#0E1A33', coral: '#FF7A59', lrSlab: '#3A1626',
+  brass: '#D8AE57', ebony: '#1A1715', mint: '#49E8C8', crSlab: '#0E1A33', coral: '#FF7A59', lrSlab: '#3A1626', sky: '#38BDF8', trSlab: '#0B2A44',
 };
 
 /* ---------- camera path ---------- */
@@ -70,11 +70,15 @@ export const overUI = (e: ThreeEvent<PointerEvent | MouseEvent>) => !!(e.nativeE
 export function Drag({ children, position = [0, 0, 0], rotation, scale }: {
   children: React.ReactNode; position?: [number, number, number]; rotation?: [number, number, number]; scale?: number;
 }) {
+  /* A part hangs from the point you grab. Grab it near its edge and it first swings round that point (like
+     pulling the corner of a book), then follows; let go and it drifts back to its place very slowly. */
   const g = useRef<THREE.Group>(null!);
   const { camera } = useThree();
   const st = useMemo(() => ({
-    on: false, id: -1, moved: false, rest: new THREE.Vector3(...position), grab: new THREE.Vector3(),
-    vel: new THREE.Vector3(), plane: new THREE.Plane(), spin: 0, spinV: 0,
+    on: false, id: -1, moved: false, rest: new THREE.Vector3(...position),
+    restQ: new THREE.Quaternion().setFromEuler(new THREE.Euler(...(rotation || [0, 0, 0]))),
+    arm: new THREE.Vector3(), target: new THREE.Vector3(), plane: new THREE.Plane(),
+    tq: new THREE.Quaternion(), dq: new THREE.Quaternion(), axis: new THREE.Vector3(), tmp: new THREE.Vector3(), lag: new THREE.Vector3(),
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { st.rest.set(...position); }, [position, st]);
   const toLocal = (v: THREE.Vector3) => g.current.parent!.worldToLocal(v);
@@ -84,19 +88,19 @@ export function Drag({ children, position = [0, 0, 0], rotation, scale }: {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     camera.getWorldDirection(_n);
     st.plane.setFromNormalAndCoplanarPoint(_n, e.point);
-    st.grab.copy(toLocal(_loc.copy(e.point))).sub(g.current.position);
-    st.on = true; st.id = e.pointerId; st.moved = false; st.vel.set(0, 0, 0);
+    const hit = toLocal(_loc.copy(e.point));
+    // the arm: where on the part you grabbed, measured from its centre, in its resting orientation
+    st.arm.copy(hit).sub(g.current.position).applyQuaternion(st.dq.copy(g.current.quaternion).invert().premultiply(st.restQ));
+    st.target.copy(hit);
+    st.on = true; st.id = e.pointerId; st.moved = false;
     world.dragging = true; document.documentElement.dataset.drag = '1';
   };
   const move = (e: ThreeEvent<PointerEvent>) => {
     if (!st.on || e.pointerId !== st.id) return;
     e.stopPropagation();
     if (!e.ray.intersectPlane(st.plane, _hit)) return;
-    const next = toLocal(_hit).sub(st.grab);
-    st.vel.copy(next).sub(g.current.position);                        // fling speed for the release
-    if (g.current.position.distanceToSquared(next) > 1e-6) st.moved = true;
-    g.current.position.copy(next);
-    st.spinV += st.vel.x * 0.8;
+    st.target.copy(toLocal(_hit));
+    st.moved = true;
   };
   const up = (e: ThreeEvent<PointerEvent>) => {
     if (!st.on || e.pointerId !== st.id) return;
@@ -104,18 +108,29 @@ export function Drag({ children, position = [0, 0, 0], rotation, scale }: {
     (e.target as Element).releasePointerCapture?.(e.pointerId);
     st.on = false; world.dragging = false; delete document.documentElement.dataset.drag;
     if (st.moved) world.dragEnd = performance.now();
-    st.vel.multiplyScalar(30);                                        // keep a little momentum, then spring home
   };
   useFrame((_, dt) => {
-    const d = Math.min(dt, 1 / 30);
-    if (!st.on) {
-      // damped spring toward the rest position: a soft overshoot, then it settles and floats again
-      _loc.copy(st.rest).sub(g.current.position).multiplyScalar(90 * d);
-      st.vel.add(_loc).multiplyScalar(Math.pow(0.001, d));
-      g.current.position.addScaledVector(st.vel, d);
+    const d = Math.min(dt, 1 / 30), o = g.current;
+    if (st.on) {
+      // where the grabbed point is now, given the part's current turn
+      st.dq.copy(o.quaternion).multiply(st.tq.copy(st.restQ).invert());
+      const armNow = st.tmp.copy(st.arm).applyQuaternion(st.dq);
+      // the centre follows a little behind the hand…
+      st.lag.copy(st.target).sub(armNow).sub(o.position);
+      o.position.addScaledVector(st.lag, 1 - Math.exp(-d * 7));
+      // …and the pull on an off-centre point turns the part (torque = arm × pull)
+      st.axis.copy(armNow).cross(st.lag);
+      const len = st.axis.length(), r = armNow.length();
+      const ang = Math.min(0.85, len * 1.3) * Math.min(1, r / 0.6);
+      st.tq.copy(st.restQ);
+      if (len > 1e-5 && ang > 1e-3) st.tq.premultiply(st.dq.setFromAxisAngle(st.axis.multiplyScalar(1 / len), ang));
+      o.quaternion.slerp(st.tq, 1 - Math.exp(-d * 9));
+    } else {
+      // let go: drift home slowly (a few seconds), still floating with the platform
+      const k = 1 - Math.exp(-d * 0.9);
+      o.position.lerp(st.rest, k);
+      o.quaternion.slerp(st.restQ, k);
     }
-    st.spinV *= Math.pow(0.05, d); st.spin += st.spinV * d; st.spin *= Math.pow(st.on ? 0.6 : 0.08, d);
-    g.current.rotation.z = (rotation?.[2] ?? 0) + st.spin * 0.6;
   });
   return (
     <group ref={g} position={position} rotation={rotation} scale={scale}
@@ -165,6 +180,54 @@ function Slab({ color, edge }: { color: string; edge?: string }) {
   );
 }
 
+/* ---------- 0. Bar Lvovski Travel: a globe with a plane circling it, a suitcase and a boarding pass ---------- */
+function Travel() {
+  const orbit = useRef<THREE.Group>(null!);
+  const globe = useRef<THREE.Mesh>(null!);
+  const wing = useMemo(() => { const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(0.42, -0.12); sh.lineTo(0.42, -0.2); sh.lineTo(0, -0.1); sh.lineTo(-0.42, -0.2); sh.lineTo(-0.42, -0.12); sh.lineTo(0, 0); return new THREE.ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: false }); }, []);
+  useFrame((_, dt) => { if (world.reduced) return; orbit.current.rotation.y -= dt * 0.55; globe.current.rotation.y += dt * 0.15; });
+  return (
+    <PlatformShell id="tr" index={0}>
+      <Glow color={C.sky} size={7.2} opacity={0.42} />
+      <Drag><Slab color={C.trSlab} edge={C.sky} /></Drag>
+      {/* globe */}
+      <Drag position={[0, 1.05, 0]}>
+        <mesh ref={globe} castShadow>
+          <sphereGeometry args={[0.72, 48, 48]} />
+          <meshPhysicalMaterial color="#1E7FD0" roughness={0.35} clearcoat={1} emissive="#0B4C86" emissiveIntensity={0.25} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.735, 0.012, 8, 64]} /><meshBasicMaterial color="#9BE3FF" /></mesh>
+        <mesh rotation={[0, 0, Math.PI / 2]}><torusGeometry args={[0.735, 0.012, 8, 64]} /><meshBasicMaterial color="#9BE3FF" /></mesh>
+        <mesh rotation={[0, Math.PI / 2, Math.PI / 2]}><torusGeometry args={[0.735, 0.012, 8, 64]} /><meshBasicMaterial color="#9BE3FF" /></mesh>
+      </Drag>
+      {/* a plane flying round the globe */}
+      <group ref={orbit} position={[0, 1.05, 0]} rotation={[0.35, 0, 0.12]}>
+        <Drag position={[1.25, 0, 0]} rotation={[0, 0, 0]}>
+          <group rotation={[Math.PI / 2, 0, 0]}>
+            <mesh castShadow><capsuleGeometry args={[0.06, 0.42, 6, 12]} /><meshStandardMaterial color="#FFFFFF" roughness={0.3} /></mesh>
+            <mesh geometry={wing} position={[0, 0.06, -0.015]}><meshStandardMaterial color="#E6F4FF" roughness={0.4} /></mesh>
+            <mesh position={[0, -0.24, 0.07]}><boxGeometry args={[0.02, 0.1, 0.12]} /><meshStandardMaterial color={C.sky} emissive={C.sky} emissiveIntensity={0.6} /></mesh>
+          </group>
+        </Drag>
+      </group>
+      {/* suitcase */}
+      <Drag position={[-1.05, 0.55, 0.7]} rotation={[0, 0.5, 0]}>
+        <RoundedBox args={[0.62, 0.46, 0.24]} radius={0.06} castShadow><meshPhysicalMaterial color="#F2B705" roughness={0.35} clearcoat={1} /></RoundedBox>
+        <mesh position={[0, 0.3, 0]}><torusGeometry args={[0.09, 0.022, 8, 24, Math.PI]} /><meshStandardMaterial color="#3A2A08" /></mesh>
+        <mesh position={[-0.16, 0, 0.125]}><boxGeometry args={[0.03, 0.46, 0.01]} /><meshStandardMaterial color="#B88700" /></mesh>
+        <mesh position={[0.16, 0, 0.125]}><boxGeometry args={[0.03, 0.46, 0.01]} /><meshStandardMaterial color="#B88700" /></mesh>
+      </Drag>
+      {/* boarding pass */}
+      <Drag position={[1.0, 0.32, 0.95]} rotation={[-0.9, -0.3, 0.1]}>
+        <RoundedBox args={[0.78, 0.36, 0.02]} radius={0.03}><meshStandardMaterial color="#FFFFFF" roughness={0.5} /></RoundedBox>
+        <mesh position={[-0.16, 0.06, 0.012]}><planeGeometry args={[0.36, 0.05]} /><meshBasicMaterial color={C.sky} /></mesh>
+        <mesh position={[-0.2, -0.06, 0.012]}><planeGeometry args={[0.28, 0.035]} /><meshBasicMaterial color="#B6C2CF" /></mesh>
+        <mesh position={[0.25, 0, 0.012]}><planeGeometry args={[0.012, 0.3]} /><meshBasicMaterial color="#B6C2CF" /></mesh>
+      </Drag>
+    </PlatformShell>
+  );
+}
+
 /* ---------- 1. Platformika: the logo tile, a gold coin-dot and orbiting people ---------- */
 function pShape() {
   const s = new THREE.Shape();
@@ -182,7 +245,7 @@ function Platformika() {
   const people = useMemo(() => Array.from({ length: 9 }, (_, i) => ({ a: (i / 9) * Math.PI * 2, r: 1.95 + (i % 3) * 0.18, y: 0.55 + (i % 2) * 0.35, c: ['#FF5A72', '#F2B705', '#8E85FF', '#33D196', '#FFFFFF'][i % 5] })), []);
   useFrame((_, dt) => { if (!world.reduced) orbit.current.rotation.y += dt * 0.35; });
   return (
-    <PlatformShell id="pk" index={0}>
+    <PlatformShell id="pk" index={1}>
       <Glow color={C.pk} size={7.5} />
       <Drag><Slab color={C.pkDeep} /></Drag>
       <Drag position={[0, 0.28, 0]}>
@@ -252,7 +315,7 @@ function Complichess() {
   }, []);
   useFrame(({ clock }) => { if (ropeRef.current && !world.reduced) ropeRef.current.position.y = Math.sin(clock.elapsedTime * 2) * 0.02; });
   return (
-    <PlatformShell id="cx" index={1}>
+    <PlatformShell id="cx" index={2}>
       <Glow color={C.brass} size={7} opacity={0.42} />
       <Drag>
         <Slab color="#14261F" />
@@ -281,7 +344,7 @@ function Crypto() {
     (ring.current.material as THREE.MeshBasicMaterial).opacity = 0.7 * (1 - t);
   });
   return (
-    <PlatformShell id="cr" index={2}>
+    <PlatformShell id="cr" index={3}>
       <Glow color={C.mint} size={6.5} opacity={0.35} />
       <Drag>
         <RoundedBox args={[3.5, 0.34, 3.5]} radius={0.14} smoothness={3}>
@@ -306,8 +369,8 @@ function Crypto() {
   );
 }
 
-/* ---------- 4. Cramika: an open book, a graduation cap, a video screen and orbiting flashcards (coming soon) ---------- */
-function Cramika() {
+/* ---------- 5. LearnLume: an open book, a graduation cap, a video screen and orbiting flashcards (coming soon) ---------- */
+function LearnLume() {
   const cards = useRef<THREE.Group>(null!);
   const play = useRef<THREE.Mesh>(null!);
   const tri = useMemo(() => {
@@ -322,7 +385,7 @@ function Cramika() {
   });
   const page = <meshPhysicalMaterial color="#FFF6E8" roughness={0.55} clearcoat={0.2} />;
   return (
-    <PlatformShell id="lr" index={3}>
+    <PlatformShell id="lr" index={4}>
       <Glow color={C.coral} size={7} opacity={0.4} />
       <Drag>
         <RoundedBox args={[3.5, 0.34, 3.5]} radius={0.14} smoothness={4} castShadow receiveShadow>
@@ -368,7 +431,7 @@ function Dust({ count }: { count: number }) {
   const pts = useRef<THREE.Points>(null!);
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry(); const a = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) { a[i * 3] = (Math.random() - 0.5) * 30; a[i * 3 + 1] = Math.random() * -22 + 7; a[i * 3 + 2] = Math.random() * -18 + 5; }
+    for (let i = 0; i < count; i++) { a[i * 3] = (Math.random() - 0.5) * 30; a[i * 3 + 1] = Math.random() * -27 + 7; a[i * 3 + 2] = Math.random() * -18 + 5; }
     g.setAttribute('position', new THREE.BufferAttribute(a, 3)); return g;
   }, [count]);
   const tex = useMemo(glowTexture, []);
@@ -398,7 +461,8 @@ export default function Scene() {
       <directionalLight position={[5, 8, 6]} intensity={1.6} castShadow shadow-mapSize={[1024, 1024]} />
       <pointLight position={[-6, -2, 4]} intensity={30} color={C.pk} />
       <pointLight position={[6, -6, 2]} intensity={24} color={C.brass} />
-      <pointLight position={[7, -11, 0]} intensity={22} color={C.coral} />
+      <pointLight position={[-7, -14, -2]} intensity={22} color={C.coral} />
+      <pointLight position={[-6, 3, 4]} intensity={22} color={C.sky} />
       <Environment resolution={128} frames={1}>
         <Lightformer form="rect" intensity={2.4} position={[0, 5, -6]} scale={[12, 4, 1]} color="#ffffff" />
         <Lightformer form="rect" intensity={1.6} position={[-6, 1, 2]} rotation-y={Math.PI / 2} scale={[8, 3, 1]} color="#8E85FF" />
@@ -406,10 +470,11 @@ export default function Scene() {
         <Lightformer form="circle" intensity={1.2} position={[0, -6, 0]} rotation-x={-Math.PI / 2} scale={6} color="#49E8C8" />
       </Environment>
       <CameraRig />
+      <Travel />
       <Platformika />
       <Complichess />
       <Crypto />
-      <Cramika />
+      <LearnLume />
       <Dust count={world.mobile ? 500 : 1100} />
     </Canvas>
   );

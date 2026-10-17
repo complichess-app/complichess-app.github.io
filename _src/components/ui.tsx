@@ -47,7 +47,22 @@ export function Cursor({ labels }: { labels: Record<string, string> }) {
   useEffect(() => {
     if (!matchMedia('(pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     setOn(true); document.documentElement.classList.add('has-cursor');
-    let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, s = 1, raf = 0, seen = false;
+    let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, s = 1, raf = 0, seen = false, frame = 0, glow = false;
+    /* the cursor is drawn with a "difference" blend, which disappears over mid-tone colours (gold, light buttons…).
+       Look at the colour under it and switch to an orange glow only there. */
+    const rgb = (c: string) => { const m = c.match(/[\d.]+/g); return m ? m.map(Number) : [0, 0, 0, 0]; };
+    const lum = ([r, g, b]: number[]) => { const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+    const PAPER = [238, 234, 248];
+    const hardToSee = (el: Element | null) => {
+      let bg = [9, 11, 31];
+      for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+        const c = rgb(getComputedStyle(n).backgroundColor); const a = c.length > 3 ? c[3] : 1;
+        if (a > 0.35) { bg = c; break; }
+      }
+      const seenAs = bg.slice(0, 3).map((v, i) => Math.abs(PAPER[i] - v));
+      const L1 = lum(seenAs), L2 = lum(bg); const ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+      return ratio < 3;
+    };
     const move = (e: PointerEvent) => { x = e.clientX; y = e.clientY; if (!seen) { seen = true; rx = x; ry = y; } };
     const loop = () => {
       rx += (x - rx) * 0.16; ry += (y - ry) * 0.16;
@@ -55,6 +70,7 @@ export function Cursor({ labels }: { labels: Record<string, string> }) {
       const dragging = !!ds.drag, grab = !!ds.grab;
       const hov = dragging ? undefined : ds.hover;
       const t = document.elementFromPoint(x, y) as HTMLElement | null;
+      if (++frame % 6 === 0) { const g2 = hardToSee(t); if (g2 !== glow) { glow = g2; ring.current?.classList.toggle('cur-glow', glow); dot.current?.classList.toggle('cur-glow', glow); } }
       const grow = !!t?.closest('a,button,[data-cursor]');
       const target = dragging ? 0.75 : hov ? 3.2 : grow ? 1.9 : 1;
       s += (target - s) * 0.18;
@@ -68,7 +84,7 @@ export function Cursor({ labels }: { labels: Record<string, string> }) {
   }, [labels]);
   if (!on) return null;
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-[70]">
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-[300]">
       <div ref={ring} className="absolute left-0 top-0 h-9 w-9 rounded-full border border-paper/60 opacity-0 mix-blend-difference" style={{ transition: 'opacity .3s' }} />
       <div ref={dot} className="absolute left-0 top-0 h-1.5 w-1.5 rounded-full bg-paper mix-blend-difference" />
       <span ref={lab} className="absolute left-0 top-0 whitespace-nowrap text-[11px] font-bold tracking-wide text-night opacity-0" style={{ transition: 'opacity .2s' }} />

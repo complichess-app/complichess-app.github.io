@@ -578,12 +578,15 @@ function onboarding(suggest){
   <form class="sheet-b" id="onbForm" novalidate>
     <div class="field"><label for="onbName">איך קוראים לך?</label><input id="onbName" autocomplete="name" placeholder="השם שיופיע בפרופיל" maxlength="40" value="${esc(suggest||'')}" autofocus></div>
     <div class="field"><label for="onbHandle">שם משתמש בפלטפורמיקה</label><input id="onbHandle" dir="ltr" autocomplete="username" placeholder="yourname" maxlength="24" value="${esc((suggest||'').toLowerCase().replace(/[^a-z0-9._]/g,''))}"><span class="hint">אותיות באנגלית, מספרים, נקודה וקו תחתון</span><span class="err" id="onbErr" hidden></span></div>
-    <button class="btn primary block" type="submit">יצירת פרופיל</button>
-    <button class="btn ghost sm" type="button" id="onbOut" style="align-self:center">התנתקות</button>
+    <button class="btn primary block" type="submit">יצירת פרופיל בפלטפורמיקה</button>
+    <div class="note" style="flex-direction:column;align-items:stretch;gap:8px">
+      <span>את/ה מחובר/ת כ־<b dir="ltr">${esc(USER?.email||'')}</b>. למשתמש הזה עוד אין פרופיל בפלטפורמיקה.</span>
+      <button class="btn ghost block" type="button" id="onbOut">כבר יש לי פרופיל — התחברות עם משתמש אחר</button>
+    </div>
   </form>`,{cls:'onb',lock:true,onMount:sh=>{
     const n=$('#onbName',sh),h=$('#onbHandle',sh),err=$('#onbErr',sh);
     h.addEventListener('input',()=>{h.value=h.value.toLowerCase().replace(/[^a-z0-9._]/g,'')});
-    $('#onbOut',sh).onclick=()=>sb.auth.signOut();
+    $('#onbOut',sh).onclick=async()=>{await sb.auth.signOut();authSheet('login')};
     $('#onbForm',sh).addEventListener('submit',async e=>{e.preventDefault();
       if(!n.value.trim()){err.hidden=false;err.textContent='כתבו שם כדי שחברים יזהו אתכם';n.focus();return}
       if(h.value.length<3){err.hidden=false;err.textContent='שם המשתמש צריך לפחות 3 תווים';h.focus();return}
