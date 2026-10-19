@@ -473,7 +473,9 @@ async function search(params,label,title){
   finally{const b2=document.querySelector('#panel .go');b2&&(b2.disabled=false)}
 }
 function view(x){
-  const k=CUR.kind;const head=x.head||[];const name=SINGLE[k]?(head[0]||''):'';
+  const k=CUR.kind;const head=x.head||[];
+  const NOTNAME=/^(מעולה|מצוין|טוב|טוב מאד|נהדר|כמעט|מחיר|החל|טיסה|יום|יציאה|חזרה|לא |אישור|נדרש|ביטול|\d)/;
+  const name=SINGLE[k]?([...head,...x.lines].find(l=>l.length>3&&!/₪/.test(l)&&!/\d+\s?(מ'|ק"מ)/.test(l)&&!NOTNAME.test(l))||head[0]||''):'';
   const lines=[...head.filter(l=>l!==name),...x.lines].filter(l=>!/^₪[\d,]+$/.test(l)&&!/^(סה.?כ לתשלום|החל מ-?)$/.test(l));
   const pic=SINGLE[k]?(x.img||((k==='hotels')&&x.logos&&x.logos[0])||null):null;
   return{name,lines,pic,logos:SINGLE[k]?(pic===x.img?x.logos:[]).slice(0,1):(x.logos||[]).slice(0,2)};
