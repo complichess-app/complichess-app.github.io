@@ -403,8 +403,8 @@ function packagesForm(){
     ${field('יציאה',`<select id="pdep" disabled><option value="">קודם בוחרים יעד</option></select>`)}
     ${field('חזרה',`<select id="pret" disabled><option value="">קודם בוחרים יציאה</option></select>`)}
     ${field('נוסעים (חדר אחד)',`<select id="pad">${opts(nums(1,6),S.adults)}</select>`)}
-    <p class="note">החבילות כוללות טיסה + מלון. מוצגים רק תאריכים שיש בהם חבילות, עם המחיר ההתחלתי לאדם.</p>`,'חיפוש חבילות');
-  const fmt=d=>`${new Date(d.date+'T12:00:00').toLocaleDateString('he-IL',{weekday:'short',day:'numeric',month:'numeric'})}${d.price?` · החל מ־₪${nf(d.price)}`:''}`;
+    <p class="note">החבילות כוללות טיסה + מלון. מוצגים רק תאריכים שיש בהם חבילות; ליד כל תאריך — המחיר ההתחלתי לאדם.</p>`,'חיפוש חבילות');
+  const fmt=d=>{const t=new Date(d.date+'T12:00:00');return`${t.getDate()}.${t.getMonth()+1} (${'אבגדהוש'[t.getDay()]}׳)${d.price?` · ₪${nf(d.price)}`:''}`};
   const loadRet=async()=>{const r=$('#pret');if(!S.dep){r.disabled=true;r.innerHTML='<option value="">קודם בוחרים יציאה</option>';return}
     r.disabled=true;r.innerHTML='<option>טוען…</option>';let d=[];try{d=(await get('/pkgdates',{code:S.code,dep:S.dep})).data||[]}catch{}d.sort((x,y)=>x.date<y.date?-1:1);
     if(!$('#pret'))return;r.innerHTML=d.length?d.map(x=>`<option value="${x.date}" ${x.date===S.ret?'selected':''}>${fmt(x)}</option>`).join(''):'<option value="">אין חזרה זמינה</option>';r.disabled=!d.length;
