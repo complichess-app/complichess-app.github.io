@@ -406,11 +406,11 @@ function packagesForm(){
     <p class="note">החבילות כוללות טיסה + מלון. מוצגים רק תאריכים שיש בהם חבילות, עם המחיר ההתחלתי לאדם.</p>`,'חיפוש חבילות');
   const fmt=d=>`${new Date(d.date+'T12:00:00').toLocaleDateString('he-IL',{weekday:'short',day:'numeric',month:'numeric'})}${d.price?` · החל מ־₪${nf(d.price)}`:''}`;
   const loadRet=async()=>{const r=$('#pret');if(!S.dep){r.disabled=true;r.innerHTML='<option value="">קודם בוחרים יציאה</option>';return}
-    r.disabled=true;r.innerHTML='<option>טוען…</option>';let d=[];try{d=(await get('/pkgdates',{code:S.code,dep:S.dep})).data||[]}catch{}
+    r.disabled=true;r.innerHTML='<option>טוען…</option>';let d=[];try{d=(await get('/pkgdates',{code:S.code,dep:S.dep})).data||[]}catch{}d.sort((x,y)=>x.date<y.date?-1:1);
     if(!$('#pret'))return;r.innerHTML=d.length?d.map(x=>`<option value="${x.date}" ${x.date===S.ret?'selected':''}>${fmt(x)}</option>`).join(''):'<option value="">אין חזרה זמינה</option>';r.disabled=!d.length;
     S.ret=d.some(x=>x.date===S.ret)?S.ret:(d[0]?.date||'')};
   const loadDep=async()=>{const s=$('#pdep');if(!S.code){s.disabled=true;s.innerHTML='<option value="">קודם בוחרים יעד</option>';loadRet();return}
-    s.disabled=true;s.innerHTML='<option>טוען תאריכים…</option>';let d=[];try{d=(await get('/pkgdates',{code:S.code})).data||[]}catch{}
+    s.disabled=true;s.innerHTML='<option>טוען תאריכים…</option>';let d=[];try{d=(await get('/pkgdates',{code:S.code})).data||[]}catch{}const soon=iso(add(new Date(),2));d=d.filter(x=>x.date>=soon).sort((x,y)=>x.date<y.date?-1:1);
     if(!$('#pdep'))return;s.innerHTML=d.length?d.map(x=>`<option value="${x.date}" ${x.date===S.dep?'selected':''}>${fmt(x)}</option>`).join(''):'<option value="">אין כרגע חבילות ליעד הזה</option>';s.disabled=!d.length;
     S.dep=d.some(x=>x.date===S.dep)?S.dep:(d[0]?.date||'');loadRet()};
   $('#pdep').onchange=()=>{S.dep=$('#pdep').value;loadRet()};$('#pret').onchange=()=>{S.ret=$('#pret').value};
