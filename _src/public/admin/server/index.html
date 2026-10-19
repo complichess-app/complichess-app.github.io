@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>🔴 שרת הנסיעות</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap">
+<style>
+:root{--bg:#090B1F;--card:#12163A;--line:rgba(255,255,255,.1);--ink:#EEEAF8;--mute:#A3A5CB;--on:#22C55E;--off:#EF4444;--warn:#F59E0B}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif}
+body{padding:20px 16px 40px}.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{margin:0;font-size:22px}.mute{color:var(--mute)}.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px}
+.light{display:flex;align-items:center;gap:16px}
+.dot{width:54px;height:54px;border-radius:50%;flex:0 0 auto;background:var(--off);box-shadow:0 0 28px var(--off)}
+.dot.on{background:var(--on);box-shadow:0 0 28px var(--on);animation:p 2s ease-in-out infinite}.dot.warn{background:var(--warn);box-shadow:0 0 28px var(--warn)}
+@keyframes p{50%{box-shadow:0 0 8px var(--on)}}
+@media (prefers-reduced-motion:reduce){.dot.on{animation:none}}
+.big{font-size:22px;font-weight:800}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:12px 20px;background:#6A63FF;color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.stats b{display:block;font-size:24px}
+.log{font-size:13px;max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:4px}.log div{border-bottom:1px solid var(--line);padding-bottom:4px}
+ol{margin:8px 0 0;padding-inline-start:22px;line-height:1.8}code{background:#0B0E28;padding:2px 6px;border-radius:6px}
+:focus-visible{outline:3px solid #D8AE57;outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="mute">טוען…</p></div>
+<script src="/lib/supabase.js"></script>
+<script>
+(()=>{
+const sb=window.supabase.createClient('https://iktmyrfbejtjsiehcrar.supabase.co','sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a',{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}});
+const app=document.getElementById('app');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KIND={flights:'טיסות',hotels:'מלונות',cars:'רכב',packages:'חבילות',tours:'טיולים',tickets:'כרטיסים'};
+let EXT=null,STATE='starting',LOGGED=null,RUN=false,HB=null,POLL=null,CH=null,seq=0;
+const pending=new Map(),stats={search:0,other:0,fail:0},LOG=[];
+const log=t=>{LOG.unshift(new Date().toLocaleTimeString('he-IL')+' · '+t);LOG.length=Math.min(LOG.length,40);draw()};
+
+// ---- talk to the Chrome extension ----
+addEventListener('message',e=>{if(e.source!==window||!e.data||e.data.src!=='bt-ext')return;
+  if(e.data.type==='hello'){if(!EXT){EXT=e.data.version||'1';boot()}return}
+  if(e.data.type==='result'){const p=pending.get(e.data.id);if(p){pending.delete(e.data.id);e.data.ok?p.res(e.data.data):p.rej(new Error(e.data.error||'failed'))}}});
+const ext=(job,ms=120000)=>new Promise((res,rej)=>{const id=++seq+'';pending.set(id,{res,rej});postMessage({src:'bt-page',type:'job',id,job},location.origin);
+  setTimeout(()=>{if(pending.has(id)){pending.delete(id);rej(new Error('timeout'))}},ms)});
+
+function draw(){
+  const on=STATE==='on',warn=STATE==='login';
+  document.title=(on?'🟢':warn?'🟠':'🔴')+' שרת הנסיעות';
+  const head=`<div class="card light"><div class="dot ${on?'on':warn?'warn':''}" role="img" aria-label="${on?'פועל':'כבוי'}"></div><div>
+    <div class="big">${on?'השרת פועל':warn?'צריך להתחבר ל-BeAgent':STATE==='noext'?'חסר התוסף':STATE==='stopped'?'השרת כבוי':'מפעיל…'}</div>
+    <div class="mute">${on?'הלקוחות יכולים לחפש ולהזמין עכשיו. השאר את החלון הזה פתוח (אפשר למזער).':warn?'החיבור ל-BeAgent נותק. התחבר בכרטיסייה שנפתחה, והשרת יידלק לבד.':STATE==='noext'?'צריך להתקין פעם אחת את התוסף ל-Chrome.':STATE==='stopped'?'הלקוחות רואים כרגע את הודעת הוואטסאפ.':'בודק חיבור…'}</div></div></div>`;
+  let body='';
+  if(STATE==='noext')body=`<div class="card"><b>התקנת התוסף (פעם אחת, דקה):</b><ol>
+    <li><a class="btn" href="/admin/server/bar-travel-ext.zip" download>הורדת התוסף</a> ← לחלץ את הקובץ לתיקייה קבועה (למשל Documents).</li>
+    <li>לפתוח בכרום את הכתובת <code>chrome://extensions</code></li>
+    <li>להדליק למעלה משמאל "מצב מפתח" (Developer mode).</li>
+    <li>ללחוץ "טעינת פריט לא ארוז" (Load unpacked) ולבחור את התיקייה <code>bar-travel-ext</code>.</li>
+    <li>לחזור לכאן ולרענן את הדף.</li></ol></div>`;
+  if(warn)body=`<div class="card row"><button id="lg">פתיחת BeAgent להתחברות</button><button class="ghost" id="rc">בדוק שוב</button></div>`;
+  if(on||STATE==='stopped')body=`<div class="card stats"><div><b>${stats.search}</b><span class="mute">חיפושים</span></div><div><b>${stats.other}</b><span class="mute">השלמות</span></div><div><b>${stats.fail}</b><span class="mute">נכשלו</span></div></div>
+    <div class="card row">${on?'<button class="ghost" id="stop">כיבוי השרת</button>':'<button id="go">הפעלת השרת</button>'}<a class="btn ghost" href="/admin/" target="_blank">דף הניהול</a><a class="btn ghost" href="/travel/" target="_blank">האתר ללקוחות</a></div>`;
+  const lg=LOG.length?`<div class="card"><b>פעילות</b><div class="log">${LOG.map(l=>`<div>${esc(l)}</div>`).join('')}</div></div>`:'';
+  app.innerHTML=`<h1>שרת Bar Lvovski Travel</h1>${head}${body}${lg}`;
+  const $=id=>document.getElementById(id);
+  $('lg')&&($('lg').onclick=()=>ext({type:'login'}).catch(()=>{}));$('rc')&&($('rc').onclick=start);
+  $('stop')&&($('stop').onclick=stop);$('go')&&($('go').onclick=start);
+}
+
+async function heartbeat(){try{await sb.rpc('travel_heartbeat',{p_on:STATE==='on',p_logged_in:LOGGED!==false,p_version:1})}catch{}}
+async function start(){
+  STATE='starting';draw();
+  let r;try{r=await ext({type:'start'},60000)}catch(e){STATE='stopped';log('התוסף לא הגיב: '+e.message);draw();return}
+  LOGGED=!!r.loggedIn;
+  if(!LOGGED){STATE='login';draw();heartbeat();setTimeout(()=>{if(STATE==='login')start()},20000);return}
+  STATE='on';RUN=true;log('השרת הופעל');draw();heartbeat();
+  clearInterval(HB);HB=setInterval(heartbeat,15000);
+  clearInterval(POLL);POLL=setInterval(pickQueued,5000);pickQueued();
+  if(!CH)CH=sb.channel('travel-jobs').on('postgres_changes',{event:'INSERT',schema:'public',table:'travel_jobs'},p=>{if(RUN&&p.new&&p.new.status==='queued')take(p.new)}).subscribe();
+}
+async function stop(){RUN=false;STATE='stopped';clearInterval(HB);clearInterval(POLL);await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:1}).catch(()=>{});log('השרת כובה');draw()}
+
+const busy=new Set();
+async function pickQueued(){if(!RUN)return;
+  const{data}=await sb.from('travel_jobs').select('id,kind,params,status,created_at').eq('status','queued').order('created_at').limit(20);
+  for(const j of data||[]){if(Date.now()-new Date(j.created_at)>150000){await sb.from('travel_jobs').update({status:'failed',error:'expired',updated_at:new Date().toISOString()}).eq('id',j.id).eq('status','queued');continue}take(j)}}
+async function take(j){
+  if(busy.has(j.id))return;busy.add(j.id);
+  const{data}=await sb.from('travel_jobs').update({status:'running',updated_at:new Date().toISOString()}).eq('id',j.id).eq('status','queued').select('id');
+  if(!data||!data.length){busy.delete(j.id);return}
+  const p=j.params||{};const label=j.kind==='search'?`חיפוש ${KIND[p.kind]||p.kind}`:j.kind==='pkgdates'?'תאריכי חבילות':'השלמה';
+  try{
+    const res=await ext({type:j.kind,params:p},j.kind==='search'?110000:30000);
+    const result=j.kind==='search'?res:{data:res};
+    await sb.from('travel_jobs').update({status:'done',result,updated_at:new Date().toISOString()}).eq('id',j.id);
+    if(j.kind==='search'){stats.search++;log(`${label} · ${(res.results||[]).length} תוצאות`)}else{stats.other++;draw()}
+  }catch(e){
+    stats.fail++;const msg=String(e.message||e);
+    await sb.from('travel_jobs').update({status:'failed',error:msg.slice(0,200),updated_at:new Date().toISOString()}).eq('id',j.id);
+    log(`${label} נכשל (${msg})`);
+    if(msg==='no-login'){LOGGED=false;RUN=false;STATE='login';heartbeat();draw();setTimeout(start,20000)}
+  }finally{busy.delete(j.id)}
+}
+
+async function boot(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){app.innerHTML=`<div class="card"><h1>שרת הנסיעות</h1><p>צריך להתחבר עם משתמש המנהל באתר.</p><a class="btn" href="/he/" target="_blank">לאתר להתחברות</a></div>`;return}
+  const{data:isAdmin}=await sb.rpc('is_admin');
+  if(isAdmin!==true){app.innerHTML=`<div class="card"><h1>אין הרשאה</h1><p class="mute">הדף פתוח רק למנהל.</p></div>`;return}
+  if(!EXT){STATE='noext';draw();return}
+  start();
+}
+// wait for the extension to say hello, then boot either way
+postMessage({src:'bt-page',type:'ping'},location.origin);
+setTimeout(()=>{if(!EXT)boot()},1500);
+})();
+</script>
+</body>
+</html>
