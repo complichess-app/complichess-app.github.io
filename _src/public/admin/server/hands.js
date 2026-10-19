@@ -162,7 +162,7 @@
 
   // Anything that could reveal Bar's agent side is dropped from the results.
   const PRIVATE = /עמלה|עמלת|commission|נטו|net price|רווח|profit|סוכן|agent|ארנק|wallet|יתרה|balance|קרדיט|credit/i;
-  const SKIP = /^(פירוט המחיר|מידע חשוב|בחירת כרטיסים|בחירה כרטיסים|הצג חדרים|בחירת חדרים|לפרטי השכרה|לפרטי טיול|הצג במפה|מדיניות דלק|שעות טיסה|בסיס אירוח|כבודה|\d|₪)$/;
+  const SKIP = /^(פירוט המחיר|מידע חשוב|בחירת כרטיסים|בחירה כרטיסים|הצג חדרים|בחירת חדרים|לפרטי השכרה|לפרטי טיול|הצג במפה|מדיניות דלק|שעות טיסה|בסיס אירוח|כבודה|\d|₪|\/|-|–)$/;
   const money = (n) => '₪' + Math.round(n).toLocaleString('en-US');
   const markup = (line) => line
     .replace(/₪\s?([\d,]+(?:\.\d+)?)/g, (_, v) => money(parseFloat(v.replace(/,/g, '')) * MARKUP))
@@ -177,9 +177,18 @@
     }
     return out;
   }
+  function ctaEls(doc, cta) {
+    const out = [];
+    for (const el of doc.querySelectorAll('button,a,span,div,p,[role=button]')) {
+      if ((el.textContent || '').trim() !== cta) continue;
+      const p = el.parentElement;
+      if (p && (p.textContent || '').trim() === cta) continue; // keep the outermost element with exactly this text
+      out.push(el);
+    }
+    return out;
+  }
   function extract(doc, cta) {
-    const isCta = (b) => (b.innerText || '').trim() === cta;
-    const btns = [...doc.querySelectorAll('button,a')].filter((b) => isCta(b) && b.getClientRects().length > 0);
+    const btns = ctaEls(doc, cta).filter((b) => b.getClientRects().length > 0);
     const src = (i) => i.currentSrc || i.src || '';
     const big = (i) => (i.naturalWidth || i.width) >= 150 && /^https:\/\//.test(src(i));
     const bigImg = (el) => [...el.querySelectorAll('img')].find(big);
@@ -243,7 +252,7 @@
         if (!d || !d.body) continue;
         let path = ''; try { path = f.contentWindow.location.pathname; } catch {}
         if (/(login|sign-?in|auth)/i.test(path)) throw new Error('no-login');
-        const n = [...d.querySelectorAll('button,a')].filter((b) => (b.innerText || '').trim() === target.cta).length;
+        const n = ctaEls(d, target.cta).length;
         const none = /לא מצאנו|לא נמצאו|אין תוצאות|no results/i.test(d.body.innerText || '');
         if (none && n === 0 && i > 5) break;
         if (n > 0 && n === last) { if (++stable >= 4) break; } else stable = 0;
