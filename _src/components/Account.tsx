@@ -53,6 +53,14 @@ export default function Account({ d, lang }: { d: Dict; lang: Lang }) {
     sb.from('profiles').select('username').eq('id', user.id).maybeSingle().then((r: any) => setName(r?.data?.username || user.user_metadata?.username || ''));
     sb.rpc('is_admin').then((r: any) => setAdmin(r?.data === true)).catch(() => setAdmin(false));
   }, [sb, user]);
+  // Travel server light (admin only): green when Bar's computer answers customers, red when not.
+  const [srv, setSrv] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!sb || !admin) return;
+    const tick = () => sb.rpc('travel_status').then((r: any) => setSrv(!!r?.data?.online)).catch(() => setSrv(false));
+    tick(); const t = setInterval(tick, 8000);
+    return () => clearInterval(t);
+  }, [sb, admin]);
   useEffect(() => {
     if (!open) return;
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
@@ -94,6 +102,14 @@ export default function Account({ d, lang }: { d: Dict; lang: Lang }) {
   const field = 'h-12 w-full rounded-2xl border border-white/10 bg-night/60 px-4 text-[16px] text-paper outline-none focus:border-pk';
   return (
     <>
+      {admin ? (
+        <button type="button" data-cursor="grow" onClick={() => window.open('/admin/server/', 'bt-server', 'popup,width=560,height=760')}
+          title={srv ? 'שרת הנסיעות פועל — הלקוחות יכולים לחפש' : 'שרת הנסיעות כבוי — לחץ להפעלה'}
+          className="glass flex h-11 items-center gap-2 rounded-full px-4 text-sm font-bold">
+          <span aria-hidden className="relative inline-block h-3 w-3 rounded-full" style={{ background: srv ? '#22C55E' : '#EF4444', boxShadow: srv ? '0 0 10px #22C55E' : '0 0 10px #EF4444' }} />
+          <span>{srv ? 'שרת פועל' : 'הפעל שרת'}</span>
+        </button>
+      ) : null}
       <button type="button" onClick={() => { setMsg(''); setOpen(true); }} data-cursor="grow" aria-haspopup="dialog"
         className="glass flex h-11 items-center gap-2 rounded-full ps-1.5 pe-4 text-sm font-bold">
         <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full font-display text-[13px] font-black" style={{ background: user ? 'linear-gradient(135deg,#6A63FF,#D8AE57)' : 'rgba(255,255,255,.08)' }}>
