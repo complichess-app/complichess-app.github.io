@@ -452,7 +452,7 @@ const ts=x=>new Date(x).getTime();
 /* ---------- state (from the server) ---------- */
 let USER=null,ME=null,READY=false,OFFLINE=!sb,AUTHKNOWN=false;
 const PROF={};                        // id -> pk_profiles row
-let POSTS=[],LIKES=[],CMTS=[],MSGS=[];
+let POSTS=[],LIKES=[],CMTS=[],MSGS=[],BLOCKED=new Set();
 const OPEN={};                        // post id -> comments open
 try{const r=new URLSearchParams(location.search).get('ref');if(r)localStorage.setItem('platformika.ref',r)}catch(e){}
 
@@ -475,6 +475,8 @@ async function loadAll(){
   ]);
   if(pr.error){OFFLINE=true;return}
   OFFLINE=false;POSTS=pr.data||[];MSGS=mr.data||[];
+  if(USER){try{const br=await sb.from('pk_blocks').select('blocked');BLOCKED=new Set(br.error?[]:(br.data||[]).map(b=>b.blocked))}catch(e){BLOCKED=new Set()}}
+  if(BLOCKED.size){POSTS=POSTS.filter(p=>!BLOCKED.has(p.author));MSGS=MSGS.filter(m=>!BLOCKED.has(m.sender)&&!BLOCKED.has(m.recipient))}
   const ids=POSTS.map(p=>p.id);
   if(ids.length){
     const[lr,cr]=await Promise.all([sb.from('pk_likes').select('post,uid,created_at').in('post',ids),sb.from('pk_comments').select('*').in('post',ids).order('created_at')]);
@@ -812,15 +814,59 @@ function vProfile(handle){
   return`<section class="card" style="overflow:hidden">
     <div class="cover">${u.cover_url?`<img src="${esc(u.cover_url)}" alt="">`:''}</div>
     <div class="prof">
-      <div class="head">${av(u,'s120')}<div style="display:flex;gap:8px;margin-bottom:6px">${mine?`<button class="btn ghost sm" data-act="edit-profile">${ic('edit')}עריכת פרופיל</button><button class="btn ghost sm" data-act="logout">התנתקות</button>`:`<a class="btn primary sm" href="#chat-${u.id}">${ic('chat')}הודעה</a>`}</div></div>
+      <div class="head">${av(u,'s120')}<div style="display:flex;gap:8px;margin-bottom:6px">${mine?`<button class="btn ghost sm" data-act="edit-profile">${ic('edit')}עריכת פרופיל</button><button class="btn ghost sm" data-act="logout">התנתקות</button>`:`${BLOCKED.has(u.id)?'':`<a class="btn primary sm" href="#chat-${u.id}">${ic('chat')}הודעה</a>`}<button class="btn ghost sm" data-act="${BLOCKED.has(u.id)?'unblock':'block'}" data-uid="${u.id}">${BLOCKED.has(u.id)?'ביטול חסימה':'חסימה'}</button><button class="btn ghost sm" data-act="report" data-uid="${u.id}">דיווח</button>`}</div></div>
       <div><h1>${esc(u.name)}</h1><div class="handle">@${esc(u.handle)}</div></div>
       ${u.bio?`<p class="bio" dir="auto">${esc(u.bio)}</p>`:mine?`<button class="btn ghost sm" style="align-self:flex-start" data-act="edit-profile">הוספת ביו</button>`:''}
       <div class="counts"><span><b>${fmt(ps.length)}</b>פרסומים</span><span><b>${fmt(got)}</b>לייקים</span></div>
+      ${mine?`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px"><a href="https://barusik.com/he/privacy/" target="_blank" rel="noopener" style="color:var(--muted)">מדיניות פרטיות</a><a href="https://barusik.com/he/terms/" target="_blank" rel="noopener" style="color:var(--muted)">תנאי שימוש</a><button class="linkish" data-act="delete-account" style="background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit">מחיקת החשבון</button></div>`:''}
     </div>
     <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='posts'}" data-ptab="posts">פוסטים</button><button role="tab" aria-selected="${tab==='media'}" data-ptab="media">תמונות וסרטונים</button></div>
     ${list.length?`<div class="grid">${list.map(p=>`<a class="cell ${p.media_url?'has-img':''}" href="${p.kind==='clip'?'#clips':'#home'}" data-jump="${p.kind==='clip'?'':p.id}">${p.media_type==='image'?`<img src="${esc(p.media_url)}" alt="" loading="lazy">`:p.media_type==='video'?`<video src="${esc(p.media_url)}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`:esc(p.body.slice(0,80))}</a>`).join('')}</div>`:
     `<div class="empty"><div class="art">${ic(tab==='media'?'camera':'edit')}</div><h2>${tab==='media'?'עוד אין תמונות':'עוד אין פוסטים'}</h2>${mine?`<button class="btn primary" data-act="${tab==='media'?'compose-img':'compose'}">יצירת פוסט</button>`:''}</div>`}
   </section>`;
+}
+const NOT_READY=e=>/does not exist|schema cache|not find the function|relation .* does not exist/i.test(String(e?.message||''));
+async function blockUser(uid){
+  if(!uid||uid===USER.id)return;
+  const{error}=await sb.from('pk_blocks').insert({blocked:uid});
+  if(error&&!/duplicate/.test(error.message)){toast(NOT_READY(error)?'החסימה תהיה זמינה בקרוב':errText(error));return}
+  BLOCKED.add(uid);POSTS=POSTS.filter(p=>p.author!==uid);MSGS=MSGS.filter(m=>m.sender!==uid&&m.recipient!==uid);render();toast('המשתמש/ת נחסם/ה. לא תראו אותם ולא יוכלו לשלוח לכם הודעות')}
+async function unblockUser(uid){
+  const{error}=await sb.from('pk_blocks').delete().eq('blocked',uid);
+  if(error){toast(errText(error));return}
+  BLOCKED.delete(uid);toast('החסימה בוטלה');reloadSoon()}
+function reportSheet(uid,postId){
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>${postId?'דיווח על פוסט':'דיווח על משתמש/ת'}</h2><span style="width:40px"></span></div>
+  <form class="sheet-b" id="rpForm">
+    <div class="field"><label for="rpWhy">מה הבעיה?</label><textarea id="rpWhy" maxlength="500" required placeholder="הטרדה, ספאם, תוכן פוגעני, התחזות…"></textarea><span class="hint">הדיווח נשלח לצוות ברוסיק בלבד. המשתמש/ת לא יידעו מי דיווח.</span></div>
+    <button class="btn primary block">שליחת דיווח</button>
+  </form>`,{onMount:sh=>{
+    $('#rpWhy',sh).focus();
+    $('#rpForm',sh).onsubmit=async e=>{e.preventDefault();const why=$('#rpWhy',sh).value.trim();if(!why){toast('כתבו בקצרה מה הבעיה');return}
+      const b=$('button.primary',sh);busy(b,true,'שולח…');
+      const{error}=await sb.from('pk_reports').insert({target_user:uid||null,post:postId||null,reason:why});
+      if(error){busy(b,false);toast(NOT_READY(error)?'הדיווח יהיה זמין בקרוב. בינתיים אפשר לכתוב ל-complichess.app@gmail.com':errText(error));return}
+      closeLayer();toast('תודה, הדיווח נשלח')};
+  }});
+}
+function deleteAccountSheet(){
+  openLayer(`
+  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>מחיקת החשבון</h2><span style="width:40px"></span></div>
+  <form class="sheet-b" id="daForm">
+    <p>המחיקה סופית: החשבון המשותף של כל הפלטפורמות של ברוסיק יימחק, יחד עם הפוסטים, הקליפים, הסטוריז, התגובות, הלייקים, ההודעות והתמונות שלכם. אי אפשר לבטל.</p>
+    <div class="field"><label for="daOk">כדי לאשר, כתבו: מחיקה</label><input id="daOk" autocomplete="off"></div>
+    <button class="btn primary block" style="background:#DC2626">מחיקת החשבון לצמיתות</button>
+  </form>`,{onMount:sh=>{
+    $('#daForm',sh).onsubmit=async e=>{e.preventDefault();if($('#daOk',sh).value.trim()!=='מחיקה'){toast('כתבו "מחיקה" כדי לאשר');return}
+      const b=$('button.primary',sh);busy(b,true,'מוחק…');
+      try{
+        const{data:files}=await sb.storage.from(BUCKET).list(USER.id,{limit:1000});
+        if(files&&files.length)await sb.storage.from(BUCKET).remove(files.map(f=>USER.id+'/'+f.name));
+        const{error}=await sb.rpc('delete_my_account');if(error)throw error;
+        await sb.auth.signOut().catch(()=>{});closeLayer();toast('החשבון נמחק');setTimeout(()=>location.reload(),1200);
+      }catch(x){busy(b,false);toast(NOT_READY(x)?'מחיקה עצמית תהיה זמינה בקרוב. בינתיים כתבו ל-complichess.app@gmail.com ונמחק תוך 7 ימים':errText(x))}};
+  }});
 }
 function editProfile(){
   let photo=null,cover=null;
@@ -991,6 +1037,10 @@ document.addEventListener('click',async e=>{
     case'search':state.showSearch=!state.showSearch;go('home');setTimeout(()=>$('#q')?.focus(),30);break;
     case'copy-ref':copy(refLink(),a);break;
     case'edit-profile':editProfile();break;
+    case'block':blockUser(a.dataset.uid);break;
+    case'unblock':unblockUser(a.dataset.uid);break;
+    case'report':reportSheet(a.dataset.uid,null);break;
+    case'delete-account':deleteAccountSheet();break;
     case'like':{if(!p)break;const on=likedByMe(p.id);
       if(on)LIKES=LIKES.filter(l=>!(l.post===p.id&&l.uid===USER.id));else LIKES.push({post:p.id,uid:USER.id,created_at:new Date().toISOString()});
       render(true);if(!on)$(`[data-post="${p.id}"] [data-act="like"] svg`)?.classList.add('pop');
@@ -999,10 +1049,12 @@ document.addEventListener('click',async e=>{
     case'comment':if(!p)break;OPEN[p.id]=!OPEN[p.id];render(true);if(OPEN[p.id])$('#c-'+p.id)?.focus();break;
     case'share':if(p)copy(SITE+'#post-'+p.id,a);break;
     case'post-menu':{if(!p)break;const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
-      m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}העתקת קישור</button>${a.dataset.mine?`<button role="menuitem" class="danger" data-m="del">${ic('trash')}מחיקה</button>`:''}`;
+      m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}העתקת קישור</button>${a.dataset.mine?`<button role="menuitem" class="danger" data-m="del">${ic('trash')}מחיקה</button>`:`<button role="menuitem" data-m="report">${ic('info')}דיווח על הפוסט</button><button role="menuitem" data-m="block">חסימת המפרסם/ת</button>`}`;
       postEl.append(m);m.querySelector('button').focus();
       m.addEventListener('click',async ev=>{const b=ev.target.closest('[data-m]');if(!b)return;
         if(b.dataset.m==='copy'){copy(SITE+'#post-'+p.id);m.remove()}
+        else if(b.dataset.m==='report'){m.remove();reportSheet(p.author,p.id)}
+        else if(b.dataset.m==='block'){m.remove();blockUser(p.author)}
         else if(b.dataset.m==='del'){
           if(!b.dataset.sure){b.dataset.sure=1;b.innerHTML=`${ic('trash')}ללחוץ שוב כדי למחוק`;return}
           const{error}=await sb.from('pk_posts').delete().eq('id',p.id);

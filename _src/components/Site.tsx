@@ -11,6 +11,7 @@ import InstallSheet, { type AppInfo } from './InstallSheet';
 import Account from './Account';
 import A11yMenu from './A11yMenu';
 import { prefersStill, A11Y_T } from '../lib/a11y';
+import { LEGAL } from '../lib/legal';
 
 const Scene = dynamic(() => import('./Scene'), { ssr: false });
 
@@ -377,7 +378,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
               <span dir="ltr" style={{ fontSize: 'clamp(15px, calc((min(100vw, 1240px) - 56px) / 15.5), 60px)' }}>{CONTACT}</span>
             </MagneticLink>
             <div className="mt-20 flex flex-col gap-6 border-t border-white/10 pt-8 text-sm text-mist md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap items-center gap-3"><Mark size={22} /><span>© {new Date().getFullYear()} Barusik · {d.rights}</span><a href={`/${lang}/accessibility/`} className="underline underline-offset-4 hover:text-paper">{A11Y_T[lang].statement}</a></div>
+              <div className="flex flex-wrap items-center gap-3"><Mark size={22} /><span>© {new Date().getFullYear()} Barusik · {d.rights}</span><a href={`/${lang}/accessibility/`} className="underline underline-offset-4 hover:text-paper">{A11Y_T[lang].statement}</a><a href={`/${lang}/privacy/`} className="underline underline-offset-4 hover:text-paper">{LEGAL[lang].privacyLink}</a><a href={`/${lang}/terms/`} className="underline underline-offset-4 hover:text-paper">{LEGAL[lang].termsLink}</a></div>
               <nav aria-label={d.nav.lang} className="flex flex-wrap gap-x-4 gap-y-2">
                 {LANGS.map((l) => (<a key={l} href={`/${l}/`} lang={l} onClick={(e) => { e.preventDefault(); goLang(l, e); }} className={l === lang ? 'text-paper' : 'hover:text-paper'}>{LANG_NAMES[l]}</a>))}
               </nav>
