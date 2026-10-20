@@ -84,8 +84,16 @@ async function load(){
   const{data,error}=await sb.rpc('admin_overview');
   if(error){if(/not allowed|42501|permission/i.test(error.message+error.code))denied(session.user.email);else app.innerHTML=`<div class="box card"><h1>שגיאה</h1><p class="err">${esc(error.message)}</p><p class="mute">אם זה "function does not exist" — צריך להריץ את קובץ ה־SQL של ברוסיק ב־Supabase.</p><button id="r">נסו שוב</button></div>`,document.getElementById('r')&&(document.getElementById('r').onclick=load);return}
   if(!data||!data.totals){app.innerHTML=`<div class="box card"><h1>אין נתונים</h1><p class="mute">השרת לא החזיר נתונים. נסו לרענן.</p><button id="r">רענון</button></div>`;document.getElementById('r').onclick=load;return}
-  DATA=data;await loadTravel();draw(session.user.email);
+  DATA=data;await loadTravel();await loadReports();draw(session.user.email);
   if(!LIVE&&TRQ!==null)LIVE=sb.channel('trq').on('postgres_changes',{event:'*',schema:'public',table:'travel_requests'},async()=>{await loadTravel();draw(session.user.email)}).subscribe();
+}
+let REP=null;
+async function loadReports(){try{const{data,error}=await sb.from('pk_reports').select('*').order('created_at',{ascending:false}).limit(100);REP=error?null:(data||[])}catch(e){REP=null}}
+function reportsHTML(){
+  if(REP===null)return'';
+  const open=REP.filter(r=>r.status==='open');
+  const name=id=>{const u=DATA.users.find(x=>x.id===id);return u?(u.platformika?.profile?.handle?'@'+u.platformika.profile.handle:u.email):'—'};
+  return`<section class="card"><h2>דיווחים בפלטפורמיקה <span class="pill ${open.length?'n':'y'}">${n(open.length)} פתוחים</span></h2>${REP.length?`<div class="list">${REP.map(r=>`<div class="post"><small>${d(r.created_at)}</small><b dir="ltr">${esc(name(r.target_user))}</b><span>${r.post?'פוסט':'משתמש'}</span><span>${esc(r.reason)}</span><span class="sp"></span><span class="mute" dir="ltr">מאת ${esc(name(r.reporter))}</span>${r.status==='open'?`<button class="ghost" data-rep="${r.id}">טופל</button>`:'<span class="pill y">טופל</span>'}</div>`).join('')}</div>`:'<p class="mute">אין דיווחים</p>'}</section>`;
 }
 function rows(){
   let u=DATA.users.map(x=>({...x,cxn:x.complichess?.username||'',pkh:x.platformika?.profile?.handle||'',rating:x.complichess?.rating??null,games:x.complichess?.games??0,
@@ -125,6 +133,7 @@ function draw(email){
   <header><h1>ניהול · Barusik Platforms</h1><span class="sp"></span><span class="mute" dir="ltr">${esc(email)}</span><button class="ghost" id="rf">רענון</button><button class="ghost" id="out">התנתקות</button></header>
   <p class="mute" style="margin:0">נכון ל־${d(DATA.generated_at)}</p>
   ${travelHTML()}
+  ${reportsHTML()}
   <section class="grid">
     <div class="card stat"><small>משתמשים (כל הפלטפורמות)</small><b>${n(T.users)}</b></div>
     <div class="card stat"><small>נרשמו ב־7 ימים</small><b>${n(T.users_7d)}</b></div>
@@ -154,6 +163,7 @@ function draw(email){
   document.querySelectorAll('[data-st]').forEach(sel=>sel.onchange=async()=>{sel.disabled=true;const{error}=await sb.from('travel_requests').update({status:sel.value,updated_at:new Date().toISOString()}).eq('id',sel.dataset.st);
     if(error){alert('שגיאה: '+error.message);sel.disabled=false;return}const r=TRQ.find(x=>x.id===sel.dataset.st);if(r)r.status=sel.value;draw(email)});
   document.getElementById('csv').onclick=csv;
+  document.querySelectorAll('[data-rep]').forEach(b=>b.onclick=async()=>{b.disabled=true;const{error}=await sb.from('pk_reports').update({status:'done'}).eq('id',b.dataset.rep);if(error){b.disabled=false;return}const r=REP.find(x=>x.id===b.dataset.rep);if(r)r.status='done';draw(email)});
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw(email)});
   document.querySelectorAll('th[data-k]').forEach(t=>t.onclick=()=>{const k=t.dataset.k;SORT=SORT.k===k?{k,dir:-SORT.dir}:{k,dir:-1};draw(email)});
   const q=document.getElementById('q');q.oninput=()=>{Q=q.value;const p=q.selectionStart;draw(email);const e=document.getElementById('q');e.focus();e.setSelectionRange(p,p)};

@@ -279,7 +279,7 @@ function offlineBox(){return`<div class="banner" role="status"><span style="flex
 // Every search runs on Bar's own computer: we leave a job, his server page answers it.
 const strs=o=>Object.fromEntries(Object.entries(o).filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=>[k,String(v)]));
 async function job(kind,params,ms){
-  const{data:id,error}=await sb.rpc('travel_submit',{p_kind:kind,p_params:strs(params)});if(error||!id)throw new Error('submit');
+  const{data:id,error}=await sb.rpc('travel_submit',{p_kind:kind,p_params:strs(params)});if(error||!id)throw new Error(/busy/.test(error&&error.message||'')?'busy':'submit');
   const end=Date.now()+ms;let wait=350;
   while(Date.now()<end){const{data}=await sb.rpc('travel_job',{p_id:id});
     if(data&&data.status==='done')return data.result;if(data&&data.status==='failed')throw new Error(data.error||'failed');
@@ -462,6 +462,7 @@ async function search(params,label,title){
     let d;
     try{d=await job('search',params,115000)}
     catch(e){
+      if(e.message==='busy'){out.innerHTML=`<div class="box status">היו הרבה חיפושים בדקות האחרונות. חכו כמה דקות ונסו שוב, או שלחו לבר בוואטסאפ: <a href="https://wa.me/${WA}" target="_blank" rel="noopener">0556630709</a></div>`;return}
       if(!(await online())||/no-login|expired/.test(e.message))throw e;
       out.innerHTML=`<div class="box status">החיפוש לא הצליח הפעם. נסו שוב, או שלחו לבר בוואטסאפ: <a href="https://wa.me/${WA}" target="_blank" rel="noopener">0556630709</a></div>`;return}
     CUR={params,label,title,kind:params.kind,link:d.link};RES=d.results||[];SHOWN=0;
@@ -505,6 +506,7 @@ function book(o){
     ${field('מייל (לא חובה)',`<input id="be" type="email" dir="ltr" autocomplete="email" maxlength="120">`)}
     ${field(o.free?'מה מחפשים? (יעד, תאריכים, כמה אנשים, תקציב)':'הערות לבר',`<textarea id="bt" maxlength="1500" ${o.free?'required':''} placeholder="${o.free?'':'שמות הנוסעים, מזוודות, בקשות מיוחדות…'}"></textarea>`)}
     <p class="note" style="font-size:13px">${o.price?'המחיר נכון לרגע החיפוש. ההזמנה סופית רק אחרי שבר מאשר ושולח לכם פרטי תשלום — שום דבר לא מחויב עכשיו.':'בר יחזור אליכם עם הצעות מחיר. שום דבר לא מחויב עכשיו.'}</p>
+    <p class="note" style="font-size:12px">הפרטים נשלחים לבר רק כדי לטפל בבקשה. <a href="https://barusik.com/he/privacy/" target="_blank" rel="noopener">מדיניות פרטיות</a></p>
     <p class="err" id="bx" role="alert"></p>
     <button class="go">${o.price?'שליחת ההזמנה לאישור':'שליחת הבקשה'}</button></form>`;
   dlg.showModal();setTimeout(()=>$('#bn').focus(),30);
