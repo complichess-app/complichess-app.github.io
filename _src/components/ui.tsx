@@ -31,9 +31,9 @@ export function useMagnetic<T extends HTMLElement>(strength = 0.35) {
   return ref;
 }
 
-export function MagneticLink({ href, className, children, onClick, label, external }: { href: string; className?: string; children: React.ReactNode; onClick?: (e: React.MouseEvent) => void; label?: string; external?: boolean }) {
+export function MagneticLink({ href, className, children, onClick, label, external, download }: { href: string; className?: string; children: React.ReactNode; onClick?: (e: React.MouseEvent) => void; label?: string; external?: boolean; download?: boolean }) {
   const ref = useMagnetic<HTMLAnchorElement>();
-  return <a ref={ref} href={href} className={className} onClick={onClick} aria-label={label} data-cursor="grow" {...(external ? { target: '_blank', rel: 'noopener' } : {})}>{children}</a>;
+  return <a ref={ref} href={href} className={className} onClick={onClick} aria-label={label} data-cursor="grow" download={download || undefined} {...(external ? { target: '_blank', rel: 'noopener' } : {})}>{children}</a>;
 }
 export function MagneticButton({ className, children, onClick, label, disabled }: { className?: string; children: React.ReactNode; onClick?: () => void; label?: string; disabled?: boolean }) {
   const ref = useMagnetic<HTMLButtonElement>();

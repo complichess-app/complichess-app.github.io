@@ -20,6 +20,7 @@ const APPS: Record<'pk' | 'cx', Omit<AppInfo, 'name'>> = {
 };
 const ACCENT: Record<PlatformId, string> = { tr: '#38BDF8', pk: '#6A63FF', cx: '#D8AE57', cr: '#49E8C8', lr: '#FF7A59' };
 const IDS: PlatformId[] = ['tr', 'pk', 'cx', 'cr', 'lr'];
+const LEARNLUME = { zip: '/learnlume/LearnLume-0.2-Windows.zip' };
 const TRAVEL = { site: '/travel/', wa: 'https://wa.me/972556630709' };
 /* titles shrink to fit their box: the longest word decides (in container-width units) */
 const fitTitle = (name: string, k = 0.64) => { const n = Math.max(...name.split(/\s+/).map((w) => [...w].length)); return `${(100 / (n * k)).toFixed(2)}cqw`; };
@@ -101,6 +102,12 @@ function Chapter({ id, index, d, data, live, onInstall }: { id: PlatformId; inde
               <a href={TRAVEL.wa} target="_blank" rel="noopener" className="flex h-14 items-center gap-2 rounded-full border border-white/15 px-5 text-base font-bold text-paper/90 hover:bg-white/5 hover:text-paper">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.1-4.7-4-4.9-4.2-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.1.1.6-.1 1.1z" /></svg>{d.trWa}
               </a>
+            </>) : id === 'lr' && live ? (<>
+              <MagneticLink href={LEARNLUME.zip} download className="relative flex h-14 items-center gap-2 rounded-full px-7 text-base font-extrabold shadow-[0_10px_40px_-10px_var(--acc)]">
+                <span className="pointer-events-none absolute inset-0 rounded-full" style={{ background: accent }} />
+                <span className="relative flex items-center gap-2 text-night"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>{d.lrDl}</span>
+              </MagneticLink>
+              <p className="w-full text-sm leading-relaxed text-mist">{d.lrNote}</p>
             </>) : live && onInstall ? (<>
               <MagneticButton onClick={onInstall} className="relative flex h-14 items-center gap-2 rounded-full px-7 text-base font-extrabold shadow-[0_10px_40px_-10px_var(--acc)]">
                 <span className="pointer-events-none absolute inset-0 rounded-full" style={{ background: accent }} />
@@ -149,6 +156,9 @@ function AppCard({ id, d, data, live, onInstall }: { id: PlatformId; d: Dict; da
         {id === 'tr' ? (<>
           <a href={TRAVEL.site} data-cursor="grow" className="flex h-12 items-center rounded-full px-6 text-[15px] font-extrabold text-night transition-transform active:scale-95" style={{ background: accent }}>{d.trVisit}</a>
           <a href={TRAVEL.wa} target="_blank" rel="noopener" className="flex h-12 items-center rounded-full border border-white/15 px-5 text-[15px] font-bold hover:bg-white/5">{d.trWa}</a>
+        </>) : id === 'lr' && live ? (<>
+          <a href={LEARNLUME.zip} download data-cursor="grow" className="flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-extrabold text-night transition-transform active:scale-95" style={{ background: accent }}>{d.lrDl}</a>
+          <p className="w-full text-[13px] leading-relaxed text-mist">{d.lrNote}</p>
         </>) : live && onInstall ? (<>
           <button type="button" onClick={onInstall} data-cursor="grow" className="h-12 rounded-full px-6 text-[15px] font-extrabold transition-transform active:scale-95" style={{ background: accent, color: id === 'cx' ? '#1A1208' : '#fff' }}>{d.install}</button>
           <a href={APPS[id as 'pk' | 'cx'].path} className="flex h-12 items-center rounded-full border border-white/15 px-5 text-[15px] font-bold hover:bg-white/5">{d.open}</a>
@@ -169,7 +179,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
   const curtain = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
 
-  const cursorLabels = useMemo(() => ({ tr: d.tr.name, pk: d.pk.name, cx: d.cx.name, cr: d.soon, lr: `${d.lr.name} · ${d.soon}`, drag: d.drag }), [d]);
+  const cursorLabels = useMemo(() => ({ tr: d.tr.name, pk: d.pk.name, cx: d.cx.name, cr: d.soon, lr: d.lr.name, drag: d.drag }), [d]);
 
   const scrollToY = useCallback((y: number) => {
     if (lenisRef.current) lenisRef.current.scrollTo(y, { duration: 1.6, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
@@ -332,7 +342,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
                 <button key={id} type="button" onClick={() => toChapter(i)} data-cursor="grow"
                   className="glass flex h-11 items-center gap-2 rounded-full ps-3 pe-4 text-[15px] font-bold transition-colors hover:bg-white/10">
                   <span className="h-2.5 w-2.5 rotate-45 rounded-[3px]" style={{ background: ACCENT[id] }} />{navItems[i]}
-                  {id === 'cr' || id === 'lr' ? <span className="text-xs font-medium text-mist">· {d.soon}</span> : null}
+                  {id === 'cr' ? <span className="text-xs font-medium text-mist">· {d.soon}</span> : null}
                 </button>
               ))}
             </div>
@@ -351,7 +361,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
           <Chapter id="pk" index={1} d={d} data={d.pk} live onInstall={() => setSheet('pk')} />
           <Chapter id="cx" index={2} d={d} data={d.cx} live onInstall={() => setSheet('cx')} />
           <Chapter id="cr" index={3} d={d} data={d.cr} live={false} />
-          <Chapter id="lr" index={4} d={d} data={d.lr} live={false} />
+          <Chapter id="lr" index={4} d={d} data={d.lr} live />
         </div>
 
         <section id="install" className="relative px-5 pb-24 pt-32 md:px-[4vw]" style={{ background: 'linear-gradient(to bottom, transparent, #090B1F 22%)' }}>
@@ -363,7 +373,7 @@ export default function Site({ lang, d }: { lang: Lang; d: Dict }) {
               <AppCard id="pk" d={d} data={d.pk} live onInstall={() => setSheet('pk')} />
               <AppCard id="cx" d={d} data={d.cx} live onInstall={() => setSheet('cx')} />
               <AppCard id="cr" d={d} data={d.cr} live={false} />
-              <AppCard id="lr" d={d} data={d.lr} live={false} />
+              <AppCard id="lr" d={d} data={d.lr} live />
             </div>
             <p className="mt-6 text-[15px] text-mist">{d.updatesNote}</p>
           </div>
