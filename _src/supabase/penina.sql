@@ -1,3 +1,4 @@
+-- © 2026 Bar Lvovski. All rights reserved.
 -- Penina (chat reports): only a usage counter lives here. Chats are never stored — not here, not in logs.
 create table if not exists public.pn_usage (
   uid uuid not null references auth.users on delete cascade,

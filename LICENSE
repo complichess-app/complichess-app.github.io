@@ -1,0 +1,11 @@
+Copyright (c) 2026 Bar Lvovski. All rights reserved.
+
+Barusik Platforms — barusik.com and everything in this repository: the hub site, Bar Lvovski Travel,
+Platformika, Barusik Crypto, What Penina thinks (Penina), LearnLume, their designs, texts, database
+schemas, server functions and source code — is proprietary. No license is granted to copy, modify,
+distribute, or use any part of it, in whole or in part, without prior written permission from the author.
+
+Contact: barusik.official@gmail.com
+
+Third-party components keep their own licenses (Next.js, React, three.js, GSAP, Lenis, Motion,
+supabase-js, KaTeX, and the fonts loaded from Google Fonts under the SIL Open Font License).
