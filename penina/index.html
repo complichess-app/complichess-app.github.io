@@ -1,0 +1,303 @@
+<!doctype html>
+<!-- What Penina thinks · © 2026 Bar Lvovski. All rights reserved. -->
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>מה פנינה חושבת על הצ'אט שלכם</title>
+<meta name="description" content="מעלים צ'אט מוואטסאפ ופנינה כותבת עליו דוח: מי מחזיק את הקבוצה, מי נעלם, מי מתנצל יותר מדי.">
+<meta name="theme-color" content="#24122E">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap">
+<style>
+/* Penina. The pearl is the one loud thing: it sits on the first screen, it holds the score in the report.
+   Everything else is plain text on aubergine, set like a letter from your aunt. */
+:root{
+  --night:#24122E; --plum:#331C42; --plum-2:#432757; --line:rgba(247,239,245,.12);
+  --pearl:#F7EFF5; --pearl-2:#D9C9DD; --muted:#A891B3;
+  --lip:#F0507F; --lip-ink:#2A0A17; --mint:#7BE0B8; --amber:#FFC46B;
+  --fd:"Secular One","Assistant",system-ui,sans-serif; --fb:"Assistant","Arial Hebrew",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--night);color:var(--pearl);font:18px/1.6 var(--fb);-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+a{color:var(--lip)}
+:focus-visible{outline:3px solid var(--amber);outline-offset:3px;border-radius:8px}
+.n{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+.hide{display:none!important}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;max-width:1100px;margin:0 auto}
+header a.home{color:var(--pearl-2);text-decoration:none;font-weight:600;font-size:15px}
+header select{background:var(--plum);border:1px solid var(--line);border-radius:999px;height:38px;padding:0 10px}
+
+/* the pearl */
+.pearl{--s:180px;width:var(--s);height:var(--s);border-radius:50%;position:relative;flex:none;
+  background:radial-gradient(circle at 34% 28%,#fff 0 6%,rgba(255,255,255,.75) 10%,transparent 30%),
+             radial-gradient(circle at 70% 78%,rgba(240,80,127,.32),transparent 45%),
+             radial-gradient(circle at 50% 50%,#FBF4FA 0%,#E7D6E8 55%,#B9A0C2 100%);
+  box-shadow:inset -12px -16px 30px rgba(80,40,90,.35),inset 8px 10px 22px rgba(255,255,255,.6),0 30px 60px -20px rgba(0,0,0,.6)}
+.pearl.rolls{animation:roll 1.4s cubic-bezier(.2,.9,.25,1) both}
+@keyframes roll{from{transform:translateX(calc(var(--dir,1)*-60vw)) rotate(calc(var(--dir,1)*-540deg))}to{transform:none}}
+
+.hero{display:flex;align-items:center;gap:36px;padding:40px 0 30px}
+.hero h1{font-family:var(--fd);font-weight:400;font-size:clamp(40px,7vw,76px);line-height:1;margin:0 0 14px;letter-spacing:-.01em}
+.hero p{margin:0;color:var(--pearl-2);font-size:19px;max-width:34ch}
+
+.drop{display:block;margin:26px 0 8px;border:2px dashed rgba(247,239,245,.28);border-radius:26px;padding:34px 24px;text-align:center;transition:border-color .2s,background .2s}
+.drop.over{border-color:var(--lip);background:rgba(240,80,127,.07)}
+.drop b{display:block;font-family:var(--fd);font-weight:400;font-size:26px;margin-bottom:6px}
+.drop p{margin:0 0 18px;color:var(--muted)}
+.pick{display:inline-flex;align-items:center;height:54px;padding:0 28px;border-radius:999px;background:var(--lip);color:var(--lip-ink);font-weight:800;font-size:18px}
+.private{color:var(--muted);font-size:15px;text-align:center;margin:6px 0 34px}
+
+details.how{border-top:1px solid var(--line);padding:16px 0}
+details.how summary{cursor:pointer;font-weight:800;font-size:18px;list-style:none}
+details.how summary::before{content:'+';display:inline-block;width:22px;color:var(--lip)}
+details.how[open] summary::before{content:'–'}
+.how ol{margin:12px 0 0;padding-inline-start:44px;color:var(--pearl-2)}
+
+/* stats */
+.sec{padding:30px 0;border-top:1px solid var(--line)}
+.sec h2{font-family:var(--fd);font-weight:400;font-size:30px;margin:0 0 6px}
+.sec .sub{color:var(--muted);margin:0 0 20px;font-size:16px}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 18px}
+.facts div{font-size:15px;color:var(--muted)}
+.facts b{display:block;font-family:var(--fd);font-weight:400;font-size:30px;color:var(--pearl);line-height:1.1}
+.who{display:grid;gap:0}
+.person{display:grid;grid-template-columns:44px 1fr auto;gap:4px 14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.dot{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:var(--night);grid-row:span 2}
+.person .nm{font-weight:800}
+.person .meta{grid-column:2/4;color:var(--muted);font-size:15px}
+.bar{height:8px;border-radius:999px;background:var(--plum-2);overflow:hidden;width:120px}
+.bar i{display:block;height:100%;background:var(--lip)}
+.clock{direction:ltr;display:grid;grid-template-columns:repeat(24,1fr);gap:3px;align-items:end;height:90px;margin-top:12px}
+.clock i{background:var(--plum-2);border-radius:3px 3px 0 0;min-height:3px}
+.clock i.top{background:var(--amber)}
+.clock-l{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;direction:ltr}
+
+.ask{background:var(--plum);border-radius:26px;padding:26px;margin:10px 0 40px;display:flex;flex-direction:column;gap:14px}
+.ask h3{margin:0;font-family:var(--fd);font-weight:400;font-size:26px}
+.ask p{margin:0;color:var(--pearl-2)}
+.go{height:56px;border-radius:999px;background:var(--lip);color:var(--lip-ink);font-weight:800;font-size:18px}
+.go:disabled{opacity:.6;cursor:wait}
+.msg{color:var(--amber);font-weight:600;min-height:1em;margin:0}
+.fld{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:15px}
+.fld input{height:50px;border-radius:14px;border:1px solid var(--line);background:var(--night);padding:0 14px;direction:ltr;text-align:start}
+
+/* report */
+.report .verdict{display:flex;gap:28px;align-items:center;padding:34px 0 10px}
+.report .verdict .pearl{--s:150px;display:grid;place-items:center}
+.score{font-family:var(--fd);font-size:54px;color:var(--lip-ink);line-height:1}
+.score small{font-size:20px;opacity:.6}
+.report h1{font-family:var(--fd);font-weight:400;font-size:clamp(32px,5.6vw,54px);line-height:1.05;margin:0}
+.report .lead{font-size:20px;color:var(--pearl);margin:18px 0 0}
+.report .sline{color:var(--muted);margin:8px 0 0}
+.card{padding:24px 0;border-bottom:1px solid var(--line)}
+.card .top{display:flex;align-items:center;gap:14px}
+.card h3{margin:0;font-size:22px}
+.card .role{color:var(--amber);font-weight:600}
+.card p{margin:10px 0 0}
+.flags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:15px}
+.flags span{border-radius:999px;padding:4px 12px}
+.flags .g{background:rgba(123,224,184,.14);color:var(--mint)}
+.flags .r{background:rgba(240,80,127,.16);color:#FF8FB0}
+.kind{color:var(--pearl-2);font-style:italic}
+.card:last-child,blockquote:last-child{border-bottom:0}
+blockquote{margin:0;padding:16px 0;border-bottom:1px solid var(--line)}
+blockquote q{font-family:var(--fd);font-size:22px;quotes:'״' '״'}
+blockquote cite{display:block;color:var(--muted);font-style:normal;font-size:15px;margin-top:4px}
+ul.dyn{margin:0;padding-inline-start:20px}
+ul.dyn li{margin:8px 0}
+.advice{font-family:var(--fd);font-size:24px;line-height:1.35;margin:0}
+.actions{display:flex;flex-wrap:wrap;gap:12px;padding:30px 0 60px}
+.btn2{height:50px;padding:0 22px;border-radius:999px;border:1px solid rgba(247,239,245,.3);font-weight:800}
+
+.wait{display:flex;flex-direction:column;align-items:center;gap:20px;padding:60px 0;text-align:center}
+.wait .pearl{--s:110px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-14px) rotate(20deg)}}
+
+footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px 50px;border-top:1px solid var(--line)}
+
+@media (max-width:640px){
+  .hero{flex-direction:column;align-items:flex-start;gap:20px;padding-top:20px}
+  .hero .pearl{--s:120px}
+  .report .verdict{flex-direction:column;align-items:flex-start}
+  .bar{width:70px}
+}
+@media (prefers-reduced-motion:reduce){.pearl.rolls,.wait .pearl{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header><a class="home" href="/" data-t="home"></a><select id="lang" aria-label="Language"></select></header>
+
+<main class="wrap">
+  <!-- 1. upload -->
+  <section id="start">
+    <div class="hero"><div class="pearl rolls" aria-hidden="true"></div><div><h1 data-t="title"></h1><p data-t="lead"></p></div></div>
+    <label class="drop" id="drop">
+      <b data-t="drop"></b><p data-t="dropSub"></p>
+      <span class="pick" data-t="choose"></span>
+      <input type="file" id="file" accept=".txt,.zip,text/plain,application/zip" class="hide">
+    </label>
+    <p class="private" data-t="private"></p>
+    <details class="how"><summary data-t="howIphone"></summary><ol data-list="stepsIphone"></ol></details>
+    <details class="how"><summary data-t="howAndroid"></summary><ol data-list="stepsAndroid"></ol></details>
+    <p class="msg" id="readMsg" role="alert"></p>
+  </section>
+
+  <!-- 2. what the browser found on its own -->
+  <section id="local" class="hide">
+    <div class="sec"><h2 id="chatTitle"></h2><p class="sub" data-t="localSub"></p><div class="facts" id="facts"></div></div>
+    <div class="sec"><h2 data-t="whoTalks"></h2><div class="who" id="people"></div></div>
+    <div class="sec"><h2 data-t="when"></h2><div class="clock" id="clock" aria-hidden="true"></div><div class="clock-l"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div><p class="sub" id="clockLine" style="margin-top:12px"></p></div>
+    <div class="ask" id="ask">
+      <h3 data-t="askTitle"></h3><p data-t="askSub"></p>
+      <div id="loginBox" class="hide">
+        <div class="fld"><label for="em" data-t="email"></label><input id="em" type="email" autocomplete="email"></div>
+        <div class="fld" style="margin-top:10px"><label for="pw" data-t="password"></label><input id="pw" type="password" autocomplete="current-password"></div>
+        <p style="margin-top:10px"><a href="/he/" data-t="noAcc"></a></p>
+      </div>
+      <p class="msg" id="askMsg" role="alert"></p>
+      <button class="go" id="goBtn" type="button"></button>
+    </div>
+  </section>
+
+  <!-- 3. waiting -->
+  <section id="wait" class="wait hide" aria-live="polite"><div class="pearl" aria-hidden="true"></div><p id="waitLine"></p></section>
+
+  <!-- 4. the report -->
+  <section id="report" class="report hide"></section>
+</main>
+<footer data-t="foot"></footer>
+
+<script src="/lib/supabase.js"></script>
+<script src="chat.js"></script>
+<script>
+'use strict';
+const T={
+he:{home:'← ברוסיק',title:'מה פנינה חושבת על הצ׳אט שלכם',lead:'מעלים צ׳אט מוואטסאפ. פנינה קוראת הכל ואומרת לכם בפרצוף מי מחזיק את הקבוצה, מי נעלם ומי מתנצל יותר מדי.',drop:'גררו לכאן את הצ׳אט',dropSub:'קובץ ‎.zip‎ או ‎.txt‎ שוואטסאפ מייצא',choose:'בחירת קובץ',private:'הקובץ נפתח רק אצלכם בטלפון או במחשב. לדוח של פנינה נשלח קטע מקוצר, בלי מספרי טלפון ומיילים, והוא לא נשמר בשום מקום.',howIphone:'איך מייצאים באייפון',howAndroid:'איך מייצאים באנדרואיד',stepsIphone:['פותחים את הצ׳אט בוואטסאפ ולוחצים על השם שלמעלה','גוללים למטה ובוחרים "ייצוא צ׳אט"','בוחרים "ללא מדיה"','שומרים בקבצים ומעלים כאן'],stepsAndroid:['פותחים את הצ׳אט ולוחצים על ⋮ למעלה','עוד ← ייצוא צ׳אט','בוחרים "ללא מדיה"','שומרים או שולחים לעצמכם ומעלים כאן'],badFile:'זה לא נראה כמו צ׳אט שוואטסאפ ייצא. נסו לייצא שוב "ללא מדיה".',tooSmall:'יש פה פחות מ־50 הודעות. פנינה צריכה קצת יותר חומר.',localSub:'את זה הדפדפן ספר לבד, בלי לשלוח כלום',msgs:'הודעות',days:'ימים',active:'ימים עם הודעות',streak:'רצף ימים הכי ארוך',people:'משתתפים',whoTalks:'מי מדבר',when:'מתי אתם מדברים',peak:'הכי הרבה הודעות בשעה {h}:00',starts:'פתח/ה {n} שיחות',reply:'עונה תוך {m} דק׳',media:'{n} תמונות ומדיה',sorry:'{n} סליחות',night:'{p}% בלילה',askTitle:'עכשיו פנינה',askSub:'דוח אישי על כל אחד, הדינמיקה של הקבוצה, והציטוטים שפנינה לא שוכחת. דוח אחד בחינם כל יום.',email:'מייל',password:'סיסמה',noAcc:'אין חשבון? נרשמים באתר הראשי',login:'להתחבר ולקבל את הדוח',getReport:'לקבל את הדוח של פנינה',badLogin:'מייל או סיסמה שגויים',limit:'כבר קיבלתם דוח היום. מחר יש עוד אחד.',busy:'פנינה לא הצליחה לסיים. הדוח לא ירד לכם מהמכסה, נסו שוב בעוד דקה.',w:['פנינה קוראת…','פנינה מגלגלת עיניים…','פנינה סופרת מי לא ענה…','פנינה מחפשת את הציטוט הכי טוב…'],score:'ציון',people2:'כל אחד בנפרד',green:'דגל ירוק',red:'דגל אדום',dyn:'איך הקבוצה עובדת',moments:'רגעים',advice:'מה פנינה אומרת לכם',share:'לשתף את הדוח',again:'צ׳אט אחר',saved:'התמונה נשמרה',foot:'© ברוסיק. פנינה כותבת בשביל הכיף. אל תקבלו החלטות חיים לפי דוח על קבוצת וואטסאפ.'},
+en:{home:'← Barusik',title:'What Penina thinks of your chat',lead:'Upload a WhatsApp chat. Penina reads all of it and tells you to your face who holds the group together, who vanishes and who apologises too much.',drop:'Drop your chat here',dropSub:'The .zip or .txt file WhatsApp exports',choose:'Choose a file',private:'The file opens only on your device. Penina gets a short excerpt with phone numbers and emails removed, and nothing is stored.',howIphone:'How to export on iPhone',howAndroid:'How to export on Android',stepsIphone:['Open the chat and tap the name at the top','Scroll down and tap "Export chat"','Choose "Without media"','Save to Files and upload it here'],stepsAndroid:['Open the chat and tap ⋮','More → Export chat','Choose "Without media"','Save or send it to yourself and upload it here'],badFile:'This does not look like a WhatsApp export. Export again "Without media".',tooSmall:'Fewer than 50 messages here. Penina needs a bit more.',localSub:'Your browser worked this out on its own, nothing was sent',msgs:'messages',days:'days',active:'days with messages',streak:'longest daily streak',people:'people',whoTalks:'Who talks',when:'When you talk',peak:'Busiest hour: {h}:00',starts:'started {n} conversations',reply:'replies in {m} min',media:'{n} photos and media',sorry:'{n} apologies',night:'{p}% at night',askTitle:'Now Penina',askSub:'A personal read on everyone, how the group works, and the quotes Penina won’t forget. One free report a day.',email:'Email',password:'Password',noAcc:'No account? Sign up on the main site',login:'Sign in and get the report',getReport:'Get Penina’s report',badLogin:'Wrong email or password',limit:'You already had a report today. There’s another one tomorrow.',busy:'Penina couldn’t finish. It didn’t count against you; try again in a minute.',w:['Penina is reading…','Penina is rolling her eyes…','Penina is counting who never answered…','Penina is picking the best quote…'],score:'Score',people2:'One by one',green:'Green flag',red:'Red flag',dyn:'How the group works',moments:'Moments',advice:'What Penina tells you',share:'Share the report',again:'Another chat',saved:'Image saved',foot:'© Barusik. Penina writes for fun. Don’t make life decisions based on a report about a WhatsApp group.'},
+ar:{home:'← Barusik',title:'ماذا تقول بنينا عن محادثتكم',lead:'ارفعوا محادثة واتساب. بنينا تقرأ كل شيء وتقول لكم بصراحة من يحمل المجموعة ومن يختفي ومن يعتذر كثيرًا.',drop:'اسحبوا المحادثة إلى هنا',dropSub:'ملف ‎.zip‎ أو ‎.txt‎ الذي يصدّره واتساب',choose:'اختيار ملف',private:'يُفتح الملف على جهازكم فقط. بنينا تتلقى مقتطفًا قصيرًا بلا أرقام هواتف أو بريد، ولا يُحفظ شيء.',howIphone:'التصدير على آيفون',howAndroid:'التصدير على أندرويد',stepsIphone:['افتحوا المحادثة واضغطوا على الاسم في الأعلى','انزلوا واضغطوا "تصدير الدردشة"','اختاروا "بدون وسائط"','احفظوا في الملفات وارفعوا هنا'],stepsAndroid:['افتحوا المحادثة واضغطوا ⋮','المزيد ← تصدير الدردشة','اختاروا "بدون وسائط"','احفظوا أو أرسلوا لأنفسكم وارفعوا هنا'],badFile:'لا يبدو هذا تصدير واتساب. صدّروا مجددًا "بدون وسائط".',tooSmall:'أقل من 50 رسالة. بنينا تحتاج المزيد.',localSub:'حسبها المتصفح وحده دون إرسال شيء',msgs:'رسالة',days:'يوم',active:'أيام فيها رسائل',streak:'أطول سلسلة أيام',people:'مشاركون',whoTalks:'من يتكلم',when:'متى تتكلمون',peak:'أكثر ساعة: {h}:00',starts:'بدأ {n} محادثة',reply:'يرد خلال {m} د',media:'{n} صور ووسائط',sorry:'{n} اعتذار',night:'{p}% ليلًا',askTitle:'والآن بنينا',askSub:'قراءة شخصية لكل واحد، وكيف تعمل المجموعة، والاقتباسات التي لا تنساها بنينا. تقرير مجاني كل يوم.',email:'البريد',password:'كلمة المرور',noAcc:'لا حساب؟ سجّلوا في الموقع الرئيسي',login:'الدخول والحصول على التقرير',getReport:'تقرير بنينا',badLogin:'بريد أو كلمة مرور خاطئة',limit:'حصلتم على تقرير اليوم. غدًا تقرير آخر.',busy:'لم تكمل بنينا. لم يُحتسب عليكم، جرّبوا بعد دقيقة.',w:['بنينا تقرأ…','بنينا تقلب عينيها…','بنينا تعدّ من لم يرد…','بنينا تختار أفضل اقتباس…'],score:'النتيجة',people2:'كل واحد',green:'علم أخضر',red:'علم أحمر',dyn:'كيف تعمل المجموعة',moments:'لحظات',advice:'ما تقوله بنينا',share:'مشاركة التقرير',again:'محادثة أخرى',saved:'حُفظت الصورة',foot:'© Barusik. بنينا تكتب للمتعة. لا تتخذوا قرارات حياتكم بناءً على تقرير عن مجموعة واتساب.'},
+ru:{home:'← Barusik',title:'Что Пнина думает о вашем чате',lead:'Загрузите чат из WhatsApp. Пнина прочитает всё и скажет прямо, кто держит группу, кто пропадает и кто слишком часто извиняется.',drop:'Перетащите чат сюда',dropSub:'Файл .zip или .txt из экспорта WhatsApp',choose:'Выбрать файл',private:'Файл открывается только на вашем устройстве. Пнина получает короткий отрывок без телефонов и почты, ничего не сохраняется.',howIphone:'Экспорт на iPhone',howAndroid:'Экспорт на Android',stepsIphone:['Откройте чат и нажмите на имя вверху','Пролистайте вниз — «Экспорт чата»','Выберите «Без медиафайлов»','Сохраните в Файлы и загрузите сюда'],stepsAndroid:['Откройте чат и нажмите ⋮','Ещё → Экспорт чата','Выберите «Без медиафайлов»','Сохраните или отправьте себе и загрузите сюда'],badFile:'Это не похоже на экспорт WhatsApp. Экспортируйте снова «Без медиафайлов».',tooSmall:'Меньше 50 сообщений. Пнине нужно больше.',localSub:'Браузер посчитал это сам, ничего не отправляя',msgs:'сообщений',days:'дней',active:'дней с сообщениями',streak:'самая длинная серия дней',people:'участников',whoTalks:'Кто говорит',when:'Когда вы пишете',peak:'Больше всего в {h}:00',starts:'начал(а) {n} разговоров',reply:'отвечает за {m} мин',media:'{n} фото и медиа',sorry:'{n} извинений',night:'{p}% ночью',askTitle:'А теперь Пнина',askSub:'Личный разбор каждого, как работает группа и цитаты, которые Пнина не забудет. Один бесплатный отчёт в день.',email:'Почта',password:'Пароль',noAcc:'Нет аккаунта? Регистрация на главном сайте',login:'Войти и получить отчёт',getReport:'Получить отчёт Пнины',badLogin:'Неверная почта или пароль',limit:'Сегодня отчёт уже был. Завтра будет ещё.',busy:'Пнина не успела. Отчёт не засчитан, попробуйте через минуту.',w:['Пнина читает…','Пнина закатывает глаза…','Пнина считает, кто не ответил…','Пнина выбирает лучшую цитату…'],score:'Оценка',people2:'Каждый отдельно',green:'Зелёный флаг',red:'Красный флаг',dyn:'Как устроена группа',moments:'Моменты',advice:'Что говорит Пнина',share:'Поделиться',again:'Другой чат',saved:'Картинка сохранена',foot:'© Barusik. Пнина пишет для удовольствия. Не принимайте жизненных решений по отчёту о группе в WhatsApp.'},
+es:{home:'← Barusik',title:'Lo que Penina piensa de tu chat',lead:'Sube un chat de WhatsApp. Penina lo lee todo y te dice en la cara quién sostiene el grupo, quién desaparece y quién pide perdón de más.',drop:'Suelta tu chat aquí',dropSub:'El .zip o .txt que exporta WhatsApp',choose:'Elegir archivo',private:'El archivo se abre solo en tu dispositivo. Penina recibe un fragmento corto sin teléfonos ni correos, y no se guarda nada.',howIphone:'Cómo exportar en iPhone',howAndroid:'Cómo exportar en Android',stepsIphone:['Abre el chat y toca el nombre arriba','Baja y toca «Exportar chat»','Elige «Sin archivos»','Guárdalo en Archivos y súbelo aquí'],stepsAndroid:['Abre el chat y toca ⋮','Más → Exportar chat','Elige «Sin archivos»','Guárdalo o envíatelo y súbelo aquí'],badFile:'Esto no parece una exportación de WhatsApp. Exporta otra vez «Sin archivos».',tooSmall:'Hay menos de 50 mensajes. Penina necesita más.',localSub:'Tu navegador lo calculó solo, sin enviar nada',msgs:'mensajes',days:'días',active:'días con mensajes',streak:'racha diaria más larga',people:'personas',whoTalks:'Quién habla',when:'Cuándo habláis',peak:'Hora punta: {h}:00',starts:'empezó {n} conversaciones',reply:'responde en {m} min',media:'{n} fotos y archivos',sorry:'{n} disculpas',night:'{p}% de noche',askTitle:'Ahora Penina',askSub:'Una lectura de cada persona, cómo funciona el grupo y las frases que Penina no olvida. Un informe gratis al día.',email:'Correo',password:'Contraseña',noAcc:'¿Sin cuenta? Regístrate en el sitio principal',login:'Entrar y recibir el informe',getReport:'Recibir el informe de Penina',badLogin:'Correo o contraseña incorrectos',limit:'Ya tuviste un informe hoy. Mañana hay otro.',busy:'Penina no pudo terminar. No se descontó; prueba en un minuto.',w:['Penina está leyendo…','Penina pone los ojos en blanco…','Penina cuenta quién no contestó…','Penina elige la mejor frase…'],score:'Nota',people2:'Uno por uno',green:'Bandera verde',red:'Bandera roja',dyn:'Cómo funciona el grupo',moments:'Momentos',advice:'Lo que Penina os dice',share:'Compartir',again:'Otro chat',saved:'Imagen guardada',foot:'© Barusik. Penina escribe por diversión. No tomes decisiones de vida por un informe de un grupo de WhatsApp.'},
+fr:{home:'← Barusik',title:'Ce que Penina pense de votre chat',lead:'Envoyez un chat WhatsApp. Penina lit tout et vous dit en face qui porte le groupe, qui disparaît et qui s’excuse trop.',drop:'Déposez votre chat ici',dropSub:'Le fichier .zip ou .txt exporté par WhatsApp',choose:'Choisir un fichier',private:'Le fichier s’ouvre seulement sur votre appareil. Penina reçoit un court extrait sans numéros ni e-mails, et rien n’est conservé.',howIphone:'Exporter sur iPhone',howAndroid:'Exporter sur Android',stepsIphone:['Ouvrez le chat et touchez le nom en haut','Descendez et touchez « Exporter la discussion »','Choisissez « Sans médias »','Enregistrez dans Fichiers et envoyez-le ici'],stepsAndroid:['Ouvrez le chat et touchez ⋮','Plus → Exporter la discussion','Choisissez « Sans médias »','Enregistrez ou envoyez-le-vous et envoyez-le ici'],badFile:'Ce n’est pas un export WhatsApp. Exportez à nouveau « Sans médias ».',tooSmall:'Moins de 50 messages. Penina a besoin de plus.',localSub:'Votre navigateur l’a calculé seul, rien n’a été envoyé',msgs:'messages',days:'jours',active:'jours avec messages',streak:'plus longue série de jours',people:'personnes',whoTalks:'Qui parle',when:'Quand vous parlez',peak:'Heure de pointe : {h}:00',starts:'a lancé {n} conversations',reply:'répond en {m} min',media:'{n} photos et médias',sorry:'{n} excuses',night:'{p} % la nuit',askTitle:'Maintenant Penina',askSub:'Un portrait de chacun, la dynamique du groupe et les citations que Penina n’oublie pas. Un rapport gratuit par jour.',email:'E-mail',password:'Mot de passe',noAcc:'Pas de compte ? Inscrivez-vous sur le site principal',login:'Se connecter et recevoir le rapport',getReport:'Recevoir le rapport de Penina',badLogin:'E-mail ou mot de passe incorrect',limit:'Vous avez déjà eu un rapport aujourd’hui. Demain, un autre.',busy:'Penina n’a pas pu finir. Ce n’est pas décompté ; réessayez dans une minute.',w:['Penina lit…','Penina lève les yeux au ciel…','Penina compte qui n’a pas répondu…','Penina choisit la meilleure citation…'],score:'Note',people2:'Un par un',green:'Drapeau vert',red:'Drapeau rouge',dyn:'Comment marche le groupe',moments:'Moments',advice:'Ce que Penina vous dit',share:'Partager le rapport',again:'Un autre chat',saved:'Image enregistrée',foot:'© Barusik. Penina écrit pour le plaisir. Ne prenez pas de décisions de vie d’après un rapport sur un groupe WhatsApp.'}
+};
+const LANGS={he:'עברית',en:'English',ar:'العربية',ru:'Русский',es:'Español',fr:'Français'},RTL={he:1,ar:1};
+let L=(()=>{const q=new URLSearchParams(location.search).get('lang');let s;try{s=localStorage.getItem('barusik.lang')}catch{}return T[q]?q:T[s]?s:'he'})();
+const t=(k,v)=>{let s=T[L][k]??T.en[k]??k;if(typeof s==='string'&&v)for(const x in v)s=s.replaceAll('{'+x+'}',v[x]);return s};
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hue=n=>{let h=0;for(const c of n)h=(h*31+c.codePointAt(0))%360;return h};
+const initial=n=>[...n.replace(/[^\p{L}\p{N}]/gu,'')][0]||'?';
+
+const SB_URL='https://iktmyrfbejtjsiehcrar.supabase.co',SB_KEY='sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
+const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}}):null;
+let USER=null,MSGS=null,STATS=null,REPORT=null;
+
+function paint(){
+  document.documentElement.lang=L;document.documentElement.dir=RTL[L]?'rtl':'ltr';
+  document.querySelector('.pearl.rolls')?.style.setProperty('--dir',RTL[L]?-1:1);
+  document.querySelectorAll('[data-t]').forEach(e=>e.textContent=t(e.dataset.t));
+  document.querySelectorAll('[data-list]').forEach(e=>e.innerHTML=t(e.dataset.list).map(x=>`<li>${esc(x)}</li>`).join(''));
+  $('#lang').innerHTML=Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===L?' selected':''}>${v}</option>`).join('');
+  document.title=t('title');
+  if(STATS)renderLocal();if(REPORT)renderReport(REPORT);goBtn();
+}
+$('#lang').onchange=e=>{L=e.target.value;try{localStorage.setItem('barusik.lang',L)}catch{}paint()};
+
+/* ---------- reading the file ---------- */
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)openChat(f)});
+$('#file').onchange=e=>{const f=e.target.files[0];if(f)openChat(f)};
+async function openChat(f){
+  $('#readMsg').textContent='';
+  try{
+    const text=await PeninaChat.readFile(f);const msgs=PeninaChat.parse(text);
+    if(!msgs.length)throw 0;if(msgs.length<50)return $('#readMsg').textContent=t('tooSmall');
+    MSGS=msgs;STATS=PeninaChat.stats(msgs);REPORT=null;$('#report').classList.add('hide');
+    $('#start').classList.add('hide');$('#local').classList.remove('hide');renderLocal();scrollTo(0,0);
+  }catch{ $('#readMsg').textContent=t('badFile') }
+}
+
+/* ---------- local stats ---------- */
+function renderLocal(){
+  const s=STATS,ppl=s.people;
+  $('#chatTitle').textContent=ppl.slice(0,3).map(p=>p.name).join(', ')+(ppl.length>3?` \u2066+${ppl.length-3}\u2069`:'');
+  const f=[[s.total.toLocaleString(),t('msgs')],[s.spanDays.toLocaleString(),t('days')],[s.activeDays.toLocaleString(),t('active')],[s.bestStreakDays,t('streak')],[ppl.length,t('people')]];
+  $('#facts').innerHTML=f.map(([v,l])=>`<div><b class="n">${v}</b>${esc(l)}</div>`).join('');
+  const max=ppl[0]?.msgs||1;
+  $('#people').innerHTML=ppl.slice(0,12).map(p=>{
+    const bits=[t('starts',{n:p.starts})];if(p.medianReplyMin!=null)bits.push(t('reply',{m:p.medianReplyMin}));if(p.media)bits.push(t('media',{n:p.media}));if(p.sorry)bits.push(t('sorry',{n:p.sorry}));if(p.nightPct>=8)bits.push(t('night',{p:p.nightPct}));
+    return `<div class="person"><span class="dot" style="background:hsl(${hue(p.name)} 70% 72%)">${esc(initial(p.name))}</span><span class="nm">${esc(p.name)} <span class="n" style="color:var(--muted);font-weight:400">· ${p.share}%</span></span><span class="bar" aria-hidden="true"><i style="width:${(p.msgs/max*100).toFixed(0)}%"></i></span><span class="meta">${bits.map(esc).join(' · ')} ${p.topEmojis.slice(0,3).join('')}</span></div>`}).join('');
+  const hm=Math.max(...s.hours,1);
+  $('#clock').innerHTML=s.hours.map((v,i)=>`<i class="${i===s.busiestHour?'top':''}" style="height:${(v/hm*100).toFixed(0)}%"></i>`).join('');
+  $('#clockLine').textContent=t('peak',{h:String(s.busiestHour).padStart(2,'0')});
+}
+
+/* ---------- asking Penina ---------- */
+function goBtn(){const b=$('#goBtn');b.textContent=USER?t('getReport'):t('login');$('#loginBox').classList.toggle('hide',!!USER)}
+$('#goBtn').onclick=async()=>{
+  const m=$('#askMsg');m.textContent='';
+  if(!sb)return m.textContent=t('busy');
+  if(!USER){const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error)return m.textContent=t('badLogin');USER=r.data.user;goBtn();}
+  $('#local').classList.add('hide');$('#wait').classList.remove('hide');scrollTo(0,0);
+  let i=0;const lines=t('w');$('#waitLine').textContent=lines[0];const tick=setInterval(()=>$('#waitLine').textContent=lines[++i%lines.length],2600);
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    const r=await fetch(`${SB_URL}/functions/v1/penina`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`,apikey:SB_KEY},
+      body:JSON.stringify({lang:L,stats:STATS,excerpt:PeninaChat.excerpt(MSGS)})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error||'busy');
+    REPORT=j.report;$('#wait').classList.add('hide');renderReport(REPORT);
+  }catch(e){
+    $('#wait').classList.add('hide');$('#local').classList.remove('hide');
+    m.textContent=String(e.message)==='limit'?t('limit'):t('busy');$('#ask').scrollIntoView();
+  }finally{clearInterval(tick)}
+};
+
+/* ---------- the report ---------- */
+function renderReport(r){
+  const el=$('#report');el.classList.remove('hide');
+  el.innerHTML=`
+  <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L]?-1:1}" role="img" aria-label="${esc(t('score'))} ${r.score}/10"><span class="score n">${r.score}<small>/10</small></span></div>
+    <div><h1>${esc(r.headline)}</h1>${r.score_line?`<p class="sline">${esc(r.score_line)}</p>`:''}</div></div>
+  <p class="lead">${esc(r.verdict)}</p>
+  <div class="sec"><h2>${t('people2')}</h2>${(r.people||[]).map(p=>`
+    <article class="card"><div class="top"><span class="dot" style="background:hsl(${hue(p.name)} 70% 72%)">${esc(initial(p.name))}</span><div><h3>${esc(p.name)}</h3><span class="role">${esc(p.role)}</span></div></div>
+      <p>${esc(p.roast)}</p><p class="kind">${esc(p.kind)}</p>
+      <div class="flags"><span class="g">${t('green')}: ${esc(p.green)}</span><span class="r">${t('red')}: ${esc(p.red)}</span></div></article>`).join('')}</div>
+  ${r.dynamics?.length?`<div class="sec"><h2>${t('dyn')}</h2><ul class="dyn">${r.dynamics.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+  ${r.moments?.length?`<div class="sec"><h2>${t('moments')}</h2>${r.moments.map(x=>`<blockquote><q>${esc(x.quote)}</q><cite>${esc(x.who)} · ${esc(x.note)}</cite></blockquote>`).join('')}</div>`:''}
+  <div class="sec"><h2>${t('advice')}</h2><p class="advice">${esc(r.advice)}</p></div>
+  <div class="actions"><button class="go" id="shareBtn" style="padding:0 26px">${t('share')}</button><button class="btn2" id="againBtn">${t('again')}</button></div>`;
+  $('#shareBtn').onclick=share;$('#againBtn').onclick=()=>{REPORT=null;STATS=null;MSGS=null;el.classList.add('hide');$('#start').classList.remove('hide');$('#file').value='';scrollTo(0,0)};
+  scrollTo(0,0);
+}
+
+/* a story-sized picture of the verdict, drawn here so nothing leaves the phone */
+async function share(){
+  const r=REPORT,W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  await document.fonts.ready;const rtl=!!RTL[L];x.direction=rtl?'rtl':'ltr';
+  x.fillStyle='#24122E';x.fillRect(0,0,W,H);
+  const g=x.createRadialGradient(400,520,20,540,600,260);g.addColorStop(0,'#FFFFFF');g.addColorStop(.25,'#FBF4FA');g.addColorStop(.7,'#E7D6E8');g.addColorStop(1,'#B9A0C2');
+  x.fillStyle=g;x.beginPath();x.arc(540,600,250,0,7);x.fill();
+  x.fillStyle='#2A0A17';x.textAlign='center';x.font='120px "Secular One"';x.fillText(`${r.score}/10`,540,640);
+  const wrap=(txt,y,size,color,maxW=900,font='"Secular One"')=>{x.font=`${size}px ${font}`;x.fillStyle=color;const words=String(txt).split(' ');let line='',lines=[];for(const w of words){const tr=line?line+' '+w:w;if(x.measureText(tr).width>maxW){lines.push(line);line=w}else line=tr}lines.push(line);lines.forEach((l,i)=>x.fillText(l,540,y+i*size*1.2));return y+lines.length*size*1.2};
+  let y=wrap(r.headline,1000,76,'#F7EFF5');y+=30;
+  for(const p of (r.people||[]).slice(0,4)){y=wrap(`${p.name} · ${p.role}`,y+30,46,'#FFC46B',900,'Assistant');}
+  x.font='40px Assistant';x.fillStyle='#A891B3';x.fillText('barusik.com/penina',540,1840);
+  const blob=await new Promise(res=>c.toBlob(res,'image/png'));const file=new File([blob],'penina.png',{type:'image/png'});
+  if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:t('title')});return}catch{}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='penina.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+paint();
+if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;goBtn()});
+</script>
+</body>
+</html>

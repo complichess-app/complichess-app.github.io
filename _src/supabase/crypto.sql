@@ -1,3 +1,4 @@
+-- © 2026 Bar Lvovski. All rights reserved.
 -- Barusik Crypto: a full exchange — coins, order book, price-time matching, balances, fees, user-created coins.
 -- Runs on the same Supabase project as the rest of barusik.com (same accounts, same is_admin()).
 -- Safe to run more than once.

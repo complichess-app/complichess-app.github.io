@@ -1,0 +1,499 @@
+<!doctype html>
+<!-- Barusik Crypto · © 2026 Bar Lvovski. All rights reserved. -->
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Barusik Crypto</title>
+<meta name="description" content="בורסת מטבעות: יצירת מטבע חדש ומסחר במטבעות קיימים.">
+<meta name="theme-color" content="#0F1733">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Barusik Crypto. One loud thing: the last price, set large, digits that changed roll in the trade's colour.
+   Everything else is a quiet trading desk: market list · chart + price · book + ticket. Phone: one panel at a time. */
+:root{
+  --ground:#0F1733; --desk:#151F45; --desk-2:#1C2856; --line:rgba(200,212,255,.09); --line-2:rgba(200,212,255,.18);
+  --ink:#E8ECFF; --ink-2:#B4BCE3; --muted:#7F89B8;
+  --buy:#3DDBB8; --buy-soft:rgba(61,219,184,.14); --sell:#FF7A6B; --sell-soft:rgba(255,122,107,.14);
+  --brass:#E6C27A;
+  --r1:8px; --r2:14px;
+  --f:"Rubik","Arial Hebrew",system-ui,sans-serif; --fd:"Unbounded","Rubik",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ground);color:var(--ink);font:15px/1.45 var(--f);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+a{color:var(--buy)}
+:focus-visible{outline:2px solid var(--buy);outline-offset:2px;border-radius:6px}
+.n{direction:ltr;unicode-bidi:isolate}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.hide{display:none!important}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;height:58px;padding:0 max(16px,env(safe-area-inset-left));border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:800;letter-spacing:-.01em}
+.brand svg{width:26px;height:26px}
+.demo{font-size:13px;color:var(--brass);border:1px solid rgba(230,194,122,.35);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.top .grow{flex:1}
+.wallet-pill{display:flex;align-items:center;gap:8px;background:var(--desk);border:1px solid var(--line);border-radius:999px;height:38px;padding:0 14px;font-weight:700}
+.btn{height:40px;border-radius:999px;padding:0 18px;font-weight:700;background:var(--desk-2);border:1px solid var(--line-2)}
+.btn.main{background:var(--ink);color:var(--ground);border-color:transparent}
+.lang{background:var(--desk);border:1px solid var(--line);border-radius:999px;height:38px;padding:0 10px}
+
+/* desk */
+.desk{display:grid;grid-template-columns:270px minmax(0,1fr) 340px;gap:1px;background:var(--line);height:calc(100dvh - 58px - 44px)}
+.desk>section{background:var(--ground);min-width:0;min-height:0;display:flex;flex-direction:column}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;color:var(--muted);font-size:13px}
+.ph h2{margin:0;font-size:14px;color:var(--ink-2);font-weight:700}
+
+/* markets */
+.search{margin:0 12px 8px;height:38px;border-radius:var(--r1);background:var(--desk);border:1px solid var(--line);padding:0 12px}
+.mlist{overflow:auto;flex:1}
+.mrow{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;width:100%;padding:9px 14px;text-align:start}
+.mrow:hover{background:var(--desk)}
+.mrow[aria-current="true"]{background:var(--desk-2)}
+.coin{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#0F1733}
+.mrow b{display:block;font-size:14px}
+.mrow small{color:var(--muted);font-size:12px}
+.mrow .px{text-align:end;font-size:14px}
+.up{color:var(--buy)} .dn{color:var(--sell)}
+.newcoin{margin:10px 12px 14px;height:44px;border-radius:var(--r2);border:1px dashed var(--line-2);color:var(--ink-2);font-weight:700}
+.newcoin:hover{border-color:var(--buy);color:var(--buy)}
+
+/* center: price + chart */
+.head{padding:18px 22px 6px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 28px}
+.who{display:flex;align-items:center;gap:12px}
+.who .coin{width:40px;height:40px;font-size:13px}
+.who h1{margin:0;font-size:20px;font-weight:800}
+.who p{margin:0;color:var(--muted);font-size:13px}
+.last{font-family:var(--fd);font-weight:700;font-size:clamp(34px,4.6vw,64px);line-height:1;letter-spacing:-.03em;display:flex}
+.last span{display:inline-block}
+.last .roll{animation:roll .45s cubic-bezier(.2,.8,.2,1)}
+.last.up .roll{color:var(--buy)} .last.dn .roll{color:var(--sell)}
+@keyframes roll{from{transform:translateY(-.5em);opacity:0}to{transform:none;opacity:1}}
+.stats{display:flex;gap:22px;color:var(--muted);font-size:13px}
+.stats b{display:block;color:var(--ink-2);font-size:15px;font-weight:700}
+.tf{display:flex;gap:4px;padding:6px 22px}
+.tf button{height:30px;padding:0 12px;border-radius:999px;color:var(--muted);font-weight:700;font-size:13px}
+.tf button[aria-pressed="true"]{background:var(--desk-2);color:var(--ink)}
+.chartbox{position:relative;flex:1;min-height:220px;margin:0 10px 10px}
+canvas{display:block;width:100%;height:100%}
+.empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);text-align:center;padding:20px}
+.tape{border-top:1px solid var(--line);height:170px;overflow:auto;padding:4px 16px}
+.tape table{width:100%;border-collapse:collapse;font-size:13px}
+.tape td{padding:3px 0}
+.tape td:last-child{text-align:end;color:var(--muted)}
+
+/* right: book + ticket */
+.book{flex:1;overflow:hidden;display:flex;flex-direction:column;font-size:13px}
+.lvls{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.lvls.asks{justify-content:flex-end}
+.lvl{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:2px 16px;cursor:pointer}
+.lvl i{position:absolute;inset-block:1px;inset-inline-end:0;border-radius:3px 0 0 3px}
+.asks i{background:var(--sell-soft)} .bids i{background:var(--buy-soft)}
+.lvl span{position:relative}
+.lvl span:first-child{justify-self:start}
+.lvl span:last-child{justify-self:end;color:var(--ink-2)}
+.asks .lvl span:first-child{color:var(--sell)} .bids .lvl span:first-child{color:var(--buy)}
+.mid{padding:6px 16px;font-weight:800;font-size:16px;border-block:1px solid var(--line);display:flex;justify-content:space-between}
+.mid small{color:var(--muted);font-weight:500;font-size:12px}
+.ticket{border-top:1px solid var(--line);padding:14px 16px max(16px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+.sides{display:grid;grid-template-columns:1fr 1fr;background:var(--desk);border-radius:var(--r2);padding:4px}
+.sides button{height:38px;border-radius:11px;font-weight:800;color:var(--muted)}
+.sides button[aria-pressed="true"].b{background:var(--buy);color:#0F1733}
+.sides button[aria-pressed="true"].s{background:var(--sell);color:#0F1733}
+.kinds{display:flex;gap:14px;font-size:14px;color:var(--muted)}
+.kinds button[aria-pressed="true"]{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:6px}
+.fld{display:flex;align-items:center;background:var(--desk);border:1px solid var(--line);border-radius:var(--r1);height:44px;padding:0 12px;gap:8px}
+.fld:focus-within{border-color:var(--line-2)}
+.fld label{color:var(--muted);font-size:13px;min-width:50px}
+.fld input{flex:1;min-width:0;background:none;border:0;outline:0;text-align:end;direction:ltr;font-size:16px}
+.fld em{font-style:normal;color:var(--muted);font-size:13px}
+.pcts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pcts button{height:30px;border-radius:var(--r1);background:var(--desk);color:var(--ink-2);font-size:13px}
+.sum{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.go{height:48px;border-radius:var(--r2);font-weight:800;font-size:16px;color:#0F1733}
+.go.b{background:var(--buy)} .go.s{background:var(--sell)}
+.go:disabled{opacity:.5;cursor:default}
+.avail{color:var(--muted);font-size:13px}
+
+/* bottom drawer: my orders */
+.mine{position:fixed;inset-inline:0;bottom:0;background:var(--desk);border-top:1px solid var(--line-2);transform:translateY(calc(100% - 44px));transition:transform .3s;z-index:20;max-height:52vh;display:flex;flex-direction:column}
+.mine.open{transform:none}
+.mine>button{height:44px;font-weight:700;color:var(--ink-2)}
+.mine table{width:100%;border-collapse:collapse;font-size:13px}
+.mine th{color:var(--muted);font-weight:500;text-align:start;padding:6px 16px}
+.mine td{padding:6px 16px;border-top:1px solid var(--line)}
+.mine .scroll{overflow:auto}
+
+/* sheets */
+.scrim{position:fixed;inset:0;background:rgba(5,8,22,.66);display:grid;place-items:center;z-index:50;padding:16px}
+.sheet{background:var(--desk);border:1px solid var(--line-2);border-radius:20px;width:100%;max-width:420px;padding:22px;display:flex;flex-direction:column;gap:12px;max-height:92dvh;overflow:auto}
+.sheet h2{margin:0;font-size:20px}
+.sheet p{margin:0;color:var(--ink-2)}
+.sheet .fld{background:var(--ground)}
+.hues{display:flex;gap:8px;flex-wrap:wrap}
+.hues button{width:30px;height:30px;border-radius:50%}
+.hues button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:2px}
+.msg{min-height:20px;font-size:14px;color:var(--brass)}
+.toast{position:fixed;bottom:60px;inset-inline:0;margin:auto;width:max-content;max-width:90vw;background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:999px;font-weight:700;z-index:60;pointer-events:none}
+
+/* admin */
+.admin{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--ink-2)}
+.admin .row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* phone */
+.tabs{display:none}
+@media (max-width:980px){
+  .desk{grid-template-columns:1fr;height:auto;min-height:calc(100dvh - 58px - 56px);padding-bottom:100px}
+  .desk>section{display:none}
+  .desk>section.on{display:flex;min-height:calc(100dvh - 58px - 56px - 44px)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;bottom:44px;inset-inline:0;height:56px;background:var(--ground);border-top:1px solid var(--line);z-index:15}
+  .tabs button{color:var(--muted);font-weight:700;font-size:13px}
+  .tabs button[aria-current="true"]{color:var(--ink)}
+  .top .demo{font-size:11px;padding:2px 8px;white-space:normal;max-width:96px;line-height:1.2}
+  .top{gap:8px}
+  .brand span,.wallet-pill span:last-child{display:none}
+  .lang{width:84px}
+  .btn{padding:0 12px}
+  .who{min-width:0}.who h1{font-size:17px;overflow-wrap:anywhere}
+  .head{padding:14px 16px 4px}
+  .chartbox{min-height:300px}
+}
+@media (prefers-reduced-motion:reduce){.last .roll{animation:none}.mine{transition:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" aria-label="Barusik">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="#3DDBB8" stroke-width="2"/><path d="M11 9h7a4 4 0 0 1 0 8h-7zm0 8h8a4 4 0 0 1 0 8h-8z" fill="none" stroke="#E8ECFF" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 6v3M14 25v3" stroke="#E8ECFF" stroke-width="2.2"/></svg>
+    <span>Barusik Crypto</span>
+  </a>
+  <span class="demo" id="demo" data-t="demo"></span>
+  <span class="grow"></span>
+  <select class="lang" id="lang" aria-label="Language"></select>
+  <span class="wallet-pill hide" id="pill"><span class="n" id="pillUsd"></span><span>USDB</span></span>
+  <button class="btn main" id="loginBtn" data-t="login"></button>
+</header>
+
+<main class="desk" id="desk">
+  <section id="pMarkets" aria-labelledby="hMarkets">
+    <div class="ph"><h2 id="hMarkets" data-t="markets"></h2><span data-t="last24"></span></div>
+    <input class="search" id="q" type="search" autocomplete="off">
+    <div class="mlist" id="mlist" role="list"></div>
+    <button class="newcoin" id="newCoin" data-t="create"></button>
+  </section>
+
+  <section id="pChart" class="on" aria-label="chart">
+    <div class="head">
+      <div class="who"><span class="coin" id="wCoin"></span><div><h1 id="wName"></h1><p id="wAbout"></p></div></div>
+      <div class="last n" id="last" aria-live="polite"></div>
+      <div class="stats">
+        <div><span data-t="chg"></span><b class="n" id="sChg">–</b></div>
+        <div><span data-t="vol"></span><b class="n" id="sVol">–</b></div>
+        <div id="worldBox"><span data-t="world"></span><b class="n" id="sWorld">–</b></div>
+      </div>
+    </div>
+    <div class="tf" id="tf" role="group"></div>
+    <div class="chartbox"><canvas id="chart"></canvas><div class="empty hide" id="chartEmpty" data-t="noTrades"></div></div>
+    <div class="tape"><table><tbody id="tape"></tbody></table></div>
+  </section>
+
+  <section id="pBook" aria-labelledby="hBook">
+    <div class="book">
+      <div class="ph"><h2 id="hBook" data-t="book"></h2><span><span data-t="price"></span> / <span data-t="amount"></span></span></div>
+      <div class="lvls asks" id="asks"></div>
+      <div class="mid"><span class="n" id="mid">–</span><small id="spread"></small></div>
+      <div class="lvls bids" id="bids"></div>
+    </div>
+    <form class="ticket" id="ticket" novalidate>
+      <div class="sides" role="group"><button type="button" class="b" id="sideB" aria-pressed="true" data-t="buy"></button><button type="button" class="s" id="sideS" aria-pressed="false" data-t="sell"></button></div>
+      <div class="kinds" role="group"><button type="button" id="kLimit" aria-pressed="true" data-t="limit"></button><button type="button" id="kMarket" aria-pressed="false" data-t="marketOrder"></button></div>
+      <div class="fld" id="fPrice"><label for="iPrice" data-t="price"></label><input id="iPrice" inputmode="decimal" autocomplete="off"><em>USDB</em></div>
+      <div class="fld"><label for="iQty" data-t="amount"></label><input id="iQty" inputmode="decimal" autocomplete="off"><em id="qSym"></em></div>
+      <div class="pcts" id="pcts"><button type="button" data-p=".25">25%</button><button type="button" data-p=".5">50%</button><button type="button" data-p=".75">75%</button><button type="button" data-p="1">100%</button></div>
+      <div class="sum"><span data-t="total"></span><span class="n" id="total">–</span></div>
+      <div class="avail" id="avail"></div>
+      <button class="go b" id="go" type="submit"></button>
+    </form>
+    <div class="admin hide" id="admin">
+      <b data-t="adminTitle"></b>
+      <div id="adminStats"></div>
+      <div class="row"><button type="button" class="btn" id="aLiq" data-t="adminLiq"></button><button type="button" class="btn" id="aHalt"></button></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" id="tabs" aria-label="panels">
+  <button data-p="pMarkets" data-t="markets"></button>
+  <button data-p="pChart" aria-current="true" data-t="chart"></button>
+  <button data-p="pBook" data-t="trade"></button>
+  <button data-p="mine" data-t="myOrders"></button>
+</nav>
+
+<div class="mine" id="mine">
+  <button type="button" id="mineBtn"></button>
+  <div class="scroll"><table><thead><tr><th data-t="market"></th><th data-t="side"></th><th data-t="price"></th><th data-t="filledCol"></th><th></th></tr></thead><tbody id="mineRows"></tbody></table></div>
+</div>
+
+<script src="/lib/supabase.js"></script>
+<script>
+'use strict';
+/* ---------- words ---------- */
+const T={
+he:{demo:'מצב הדגמה · יתרות מדומות',login:'התחברות',logout:'יציאה',markets:'שווקים',last24:'24 שעות',create:'+ ליצור מטבע',chg:'שינוי 24 ש׳',vol:'מחזור 24 ש׳',world:'מחיר עולמי',noTrades:'עוד אין עסקאות בשוק הזה. הפקודה הראשונה קובעת את המחיר.',book:'ספר פקודות',price:'מחיר',amount:'כמות',buy:'קנייה',sell:'מכירה',limit:'מחיר מוגבל',marketOrder:'מחיר שוק',total:'סה״כ',chart:'גרף',trade:'מסחר',myOrders:'הפקודות שלי',market:'שוק',side:'צד',filledCol:'בוצע',cancel:'ביטול',cancelAll:'ביטול הכל',buyX:'לקנות {s}',sellX:'למכור {s}',availB:'זמין: {v} USDB',availS:'זמין: {v} {s}',signFirst:'צריך להתחבר כדי לסחור',claim:'לקבל 10,000 USDB להתחלה',claimed:'קיבלת 10,000 USDB',placed:'הפקודה נשלחה',filled:'בוצע',partial:'בוצע חלקית',cancelled:'הפקודה בוטלה',search:'חיפוש מטבע',email:'מייל',password:'סיסמה',signIn:'כניסה',noAcc:'אין לך חשבון? הירשם באתר הראשי',badLogin:'מייל או סיסמה שגויים',cSym:'סימול',cName:'שם',cSupply:'כמות כוללת',cAbout:'על המטבע',cColor:'צבע',cFee:'יצירת מטבע עולה {f} USDB. כל הכמות עוברת אליך, ואתה מחליט במה למכור.',cGo:'ליצור את המטבע',cMade:'המטבע {s} נוצר. כל {n} היחידות אצלך.',close:'סגירה',open:'פתוחה',none:'אין פקודות פתוחות',adminTitle:'ניהול (רק אתה רואה)',adminLiq:'נזילות לפי מחיר עולמי',halt:'עצירת מסחר',resume:'חידוש מסחר',halted:'המסחר בשוק הזה עצור',err:{insufficient:'אין מספיק יתרה',slow:'יותר מדי פקודות. נסה שוב בעוד כמה שניות',small:'הפקודה קטנה מדי (מינימום 0.01 USDB)',noSell:'אין מוכרים כרגע. נסה פקודה במחיר מוגבל',noBuy:'אין קונים כרגע. נסה פקודה במחיר מוגבל',taken:'הסימול הזה תפוס',bad:'בדוק את הערכים',halt:'המסחר בשוק הזה עצור',day:'אפשר ליצור עד 3 מטבעות ביום',already:'כבר קיבלת את היתרה ההתחלתית'}},
+en:{demo:'Demo mode · play balances',login:'Sign in',logout:'Sign out',markets:'Markets',last24:'24h',create:'+ Create a coin',chg:'24h change',vol:'24h volume',world:'World price',noTrades:'No trades in this market yet. The first order sets the price.',book:'Order book',price:'Price',amount:'Amount',buy:'Buy',sell:'Sell',limit:'Limit',marketOrder:'Market',total:'Total',chart:'Chart',trade:'Trade',myOrders:'My orders',market:'Market',side:'Side',filledCol:'Filled',cancel:'Cancel',cancelAll:'Cancel all',buyX:'Buy {s}',sellX:'Sell {s}',availB:'Available: {v} USDB',availS:'Available: {v} {s}',signFirst:'Sign in to trade',claim:'Get 10,000 USDB to start',claimed:'You got 10,000 USDB',placed:'Order sent',filled:'Filled',partial:'Partly filled',cancelled:'Order cancelled',search:'Search coins',email:'Email',password:'Password',signIn:'Sign in',noAcc:'No account? Sign up on the main site',badLogin:'Wrong email or password',cSym:'Symbol',cName:'Name',cSupply:'Total supply',cAbout:'About the coin',cColor:'Colour',cFee:'Creating a coin costs {f} USDB. The whole supply goes to you, and you choose the price you sell at.',cGo:'Create the coin',cMade:'{s} is live. All {n} units are yours.',close:'Close',open:'Open',none:'No open orders',adminTitle:'Admin (only you see this)',adminLiq:'Liquidity at world prices',halt:'Halt trading',resume:'Resume trading',halted:'Trading in this market is halted',err:{insufficient:'Not enough balance',slow:'Too many orders. Try again in a few seconds',small:'Order too small (minimum 0.01 USDB)',noSell:'No sellers right now. Try a limit order',noBuy:'No buyers right now. Try a limit order',taken:'That symbol is taken',bad:'Check the values',halt:'Trading in this market is halted',day:'Up to 3 coins a day',already:'You already got the starting balance'}},
+ar:{demo:'وضع تجريبي · أرصدة وهمية',login:'تسجيل الدخول',logout:'خروج',markets:'الأسواق',last24:'24 ساعة',create:'+ إنشاء عملة',chg:'تغيّر 24 س',vol:'حجم 24 س',world:'السعر العالمي',noTrades:'لا صفقات في هذا السوق بعد. أول أمر يحدد السعر.',book:'دفتر الأوامر',price:'السعر',amount:'الكمية',buy:'شراء',sell:'بيع',limit:'سعر محدد',marketOrder:'سعر السوق',total:'المجموع',chart:'رسم',trade:'تداول',myOrders:'أوامري',market:'السوق',side:'الجهة',filledCol:'المنفّذ',cancel:'إلغاء',cancelAll:'إلغاء الكل',buyX:'شراء {s}',sellX:'بيع {s}',availB:'المتاح: {v} USDB',availS:'المتاح: {v} {s}',signFirst:'سجّل الدخول للتداول',claim:'احصل على 10,000 USDB للبدء',claimed:'حصلت على 10,000 USDB',placed:'أُرسل الأمر',filled:'نُفّذ',partial:'نُفّذ جزئيًا',cancelled:'أُلغي الأمر',search:'ابحث عن عملة',email:'البريد',password:'كلمة المرور',signIn:'دخول',noAcc:'لا حساب؟ سجّل في الموقع الرئيسي',badLogin:'بريد أو كلمة مرور خاطئة',cSym:'الرمز',cName:'الاسم',cSupply:'الكمية الكلية',cAbout:'عن العملة',cColor:'اللون',cFee:'إنشاء عملة يكلف {f} USDB. كل الكمية لك وأنت تحدد سعر البيع.',cGo:'إنشاء العملة',cMade:'العملة {s} جاهزة. كل الـ{n} وحدة لك.',close:'إغلاق',open:'مفتوح',none:'لا أوامر مفتوحة',adminTitle:'الإدارة (أنت فقط)',adminLiq:'سيولة بالأسعار العالمية',halt:'إيقاف التداول',resume:'استئناف التداول',halted:'التداول في هذا السوق متوقف',err:{insufficient:'الرصيد غير كافٍ',slow:'أوامر كثيرة. حاول بعد ثوانٍ',small:'الأمر صغير جدًا (الحد الأدنى 0.01 USDB)',noSell:'لا بائعين الآن. جرّب سعرًا محددًا',noBuy:'لا مشترين الآن. جرّب سعرًا محددًا',taken:'الرمز محجوز',bad:'تحقق من القيم',halt:'التداول متوقف',day:'حتى 3 عملات يوميًا',already:'حصلت على الرصيد الأولي مسبقًا'}},
+ru:{demo:'Демо · игровые балансы',login:'Войти',logout:'Выйти',markets:'Рынки',last24:'24 ч',create:'+ Создать монету',chg:'Изм. 24 ч',vol:'Объём 24 ч',world:'Мировая цена',noTrades:'Сделок пока нет. Первая заявка задаёт цену.',book:'Стакан',price:'Цена',amount:'Кол-во',buy:'Купить',sell:'Продать',limit:'Лимит',marketOrder:'По рынку',total:'Итого',chart:'График',trade:'Торговля',myOrders:'Мои заявки',market:'Рынок',side:'Сторона',filledCol:'Исполнено',cancel:'Отменить',cancelAll:'Отменить все',buyX:'Купить {s}',sellX:'Продать {s}',availB:'Доступно: {v} USDB',availS:'Доступно: {v} {s}',signFirst:'Войдите, чтобы торговать',claim:'Получить 10 000 USDB',claimed:'Вы получили 10 000 USDB',placed:'Заявка отправлена',filled:'Исполнена',partial:'Исполнена частично',cancelled:'Заявка отменена',search:'Поиск монеты',email:'Почта',password:'Пароль',signIn:'Войти',noAcc:'Нет аккаунта? Зарегистрируйтесь на главном сайте',badLogin:'Неверная почта или пароль',cSym:'Тикер',cName:'Название',cSupply:'Общий выпуск',cAbout:'О монете',cColor:'Цвет',cFee:'Создание монеты стоит {f} USDB. Весь выпуск ваш, цену продажи выбираете вы.',cGo:'Создать монету',cMade:'{s} создана. Все {n} единиц у вас.',close:'Закрыть',open:'Открыта',none:'Нет открытых заявок',adminTitle:'Админ (видите только вы)',adminLiq:'Ликвидность по мировым ценам',halt:'Остановить торги',resume:'Возобновить торги',halted:'Торги на этом рынке остановлены',err:{insufficient:'Недостаточно средств',slow:'Слишком много заявок. Подождите',small:'Слишком маленькая заявка (мин. 0.01 USDB)',noSell:'Нет продавцов. Попробуйте лимитную заявку',noBuy:'Нет покупателей. Попробуйте лимитную заявку',taken:'Тикер занят',bad:'Проверьте значения',halt:'Торги остановлены',day:'Не больше 3 монет в день',already:'Стартовый баланс уже получен'}},
+es:{demo:'Modo demo · saldos de juego',login:'Entrar',logout:'Salir',markets:'Mercados',last24:'24 h',create:'+ Crear una moneda',chg:'Cambio 24 h',vol:'Volumen 24 h',world:'Precio mundial',noTrades:'Aún no hay operaciones. La primera orden fija el precio.',book:'Libro de órdenes',price:'Precio',amount:'Cantidad',buy:'Comprar',sell:'Vender',limit:'Límite',marketOrder:'Mercado',total:'Total',chart:'Gráfico',trade:'Operar',myOrders:'Mis órdenes',market:'Mercado',side:'Lado',filledCol:'Ejecutado',cancel:'Cancelar',cancelAll:'Cancelar todo',buyX:'Comprar {s}',sellX:'Vender {s}',availB:'Disponible: {v} USDB',availS:'Disponible: {v} {s}',signFirst:'Entra para operar',claim:'Recibir 10.000 USDB',claimed:'Recibiste 10.000 USDB',placed:'Orden enviada',filled:'Ejecutada',partial:'Ejecutada en parte',cancelled:'Orden cancelada',search:'Buscar moneda',email:'Correo',password:'Contraseña',signIn:'Entrar',noAcc:'¿Sin cuenta? Regístrate en el sitio principal',badLogin:'Correo o contraseña incorrectos',cSym:'Símbolo',cName:'Nombre',cSupply:'Suministro total',cAbout:'Sobre la moneda',cColor:'Color',cFee:'Crear una moneda cuesta {f} USDB. Todo el suministro es tuyo y tú eliges el precio.',cGo:'Crear la moneda',cMade:'{s} ya existe. Las {n} unidades son tuyas.',close:'Cerrar',open:'Abierta',none:'Sin órdenes abiertas',adminTitle:'Admin (solo tú lo ves)',adminLiq:'Liquidez a precio mundial',halt:'Detener operaciones',resume:'Reanudar operaciones',halted:'Operaciones detenidas en este mercado',err:{insufficient:'Saldo insuficiente',slow:'Demasiadas órdenes. Espera unos segundos',small:'Orden demasiado pequeña (mín. 0,01 USDB)',noSell:'No hay vendedores. Prueba una orden límite',noBuy:'No hay compradores. Prueba una orden límite',taken:'Ese símbolo está ocupado',bad:'Revisa los valores',halt:'Operaciones detenidas',day:'Hasta 3 monedas por día',already:'Ya recibiste el saldo inicial'}},
+fr:{demo:'Mode démo · soldes fictifs',login:'Connexion',logout:'Déconnexion',markets:'Marchés',last24:'24 h',create:'+ Créer une monnaie',chg:'Variation 24 h',vol:'Volume 24 h',world:'Prix mondial',noTrades:'Pas encore d’échanges. Le premier ordre fixe le prix.',book:'Carnet d’ordres',price:'Prix',amount:'Quantité',buy:'Acheter',sell:'Vendre',limit:'Limite',marketOrder:'Marché',total:'Total',chart:'Graphique',trade:'Trader',myOrders:'Mes ordres',market:'Marché',side:'Sens',filledCol:'Exécuté',cancel:'Annuler',cancelAll:'Tout annuler',buyX:'Acheter {s}',sellX:'Vendre {s}',availB:'Disponible : {v} USDB',availS:'Disponible : {v} {s}',signFirst:'Connectez-vous pour trader',claim:'Recevoir 10 000 USDB',claimed:'Vous avez reçu 10 000 USDB',placed:'Ordre envoyé',filled:'Exécuté',partial:'Exécuté en partie',cancelled:'Ordre annulé',search:'Chercher une monnaie',email:'E-mail',password:'Mot de passe',signIn:'Connexion',noAcc:'Pas de compte ? Inscrivez-vous sur le site principal',badLogin:'E-mail ou mot de passe incorrect',cSym:'Symbole',cName:'Nom',cSupply:'Offre totale',cAbout:'À propos',cColor:'Couleur',cFee:'Créer une monnaie coûte {f} USDB. Toute l’offre est à vous, vous choisissez le prix.',cGo:'Créer la monnaie',cMade:'{s} est en ligne. Les {n} unités sont à vous.',close:'Fermer',open:'Ouvert',none:'Aucun ordre ouvert',adminTitle:'Admin (visible par vous seul)',adminLiq:'Liquidité au prix mondial',halt:'Suspendre',resume:'Reprendre',halted:'Échanges suspendus sur ce marché',err:{insufficient:'Solde insuffisant',slow:'Trop d’ordres. Réessayez dans quelques secondes',small:'Ordre trop petit (min. 0,01 USDB)',noSell:'Aucun vendeur. Essayez un ordre limite',noBuy:'Aucun acheteur. Essayez un ordre limite',taken:'Symbole déjà pris',bad:'Vérifiez les valeurs',halt:'Échanges suspendus',day:'3 monnaies par jour maximum',already:'Solde de départ déjà reçu'}}
+};
+const LANGS={he:'עברית',en:'English',ar:'العربية',ru:'Русский',es:'Español',fr:'Français'};
+const RTL={he:1,ar:1};
+let L=(()=>{const q=new URLSearchParams(location.search).get('lang');let s;try{s=localStorage.getItem('barusik.lang')}catch{}return T[q]?q:T[s]?s:'he'})();
+const t=(k,v)=>{let s=k.split('.').reduce((o,p)=>o&&o[p],T[L])??k.split('.').reduce((o,p)=>o&&o[p],T.en)??k;if(v)for(const x in v)s=s.replaceAll('{'+x+'}',v[x]);return s};
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dec=p=>{p=Number(p);if(!p)return 2;return Math.min(8,Math.max(2,-Math.floor(Math.log10(p))+3))};
+const fmt=(v,d=2)=>v==null||isNaN(v)?'–':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtQ=v=>v==null?'–':Number(v).toLocaleString('en-US',{maximumFractionDigits:v>=100?2:v>=1?4:8});
+const big=v=>v==null?'–':v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':fmt(v);
+const toast=m=>{document.querySelectorAll('.toast').forEach(x=>x.remove());const d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)};
+const errText=e=>{const m=String(e?.message||e||'').toLowerCase();
+  return m.includes('insufficient')?t('err.insufficient'):m.includes('slow')?t('err.slow'):m.includes('small')?t('err.small'):m.includes('no sellers')?t('err.noSell'):m.includes('no buyers')?t('err.noBuy'):
+  m.includes('taken')?t('err.taken'):m.includes('halted')?t('err.halt'):m.includes('a day')?t('err.day'):m.includes('already')?t('err.already'):m.includes('sign in')?t('signFirst'):t('err.bad')};
+const coinStyle=a=>`background:hsl(${a.hue||170} 70% 62%)`;
+const WORLD_IDS={BTC:'bitcoin',ETH:'ethereum',SOL:'solana',XRP:'ripple',DOGE:'dogecoin'};
+
+/* ---------- state ---------- */
+const SB_URL='https://iktmyrfbejtjsiehcrar.supabase.co',SB_KEY='sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
+const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}}):null;
+const S={markets:[],m:(new URLSearchParams(location.search).get('m')||'BTC').toUpperCase(),side:'buy',kind:'limit',tf:15,user:null,admin:false,bal:{},orders:[],book:{bids:[],asks:[]},world:{},candles:[],tape:[]};
+
+/* ---------- static text ---------- */
+function paint(){
+  document.documentElement.lang=L;document.documentElement.dir=RTL[L]?'rtl':'ltr';
+  document.querySelectorAll('[data-t]').forEach(e=>e.textContent=t(e.dataset.t));
+  $('#q').placeholder=t('search');
+  $('#lang').innerHTML=Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===L?' selected':''}>${v}</option>`).join('');
+  $('#tf').innerHTML=[[1,'1m'],[15,'15m'],[60,'1h'],[240,'4h'],[1440,'1D']].map(([m,l])=>`<button type="button" data-m="${m}" aria-pressed="${S.tf===m}">${l}</button>`).join('');
+  paintTicket();renderMarkets();renderHead();renderMine();
+}
+$('#lang').onchange=e=>{L=e.target.value;try{localStorage.setItem('barusik.lang',L)}catch{}paint();};
+
+/* ---------- markets ---------- */
+const cur=()=>S.markets.find(x=>x.symbol===S.m);
+function chg(a){const base=a.open24??a.first24;return base&&a.last?(a.last/base-1)*100:null}
+function renderMarkets(){
+  const q=$('#q').value.trim().toUpperCase();
+  $('#mlist').innerHTML=S.markets.filter(a=>!q||a.symbol.includes(q)||a.name.toUpperCase().includes(q)).map(a=>{const c=chg(a);return `
+    <button class="mrow" role="listitem" data-s="${esc(a.symbol)}" aria-current="${a.symbol===S.m}">
+      <span class="coin" style="${coinStyle(a)}">${esc(a.symbol.slice(0,3))}</span>
+      <span><b class="n">${esc(a.symbol)}</b><small>${esc(a.name)}</small></span>
+      <span class="px n">${fmt(a.last,dec(a.last))}<br><small class="${c>0?'up':c<0?'dn':''}">${c==null?'':(c>0?'+':'')+c.toFixed(2)+'%'}</small></span>
+    </button>`}).join('');
+}
+$('#q').oninput=renderMarkets;
+$('#mlist').onclick=e=>{const b=e.target.closest('[data-s]');if(b)pick(b.dataset.s)};
+function pick(s){S.m=s;history.replaceState(null,'',`?m=${s}`);S.candles=[];S.tape=[];S.book={bids:[],asks:[]};lastShown='';$('#iPrice').value='';$('#iQty').value='';renderMarkets();renderHead();paintTicket();refreshMarket();if(innerWidth<=980)show('pChart');}
+
+/* ---------- headline price ---------- */
+let lastShown='';
+function renderHead(){
+  const a=cur();if(!a)return;
+  $('#wCoin').textContent=a.symbol.slice(0,3);$('#wCoin').style.cssText=coinStyle(a);
+  $('#wName').textContent=`${a.name} · ${a.symbol}/USDB`;$('#wAbout').textContent=a.halted?t('halted'):(a.about||'');
+  const c=chg(a);$('#sChg').textContent=c==null?'–':(c>0?'+':'')+c.toFixed(2)+'%';$('#sChg').className='n '+(c>0?'up':c<0?'dn':'');
+  $('#sVol').textContent=a.vol?big(Number(a.vol)):'–';
+  const w=S.world[a.symbol];$('#worldBox').classList.toggle('hide',!WORLD_IDS[a.symbol]);$('#sWorld').textContent=w?fmt(w,dec(w)):'–';
+  const txt=a.last?fmt(a.last,dec(a.last)):'—';
+  if(txt!==lastShown){
+    const el=$('#last');const prev=lastShown;const up=prev&&parseFloat(txt.replace(/,/g,''))>=parseFloat(prev.replace(/,/g,''));
+    el.className='last n '+(prev?(up?'up':'dn'):'');
+    el.innerHTML=[...txt].map((ch,i)=>`<span class="${prev&&prev[i]!==ch?'roll':''}">${ch}</span>`).join('');
+    lastShown=txt;document.title=`${txt} ${a.symbol} · Barusik Crypto`;
+  }
+}
+
+/* ---------- chart (own canvas renderer: candles + volume) ---------- */
+const cv=$('#chart'),cx=cv.getContext('2d');
+function drawChart(){
+  const box=cv.parentElement.getBoundingClientRect(),dpr=devicePixelRatio||1;
+  cv.width=box.width*dpr;cv.height=box.height*dpr;cx.setTransform(dpr,0,0,dpr,0,0);
+  const W=box.width,H=box.height;cx.clearRect(0,0,W,H);
+  const c=S.candles;$('#chartEmpty').classList.toggle('hide',c.length>0);if(!c.length)return;
+  const css=getComputedStyle(document.documentElement),buy=css.getPropertyValue('--buy').trim(),sell=css.getPropertyValue('--sell').trim(),muted=css.getPropertyValue('--muted').trim(),line=css.getPropertyValue('--line').trim();
+  const padR=64,padB=22,vH=H*.16,cH=H-padB-vH-8;
+  const n=Math.max(30,c.length),bw=(W-padR)/n,first=n-c.length;
+  let hi=-Infinity,lo=Infinity,vmax=0;for(const k of c){hi=Math.max(hi,+k[2]);lo=Math.min(lo,+k[3]);vmax=Math.max(vmax,+k[5])}
+  if(hi===lo){hi*=1.01;lo*=.99}const pad=(hi-lo)*.08;hi+=pad;lo-=pad;
+  const y=v=>8+(hi-v)/(hi-lo)*(cH-8);
+  cx.font='11px Rubik,system-ui';cx.fillStyle=muted;cx.strokeStyle=line;cx.lineWidth=1;cx.textAlign='left';
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,yy=y(v);cx.beginPath();cx.moveTo(0,yy);cx.lineTo(W-padR,yy);cx.stroke();cx.fillText(fmt(v,dec(v)),W-padR+8,yy+4)}
+  c.forEach((k,i)=>{const [ts,o,h,l,cl,v]=k.map(Number),x=(first+i)*bw+bw/2,col=cl>=o?buy:sell;
+    cx.strokeStyle=col;cx.fillStyle=col;cx.beginPath();cx.moveTo(x,y(h));cx.lineTo(x,y(l));cx.stroke();
+    const top=y(Math.max(o,cl)),bh=Math.max(1,Math.abs(y(o)-y(cl)));cx.fillRect(x-bw*.32,top,bw*.64,bh);
+    cx.globalAlpha=.35;const vh=v/vmax*vH;cx.fillRect(x-bw*.32,H-padB-vh,bw*.64,vh);cx.globalAlpha=1;});
+  const lastK=c[c.length-1],ly=y(+lastK[4]);cx.setLineDash([3,4]);cx.strokeStyle=muted;cx.beginPath();cx.moveTo(0,ly);cx.lineTo(W-padR,ly);cx.stroke();cx.setLineDash([]);
+  cx.fillStyle=muted;const fmtT=s=>{const d=new Date(s*1000);return S.tf>=1440?d.toLocaleDateString(L,{day:'numeric',month:'short'}):d.toLocaleTimeString(L,{hour:'2-digit',minute:'2-digit'})};
+  [0,Math.floor(c.length/2),c.length-1].forEach(i=>{if(c[i]){cx.textAlign='center';cx.fillText(fmtT(+c[i][0]),(first+i)*bw+bw/2,H-6)}});
+}
+addEventListener('resize',()=>drawChart());
+$('#tf').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;S.tf=+b.dataset.m;document.querySelectorAll('#tf button').forEach(x=>x.setAttribute('aria-pressed',x===b));loadCandles()};
+
+/* ---------- book & tape ---------- */
+function renderBook(){
+  const {bids,asks}=S.book,a=cur(),d=dec(a?.last||asks[0]?.[0]||1);
+  const max=Math.max(1,...bids.map(x=>+x[1]),...asks.map(x=>+x[1]));
+  const row=x=>`<div class="lvl" data-p="${x[0]}"><i style="width:${(+x[1]/max*100).toFixed(1)}%"></i><span class="n">${fmt(x[0],d)}</span><span class="n">${fmtQ(+x[1])}</span></div>`;
+  $('#asks').innerHTML=asks.slice(0,12).reverse().map(row).join('');
+  $('#bids').innerHTML=bids.slice(0,12).map(row).join('');
+  const bb=bids[0]?.[0],ba=asks[0]?.[0];
+  $('#mid').textContent=bb&&ba?fmt((+bb+ +ba)/2,d):a?.last?fmt(a.last,d):'–';
+  $('#spread').textContent=bb&&ba?`spread ${((ba-bb)/ba*100).toFixed(2)}%`:'';
+}
+document.querySelector('.book').onclick=e=>{const l=e.target.closest('[data-p]');if(!l)return;setKind('limit');$('#iPrice').value=l.dataset.p;calc()};
+function renderTape(){
+  const d=dec(cur()?.last||1);
+  $('#tape').innerHTML=S.tape.map(r=>`<tr><td class="n ${r[3]==='buy'?'up':'dn'}">${fmt(r[1],d)}</td><td class="n">${fmtQ(+r[2])}</td><td>${new Date(r[4]*1000).toLocaleTimeString(L,{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td></tr>`).join('');
+}
+
+/* ---------- ticket ---------- */
+function setSide(s){S.side=s;$('#sideB').setAttribute('aria-pressed',s==='buy');$('#sideS').setAttribute('aria-pressed',s==='sell');paintTicket()}
+function setKind(k){S.kind=k;$('#kLimit').setAttribute('aria-pressed',k==='limit');$('#kMarket').setAttribute('aria-pressed',k==='market');$('#fPrice').classList.toggle('hide',k==='market');calc()}
+$('#sideB').onclick=()=>setSide('buy');$('#sideS').onclick=()=>setSide('sell');$('#kLimit').onclick=()=>setKind('limit');$('#kMarket').onclick=()=>setKind('market');
+function refPrice(){if(S.kind==='limit'&&+$('#iPrice').value>0)return +$('#iPrice').value;const b=S.book;return S.side==='buy'?+(b.asks[0]?.[0]||cur()?.last||0):+(b.bids[0]?.[0]||cur()?.last||0)}
+function calc(){const p=refPrice(),q=+$('#iQty').value;$('#total').textContent=p&&q?fmt(p*q,2)+' USDB':'–'}
+$('#iPrice').oninput=calc;$('#iQty').oninput=calc;
+$('#pcts').onclick=e=>{const b=e.target.closest('[data-p]');if(!b||!S.user)return;const f=+b.dataset.p,a=cur();
+  if(S.side==='sell'){$('#iQty').value=+(Number(S.bal[a.symbol]?.available||0)*f).toFixed(8)}
+  else{const p=refPrice();if(p)$('#iQty').value=+(Number(S.bal.USDB?.available||0)*f/p/1.002).toFixed(8)}calc()};
+function paintTicket(){
+  const a=cur();if(!a)return;$('#qSym').textContent=a.symbol;
+  const g=$('#go');g.className='go '+(S.side==='buy'?'b':'s');
+  if(!S.user){g.textContent=t('signFirst');$('#avail').textContent='';}
+  else if(!S.bal.USDB&&!Object.keys(S.bal).length){g.textContent=t('claim');}
+  else g.textContent=t(S.side==='buy'?'buyX':'sellX',{s:a.symbol});
+  if(S.user)$('#avail').textContent=S.side==='buy'?t('availB',{v:fmt(S.bal.USDB?.available||0)}):t('availS',{v:fmtQ(+(S.bal[a.symbol]?.available||0)),s:a.symbol});
+  g.disabled=!!a.halted&&!!S.user;calc();
+}
+$('#ticket').onsubmit=async e=>{e.preventDefault();
+  if(!S.user)return loginSheet();
+  if(!Object.keys(S.bal).length){try{await sb.rpc('cx_claim').then(r=>{if(r.error)throw r.error});toast(t('claimed'));await loadMe()}catch(x){toast(errText(x))}return}
+  const q=+$('#iQty').value,p=+$('#iPrice').value;if(!(q>0)||(S.kind==='limit'&&!(p>0)))return toast(t('err.bad'));
+  const g=$('#go');g.disabled=true;
+  try{
+    const r=S.kind==='limit'?await sb.rpc('cx_order',{p_market:S.m,p_side:S.side,p_price:p,p_qty:q}):await sb.rpc('cx_market',{p_market:S.m,p_side:S.side,p_qty:q});
+    if(r.error)throw r.error;const o=r.data;
+    toast(o.status==='filled'?t('filled'):+o.filled>0?t('partial'):o.status==='cancelled'?t('cancelled'):t('placed'));
+    $('#iQty').value='';calc();await Promise.all([loadMe(),refreshMarket()]);
+  }catch(x){toast(errText(x))}finally{g.disabled=false}
+};
+
+/* ---------- my orders ---------- */
+function renderMine(){
+  const open=S.orders.filter(o=>o.status==='open');
+  $('#mineBtn').textContent=`${t('myOrders')} (${open.length})`;
+  $('#mineRows').innerHTML=open.length?open.map(o=>`<tr><td class="n">${esc(o.market)}</td><td class="${o.side==='buy'?'up':'dn'}">${t(o.side)}</td><td class="n">${fmt(o.price,dec(o.price))}</td><td class="n">${fmtQ(+o.filled)} / ${fmtQ(+o.qty)}</td><td><button class="btn" data-x="${o.id}">${t('cancel')}</button></td></tr>`).join('')
+    +`<tr><td colspan="5"><button class="btn" id="xAll">${t('cancelAll')}</button></td></tr>`:`<tr><td colspan="5">${t('none')}</td></tr>`;
+}
+$('#mineBtn').onclick=()=>$('#mine').classList.toggle('open');
+$('#mineRows').onclick=async e=>{const b=e.target.closest('[data-x]');const all=e.target.closest('#xAll');if(!b&&!all)return;
+  const r=all?await sb.rpc('cx_cancel_all',{}):await sb.rpc('cx_cancel',{p_id:+b.dataset.x});if(r.error)return toast(errText(r.error));toast(t('cancelled'));loadMe();refreshMarket()};
+
+/* ---------- data ---------- */
+async function loadMarkets(){const r=await sb.rpc('cx_markets');if(!r.error){S.markets=r.data||[];if(!cur()&&S.markets[0])S.m=S.markets[0].symbol;renderMarkets();renderHead();paintTicket()}}
+async function loadCandles(){const r=await sb.rpc('cx_candles',{p_market:S.m,p_minutes:S.tf,p_limit:120});if(!r.error){S.candles=r.data||[];drawChart()}}
+async function refreshMarket(){
+  const [b,tp]=await Promise.all([sb.rpc('cx_book',{p_market:S.m,p_depth:14}),sb.rpc('cx_tape',{p_market:S.m,p_limit:40})]);
+  if(!b.error){S.book=b.data;renderBook()}if(!tp.error){S.tape=tp.data;renderTape()}
+  loadCandles();loadMarkets();
+}
+async function loadMe(){
+  if(!S.user){S.bal={};S.orders=[];paintTicket();renderMine();return}
+  const [b,o]=await Promise.all([sb.from('cx_balances').select('asset,available,locked'),sb.from('cx_orders').select('id,market,side,price,qty,filled,status').eq('status','open').order('id',{ascending:false}).limit(100)]);
+  S.bal=Object.fromEntries((b.data||[]).map(x=>[x.asset,x]));S.orders=o.data||[];
+  $('#pill').classList.toggle('hide',!S.bal.USDB);$('#pillUsd').textContent=fmt(S.bal.USDB?.available||0);
+  paintTicket();renderMine();
+}
+async function loadWorld(){
+  try{const ids=Object.values(WORLD_IDS).join(',');const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);const j=await r.json();
+    for(const[s,id]of Object.entries(WORLD_IDS))if(j[id])S.world[s]=j[id].usd;renderHead()}catch{}
+}
+
+/* ---------- account ---------- */
+function loginSheet(){
+  const d=document.createElement('div');d.className='scrim';d.innerHTML=`<form class="sheet" role="dialog" aria-modal="true" aria-labelledby="lgT" novalidate>
+    <h2 id="lgT">${t('signIn')}</h2>
+    <div class="fld"><label for="lgE">${t('email')}</label><input id="lgE" type="email" autocomplete="email" dir="ltr"></div>
+    <div class="fld"><label for="lgP">${t('password')}</label><input id="lgP" type="password" autocomplete="current-password" dir="ltr"></div>
+    <p class="msg" role="alert"></p>
+    <button class="go b">${t('signIn')}</button>
+    <a href="/${L}/">${t('noAcc')}</a>
+    <button type="button" class="btn" data-close>${t('close')}</button></form>`;
+  document.body.appendChild(d);d.querySelector('input').focus();
+  const close=()=>d.remove();d.onclick=e=>{if(e.target===d||e.target.closest('[data-close]'))close()};
+  d.querySelector('form').onsubmit=async e=>{e.preventDefault();const r=await sb.auth.signInWithPassword({email:$('#lgE').value.trim(),password:$('#lgP').value});
+    if(r.error)d.querySelector('.msg').textContent=t('badLogin');else close()};
+}
+$('#loginBtn').onclick=async()=>{if(S.user){await sb.auth.signOut()}else loginSheet()};
+
+/* ---------- create a coin ---------- */
+$('#newCoin').onclick=()=>{
+  if(!S.user)return loginSheet();
+  let hue=170;const d=document.createElement('div');d.className='scrim';
+  d.innerHTML=`<form class="sheet" role="dialog" aria-modal="true" aria-labelledby="ncT" novalidate>
+    <h2 id="ncT">${t('create').replace('+ ','')}</h2><p>${t('cFee',{f:100})}</p>
+    <div class="fld"><label for="ncS">${t('cSym')}</label><input id="ncS" maxlength="10" autocomplete="off" style="text-transform:uppercase"></div>
+    <div class="fld"><label for="ncN">${t('cName')}</label><input id="ncN" maxlength="32" autocomplete="off" style="text-align:start;direction:auto"></div>
+    <div class="fld"><label for="ncQ">${t('cSupply')}</label><input id="ncQ" inputmode="numeric" value="1000000"></div>
+    <div class="fld"><label for="ncA">${t('cAbout')}</label><input id="ncA" maxlength="280" style="text-align:start;direction:auto"></div>
+    <span>${t('cColor')}</span><div class="hues">${[170,40,0,210,280,330,95].map(h=>`<button type="button" data-h="${h}" aria-label="${h}" aria-pressed="${h===hue}" style="background:hsl(${h} 70% 62%)"></button>`).join('')}</div>
+    <p class="msg" role="alert"></p>
+    <button class="go b">${t('cGo')}</button><button type="button" class="btn" data-close>${t('close')}</button></form>`;
+  document.body.appendChild(d);d.querySelector('input').focus();
+  d.onclick=e=>{if(e.target===d||e.target.closest('[data-close]'))d.remove();const h=e.target.closest('[data-h]');if(h){hue=+h.dataset.h;d.querySelectorAll('[data-h]').forEach(x=>x.setAttribute('aria-pressed',x===h))}};
+  d.querySelector('form').onsubmit=async e=>{e.preventDefault();
+    const r=await sb.rpc('cx_create_coin',{p_symbol:$('#ncS').value,p_name:$('#ncN').value,p_supply:+$('#ncQ').value.replace(/,/g,''),p_hue:hue,p_about:$('#ncA').value});
+    if(r.error)return d.querySelector('.msg').textContent=errText(r.error);
+    d.remove();toast(t('cMade',{s:r.data.symbol,n:fmtQ(+$('#ncQ')?.value||0)}));await loadMarkets();pick(r.data.symbol);loadMe();setSide('sell')};
+};
+
+/* ---------- admin ---------- */
+async function loadAdmin(){
+  if(!S.admin)return $('#admin').classList.add('hide');
+  $('#admin').classList.remove('hide');const r=await sb.rpc('cx_admin_overview');if(r.error)return;const o=r.data;
+  $('#adminStats').innerHTML=`${esc(o.mode)} · fees <span class="n">${fmt(o.fees_usdb)}</span> USDB · ${o.traders} traders · ${o.trades_24h} trades/24h · <span class="n">${big(+o.volume_24h)}</span> vol · books ${o.books_balance?'✓':'✗'}`;
+  $('#aHalt').textContent=cur()?.halted?t('resume'):t('halt');
+}
+$('#aLiq').onclick=async()=>{await loadWorld();let n=0;for(const s of Object.keys(WORLD_IDS)){if(!S.world[s])continue;const r=await sb.rpc('cx_admin_liquidity',{p_market:s,p_ref:S.world[s]});if(r.error)toast(r.error.message);else n+=r.data}toast(`+${n}`);refreshMarket();loadAdmin()};
+$('#aHalt').onclick=async()=>{const a=cur();await sb.rpc('cx_admin_halt',{p_market:a.symbol,p_halted:!a.halted});await loadMarkets();loadAdmin()};
+
+/* ---------- phone panels ---------- */
+function show(id){
+  if(id==='mine'){$('#mine').classList.add('open');return}
+  document.querySelectorAll('.desk>section').forEach(s=>s.classList.toggle('on',s.id===id));
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.p===id));
+  if(id==='pChart')requestAnimationFrame(drawChart);
+}
+$('#tabs').onclick=e=>{const b=e.target.closest('[data-p]');if(b)show(b.dataset.p)};
+
+/* ---------- boot ---------- */
+paint();
+if(!sb){$('#chartEmpty').textContent='Network error';$('#chartEmpty').classList.remove('hide')}
+else{
+  sb.auth.onAuthStateChange((_e,session)=>{S.user=session?.user||null;$('#loginBtn').textContent=S.user?t('logout'):t('login');
+    if(S.user)sb.rpc('is_admin').then(r=>{S.admin=r.data===true;loadAdmin()});else{S.admin=false;loadAdmin()}loadMe()});
+  loadMarkets().then(refreshMarket);loadWorld();
+  setInterval(()=>{if(!document.hidden)refreshMarket()},3000);
+  setInterval(()=>{if(!document.hidden){loadMe();if(S.admin)loadAdmin()}},6000);
+  setInterval(loadWorld,60000);
+}
+</script>
+</body>
+</html>

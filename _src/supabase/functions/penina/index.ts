@@ -1,3 +1,4 @@
+// © 2026 Bar Lvovski. All rights reserved.
 // Penina: reads a WhatsApp chat (stats + a sampled excerpt prepared in the browser) and writes a report.
 // Nothing about the chat is stored or logged. One free report per account per day (pn_take_report).
 // Secrets: ANTHROPIC_API_KEY. SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
