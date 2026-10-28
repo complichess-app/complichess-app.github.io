@@ -6,7 +6,8 @@ import { customCursorOff, prefersStill } from '../lib/a11y';
 /* Words wrapped for a rise-in reveal. Splits on spaces only, so Arabic and Hebrew letters keep their shapes. */
 export function Words({ text, className }: { text: string; className?: string }) {
   return (
-    <span className={className} aria-label={text}>
+    // Latin-only titles (Barusik Crypto, Bar Lvovski Travel) keep their word order inside RTL pages
+    <span className={className} aria-label={text} dir={/[\u0590-\u08FF]/.test(text) ? undefined : 'ltr'} style={/[\u0590-\u08FF]/.test(text) ? undefined : { unicodeBidi: 'isolate' }}>
       {text.split(' ').map((w, i) => (
         <span key={i} aria-hidden="true"><span className="word"><span>{w}</span></span>{' '}</span>
       ))}

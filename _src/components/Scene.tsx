@@ -9,7 +9,7 @@ import { world, PLATFORMS, smooth, clamp, type PlatformId } from '../lib/store';
 
 const C = {
   night: '#090B1F', pk: '#5B54FF', pkDeep: '#2A238F', gold: '#F2B705', felt: '#1F4A3B', cream: '#E9DFC6',
-  brass: '#D8AE57', ebony: '#1A1715', mint: '#49E8C8', crSlab: '#0E1A33', coral: '#FF7A59', lrSlab: '#3A1626', sky: '#38BDF8', trSlab: '#0B2A44',
+  brass: '#D8AE57', ebony: '#1A1715', mint: '#49E8C8', crSlab: '#0E1A33', coral: '#FF7A59', lrSlab: '#3A1626', sky: '#38BDF8', trSlab: '#0B2A44', lip: '#F0507F', pnSlab: '#2B1638',
 };
 
 /* ---------- camera path ---------- */
@@ -332,7 +332,7 @@ function Complichess() {
   );
 }
 
-/* ---------- 3. Crypto: an unfinished wireframe slab with a spinning coin (coming soon) ---------- */
+/* ---------- 3. Crypto: a glass slab with a spinning coin and a pulse ring ---------- */
 function Crypto() {
   const coin = useRef<THREE.Group>(null!);
   const ring = useRef<THREE.Mesh>(null!);
@@ -348,7 +348,7 @@ function Crypto() {
       <Glow color={C.mint} size={6.5} opacity={0.35} />
       <Drag>
         <RoundedBox args={[3.5, 0.34, 3.5]} radius={0.14} smoothness={3}>
-          <meshPhysicalMaterial color={C.crSlab} transparent opacity={0.45} roughness={0.1} transmission={0} />
+          <meshPhysicalMaterial color={C.crSlab} roughness={0.18} metalness={0.3} clearcoat={1} clearcoatRoughness={0.15} />
           <Edges color={C.mint} threshold={15} />
         </RoundedBox>
       </Drag>
@@ -369,7 +369,7 @@ function Crypto() {
   );
 }
 
-/* ---------- 5. LearnLume: an open book, a graduation cap, a video screen and orbiting flashcards (coming soon) ---------- */
+/* ---------- 4. LearnLume: an open book, a graduation cap, a video screen and orbiting flashcards ---------- */
 function LearnLume() {
   const cards = useRef<THREE.Group>(null!);
   const play = useRef<THREE.Mesh>(null!);
@@ -426,12 +426,58 @@ function LearnLume() {
   );
 }
 
+/* ---------- 5. Penina: a pearl that reads your chat, with two speech bubbles leaning on it ---------- */
+function Penina() {
+  const pearl = useRef<THREE.Mesh>(null!);
+  const bubbles = useRef<THREE.Group>(null!);
+  const dots = useRef<THREE.Group>(null!);
+  useFrame(({ clock }, dt) => {
+    if (world.reduced) return;
+    pearl.current.rotation.y += dt * 0.35;
+    bubbles.current.position.y = Math.sin(clock.elapsedTime * 1.3) * 0.06;
+    dots.current.children.forEach((d, i) => { d.position.y = Math.max(0, Math.sin(clock.elapsedTime * 5 - i * 0.7)) * 0.06; });
+  });
+  const bubble = (w: number, h: number) => {
+    const s = new THREE.Shape(); const r = h / 2;
+    s.moveTo(-w / 2 + r, -h / 2); s.lineTo(w / 2 - r, -h / 2); s.absarc(w / 2 - r, 0, r, -Math.PI / 2, Math.PI / 2, false);
+    s.lineTo(-w / 2 + r, h / 2); s.absarc(-w / 2 + r, 0, r, Math.PI / 2, Math.PI * 1.5, false);
+    return new THREE.ExtrudeGeometry(s, { depth: 0.08, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 3 });
+  };
+  const b1 = useMemo(() => bubble(1.2, 0.46), []);
+  const b2 = useMemo(() => bubble(0.9, 0.4), []);
+  return (
+    <PlatformShell id="pn" index={5}>
+      <Glow color={C.lip} size={6.5} opacity={0.4} />
+      <Drag><Slab color={C.pnSlab} edge={C.lip} /></Drag>
+      <Drag position={[-0.35, 0.95, 0]}>
+        <mesh ref={pearl} castShadow>
+          <sphereGeometry args={[0.78, 64, 64]} />
+          <meshPhysicalMaterial color="#F6EAF3" roughness={0.12} metalness={0.05} clearcoat={1} clearcoatRoughness={0.05} iridescence={1} iridescenceIOR={1.6} iridescenceThicknessRange={[200, 700]} sheen={1} sheenColor="#FFC6DA" />
+        </mesh>
+      </Drag>
+      <group ref={bubbles}>
+        <Drag position={[0.95, 1.55, 0.35]} rotation={[0, -0.35, 0.05]}>
+          <mesh geometry={b1} castShadow><meshPhysicalMaterial color={C.lip} roughness={0.3} clearcoat={1} /></mesh>
+          <group ref={dots} position={[0, 0, 0.12]}>
+            {[-0.25, 0, 0.25].map((x) => (<mesh key={x} position={[x, 0, 0]}><sphereGeometry args={[0.06, 16, 16]} /><meshStandardMaterial color="#FFFFFF" emissive="#FFFFFF" emissiveIntensity={0.4} /></mesh>))}
+          </group>
+        </Drag>
+        <Drag position={[1.05, 0.85, 0.9]} rotation={[0, -0.6, -0.05]}>
+          <mesh geometry={b2} castShadow><meshPhysicalMaterial color="#F7EFF5" roughness={0.35} clearcoat={0.6} /></mesh>
+          <mesh position={[-0.05, 0.05, 0.12]}><planeGeometry args={[0.5, 0.05]} /><meshBasicMaterial color="#B9A0C2" /></mesh>
+          <mesh position={[-0.12, -0.07, 0.12]}><planeGeometry args={[0.36, 0.05]} /><meshBasicMaterial color="#B9A0C2" /></mesh>
+        </Drag>
+      </group>
+    </PlatformShell>
+  );
+}
+
 /* ---------- star dust ---------- */
 function Dust({ count }: { count: number }) {
   const pts = useRef<THREE.Points>(null!);
   const geo = useMemo(() => {
     const g = new THREE.BufferGeometry(); const a = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) { a[i * 3] = (Math.random() - 0.5) * 30; a[i * 3 + 1] = Math.random() * -27 + 7; a[i * 3 + 2] = Math.random() * -18 + 5; }
+    for (let i = 0; i < count; i++) { a[i * 3] = (Math.random() - 0.5) * 30; a[i * 3 + 1] = Math.random() * -32 + 7; a[i * 3 + 2] = Math.random() * -18 + 5; }
     g.setAttribute('position', new THREE.BufferAttribute(a, 3)); return g;
   }, [count]);
   const tex = useMemo(glowTexture, []);
@@ -447,7 +493,7 @@ export default function Scene() {
   return (
     <Canvas
       dpr={[1, 1.75]}
-      shadows
+      shadows="percentage"
       camera={{ fov: 35, near: 0.1, far: 80, position: [0, -2.2, 16.5] }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.05; }}
@@ -463,6 +509,7 @@ export default function Scene() {
       <pointLight position={[6, -6, 2]} intensity={24} color={C.brass} />
       <pointLight position={[-7, -14, -2]} intensity={22} color={C.coral} />
       <pointLight position={[-6, 3, 4]} intensity={22} color={C.sky} />
+      <pointLight position={[6, -17, -4]} intensity={20} color={C.lip} />
       <Environment resolution={128} frames={1}>
         <Lightformer form="rect" intensity={2.4} position={[0, 5, -6]} scale={[12, 4, 1]} color="#ffffff" />
         <Lightformer form="rect" intensity={1.6} position={[-6, 1, 2]} rotation-y={Math.PI / 2} scale={[8, 3, 1]} color="#8E85FF" />
@@ -475,6 +522,7 @@ export default function Scene() {
       <Complichess />
       <Crypto />
       <LearnLume />
+      <Penina />
       <Dust count={world.mobile ? 500 : 1100} />
     </Canvas>
   );
