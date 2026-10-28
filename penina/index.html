@@ -163,6 +163,7 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px 50p
       </div>
       <p class="msg" id="askMsg" role="alert"></p>
       <button class="go" id="goBtn" type="button"></button>
+      <button type="button" id="forgetBtn" data-t="forget" style="color:var(--muted);font-size:15px;text-decoration:underline;text-underline-offset:4px;align-self:center"></button>
     </div>
   </section>
 
@@ -195,7 +196,7 @@ const initial=n=>[...n.replace(/[^\p{L}\p{N}]/gu,'')][0]||'?';
 
 const SB_URL='https://iktmyrfbejtjsiehcrar.supabase.co',SB_KEY='sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
 const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}}):null;
-let USER=null,MSGS=null,STATS=null,REPORT=null;
+let USER=null,EXCERPT=null,STATS=null,REPORT=null;
 
 function paint(){
   document.documentElement.lang=L;document.documentElement.dir=RTL[L]?'rtl':'ltr';
@@ -206,6 +207,7 @@ function paint(){
   document.title=t('title');
   if(STATS)renderLocal();if(REPORT)renderReport(REPORT);goBtn();
 }
+$('#forgetBtn').onclick=()=>{forgetLocal();STATS=null;EXCERPT=null;REPORT=null;$('#local').classList.add('hide');$('#start').classList.remove('hide');$('#file').value='';scrollTo(0,0)};
 $('#lang').onchange=e=>{L=e.target.value;try{localStorage.setItem('barusik.lang',L)}catch{}paint()};
 
 /* ---------- reading the file ---------- */
@@ -219,7 +221,7 @@ async function openChat(f){
   try{
     const text=await PeninaChat.readFile(f);const msgs=PeninaChat.parse(text);
     if(!msgs.length)throw 0;if(msgs.length<50)return $('#readMsg').textContent=t('tooSmall');
-    MSGS=msgs;STATS=PeninaChat.stats(msgs);REPORT=null;$('#report').classList.add('hide');
+    EXCERPT=PeninaChat.excerpt(msgs);STATS=PeninaChat.stats(msgs);REPORT=null;saveLocal();$('#report').classList.add('hide');
     $('#start').classList.add('hide');$('#local').classList.remove('hide');renderLocal();scrollTo(0,0);
   }catch{ $('#readMsg').textContent=t('badFile') }
 }
@@ -239,24 +241,63 @@ function renderLocal(){
   $('#clockLine').textContent=t('peak',{h:String(s.busiestHour).padStart(2,'0')});
 }
 
-/* ---------- asking Penina ---------- */
-function goBtn(){const b=$('#goBtn');b.textContent=USER?t('getReport'):t('login');$('#loginBox').classList.toggle('hide',!!USER)}
+/* ---------- asking Penina: every report is approved by Bar first ---------- */
+const T2={
+he:{askSub:'דוח אישי על כל אחד, הדינמיקה של הקבוצה, והציטוטים שפנינה לא שוכחת. כל דוח מאושר אישית לפני שהוא נכתב.',login:'להתחבר ולבקש דוח',request:'לבקש דוח מפנינה',getReport:'לקבל את הדוח של פנינה',pending:'הבקשה נשלחה ומחכה לאישור. ברגע שתאושר, הכפתור כאן יהפוך ל"לקבל את הדוח". הצ׳אט נשמר רק במכשיר הזה, אפשר לסגור את הדף ולחזור.',check:'לבדוק שוב',approved:'הבקשה אושרה. פנינה מוכנה.',declined:'הבקשה הקודמת לא אושרה. אפשר לבקש שוב.',tooMany:'כבר יש 3 בקשות שמחכות לאישור.',soon:'הדוחות של פנינה ייפתחו בקרוב. הסטטיסטיקה למעלה כבר שלכם.',notApproved:'הבקשה עוד לא אושרה.',busy:'פנינה לא הצליחה לסיים. הבקשה לא נוצלה, נסו שוב בעוד דקה.',forget:'למחוק את הצ׳אט מהמכשיר'},
+en:{askSub:'A personal read on everyone, how the group works, and the quotes Penina won’t forget. Every report is approved personally before it is written.',login:'Sign in and request a report',request:'Request a report from Penina',getReport:'Get Penina’s report',pending:'Your request is waiting for approval. Once it is approved this button turns into "Get the report". The chat is kept only on this device, so you can close the page and come back.',check:'Check again',approved:'Approved. Penina is ready.',declined:'Your last request was not approved. You can ask again.',tooMany:'You already have 3 requests waiting.',soon:'Penina’s reports open soon. The stats above are already yours.',notApproved:'Your request isn’t approved yet.',busy:'Penina couldn’t finish. Your request wasn’t used up; try again in a minute.',forget:'Remove the chat from this device'},
+ar:{askSub:'قراءة شخصية لكل واحد، وكيف تعمل المجموعة، والاقتباسات التي لا تنساها بنينا. كل تقرير يُوافق عليه شخصيًا قبل كتابته.',login:'الدخول وطلب تقرير',request:'اطلب تقريرًا من بنينا',getReport:'تقرير بنينا',pending:'طلبك بانتظار الموافقة. عند الموافقة يصبح هذا الزر "احصل على التقرير". المحادثة محفوظة على هذا الجهاز فقط، يمكنك إغلاق الصفحة والعودة.',check:'تحقق مجددًا',approved:'تمت الموافقة. بنينا جاهزة.',declined:'لم تتم الموافقة على طلبك السابق. يمكنك الطلب مجددًا.',tooMany:'لديك 3 طلبات بانتظار الموافقة.',soon:'تقارير بنينا تُفتح قريبًا. الإحصاءات أعلاه لك بالفعل.',notApproved:'لم تتم الموافقة على طلبك بعد.',busy:'لم تكمل بنينا. لم يُستهلك طلبك، جرّب بعد دقيقة.',forget:'حذف المحادثة من الجهاز'},
+ru:{askSub:'Личный разбор каждого, как работает группа и цитаты, которые Пнина не забудет. Каждый отчёт одобряется лично, прежде чем он будет написан.',login:'Войти и запросить отчёт',request:'Запросить отчёт у Пнины',getReport:'Получить отчёт Пнины',pending:'Запрос ждёт одобрения. Как только его одобрят, эта кнопка станет «Получить отчёт». Чат хранится только на этом устройстве — можно закрыть страницу и вернуться.',check:'Проверить снова',approved:'Одобрено. Пнина готова.',declined:'Прошлый запрос не одобрен. Можно запросить снова.',tooMany:'Уже 3 запроса ждут одобрения.',soon:'Отчёты Пнины скоро откроются. Статистика выше уже ваша.',notApproved:'Запрос ещё не одобрен.',busy:'Пнина не успела. Запрос не израсходован, попробуйте через минуту.',forget:'Удалить чат с устройства'},
+es:{askSub:'Una lectura de cada persona, cómo funciona el grupo y las frases que Penina no olvida. Cada informe se aprueba personalmente antes de escribirse.',login:'Entrar y pedir un informe',request:'Pedir un informe a Penina',getReport:'Recibir el informe de Penina',pending:'Tu solicitud espera aprobación. Cuando se apruebe, este botón pasará a «Recibir el informe». El chat se guarda solo en este dispositivo: puedes cerrar la página y volver.',check:'Comprobar otra vez',approved:'Aprobado. Penina está lista.',declined:'Tu última solicitud no se aprobó. Puedes pedir otra.',tooMany:'Ya tienes 3 solicitudes esperando.',soon:'Los informes de Penina abren pronto. Las estadísticas de arriba ya son tuyas.',notApproved:'Tu solicitud aún no está aprobada.',busy:'Penina no pudo terminar. La solicitud no se gastó; prueba en un minuto.',forget:'Borrar el chat de este dispositivo'},
+fr:{askSub:'Un portrait de chacun, la dynamique du groupe et les citations que Penina n’oublie pas. Chaque rapport est validé personnellement avant d’être écrit.',login:'Se connecter et demander un rapport',request:'Demander un rapport à Penina',getReport:'Recevoir le rapport de Penina',pending:'Votre demande attend une validation. Une fois validée, ce bouton devient « Recevoir le rapport ». Le chat reste seulement sur cet appareil : vous pouvez fermer la page et revenir.',check:'Vérifier à nouveau',approved:'Validé. Penina est prête.',declined:'Votre dernière demande n’a pas été validée. Vous pouvez redemander.',tooMany:'Vous avez déjà 3 demandes en attente.',soon:'Les rapports de Penina ouvrent bientôt. Les statistiques ci-dessus sont déjà à vous.',notApproved:'Votre demande n’est pas encore validée.',busy:'Penina n’a pas pu finir. La demande n’a pas été utilisée ; réessayez dans une minute.',forget:'Effacer le chat de cet appareil'}};
+for(const l in T2)Object.assign(T[l],T2[l]);
+const NOT_READY=e=>/does not exist|schema cache|not find the function|relation .* does not exist|404/i.test(String(e?.message||e||''));
+let ADMIN=false,REQ=null,BACKEND=true,pollReq=null;
+const KEY='penina.chat';
+const saveLocal=()=>{try{localStorage.setItem(KEY,JSON.stringify({stats:STATS,excerpt:EXCERPT,report:REPORT,at:Date.now()}))}catch{}};
+const forgetLocal=()=>{try{localStorage.removeItem(KEY)}catch{}};
+
+async function loadReq(){
+  REQ=null;if(!sb||!USER)return;
+  try{ADMIN=(await sb.rpc('is_admin')).data===true}catch{ADMIN=false}
+  if(ADMIN)return;
+  const r=await sb.from('pn_requests').select('id,status,created_at,decided_at').order('created_at',{ascending:false}).limit(5);
+  if(r.error){BACKEND=!NOT_READY(r.error);return}
+  BACKEND=true;const rows=r.data||[];
+  REQ=rows.find(x=>x.status==='approved')||rows.find(x=>x.status==='pending')||rows[0]||null;
+}
+function goBtn(){
+  const b=$('#goBtn'),m=$('#askMsg');$('#loginBox').classList.toggle('hide',!!USER);b.classList.remove('hide');
+  clearInterval(pollReq);
+  if(!USER){b.textContent=t('login');return}
+  if(!BACKEND){b.classList.add('hide');m.textContent=t('soon');return}
+  if(ADMIN||REQ?.status==='approved'){b.textContent=t('getReport');if(REQ?.status==='approved')m.textContent=t('approved');return}
+  if(REQ?.status==='pending'){b.textContent=t('check');m.textContent=t('pending');pollReq=setInterval(async()=>{if(document.hidden)return;await loadReq();if(REQ?.status!=='pending')goBtn()},20000);return}
+  b.textContent=t('request');if(REQ?.status==='declined')m.textContent=t('declined');
+}
+async function refreshAsk(){await loadReq();$('#askMsg').textContent='';goBtn()}
+
 $('#goBtn').onclick=async()=>{
   const m=$('#askMsg');m.textContent='';
   if(!sb)return m.textContent=t('busy');
-  if(!USER){const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error)return m.textContent=t('badLogin');USER=r.data.user;goBtn();}
+  if(!USER){const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error)return m.textContent=t('badLogin');USER=r.data.user;await refreshAsk();if(ADMIN||REQ?.status==='approved'||REQ?.status==='pending')return;}
+  if(!ADMIN&&REQ?.status==='pending'){await refreshAsk();if(REQ?.status==='pending')m.textContent=t('pending');return}
+  if(!ADMIN&&REQ?.status!=='approved'){
+    const r=await sb.rpc('pn_request',{p_msgs:STATS.total,p_people:STATS.people.length,p_lang:L});
+    if(r.error){m.textContent=NOT_READY(r.error)?t('soon'):/too many/.test(r.error.message)?t('tooMany'):t('busy');return}
+    saveLocal();await refreshAsk();return;
+  }
   $('#local').classList.add('hide');$('#wait').classList.remove('hide');scrollTo(0,0);
   let i=0;const lines=t('w');$('#waitLine').textContent=lines[0];const tick=setInterval(()=>$('#waitLine').textContent=lines[++i%lines.length],2600);
   try{
     const {data:{session}}=await sb.auth.getSession();
     const r=await fetch(`${SB_URL}/functions/v1/penina`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`,apikey:SB_KEY},
-      body:JSON.stringify({lang:L,stats:STATS,excerpt:PeninaChat.excerpt(MSGS)})});
+      body:JSON.stringify({lang:L,stats:STATS,excerpt:EXCERPT})});
     const j=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(j.error||'busy');
-    REPORT=j.report;$('#wait').classList.add('hide');renderReport(REPORT);
+    if(!r.ok)throw new Error(j.error||(r.status===404?'404':'busy'));
+    REPORT=j.report;saveLocal();$('#wait').classList.add('hide');renderReport(REPORT);refreshAsk();
   }catch(e){
-    $('#wait').classList.add('hide');$('#local').classList.remove('hide');
-    m.textContent=String(e.message)==='limit'?t('limit'):t('busy');$('#ask').scrollIntoView();
+    $('#wait').classList.add('hide');$('#local').classList.remove('hide');await refreshAsk();
+    m.textContent=String(e.message)==='not approved'?t('notApproved'):NOT_READY(e)?t('soon'):t('busy');$('#ask').scrollIntoView();
   }finally{clearInterval(tick)}
 };
 
@@ -275,7 +316,7 @@ function renderReport(r){
   ${r.moments?.length?`<div class="sec"><h2>${t('moments')}</h2>${r.moments.map(x=>`<blockquote><q>${esc(x.quote)}</q><cite>${esc(x.who)} · ${esc(x.note)}</cite></blockquote>`).join('')}</div>`:''}
   <div class="sec"><h2>${t('advice')}</h2><p class="advice">${esc(r.advice)}</p></div>
   <div class="actions"><button class="go" id="shareBtn" style="padding:0 26px">${t('share')}</button><button class="btn2" id="againBtn">${t('again')}</button></div>`;
-  $('#shareBtn').onclick=share;$('#againBtn').onclick=()=>{REPORT=null;STATS=null;MSGS=null;el.classList.add('hide');$('#start').classList.remove('hide');$('#file').value='';scrollTo(0,0)};
+  $('#shareBtn').onclick=share;$('#againBtn').onclick=()=>{REPORT=null;STATS=null;EXCERPT=null;forgetLocal();el.classList.add('hide');$('#start').classList.remove('hide');$('#file').value='';scrollTo(0,0)};
   scrollTo(0,0);
 }
 
@@ -296,8 +337,9 @@ async function share(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='penina.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
 
+try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stats&&sv.excerpt&&Date.now()-sv.at<14*864e5){STATS=sv.stats;EXCERPT=sv.excerpt;REPORT=sv.report||null;$('#start').classList.add('hide');if(REPORT){renderReport(REPORT)}else $('#local').classList.remove('hide')}}catch{}
 paint();
-if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;goBtn()});
+if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;refreshAsk()});
 </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // © 2026 Bar Lvovski. All rights reserved.
 // Penina: reads a WhatsApp chat (stats + a sampled excerpt prepared in the browser) and writes a report.
-// Nothing about the chat is stored or logged. One free report per account per day (pn_take_report).
+// Nothing about the chat is stored or logged. A report needs a request Bar approved on /admin/ (pn_take_report).
 // Secrets: ANTHROPIC_API_KEY. SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are provided by Supabase.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -80,13 +80,13 @@ Deno.serve(async (req) => {
 
   const take = await sb.rpc('pn_take_report');
   if (take.error) {
-    const limit = take.error.message.includes('daily limit');
-    return new Response(JSON.stringify({ error: limit ? 'limit' : 'account' }), { status: limit ? 429 : 401, headers: h });
+    const waiting = take.error.message.includes('not approved');
+    return new Response(JSON.stringify({ error: waiting ? 'not approved' : 'account' }), { status: waiting ? 403 : 401, headers: h });
   }
 
   const refund = async () => {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    await admin.rpc('pn_refund', { p_uid: who.user!.id });
+    if (take.data?.id) await admin.rpc('pn_refund', { p_id: take.data.id });
   };
 
   try {
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     const j = await r.json();
     const out = j.content?.find((c: { type: string }) => c.type === 'tool_use')?.input;
     if (!out) throw new Error('no report');
-    return new Response(JSON.stringify({ report: out, left: take.data?.left ?? 0 }), { headers: h });
+    return new Response(JSON.stringify({ report: out }), { headers: h });
   } catch (e) {
     await refund();
     console.error('penina failed', String(e).slice(0, 80)); // never log chat content

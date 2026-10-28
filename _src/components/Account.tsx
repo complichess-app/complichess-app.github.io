@@ -53,6 +53,14 @@ export default function Account({ d, lang }: { d: Dict; lang: Lang }) {
     sb.from('profiles').select('username').eq('id', user.id).maybeSingle().then((r: any) => setName(r?.data?.username || user.user_metadata?.username || ''));
     sb.rpc('is_admin').then((r: any) => setAdmin(r?.data === true)).catch(() => setAdmin(false));
   }, [sb, user]);
+  // Penina requests waiting for Bar's approval (admin only): a number on the account button and the admin link
+  const [pn, setPn] = useState(0);
+  useEffect(() => {
+    if (!sb || !admin) { setPn(0); return; }
+    const tick = () => { if (document.hidden) return; sb.rpc('pn_pending_count').then((r: any) => setPn(Number(r?.data) || 0)).catch(() => setPn(0)); };
+    tick(); const t = setInterval(tick, 30000);
+    return () => clearInterval(t);
+  }, [sb, admin]);
   // Travel server light (admin only): green when Bar's computer answers customers, red when not.
   const [srv, setSrv] = useState<boolean | null>(null);
   useEffect(() => {
@@ -111,7 +119,8 @@ export default function Account({ d, lang }: { d: Dict; lang: Lang }) {
         </button>
       ) : null}
       <button type="button" onClick={() => { setMsg(''); setOpen(true); }} data-cursor="grow" aria-haspopup="dialog"
-        className="glass flex h-11 items-center gap-2 rounded-full ps-1.5 pe-4 text-sm font-bold">
+        className="glass relative flex h-11 items-center gap-2 rounded-full ps-1.5 pe-4 text-sm font-bold">
+        {pn > 0 ? <span aria-label={`${pn}`} className="absolute -top-1 -start-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#F0507F] px-1 text-[11px] font-black text-white">{pn}</span> : null}
         <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full font-display text-[13px] font-black" style={{ background: user ? 'linear-gradient(135deg,#6A63FF,#D8AE57)' : 'rgba(255,255,255,.08)' }}>
           {user ? initial : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>}
         </span>
@@ -135,7 +144,7 @@ export default function Account({ d, lang }: { d: Dict; lang: Lang }) {
                     <a href="/platformika/" className="rounded-2xl border border-white/10 px-4 py-3 font-bold hover:bg-white/5"><span className="me-2 inline-block h-2.5 w-2.5 rotate-45 rounded-[3px] bg-pk" />{d.pk.name}</a>
                     <a href="/complichess/" className="rounded-2xl border border-white/10 px-4 py-3 font-bold hover:bg-white/5"><span className="me-2 inline-block h-2.5 w-2.5 rotate-45 rounded-[3px] bg-brass" />{d.cx.name}</a>
                   </div>
-                  {admin ? <a href="/admin/" className="flex h-12 items-center justify-center rounded-full bg-gold font-extrabold text-night">{a.admin}</a> : null}
+                  {admin ? <a href={pn > 0 ? '/admin/#penina' : '/admin/'} className="flex h-12 items-center justify-center gap-2 rounded-full bg-gold font-extrabold text-night">{a.admin}{pn > 0 ? <span className="rounded-full bg-night px-2 text-sm text-gold">{pn}</span> : null}</a> : null}
                   <button type="button" onClick={async () => { await sb?.auth.signOut(); setOpen(false); }} className="h-12 rounded-full border border-white/15 font-bold hover:bg-white/5">{a.logout}</button>
                 </div>
               ) : (

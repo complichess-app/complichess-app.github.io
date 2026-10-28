@@ -23,7 +23,7 @@ const he: LegalT = {
         'פלטפורמיקה: הפרופיל (שם, ביו, תמונות), פוסטים, קליפים, סטוריז, תגובות, לייקים, הודעות פרטיות, חסימות ודיווחים.',
         'קומפליצס: שם השחקן, דירוג ונתוני משחקים.',
         'Barusik Crypto: יתרות, פקודות קנייה ומכירה, עסקאות ומטבעות שיצרתם. בעסקאות שמוצגות לכולם לא מופיע מי קנה ומי מכר.',
-        'מה פנינה חושבת: הצ׳אט שאתם מעלים נפתח רק במכשיר שלכם. לדוח נשלח קטע מקוצר בלי מספרי טלפון ומיילים, והוא לא נשמר — לא אצלנו ולא ביומנים. נשמר רק מונה של כמה דוחות קיבלתם היום.',
+        'מה פנינה חושבת: הצ׳אט שאתם מעלים נפתח רק במכשיר שלכם. לדוח נשלח קטע מקוצר בלי מספרי טלפון ומיילים, והוא לא נשמר — לא אצלנו ולא ביומנים. נשמרת רק הבקשה: מתי ביקשתם, כמה הודעות ומשתתפים יש בצ׳אט, ואם אושרה.',
         'LearnLume: רץ על המחשב שלכם. הקבצים נשלחים ישירות מהמחשב שלכם ל־Claude עם המפתח שלכם, ולא עוברים דרכנו.',
         'Bar Lvovski Travel: כששולחים בקשה או הזמנה — שם, טלפון, מייל (לא חובה), הערות ופרטי הנסיעה. חיפושים באתר נשמרים זמנית כדי להחזיר תשובה מהירה לחיפוש זהה.',
         'מידע טכני: כדי למנוע הצפה וניצול לרעה, נשמר לזמן קצר "טביעה" מוצפנת (גיבוב) של כתובת ה־IP — לא הכתובת עצמה. ספקי האירוח שומרים יומני גישה רגילים.',
@@ -103,7 +103,7 @@ const he: LegalT = {
       ] },
       { h: 'מה פנינה חושבת', p: [
         'הדוחות נכתבים בשביל הכיף ועלולים לטעות. אל תקבלו החלטות לפי דוח על קבוצת וואטסאפ.',
-        'מעלים רק צ׳אט שאתם חלק ממנו. דוח אחד בחינם לכל חשבון ביום.',
+        'מעלים רק צ׳אט שאתם חלק ממנו. כל דוח נכתב רק אחרי שבקשה שלכם אושרה.',
       ] },
       { h: 'אחריות', p: [
         'השירותים ניתנים כפי שהם (AS IS). אנחנו עושים מאמץ שיפעלו כראוי, אבל לא מתחייבים לזמינות מלאה או להיעדר תקלות. האחריות שלנו מוגבלת ככל שהחוק מתיר.',
@@ -130,7 +130,7 @@ const en: LegalT = {
         'Platformika: your profile (name, bio, pictures), posts, clips, stories, comments, likes, private messages, blocks and reports.',
         'Complichess: player name, rating and game data.',
         'Barusik Crypto: balances, buy and sell orders, trades and the coins you create. The public trade list does not show who bought or sold.',
-        'What Penina thinks: the chat you upload opens only on your device. A shortened excerpt with phone numbers and emails removed is sent for the report and is not stored — not by us and not in logs. We only keep a count of how many reports you had today.',
+        'What Penina thinks: the chat you upload opens only on your device. A shortened excerpt with phone numbers and emails removed is sent for the report and is not stored — not by us and not in logs. We only keep the request: when you asked, how many messages and people the chat has, and whether it was approved.',
         'LearnLume: runs on your computer. Your files go straight from your computer to Claude with your own key and never pass through us.',
         'Bar Lvovski Travel: when you send a request or booking — name, phone, email (optional), notes and trip details. Searches are kept briefly so identical searches can be answered quickly.',
         'Technical data: to prevent flooding and abuse we briefly keep a one-way hash of your IP address — not the address itself. Hosting providers keep standard access logs.',
@@ -195,7 +195,7 @@ const en: LegalT = {
       ] },
       { h: 'What Penina thinks', p: [
         'Reports are written for fun and can be wrong. Do not make decisions based on a report about a WhatsApp group.',
-        'Only upload chats you are part of. One free report per account per day.',
+        'Only upload chats you are part of. A report is written only after your request is approved.',
       ] },
       { h: 'Liability', p: ['The services are provided as is. We work to keep them running well but do not promise full availability or that they are error-free. Our liability is limited as far as the law allows.'] },
       { h: 'Law', p: ['These terms are governed by Israeli law. The competent courts in the Tel Aviv district have jurisdiction.'] },

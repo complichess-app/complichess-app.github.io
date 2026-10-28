@@ -23,7 +23,8 @@ button,.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:10
 input{font:inherit;background:#0B0E28;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:11px 14px;width:100%}
 input:focus-visible,button:focus-visible{outline:3px solid var(--cx);outline-offset:2px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{background:transparent;border:1px solid var(--line);color:var(--mute)}.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
-.tbl{overflow:auto;border-radius:12px;border:1px solid var(--line)}
+.tbl{overflow:auto;max-width:100%;border-radius:12px;border:1px solid var(--line)}
+.card{min-width:0;max-width:100%}
 table{border-collapse:collapse;width:100%;font-size:14px;min-width:820px}
 th,td{padding:10px 12px;text-align:start;border-bottom:1px solid var(--line);white-space:nowrap}
 th{position:sticky;top:0;background:#0F1333;color:var(--mute);font-weight:600;cursor:pointer;user-select:none}
@@ -32,7 +33,7 @@ tr:hover td{background:rgba(255,255,255,.03)}td.l{direction:ltr;text-align:right
 .y{background:rgba(73,232,200,.15);color:var(--ok)}.n{background:rgba(255,122,122,.14);color:var(--bad)}
 .box{max-width:420px;margin:10vh auto 0;display:flex;flex-direction:column;gap:12px}
 .err{color:var(--bad);font-size:14px}.list{display:flex;flex-direction:column;gap:8px}
-.post{display:flex;gap:10px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px}
+.post{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px}
 .post small{color:var(--mute);white-space:nowrap}
 </style>
 </head>
@@ -84,8 +85,21 @@ async function load(){
   const{data,error}=await sb.rpc('admin_overview');
   if(error){if(/not allowed|42501|permission/i.test(error.message+error.code))denied(session.user.email);else app.innerHTML=`<div class="box card"><h1>שגיאה</h1><p class="err">${esc(error.message)}</p><p class="mute">אם זה "function does not exist" — צריך להריץ את קובץ ה־SQL של ברוסיק ב־Supabase.</p><button id="r">נסו שוב</button></div>`,document.getElementById('r')&&(document.getElementById('r').onclick=load);return}
   if(!data||!data.totals){app.innerHTML=`<div class="box card"><h1>אין נתונים</h1><p class="mute">השרת לא החזיר נתונים. נסו לרענן.</p><button id="r">רענון</button></div>`;document.getElementById('r').onclick=load;return}
-  DATA=data;await loadTravel();await loadReports();draw(session.user.email);
+  DATA=data;await loadTravel();await loadReports();await loadPenina();draw(session.user.email);
+  if(!PNLIVE&&PNR!==null)PNLIVE=sb.channel('pnr').on('postgres_changes',{event:'*',schema:'public',table:'pn_requests'},async()=>{await loadPenina();draw(session.user.email)}).subscribe();
   if(!LIVE&&TRQ!==null)LIVE=sb.channel('trq').on('postgres_changes',{event:'*',schema:'public',table:'travel_requests'},async()=>{await loadTravel();draw(session.user.email)}).subscribe();
+}
+let PNR=null,PNLIVE=null;
+async function loadPenina(){try{const{data,error}=await sb.rpc('pn_admin_list');PNR=error?null:(data||[])}catch(e){PNR=null}}
+const PN_LANG={he:'עברית',en:'אנגלית',ar:'ערבית',ru:'רוסית',es:'ספרדית',fr:'צרפתית'};
+const PN_ST={pending:['מחכה','n'],approved:['אושר, עוד לא נוצל','y'],used:['הדוח נכתב','y'],declined:'נדחה'};
+function peninaHTML(){
+  if(PNR===null)return'';
+  const wait=PNR.filter(r=>r.status==='pending');
+  const st=r=>{const v=PN_ST[r.status];return Array.isArray(v)?`<span class="pill ${v[1]}">${v[0]}</span>`:`<span class="mute">${v||r.status}</span>`};
+  return`<section class="card" id="penina"><h2>בקשות לדוח של פנינה <span class="pill ${wait.length?'n':'y'}">${n(wait.length)} מחכות</span></h2>
+  <p class="mute" style="margin:0 0 10px">כל דוח עולה כ־10 סנט ב־Claude. הצ׳אט עצמו לא מגיע אליך ולא נשמר — רק מי ביקש וכמה גדול הצ׳אט.</p>
+  ${PNR.length?`<div class="list">${PNR.map(r=>`<div class="post"><small>${d(r.created_at)}</small><b dir="ltr">${esc(r.email)}</b><span>${n(r.msgs)} הודעות · ${n(r.people)} משתתפים · ${PN_LANG[r.lang]||r.lang}</span><span class="sp"></span>${r.status==='pending'?`<button data-pn="${r.id}" data-ok="1">אישור</button><button class="ghost" data-pn="${r.id}" data-ok="0">דחייה</button>`:st(r)}</div>`).join('')}</div>`:'<p class="mute">עוד אין בקשות.</p>'}</section>`;
 }
 let REP=null;
 async function loadReports(){try{const{data,error}=await sb.from('pk_reports').select('*').order('created_at',{ascending:false}).limit(100);REP=error?null:(data||[])}catch(e){REP=null}}
@@ -132,6 +146,7 @@ function draw(email){
   app.innerHTML=`
   <header><h1>ניהול · Barusik Platforms</h1><span class="sp"></span><span class="mute" dir="ltr">${esc(email)}</span><button class="ghost" id="rf">רענון</button><button class="ghost" id="out">התנתקות</button></header>
   <p class="mute" style="margin:0">נכון ל־${d(DATA.generated_at)}</p>
+  ${peninaHTML()}
   ${travelHTML()}
   ${reportsHTML()}
   <section class="grid">
@@ -163,6 +178,9 @@ function draw(email){
   document.querySelectorAll('[data-st]').forEach(sel=>sel.onchange=async()=>{sel.disabled=true;const{error}=await sb.from('travel_requests').update({status:sel.value,updated_at:new Date().toISOString()}).eq('id',sel.dataset.st);
     if(error){alert('שגיאה: '+error.message);sel.disabled=false;return}const r=TRQ.find(x=>x.id===sel.dataset.st);if(r)r.status=sel.value;draw(email)});
   document.getElementById('csv').onclick=csv;
+  document.querySelectorAll('[data-pn]').forEach(b=>b.onclick=async()=>{const row=b.parentElement;row.querySelectorAll('button').forEach(x=>x.disabled=true);
+    const{error}=await sb.rpc('pn_admin_decide',{p_id:b.dataset.pn,p_approve:b.dataset.ok==='1'});
+    if(error){alert('שגיאה: '+error.message);row.querySelectorAll('button').forEach(x=>x.disabled=false);return}await loadPenina();draw(email)});
   document.querySelectorAll('[data-rep]').forEach(b=>b.onclick=async()=>{b.disabled=true;const{error}=await sb.from('pk_reports').update({status:'done'}).eq('id',b.dataset.rep);if(error){b.disabled=false;return}const r=REP.find(x=>x.id===b.dataset.rep);if(r)r.status='done';draw(email)});
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{TAB=b.dataset.tab;draw(email)});
   document.querySelectorAll('th[data-k]').forEach(t=>t.onclick=()=>{const k=t.dataset.k;SORT=SORT.k===k?{k,dir:-SORT.dir}:{k,dir:-1};draw(email)});
