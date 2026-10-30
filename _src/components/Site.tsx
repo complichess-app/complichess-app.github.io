@@ -23,7 +23,7 @@ const ACCENT: Record<PlatformId, string> = { tr: '#38BDF8', pk: '#6A63FF', cx: '
 const IDS: PlatformId[] = ['tr', 'pk', 'cx', 'cr', 'lr', 'pn'];
 /* web platforms that open in the browser, no install step */
 const WEB: Partial<Record<PlatformId, string>> = { cr: '/crypto/', pn: '/penina/' };
-const LEARNLUME = { zip: '/learnlume/LearnLume-0.3-Windows.zip' };
+const LEARNLUME = { zip: '/learnlume/LearnLume-0.3.1-Windows.zip' };
 const TRAVEL = { site: '/travel/', wa: 'https://wa.me/972556630709' };
 /* titles shrink to fit their box: the longest word decides (in container-width units) */
 const fitTitle = (name: string, k = 0.64) => { const n = Math.max(...name.split(/\s+/).map((w) => [...w].length)); return `${(100 / (n * k)).toFixed(2)}cqw`; };
