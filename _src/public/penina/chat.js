@@ -46,6 +46,15 @@
   const MEDIA = /(omitted|הושמט|לא נכלל|<attached:|‏?<.+>$|\.(jpg|jpeg|png|webp|opus|mp4|pdf) \(file attached\)|קובץ מצורף)/i;
   const DELETED = /^(this message was deleted|you deleted this message|ההודעה נמחקה|מחקת את ההודעה הזו|تم حذف هذه الرسالة|данное сообщение удалено|se eliminó este mensaje|ce message a été supprimé)\.?$/i;
 
+  // Unsaved contacts appear in exports as their phone number. Show them as "☎…0101" (last four digits only),
+  // so the full number never reaches the stats, the excerpt or the report.
+  const PHONE_NAME = /^[~\s]*\+?[\d\s().-]{7,}$/;
+  function safeName(n) {
+    const v = String(n).trim();
+    if (!PHONE_NAME.test(v) || (v.match(/\d/g) || []).length < 7) return v;
+    return '☎…' + v.replace(/\D/g, '').slice(-4);
+  }
+
   function parse(text) {
     const lines = text.replace(/\r\n?/g, '\n').replace(/[  ]/g, ' ').split('\n');
     const raw = [];
@@ -72,7 +81,7 @@
       const t = new Date(y, mo - 1, da, h, r.mi, r.s).getTime();
       if (isNaN(t)) continue;
       const text = r.text.trim();
-      msgs.push({ t, who: r.who, text, media: MEDIA.test(text), deleted: DELETED.test(text) });
+      msgs.push({ t, who: safeName(r.who), text, media: MEDIA.test(text), deleted: DELETED.test(text) });
     }
     msgs.sort((a, b) => a.t - b.t);
     return msgs;
@@ -151,5 +160,5 @@
     return out.join('\n').slice(0, budget);
   }
 
-  root.PeninaChat = { readFile, parse, stats, excerpt, readZip };
+  root.PeninaChat = { readFile, parse, stats, excerpt, readZip, safeName };
 })(typeof window !== 'undefined' ? window : globalThis);
