@@ -11,8 +11,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return {
     metadataBase: new URL('https://barusik.com'),
     title: d.metaTitle, description: d.metaDesc,
-    alternates: { canonical: `/${lang}/`, languages: Object.fromEntries(LANGS.map((l) => [l, `/${l}/`])) },
-    openGraph: { title: d.metaTitle, description: d.metaDesc, url: `/${lang}/`, siteName: 'Barusik Platforms', images: ['/og.png'], type: 'website' },
+    alternates: { canonical: `/${lang}/`, languages: { ...Object.fromEntries(LANGS.map((l) => [l, `/${l}/`])), 'x-default': '/' } },
+    openGraph: { title: d.metaTitle, description: d.metaDesc, url: `/${lang}/`, siteName: 'Barusik Platforms', images: ['/og.png'], type: 'website', locale: { he: 'he_IL', en: 'en_US', ar: 'ar_IL', ru: 'ru_RU', es: 'es_ES', fr: 'fr_FR' }[lang as Lang] },
+    twitter: { card: 'summary_large_image', title: d.metaTitle, description: d.metaDesc, images: ['/og.png'] },
     icons: { icon: '/favicon.svg', apple: '/apple-touch-icon.png' },
   };
 }
