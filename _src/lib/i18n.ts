@@ -326,4 +326,4 @@ const fr: Dict = {
 };
 
 export const DICTS: Record<Lang, Dict> = { he, en, ar, ru, es, fr };
-export const CONTACT = 'complichess.app@gmail.com';
+export const CONTACT = 'barusik.official@gmail.com';
