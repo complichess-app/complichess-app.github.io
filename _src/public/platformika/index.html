@@ -846,7 +846,7 @@ function reportSheet(uid,postId){
     $('#rpForm',sh).onsubmit=async e=>{e.preventDefault();const why=$('#rpWhy',sh).value.trim();if(!why){toast('כתבו בקצרה מה הבעיה');return}
       const b=$('button.primary',sh);busy(b,true,'שולח…');
       const{error}=await sb.from('pk_reports').insert({target_user:uid||null,post:postId||null,reason:why});
-      if(error){busy(b,false);toast(NOT_READY(error)?'הדיווח יהיה זמין בקרוב. בינתיים אפשר לכתוב ל-complichess.app@gmail.com':errText(error));return}
+      if(error){busy(b,false);toast(NOT_READY(error)?'הדיווח יהיה זמין בקרוב. בינתיים אפשר לכתוב ל-barusik.official@gmail.com':errText(error));return}
       closeLayer();toast('תודה, הדיווח נשלח')};
   }});
 }
@@ -865,7 +865,7 @@ function deleteAccountSheet(){
         if(files&&files.length)await sb.storage.from(BUCKET).remove(files.map(f=>USER.id+'/'+f.name));
         const{error}=await sb.rpc('delete_my_account');if(error)throw error;
         await sb.auth.signOut().catch(()=>{});closeLayer();toast('החשבון נמחק');setTimeout(()=>location.reload(),1200);
-      }catch(x){busy(b,false);toast(NOT_READY(x)?'מחיקה עצמית תהיה זמינה בקרוב. בינתיים כתבו ל-complichess.app@gmail.com ונמחק תוך 7 ימים':errText(x))}};
+      }catch(x){busy(b,false);toast(NOT_READY(x)?'מחיקה עצמית תהיה זמינה בקרוב. בינתיים כתבו ל-barusik.official@gmail.com ונמחק תוך 7 ימים':errText(x))}};
   }});
 }
 function editProfile(){
