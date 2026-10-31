@@ -20,7 +20,9 @@ h1{margin:0;font-size:22px}.mute{color:var(--mute)}.card{background:var(--card);
 .big{font-size:22px;font-weight:800}
 button,.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:12px 20px;background:#6A63FF;color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
-.bm{background:#F59E0B;color:#1A1200;cursor:grab;font-size:17px;padding:12px 22px}
+.bm{background:#F59E0B;color:#1A1200;font-size:16px;padding:11px 20px}
+.go{font-size:19px;padding:15px 30px;background:#22C55E;color:#04210F}
+summary{cursor:pointer;list-style-position:inside}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.stats b{display:block;font-size:24px}
 .log{font-size:13px;max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:4px}.log div{border-bottom:1px solid var(--line);padding-bottom:4px}
@@ -63,23 +65,36 @@ const hands=(job,ms=120000)=>new Promise((res,rej)=>{
   tick(ms).then(()=>{if(pending.has(id)){pending.delete(id);rej(new Error('timeout'))}})});
 
 function draw(){
+  const st=document.getElementById('setup');if(st&&st.open&&st.contains(document.activeElement)&&(STATE==='wait'||STATE==='login')&&draw.last===STATE)return;draw.last=STATE;
   const on=STATE==='on',warn=STATE==='login';
   document.title=(on?'🟢':warn?'🟠':'🔴')+' שרת הנסיעות';
   const title={on:'השרת פועל',login:'צריך להתחבר ל-BeAgent',wait:'השרת כבוי',stopped:'השרת כבוי'}[STATE]||'מפעיל…';
   const sub={on:'הלקוחות יכולים לחפש ולהזמין עכשיו. השאר פתוחים את החלון הזה ואת לשונית BeAgent (אפשר למזער).',
     login:'בלשונית BeAgent התחבר כרגיל, ואז לחץ שם שוב על הסימניה ⚡.',
-    wait:'הלקוחות רואים כרגע את הודעת הוואטסאפ. כדי להפעיל — שני צעדים למטה.',stopped:'הלקוחות רואים כרגע את הודעת הוואטסאפ.'}[STATE]||'';
+    wait:'הלקוחות רואים כרגע את הודעת הוואטסאפ. כדי להפעיל — הכפתור הירוק למטה.',stopped:'הלקוחות רואים כרגע את הודעת הוואטסאפ.'}[STATE]||'';
   const head=`<div class="card light"><div class="dot ${on?'on':warn?'warn':''}" role="img" aria-label="${on?'פועל':'כבוי'}"></div><div><div class="big">${title}</div><div class="mute">${sub}</div></div></div>`;
   let body='';
-  if(STATE==='wait'||STATE==='login')body=`<div class="card" style="display:flex;flex-direction:column;gap:16px">
-    <div class="step"><span class="n">1</span><div><b>פעם ראשונה בלבד:</b> גרור את הכפתור הכתום אל סרגל הסימניות של Chrome (אם הסרגל מוסתר: Ctrl+Shift+B).<div class="row" style="margin-top:10px"><a class="btn bm" id="bm" title="גרור אותי לסרגל הסימניות">⚡ שרת ברוסיק</a></div></div></div>
-    <div class="step"><span class="n">2</span><div>פתח את BeAgent ולחץ שם על הסימניה <b>⚡ שרת ברוסיק</b>. הנורית כאן תהפוך לירוקה.<div class="row" style="margin-top:10px"><button id="ob">פתיחת BeAgent</button></div></div></div></div>`;
+  const SET=(()=>{try{return localStorage.getItem('bt-bm')==='1'}catch{return false}})();
+  if(STATE==='wait'||STATE==='login')body=`<div class="card" style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
+    <button id="ob" class="go">⚡ הפעלת השרת</button>
+    <div class="mute" style="line-height:1.7">נפתחת לשונית BeAgent. שם לוחצים פעם אחת על <b>⚡ שרת ברוסיק</b> בסרגל הסימניות, והשרת עולה לבד.</div>
+    ${STATE==='login'?'<div class="mute">אם BeAgent מבקש התחברות — התחבר שם כרגיל ואז לחץ שוב על ⚡.</div>':''}</div>
+    <details class="card" id="setup" ${SET?'':'open'}><summary><b>${SET?'הסימניה ⚡ כבר מוגדרת? אם לא — הגדרה מחדש':'הגדרה חד־פעמית: הוספת הסימניה ⚡'}</b></summary>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
+    <div class="step"><span class="n">1</span><div>לחץ כאן כדי להעתיק את הסימניה:<div class="row" style="margin-top:10px"><button id="cp" class="bm">📋 העתקת הסימניה</button><span id="cpok" class="mute"></span></div></div></div>
+    <div class="step"><span class="n">2</span><div>לחץ <code>Ctrl+Shift+O</code> (נפתח מנהל הסימניות). בצד שמאל בחר <b>סרגל הסימניות</b>, ולמעלה מימין לחץ על <b>⋮</b> ← <b>הוספת סימניה חדשה</b>.</div></div>
+    <div class="step"><span class="n">3</span><div>בשם כתוב <code>⚡ שרת ברוסיק</code>, בכתובת הדבק (<code>Ctrl+V</code>) ולחץ <b>שמירה</b>. סרגל הסימניות מוסתר? <code>Ctrl+Shift+B</code>.</div></div>
+    <div class="row"><button class="ghost" id="done">סיימתי</button><a class="btn ghost" id="bm" title="אפשר גם לגרור את הכפתור הזה לסרגל הסימניות" draggable="true">⚡ שרת ברוסיק (גרירה)</a></div>
+    </div></details>`;
   if(on||STATE==='stopped')body=`<div class="card stats"><div><b>${stats.search}</b><span class="mute">חיפושים</span></div><div><b>${stats.other}</b><span class="mute">השלמות</span></div><div><b>${stats.fail}</b><span class="mute">נכשלו</span></div></div>
     <div class="card row">${on?'<button class="ghost" id="stop">כיבוי השרת</button>':'<button id="go">הפעלת השרת</button>'}<a class="btn ghost" href="/admin/" target="_blank">דף הניהול</a><a class="btn ghost" href="/travel/" target="_blank">האתר ללקוחות</a></div>`;
   const lg=LOG.length?`<div class="card"><b>פעילות</b><div class="log">${LOG.map(l=>`<div>${esc(l)}</div>`).join('')}</div></div>`:'';
   app.innerHTML=`<h1>שרת Bar Lvovski Travel</h1>${head}${body}${lg}`;
   const $=id=>document.getElementById(id);
-  if($('bm')){$('bm').setAttribute('href',BOOKMARK);$('bm').onclick=e=>{e.preventDefault();alert('את הכפתור הזה צריך לגרור (לא ללחוץ) אל סרגל הסימניות, ואז ללחוץ עליו כשאתה בתוך BeAgent.')}}
+  if($('bm')){$('bm').setAttribute('href',BOOKMARK);$('bm').onclick=e=>{e.preventDefault();alert('את הכפתור הזה גוררים לסרגל הסימניות. קל יותר: "העתקת הסימניה" והשלבים שמעליו.')}}
+  $('cp')&&($('cp').onclick=async()=>{let ok=false;try{await navigator.clipboard.writeText(BOOKMARK);ok=true}catch{try{const t=document.createElement('textarea');t.value=BOOKMARK;document.body.appendChild(t);t.select();ok=document.execCommand('copy');t.remove()}catch{}}
+    $('cpok').textContent=ok?'✓ הועתק':'ההעתקה נחסמה — נסה שוב';});
+  $('done')&&($('done').onclick=()=>{try{localStorage.setItem('bt-bm','1')}catch{}$('setup').open=false});
   $('ob')&&($('ob').onclick=()=>{const w=window.open(BEAGENT+'/he','bt-hands');w&&w.focus()});
   $('stop')&&($('stop').onclick=stop);$('go')&&($('go').onclick=start);
 }

@@ -9,7 +9,7 @@
   const SERVER = 'https://barusik.com';
   const MARKUP = 1.12;
   const API = 'https://book-api.travelor.com/api';
-  const VERSION = 1;
+  const VERSION = 2;
 
   // ---- timers that keep running even when this tab is in the background ----
   const tick = (() => {
@@ -33,11 +33,9 @@
   // ---- talking to the server page ----
   let server = null, acked = false;
   const post = (m) => { try { server && server.postMessage({ src: 'bt-hands', ...m }, SERVER); } catch {} };
-  function openServer() {
-    try { if (window.opener && !window.opener.closed) server = window.opener; } catch {}
-    if (!server || server.closed) server = window.open(SERVER + '/admin/server/', 'bt-server', 'popup,width=560,height=760');
-  }
-  badge.onclick = () => { server = window.open(SERVER + '/admin/server/', 'bt-server', 'popup,width=560,height=760'); acked = false; hello(); };
+  // the named tab is reused if it's already open, so Bar never ends up with two server tabs
+  function openServer() { server = window.open(SERVER + '/admin/server/', 'bt-server'); }
+  badge.onclick = () => { server = window.open(SERVER + '/admin/server/', 'bt-server'); acked = false; hello(); };
   async function hello() { for (let i = 0; i < 60 && !acked; i++) { post({ type: 'hello', version: VERSION }); await tick(1000); } }
   (async () => { for (;;) { await tick(10000); if (acked) post({ type: 'alive' }); } })();
 
