@@ -259,7 +259,6 @@ const forgetLocal=()=>{try{localStorage.removeItem(KEY)}catch{}};
 async function loadReq(){
   REQ=null;if(!sb||!USER)return;
   try{ADMIN=(await sb.rpc('is_admin')).data===true}catch{ADMIN=false}
-  if(ADMIN)return;
   const r=await sb.from('pn_requests').select('id,status,created_at,decided_at').order('created_at',{ascending:false}).limit(5);
   if(r.error){BACKEND=!NOT_READY(r.error);return}
   BACKEND=true;const rows=r.data||[];
@@ -270,7 +269,7 @@ function goBtn(){
   clearInterval(pollReq);
   if(!USER){b.textContent=t('login');return}
   if(!BACKEND){b.classList.add('hide');m.textContent=t('soon');return}
-  if(ADMIN||REQ?.status==='approved'){b.textContent=t('getReport');if(REQ?.status==='approved')m.textContent=t('approved');return}
+  if(REQ?.status==='approved'){b.textContent=t('getReport');m.textContent=t('approved');return}
   if(REQ?.status==='pending'){b.textContent=t('check');m.textContent=t('pending');pollReq=setInterval(async()=>{if(document.hidden)return;await loadReq();if(REQ?.status!=='pending')goBtn()},20000);return}
   b.textContent=t('request');if(REQ?.status==='declined')m.textContent=t('declined');
 }
@@ -279,9 +278,9 @@ async function refreshAsk(){await loadReq();$('#askMsg').textContent='';goBtn()}
 $('#goBtn').onclick=async()=>{
   const m=$('#askMsg');m.textContent='';
   if(!sb)return m.textContent=t('busy');
-  if(!USER){const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error)return m.textContent=t('badLogin');USER=r.data.user;await refreshAsk();if(ADMIN||REQ?.status==='approved'||REQ?.status==='pending')return;}
-  if(!ADMIN&&REQ?.status==='pending'){await refreshAsk();if(REQ?.status==='pending')m.textContent=t('pending');return}
-  if(!ADMIN&&REQ?.status!=='approved'){
+  if(!USER){const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error)return m.textContent=t('badLogin');USER=r.data.user;await refreshAsk();if(REQ?.status==='approved'||REQ?.status==='pending')return;}
+  if(REQ?.status==='pending'){await refreshAsk();if(REQ?.status==='pending')m.textContent=t('pending');return}
+  if(REQ?.status!=='approved'){
     const r=await sb.rpc('pn_request',{p_msgs:STATS.total,p_people:STATS.people.length,p_lang:L});
     if(r.error){m.textContent=NOT_READY(r.error)?t('soon'):/too many/.test(r.error.message)?t('tooMany'):t('busy');return}
     saveLocal();await refreshAsk();return;
@@ -297,7 +296,7 @@ $('#goBtn').onclick=async()=>{
     REPORT=j.report;saveLocal();$('#wait').classList.add('hide');renderReport(REPORT);refreshAsk();
   }catch(e){
     $('#wait').classList.add('hide');$('#local').classList.remove('hide');await refreshAsk();
-    m.textContent=String(e.message)==='not approved'?t('notApproved'):NOT_READY(e)?t('soon'):t('busy');$('#ask').scrollIntoView();
+    m.textContent=String(e.message)==='not approved'?t('notApproved'):NOT_READY(e)?t('soon'):t('busy')+(ADMIN?` (${String(e.message).slice(0,60)})`:'');$('#ask').scrollIntoView();
   }finally{clearInterval(tick)}
 };
 
