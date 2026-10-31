@@ -89,16 +89,16 @@ async function load(){
   if(!PNLIVE&&PNR!==null)PNLIVE=sb.channel('pnr').on('postgres_changes',{event:'*',schema:'public',table:'pn_requests'},async()=>{await loadPenina();draw(session.user.email)}).subscribe();
   if(!LIVE&&TRQ!==null)LIVE=sb.channel('trq').on('postgres_changes',{event:'*',schema:'public',table:'travel_requests'},async()=>{await loadTravel();draw(session.user.email)}).subscribe();
 }
-let PNR=null,PNLIVE=null;
-async function loadPenina(){try{const{data,error}=await sb.rpc('pn_admin_list');PNR=error?null:(data||[])}catch(e){PNR=null}}
+let PNR=null,PNLIVE=null,PNERR='';
+async function loadPenina(){PNERR='';try{const{data,error}=await sb.rpc('pn_admin_list');if(error)PNERR=error.message||'';PNR=error?null:(data||[])}catch(e){PNR=null;PNERR=String(e&&e.message||e)}}
 const PN_LANG={he:'עברית',en:'אנגלית',ar:'ערבית',ru:'רוסית',es:'ספרדית',fr:'צרפתית'};
 const PN_ST={pending:['מחכה','n'],approved:['אושר, עוד לא נוצל','y'],used:['הדוח נכתב','y'],declined:'נדחה'};
 function peninaHTML(){
-  if(PNR===null)return'';
+  if(PNR===null)return`<section class="card" id="penina"><h2>בקשות לדוח של פנינה <span class="pill n">לא זמין</span></h2><p class="err">${esc(PNERR||'השרת לא ענה')}</p><p class="mute" style="margin:0">אם כתוב ש־pn_admin_list לא קיימת — צריך להריץ את penina.sql ב־Supabase. בלי זה פנינה לא יכולה לכתוב דוחות.</p></section>`;
   const wait=PNR.filter(r=>r.status==='pending');
   const st=r=>{const v=PN_ST[r.status];return Array.isArray(v)?`<span class="pill ${v[1]}">${v[0]}</span>`:`<span class="mute">${v||r.status}</span>`};
   return`<section class="card" id="penina"><h2>בקשות לדוח של פנינה <span class="pill ${wait.length?'n':'y'}">${n(wait.length)} מחכות</span></h2>
-  <p class="mute" style="margin:0 0 10px">כל דוח עולה כ־10 סנט ב־Claude. הצ׳אט עצמו לא מגיע אליך ולא נשמר — רק מי ביקש וכמה גדול הצ׳אט.</p>
+  <p class="mute" style="margin:0 0 10px">כל דוח נכתב מהקרדיט שלך ב־Claude ועולה כ־10 סנט, ולכן הוא נכתב רק אחרי שתאשר כאן. גם בקשות שלך עוברות כאן. הצ׳אט עצמו לא מגיע אליך ולא נשמר — רק מי ביקש וכמה גדול הצ׳אט.</p>
   ${PNR.length?`<div class="list">${PNR.map(r=>`<div class="post"><small>${d(r.created_at)}</small><b dir="ltr">${esc(r.email)}</b><span>${n(r.msgs)} הודעות · ${n(r.people)} משתתפים · ${PN_LANG[r.lang]||r.lang}</span><span class="sp"></span>${r.status==='pending'?`<button data-pn="${r.id}" data-ok="1">אישור</button><button class="ghost" data-pn="${r.id}" data-ok="0">דחייה</button>`:st(r)}</div>`).join('')}</div>`:'<p class="mute">עוד אין בקשות.</p>'}</section>`;
 }
 let REP=null;
