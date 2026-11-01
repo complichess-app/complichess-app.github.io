@@ -92,15 +92,38 @@ async function load(){
 let PNR=null,PNLIVE=null,PNERR='';
 async function loadPenina(){PNERR='';try{const{data,error}=await sb.rpc('pn_admin_list');if(error)PNERR=error.message||'';PNR=error?null:(data||[])}catch(e){PNR=null;PNERR=String(e&&e.message||e)}}
 const PN_LANG={he:'עברית',en:'אנגלית',ar:'ערבית',ru:'רוסית',es:'ספרדית',fr:'צרפתית'};
-const PN_MODEL={sonnet:['Sonnet','כ־5–22 סנט'],opus:['Opus','כ־10–44 סנט'],fable:['Fable','כ־25 סנט עד $1.1']};
+const PN_MODEL={sonnet:['Sonnet','כ־$0.6–2'],opus:['Opus','כ־$1.2–4'],fable:['Fable','כ־$3–10']};
 const PN_ST={pending:['מחכה','n'],approved:['אושר, עוד לא נוצל','y'],used:['הדוח נכתב','y'],declined:'נדחה'};
+
+function pnView(x){
+  const A=v=>Array.isArray(v)?v:[],P=(t,h)=>h?`<h3 style="margin:18px 0 6px">${t}</h3>${h}`:'';
+  const r=x.report||{},bl=s=>String(s??'').split(/\n\s*\n/).map(q=>`<p>${esc(q)}</p>`).join('');
+  const li=(a,f)=>A(a).map(f).join('');
+  return`<div style="max-width:760px;margin:0 auto;padding:18px;line-height:1.55" dir="auto">
+  <button class="ghost" id="pnClose">← חזרה</button>
+  <p class="mute" dir="rtl">${esc(x.email)} · ${d(x.created_at)} · ${(PN_MODEL[x.model]||[x.model])[0]}${x.cost_usd!=null?' · עלה $'+Number(x.cost_usd).toFixed(2):''}</p>
+  <h2 style="margin:4px 0">${esc(r.headline)} <span class="pill y">${esc(r.score)}/10</span></h2>
+  ${r.score_line?`<p><i>${esc(r.score_line)}</i></p>`:''}${bl(r.verdict)}
+  ${P('פרסים',li(r.awards,a=>`<p><b>${esc(a.title)}</b> — ${esc(a.who)}: ${esc(a.why)}</p>`))}
+  ${P('אנשים',li(r.people,p=>`<p><b>${esc(p.name)}</b> · ${esc(p.role)}<br>${esc(p.roast)}<br><i>${esc(p.kind)}</i><br>🟢 ${esc(p.green)} · 🔴 ${esc(p.red)}${A(p.habits).length?'<br>'+A(p.habits).map(esc).join(' · '):''}${A(p.signature).length?'<br>'+A(p.signature).map(q=>'״'+esc(q)+'״').join(' · '):''}${p.fun_fact?'<br>'+esc(p.fun_fact):''}</p>`))}
+  ${P('מקרים ('+A(r.cases).length+')',li(r.cases,(c,i)=>`<p><b>${i+1}. ${esc(c.title)}</b> <span class="mute">${esc(c.when)} · ${esc(c.who)}</span><br>${esc(c.story)}${c.quote?`<br>״${esc(c.quote)}״`:''}<br><i>${esc(c.punchline)}</i></p>`))}
+  ${P('בדיחות פנימיות',li(r.jokes,j=>`<p><b>${esc(j.title)}</b> (${esc(j.who)}): ${esc(j.explain)}${j.quote?` ״${esc(j.quote)}״`:''}</p>`))}
+  ${P('משחקונים',li(r.games,g=>`<p><b>${esc(g.title)}</b> (${esc(g.type)}): ${esc(g.intro)}</p>`))}
+  ${P('מי עם מי',li(r.pairs,p=>`<p><b>${esc(p.a)} + ${esc(p.b)}</b>: ${esc(p.note)}</p>`))}
+  ${P('לאורך הזמן',li(r.eras,e=>`<p><b>${esc(e.label)}</b>: ${esc(e.note)}</p>`))}
+  ${P('דינמיקה',li(r.dynamics,q=>`<p>${esc(q)}</p>`))}
+  ${P('רגעים',li(r.moments,m=>`<p>״${esc(m.quote)}״ — ${esc(m.who)} · ${esc(m.note)}</p>`))}
+  ${P('עצה',r.advice?`<p>${esc(r.advice)}</p>`:'')}
+  ${P('תשובות הלקוח לשאלות',li(x.answers,a=>`<p><b>${esc(a.q)}</b><br>${esc(a.a)}</p>`))}
+  </div>`;
+}
 function peninaHTML(){
   if(PNR===null)return`<section class="card" id="penina"><h2>בקשות לדוח של פנינה <span class="pill n">לא זמין</span></h2><p class="err">${esc(PNERR||'השרת לא ענה')}</p><p class="mute" style="margin:0">אם כתוב ש־pn_admin_list לא קיימת — צריך להריץ את penina.sql ב־Supabase. בלי זה פנינה לא יכולה לכתוב דוחות.</p></section>`;
   const wait=PNR.filter(r=>r.status==='pending'),tot=PNR.reduce((a,r)=>a+Number(r.cost_usd||0),0);
   const st=r=>{const v=PN_ST[r.status];return Array.isArray(v)?`<span class="pill ${v[1]}">${v[0]}</span>`:`<span class="mute">${v||r.status}</span>`};
   return`<section class="card" id="penina"><h2>בקשות לדוח של פנינה <span class="pill ${wait.length?'n':'y'}">${n(wait.length)} מחכות</span>${tot?` <span class="mute">· עלו עד היום $${tot.toFixed(2)}</span>`:''}</h2>
-  <p class="mute" style="margin:0 0 10px">כל דוח נכתב מהקרדיט שלך ב־Claude ולכן הוא נכתב רק אחרי שתאשר כאן ותבחר מודל (המחיר ליד כל מודל הוא טווח משוער, והעלות האמיתית תופיע ליד כל דוח אחרי שנכתב). גם בקשות שלך עוברות כאן. הצ׳אט עצמו לא מגיע אליך ולא נשמר — רק מי ביקש וכמה גדול הצ׳אט.</p>
-  ${PNR.length?`<div class="list">${PNR.map(r=>`<div class="post"><small>${d(r.created_at)}</small><b dir="ltr">${esc(r.email)}</b><span>${n(r.msgs)} הודעות · ${n(r.people)} משתתפים · ${PN_LANG[r.lang]||r.lang}</span><span class="sp"></span>${r.status==='pending'?`<select data-pnm aria-label="מודל">${Object.entries(PN_MODEL).map(([k,v])=>`<option value="${k}"${k==='opus'?' selected':''}>${v[0]} · ${v[1]}</option>`).join('')}</select><button data-pn="${r.id}" data-ok="1">אישור</button><button class="ghost" data-pn="${r.id}" data-ok="0">דחייה</button>`:`${st(r)} <span class="mute">${(PN_MODEL[r.model]||[r.model])[0]}${r.cost_usd!=null?' · עלה $'+Number(r.cost_usd).toFixed(2):''}</span>${r.status==='approved'?`<select data-pns aria-label="מודל">${Object.entries(PN_MODEL).map(([k,v])=>`<option value="${k}"${k===r.model?' selected':''}>${v[0]} · ${v[1]}</option>`).join('')}</select><button class="ghost" data-pnset="${r.id}">החלפת מודל</button>`:''}`}</div>`).join('')}</div>`:'<p class="mute">עוד אין בקשות.</p>'}</section>`;
+  <p class="mute" style="margin:0 0 10px">כל דוח נכתב מהקרדיט שלך ב־Claude ולכן הוא נכתב רק אחרי שתאשר כאן ותבחר מודל (המחיר ליד כל מודל הוא טווח משוער לדוח מלא, תלוי בגודל הצ׳אט, והעלות האמיתית תופיע ליד כל דוח אחרי שנכתב). גם בקשות שלך עוברות כאן. הצ׳אט עצמו לא מגיע אליך ולא נשמר. הדוחות המוכנים נשמרים וניתן לפתוח אותם מכאן.</p>
+  ${PNR.length?`<div class="list">${PNR.map(r=>`<div class="post"><small>${d(r.created_at)}</small><b dir="ltr">${esc(r.email)}</b><span>${n(r.msgs)} הודעות${Number(r.mb)?' · '+Number(r.mb).toLocaleString(undefined,{maximumFractionDigits:1})+' MB':''} · ${n(r.people)} משתתפים · ${PN_LANG[r.lang]||r.lang}</span><span class="sp"></span>${r.status==='pending'?`<select data-pnm aria-label="מודל">${Object.entries(PN_MODEL).map(([k,v])=>`<option value="${k}"${k==='opus'?' selected':''}>${v[0]} · ${v[1]}</option>`).join('')}</select><button data-pn="${r.id}" data-ok="1">אישור</button><button class="ghost" data-pn="${r.id}" data-ok="0">דחייה</button>`:`${st(r)} <span class="mute">${(PN_MODEL[r.model]||[r.model])[0]}${r.cost_usd!=null?' · עלה $'+Number(r.cost_usd).toFixed(2):''}</span>${r.has_report?` <button class="ghost" data-pnopen="${r.id}">פתיחת הדוח</button>`:''}${r.status==='approved'?`<select data-pns aria-label="מודל">${Object.entries(PN_MODEL).map(([k,v])=>`<option value="${k}"${k===r.model?' selected':''}>${v[0]} · ${v[1]}</option>`).join('')}</select><button class="ghost" data-pnset="${r.id}">החלפת מודל</button>`:''}`}</div>`).join('')}</div>`:'<p class="mute">עוד אין בקשות.</p>'}</section>`;
 }
 let REP=null;
 async function loadReports(){try{const{data,error}=await sb.from('pk_reports').select('*').order('created_at',{ascending:false}).limit(100);REP=error?null:(data||[])}catch(e){REP=null}}
@@ -182,6 +205,9 @@ function draw(email){
   document.querySelectorAll('[data-pn]').forEach(b=>b.onclick=async()=>{const row=b.parentElement;row.querySelectorAll('button').forEach(x=>x.disabled=true);
     const{error}=await sb.rpc('pn_admin_decide',{p_id:b.dataset.pn,p_approve:b.dataset.ok==='1',p_model:row.querySelector('[data-pnm]')?.value||'sonnet'});
     if(error){alert('שגיאה: '+error.message);row.querySelectorAll('button').forEach(x=>x.disabled=false);return}await loadPenina();draw(email)});
+  document.querySelectorAll('[data-pnopen]').forEach(b=>b.onclick=async()=>{b.disabled=true;const{data,error}=await sb.rpc('pn_admin_get_report',{p_id:b.dataset.pnopen});b.disabled=false;
+    if(error||!data){alert('שגיאה: '+(error?error.message:'אין דוח'));return}
+    const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;z-index:99;overflow:auto;background:var(--bg,#fff);color:inherit';o.innerHTML=pnView(data);document.body.appendChild(o);o.querySelector('#pnClose').onclick=()=>o.remove()});
   document.querySelectorAll('[data-pnset]').forEach(b=>b.onclick=async()=>{const row=b.parentElement;b.disabled=true;
     const{error}=await sb.rpc('pn_admin_set_model',{p_id:b.dataset.pnset,p_model:row.querySelector('[data-pns]').value});
     if(error){alert('שגיאה: '+error.message);b.disabled=false;return}await loadPenina();draw(email)});
