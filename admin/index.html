@@ -109,6 +109,7 @@ function pnView(x){
   ${P('מקרים ('+A(r.cases).length+')',li(r.cases,(c,i)=>`<p><b>${i+1}. ${esc(c.title)}</b> <span class="mute">${esc(c.when)} · ${esc(c.who)}</span><br>${esc(c.story)}${c.quote?`<br>״${esc(c.quote)}״`:''}<br><i>${esc(c.punchline)}</i></p>`))}
   ${P('בדיחות פנימיות',li(r.jokes,j=>`<p><b>${esc(j.title)}</b> (${esc(j.who)}): ${esc(j.explain)}${j.quote?` ״${esc(j.quote)}״`:''}</p>`))}
   ${P('משחקונים',li(r.games,g=>`<p><b>${esc(g.title)}</b> (${esc(g.type)}): ${esc(g.intro)}</p>`))}
+  ${P('טיפים מפנינה',li(r.tips,x=>`<p><b>💡 ${esc(x.title)}</b> ${esc(x.who)}: ${esc(x.tip)}</p>`))}
   ${P('מי עם מי',li(r.pairs,p=>`<p><b>${esc(p.a)} + ${esc(p.b)}</b>: ${esc(p.note)}</p>`))}
   ${P('לאורך הזמן',li(r.eras,e=>`<p><b>${esc(e.label)}</b>: ${esc(e.note)}</p>`))}
   ${P('דינמיקה',li(r.dynamics,q=>`<p>${esc(q)}</p>`))}
