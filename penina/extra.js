@@ -68,28 +68,51 @@
   const arr = (v) => (Array.isArray(v) ? v : []);
   const txt = (v) => String(v ?? '');
 
-  /* ---------- the questions before the report ---------- */
+  /* ---------- before the report: questions, names of unnamed people, optional pictures for the games ---------- */
+  const resizeJpeg = (file) => new Promise((res) => {
+    const im = new Image(), u = URL.createObjectURL(file);
+    im.onload = () => {
+      const k = Math.min(1, 220 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', 0.72));
+    };
+    im.onerror = () => res(null); im.src = u;
+  });
   window.PQ = {
     async run() {
       const msg = $('#askMsg'), btn = $('#goBtn');
       msg.textContent = t('qLoad'); btn.disabled = true;
-      let qs = [];
+      let qs = [], ph = [];
       try {
         const { data: { session } } = await sb.auth.getSession();
         const r = await fetch(`${SB_URL}/functions/v1/penina`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}`, apikey: SB_KEY }, body: JSON.stringify({ mode: 'questions', lang: L, stats: STATS, excerpt: EXCERPT }) });
         const j = JSON.parse((await r.text()).trim() || '{}');
         qs = arr(j.questions).filter((q) => q && q.q).slice(0, 6);
+        ph = arr(j.photos).filter((x) => x && x.name).slice(0, 4);
       } catch { /* no questions, no problem */ }
       msg.textContent = ''; btn.disabled = false;
-      if (!qs.length) return [];
+      const un = STATS.people.filter((p) => isPlaceholder(p.name)).slice(0, 12);
+      if (!qs.length && !ph.length && !un.length) return { answers: [], photos: [] };
       const ask = $('#ask'); ask.classList.add('hide');
+      const inp = 'height:44px;border-radius:12px;border:1px solid var(--line);background:var(--night);padding:0 12px;color:inherit;font:inherit';
       return new Promise((resolve) => {
         const f = document.createElement('form'); f.className = 'qform';
-        f.innerHTML = `<h3>${E(t('qTitle'))}</h3><p>${E(t('qSub'))}</p>` + qs.map((q, i) => `<label>${E(q.q)}<textarea name="q${i}" maxlength="700" placeholder="${E(q.hint || '')}"></textarea></label>`).join('') + `<button class="go" type="submit">${E(t('qGo'))}</button><button type="button" class="skipq" style="color:var(--muted);font-size:15px;text-decoration:underline;text-underline-offset:4px;align-self:center">${E(t('qSkip'))}</button>`;
+        f.innerHTML = `<h3>${E(t('qTitle'))}</h3><p>${E(t('qSub'))}</p>`
+          + (un.length ? `<h3 style="font-size:20px">${E(t('nmT'))}</h3><p>${E(t('nmS'))}</p>` + un.map((p, i) => `<label>${E(p.name)}<input name="n${i}" maxlength="40" style="${inp}"></label>`).join('') : '')
+          + qs.map((q, i) => `<label>${E(q.q)}<textarea name="q${i}" maxlength="700" placeholder="${E(q.hint || '')}"></textarea></label>`).join('')
+          + (ph.length ? `<h3 style="font-size:20px">${E(t('games'))}</h3><p>${E(t('photoHint'))}</p>` + ph.map((x, i) => `<label>📷 ${E(t('photoOf', { n: txt(x.name) }))}${x.why ? ` <span style="font-weight:400;color:var(--muted)">· ${E(x.why)}</span>` : ''}<input type="file" accept="image/*" name="p${i}"></label>`).join('') : '')
+          + `<button class="go" type="submit">${E(t('qGo'))}</button><button type="button" class="skipq" style="color:var(--muted);font-size:15px;text-decoration:underline;text-underline-offset:4px;align-self:center">${E(t('qSkip'))}</button>`;
         ask.after(f); f.scrollIntoView({ block: 'start' });
-        const done = (list) => { f.remove(); ask.classList.remove('hide'); resolve(list); };
-        f.onsubmit = (e) => { e.preventDefault(); done(qs.map((q, i) => ({ q: q.q, a: f.elements['q' + i].value.trim() })).filter((x) => x.a)); };
-        f.querySelector('.skipq').onclick = () => done([]);
+        const done = (out) => { f.remove(); ask.classList.remove('hide'); resolve(out); };
+        f.onsubmit = async (e) => {
+          e.preventDefault();
+          const map = {}; un.forEach((p, i) => { const v = f.elements['n' + i].value.trim().replace(/[:\n]/g, ' ').slice(0, 40); if (v) map[p.name] = v; });
+          if (Object.keys(map).length) { renameAll(map); saveLocal(); }
+          const photos = [];
+          for (let i = 0; i < ph.length; i++) { const file = f.elements['p' + i].files[0]; if (file && file.type.startsWith('image/')) { const d = await resizeJpeg(file); if (d) photos.push({ name: txt(ph[i].name).slice(0, 40), data: d }); } }
+          done({ answers: qs.map((q, i) => ({ q: q.q, a: f.elements['q' + i].value.trim() })).filter((x) => x.a), photos });
+        };
+        f.querySelector('.skipq').onclick = () => done({ answers: [], photos: [] });
       });
     },
   };
@@ -136,6 +159,9 @@
     const dyn = arr(r.dynamics).length ? `<ul class="dyn">${arr(r.dynamics).map((x) => `<li>${E(x)}</li>`).join('')}</ul>` : '';
     const moments = arr(r.moments).map((x) => `<blockquote><q>${E(x.quote)}</q><cite>${E(x.who)} · ${E(x.note)}</cite></blockquote>`).join('');
     const games = arr(r.games).filter(validGame);
+    const pic = {}; arr(r.photos).forEach((x) => { if (x && x.name && /^data:image\/jpeg;base64,/.test(x.data || '')) { const im = new Image(); im.src = x.data; pic[txt(x.name).toLowerCase().trim()] = im; } });
+    const findPic = (n) => { n = txt(n).toLowerCase().trim(); if (!n) return null; for (const k in pic) if (k === n || (k.length > 2 && (n.includes(k) || k.includes(n)))) return pic[k]; return null; };
+    games.forEach((g) => { g._ph = g._ph || {}; [['hero', g.hero_name], ['bad', g.bad_name], ['good', g.good_name]].forEach(([k, n]) => { const im = findPic(n); if (im) g._ph[k] = im; }); });
     el.innerHTML = `
       <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L] ? -1 : 1}" role="img" aria-label="${E(t('score'))} ${E(r.score)}/10"><span class="score n">${E(r.score)}<small>/10</small></span></div>
         <div><h1>${E(r.headline)}</h1>${r.score_line ? `<p class="sline">${E(r.score_line)}</p>` : ''}</div></div>
