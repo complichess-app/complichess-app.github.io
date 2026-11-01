@@ -193,6 +193,20 @@
   }
   window.PShare = {
     async boot() {
+      const adm = new URLSearchParams(location.search).get('a');
+      if (adm && /^[0-9a-f-]{36}$/i.test(adm)) {
+        try {
+          const { data: { session } } = await sb.auth.getSession(); if (!session) return;
+          const r = await sb.rpc('pn_admin_get_report', { p_id: adm }); if (r.error || !r.data || !r.data.report) return;
+          SHARED = true; REPORT = r.data.report; $('#start').classList.add('hide'); $('#local').classList.add('hide'); renderReport(REPORT);
+          const d = r.data, bar = document.createElement('div');
+          bar.style.cssText = 'background:var(--plum);border-radius:16px;padding:12px 16px;margin:0 0 18px;font-size:14px;color:var(--pearl-2)';
+          bar.innerHTML = '<b>Admin</b> · <span dir="ltr">' + E(d.email) + '</span> · ' + E(d.model) + (d.cost_usd != null ? ' · $' + Number(d.cost_usd).toFixed(2) : '') +
+            (arr(d.answers).length ? '<details style="margin-top:8px"><summary style="cursor:pointer">Q&amp;A</summary>' + arr(d.answers).map((x) => '<p style="margin:8px 0 0"><b>' + E(x.q) + '</b><br>' + E(x.a) + '</p>').join('') + '</details>' : '');
+          $('#report').prepend(bar);
+        } catch { /* not allowed */ }
+        return;
+      }
       const tok = new URLSearchParams(location.search).get('r'); if (!tok || !/^[0-9a-f-]{36}$/i.test(tok)) return;
       try {
         const r = await sb.rpc('pn_shared_report', { p_token: tok });
