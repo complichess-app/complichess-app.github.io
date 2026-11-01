@@ -79,10 +79,50 @@ function denied(email){
   app.innerHTML=`<div class="box card"><h1>אין הרשאה</h1><p class="mute">המשתמש <b dir="ltr">${esc(email)}</b> אינו מנהל. הדף הזה פתוח רק לבר.</p><button class="ghost" id="o">התנתקות</button><a class="mute" href="/">← חזרה לאתר</a></div>`;
   document.getElementById('o').onclick=async()=>{await sb.auth.signOut();login()};
 }
+// Two-step sign-in for the admin: a 6-digit code from an authenticator app on top of the password.
+// The server enforces it too (is_admin() needs aal2, supabase/admin_mfa.sql); this page only walks you through it.
+function codeForm(title,intro,btn,onCode,extra){
+  app.innerHTML=`<form class="box card" id="f"><h1>${title}</h1><p class="mute">${intro}</p><div id="x"></div>
+  <input id="c" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr" placeholder="000000" aria-label="קוד בן 6 ספרות" required>
+  <span class="err" role="alert" id="e"></span><button>${btn}</button><button type="button" class="ghost" id="o">התנתקות</button></form>`;
+  if(extra)extra(document.getElementById('x'));
+  const c=document.getElementById('c'),e=document.getElementById('e');c.focus();
+  document.getElementById('o').onclick=async()=>{await sb.auth.signOut();login()};
+  document.getElementById('f').onsubmit=async ev=>{ev.preventDefault();const b=ev.target.querySelector('button');
+    const code=c.value.replace(/\D/g,'');if(code.length!==6){e.textContent='צריך 6 ספרות';return}
+    b.disabled=true;e.textContent='';const err=await onCode(code);b.disabled=false;
+    if(err){e.textContent=err;c.value='';c.focus()}else load()};
+}
+async function mfaVerify(){
+  const{data:f}=await sb.auth.mfa.listFactors();const t=f&&f.totp&&f.totp[0];
+  if(!t){mfaEnroll();return}
+  codeForm('אימות דו-שלבי','הזינו את הקוד בן 6 הספרות מאפליקציית האימות.','אישור',async code=>{
+    const{error}=await sb.auth.mfa.challengeAndVerify({factorId:t.id,code});
+    return error?'הקוד לא נכון או שפג תוקפו. נסו שוב עם הקוד הנוכחי.':''});
+}
+async function mfaEnroll(){
+  const{data:f}=await sb.auth.mfa.listFactors();
+  for(const x of(f&&f.all)||[])if(x.factor_type==='totp'&&x.status!=='verified')await sb.auth.mfa.unenroll({factorId:x.id});
+  const{data,error}=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'Barusik admin '+new Date().toISOString().slice(0,10)});
+  if(error||!data){app.innerHTML=`<div class="box card"><h1>אימות דו-שלבי</h1><p class="err">${esc(error?error.message:'לא התקבלה תשובה')}</p><button id="r">נסו שוב</button></div>`;document.getElementById('r').onclick=load;return}
+  codeForm('הפעלת אימות דו-שלבי','מעכשיו דף הניהול דורש גם קוד מהטלפון. סרקו את הקוד באפליקציית אימות (Google Authenticator, Microsoft Authenticator או 1Password) והזינו את 6 הספרות שהיא מציגה.','הפעלה',async code=>{
+    const{error}=await sb.auth.mfa.challengeAndVerify({factorId:data.id,code});
+    return error?'הקוד לא התקבל. בדקו שהשעון בטלפון מדויק ונסו את הקוד הבא.':''},
+  x=>{const img=new Image(200,200);img.alt='קוד QR להוספה לאפליקציית האימות';img.src=data.totp.qr_code;img.style.cssText='display:block;margin:0 auto;background:#fff;border-radius:12px;padding:8px';
+    const p=document.createElement('p');p.className='mute';p.style.fontSize='13px';p.textContent='אי אפשר לסרוק? הקלידו באפליקציה את המפתח: ';
+    const s=document.createElement('span');s.dir='ltr';s.style.cssText='user-select:all;word-break:break-all;color:var(--ink)';s.textContent=data.totp.secret;p.appendChild(s);x.append(img,p)});
+}
 async function load(){
   const{data:{session}}=await sb.auth.getSession();
   if(!session){login();return}
+  const{data:aal}=await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(aal&&aal.currentLevel==='aal1'&&aal.nextLevel==='aal2'){mfaVerify();return}
   const{data,error}=await sb.rpc('admin_overview');
+  if(error&&/not allowed|42501|permission/i.test(error.message+error.code)){
+    const{data:mine}=await sb.rpc('is_admin_account');
+    if(mine===true){mfaEnroll();return}
+  }
+  if(!error&&!(aal&&aal.currentLevel==='aal2')){mfaEnroll();return}
   if(error){if(/not allowed|42501|permission/i.test(error.message+error.code))denied(session.user.email);else app.innerHTML=`<div class="box card"><h1>שגיאה</h1><p class="err">${esc(error.message)}</p><p class="mute">אם זה "function does not exist" — צריך להריץ את קובץ ה־SQL של ברוסיק ב־Supabase.</p><button id="r">נסו שוב</button></div>`,document.getElementById('r')&&(document.getElementById('r').onclick=load);return}
   if(!data||!data.totals){app.innerHTML=`<div class="box card"><h1>אין נתונים</h1><p class="mute">השרת לא החזיר נתונים. נסו לרענן.</p><button id="r">רענון</button></div>`;document.getElementById('r').onclick=load;return}
   DATA=data;await loadTravel();await loadReports();await loadPenina();draw(session.user.email);

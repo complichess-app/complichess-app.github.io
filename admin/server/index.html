@@ -141,7 +141,13 @@ async function take(j){
   const{data:{session}}=await sb.auth.getSession();
   if(!session){app.innerHTML=`<div class="card"><h1>שרת הנסיעות</h1><p>צריך להתחבר עם משתמש המנהל באתר.</p><a class="btn" href="/he/" target="_blank">לאתר להתחברות</a></div>`;return}
   const{data:isAdmin}=await sb.rpc('is_admin');
-  if(isAdmin!==true){app.innerHTML=`<div class="card"><h1>אין הרשאה</h1><p class="mute">הדף פתוח רק למנהל.</p></div>`;return}
+  if(isAdmin!==true){
+    // the admin's own account without the second step yet: send him to /admin/ to enter the code
+    const{data:mine}=await sb.rpc('is_admin_account');
+    app.innerHTML=mine===true
+      ?`<div class="card"><h1>צריך קוד אימות</h1><p class="mute">היכנסו קודם לדף הניהול והזינו את הקוד מאפליקציית האימות, ואז חזרו לכאן.</p><a class="btn" href="/admin/" target="_blank">לדף הניהול</a></div>`
+      :`<div class="card"><h1>אין הרשאה</h1><p class="mute">הדף פתוח רק למנהל.</p></div>`;
+    return}
   ADMIN=true;draw();
   if(HANDS)start();
 })();
