@@ -332,7 +332,7 @@
   let SHARED = false, CUR = null;
   async function savedId() {
     if (CUR) return CUR;
-    const q = await sb.from('pn_requests').select('id').not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(1);
+    const q = await sb.from('pn_requests').select('id').eq('uid', USER.id).not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(1);
     return q.data && q.data[0] && q.data[0].id;
   }
   function linkBox(el) {
@@ -430,23 +430,30 @@
     } catch { btn.textContent = t('busy').slice(0, 30); }
     btn.disabled = false;
   }
+  // the list has its own place under everything else, so it shows whether the page is on the upload, the stats or a report
+  function myNav(on) {
+    let a = $('#myNav');
+    if (!on) { a?.remove(); return; }
+    if (!a) { a = document.createElement('a'); a.id = 'myNav'; a.href = '#myReports'; a.style.cssText = 'color:var(--amber);font-weight:800;margin-inline-start:auto;margin-inline-end:14px;text-decoration:none'; $('#lang').before(a); a.onclick = (e) => { e.preventDefault(); $('#myReports')?.scrollIntoView({ behavior: 'smooth' }); }; }
+    a.textContent = t('myNav');
+  }
   window.PList = {
     async load() {
-      const start = $('#start'); if (!start || !sb || !USER) { $('#myReports')?.remove(); return; }
+      const main = $('main.wrap'); if (!main || !sb || !USER) { $('#myReports')?.remove(); myNav(false); return; }
       let rows = [];
       try {
-        const q = await sb.from('pn_requests').select('id,done_at,headline:report->>headline,score:report->>score').not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(30);
+        const q = await sb.from('pn_requests').select('id,done_at,headline:report->>headline').eq('uid', USER.id).not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(30);
         rows = q.data || [];
       } catch { /* no list */ }
-      $('#myReports')?.remove(); if (!rows.length) return;
-      const box = document.createElement('div'); box.id = 'myReports'; box.className = 'sec';
-      box.innerHTML = `<h2>${E(t('myT'))}</h2>` + rows.map((r) => `<div class="pairrow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.headline || '—')}</b><br><span style="color:var(--muted);font-size:14px">${r.done_at ? new Date(r.done_at).toLocaleDateString(L) : ''}</span></div><button class="btn2" type="button" data-open="${r.id}" style="height:42px;padding:0 18px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${r.id}" style="height:42px;padding:0 18px">${E(t('mySend'))}</button></div>`).join('');
-      start.appendChild(box);
+      $('#myReports')?.remove(); myNav(true);
+      const box = document.createElement('section'); box.id = 'myReports'; box.className = 'sec'; box.style.scrollMarginTop = '20px';
+      box.innerHTML = `<h2>${E(t('myT'))}</h2>` + (rows.length ? rows.map((r) => `<div class="pairrow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.headline || '—')}</b><br><span style="color:var(--muted);font-size:14px">${r.done_at ? new Date(r.done_at).toLocaleDateString(L) : ''}</span></div><button class="btn2" type="button" data-open="${r.id}" style="height:42px;padding:0 18px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${r.id}" style="height:42px;padding:0 18px">${E(t('mySend'))}</button></div>`).join('') : `<p style="color:var(--muted);margin:0">${E(t('myNone'))}</p>`);
+      main.appendChild(box);
       box.querySelectorAll('[data-open]').forEach((b) => b.onclick = async () => {
         b.disabled = true;
         const q = await sb.from('pn_requests').select('report').eq('id', b.dataset.open).maybeSingle();
         b.disabled = false; if (!q.data || !q.data.report) return;
-        CUR = b.dataset.open; SHARED = false; REPORT = q.data.report; $('#start').classList.add('hide'); $('#local').classList.add('hide'); renderReport(REPORT);
+        CUR = b.dataset.open; SHARED = false; REPORT = q.data.report; $('#start').classList.add('hide'); $('#local').classList.add('hide'); $('#wait').classList.add('hide'); renderReport(REPORT);
       });
       box.querySelectorAll('[data-send]').forEach((b) => b.onclick = () => sendLink(b.dataset.send, b));
     },
