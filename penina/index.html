@@ -330,7 +330,7 @@ async function share(){
   x.fillStyle='#24122E';x.fillRect(0,0,W,H);
   const g=x.createRadialGradient(400,520,20,540,600,260);g.addColorStop(0,'#FFFFFF');g.addColorStop(.25,'#FBF4FA');g.addColorStop(.7,'#E7D6E8');g.addColorStop(1,'#B9A0C2');
   x.fillStyle=g;x.beginPath();x.arc(540,600,250,0,7);x.fill();
-  x.fillStyle='#2A0A17';x.textAlign='center';x.font='120px "Secular One"';x.fillText(`${r.score}/10`,540,640);
+  x.textAlign='center';if(r.v<2&&r.score!=null){x.fillStyle='#2A0A17';x.font='120px "Secular One"';x.fillText(`${r.score}/10`,540,640);}
   const wrap=(txt,y,size,color,maxW=900,font='"Secular One"')=>{x.font=`${size}px ${font}`;x.fillStyle=color;const words=String(txt).split(' ');let line='',lines=[];for(const w of words){const tr=line?line+' '+w:w;if(x.measureText(tr).width>maxW){lines.push(line);line=w}else line=tr}lines.push(line);lines.forEach((l,i)=>x.fillText(l,540,y+i*size*1.2));return y+lines.length*size*1.2};
   let y=wrap(r.headline,1000,76,'#F7EFF5');y+=30;
   for(const p of (r.people||[]).slice(0,4)){y=wrap(`${p.name} · ${p.role}`,y+30,46,'#FFC46B',900,'Assistant');}
