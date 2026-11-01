@@ -275,7 +275,13 @@ function goBtn(){
   if(REQ?.status==='pending'){b.textContent=t('check');m.textContent=t('pending');pollReq=setInterval(async()=>{if(document.hidden)return;await loadReq();if(REQ?.status!=='pending')goBtn()},20000);return}
   b.textContent=t('request');if(REQ?.status==='declined')m.textContent=t('declined');
 }
-async function refreshAsk(){await loadReq();$('#askMsg').textContent='';goBtn()}
+async function attachOld(){
+  if(!sb||!USER||!REPORT||!REPORT.headline||!BACKEND)return;
+  const mark='penina.att.'+USER.id+'.'+String(REPORT.headline).slice(0,40);
+  try{if(localStorage.getItem(mark))return}catch{}
+  try{const r=await sb.rpc('pn_attach_report',{p_report:REPORT});if(!r.error){try{localStorage.setItem(mark,'1')}catch{}}}catch{}
+}
+async function refreshAsk(){await loadReq();attachOld();$('#askMsg').textContent='';goBtn()}
 
 $('#goBtn').onclick=async()=>{
   const m=$('#askMsg');m.textContent='';
