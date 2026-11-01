@@ -206,7 +206,7 @@ function draw(email){
   document.querySelectorAll('[data-pn]').forEach(b=>b.onclick=async()=>{const row=b.parentElement;row.querySelectorAll('button').forEach(x=>x.disabled=true);
     const{error}=await sb.rpc('pn_admin_decide',{p_id:b.dataset.pn,p_approve:b.dataset.ok==='1',p_model:row.querySelector('[data-pnm]')?.value||'sonnet'});
     if(error){alert('שגיאה: '+error.message);row.querySelectorAll('button').forEach(x=>x.disabled=false);return}await loadPenina();draw(email)});
-  document.querySelectorAll('[data-pnopen]').forEach(b=>b.onclick=()=>{window.open('/penina/?a='+b.dataset.pnopen,'_blank')});
+  document.querySelectorAll('[data-pnopen]').forEach(b=>b.onclick=async()=>{b.disabled=true;const{data,error}=await sb.rpc('pn_admin_share',{p_id:b.dataset.pnopen});b.disabled=false;if(error||!data){alert('שגיאה: '+(error?error.message:'אין דוח'));return}window.open('/penina/?r='+data,'_blank')});
   document.querySelectorAll('[data-pnset]').forEach(b=>b.onclick=async()=>{const row=b.parentElement;b.disabled=true;
     const{error}=await sb.rpc('pn_admin_set_model',{p_id:b.dataset.pnset,p_model:row.querySelector('[data-pns]').value});
     if(error){alert('שגיאה: '+error.message);b.disabled=false;return}await loadPenina();draw(email)});

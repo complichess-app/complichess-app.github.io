@@ -287,14 +287,14 @@ $('#goBtn').onclick=async()=>{
     if(r.error){m.textContent=NOT_READY(r.error)?t('soon'):/too many/.test(r.error.message)?t('tooMany'):t('busy');return}
     saveLocal();await refreshAsk();return;
   }
-  let answers=[];
-  if(window.PQ){try{answers=await PQ.run()}catch{answers=[]}}
+  let answers=[],photos=[];
+  if(window.PQ){try{const q=await PQ.run();answers=q.answers||[];photos=q.photos||[]}catch{answers=[];photos=[]}}
   $('#local').classList.add('hide');$('#wait').classList.remove('hide');scrollTo(0,0);
   let i=0;const lines=t('w');$('#waitLine').textContent=lines[0];const tick=setInterval(()=>$('#waitLine').textContent=lines[++i%lines.length],2600);
   try{
     const {data:{session}}=await sb.auth.getSession();
     const r=await fetch(`${SB_URL}/functions/v1/penina`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`,apikey:SB_KEY},
-      body:JSON.stringify({mode:'report',lang:L,stats:STATS,excerpt:EXCERPT,answers})});
+      body:JSON.stringify({mode:'report',lang:L,stats:STATS,excerpt:EXCERPT,answers,photos})});
     const j=JSON.parse((await r.text()).trim()||'{}');
     if(!r.ok||j.error||!j.report)throw new Error(j.error||(r.status===404?'404':'busy'));
     REPORT=j.report;saveLocal();$('#wait').classList.add('hide');renderReport(REPORT);refreshAsk();
