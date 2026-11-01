@@ -351,6 +351,7 @@ async function share(){
 <script>
 try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stats&&sv.excerpt&&Date.now()-sv.at<14*864e5){STATS=sv.stats;EXCERPT=sv.excerpt;REPORT=sv.report||null;$('#start').classList.add('hide');if(REPORT){renderReport(REPORT)}else $('#local').classList.remove('hide')}}catch{}
 paint();
+if(window.PShare)PShare.boot();
 if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;refreshAsk()});
 </script>
 </body>
