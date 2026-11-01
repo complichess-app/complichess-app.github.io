@@ -135,7 +135,7 @@
 
   /* ---------- excerpt for the writer: whole conversations spread across the history, private details masked ---------- */
   const mask = (s) => s.replace(/\b[\w.+-]+@[\w-]+\.[\w.]+\b/g, '[email]').replace(/https?:\/\/\S+/g, '[link]').replace(/(\+?\d[\d\s-]{7,}\d)/g, '[phone]').replace(/\b\d{9}\b/g, '[id]');
-  function excerpt(msgs, budget = 110000) {
+  function excerpt(msgs, budget = 320000) {
     const useful = msgs.filter((m) => !m.deleted);
     const win = 45, slots = Math.max(1, Math.floor(budget / (win * 70)));
     const out = []; const step = Math.max(win, Math.floor(useful.length / slots));
@@ -144,7 +144,7 @@
       out.push('…');
       for (const m of useful.slice(s, s + win)) {
         const d = new Date(m.t);
-        const body = m.media ? '[media]' : mask(m.text).replace(/\n+/g, ' / ').slice(0, 220);
+        const body = m.media ? '[media]' : mask(m.text).replace(/\n+/g, ' / ').slice(0, 300);
         out.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} | ${m.who}: ${body}`);
       }
     }
