@@ -323,6 +323,8 @@
   function photoPick(g, i) {
     const slots = g.type === 'dodge' ? [['hero', g.hero_name], ['bad', g.bad_name]] : g.type === 'catch' ? [['good', g.good_name], ['bad', g.bad_name]] : g.type === 'tap' ? [['bad', g.bad_name]] : [];
     const ok = slots.filter(([, n]) => txt(n).trim());
+    // photos are collected before the report is written, never in the shared page
+    return '';
     if (!ok.length) return '';
     return `<div class="gph" title="${E(t('photoHint'))}">${ok.map(([k, n]) => `<label>📷 ${E(t('photoOf', { n: txt(n) }))}<input type="file" accept="image/*" data-g="${i}" data-k="${k}"></label>`).join('')}</div><p style="font-size:13px;color:var(--muted);margin:-4px 0 10px">${E(t('photoHint'))}</p>`;
   }
