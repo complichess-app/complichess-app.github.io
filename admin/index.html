@@ -102,8 +102,8 @@ function pnView(x){
   return`<div style="max-width:760px;margin:0 auto;padding:18px;line-height:1.55" dir="auto">
   <button class="ghost" id="pnClose">← חזרה</button>
   <p class="mute" dir="rtl">${esc(x.email)} · ${d(x.created_at)} · ${(PN_MODEL[x.model]||[x.model])[0]}${x.cost_usd!=null?' · עלה $'+Number(x.cost_usd).toFixed(2):''}</p>
-  <h2 style="margin:4px 0">${esc(r.headline)} <span class="pill y">${esc(r.score)}/10</span></h2>
-  ${r.score_line?`<p><i>${esc(r.score_line)}</i></p>`:''}${bl(r.verdict)}
+  <h2 style="margin:4px 0">${esc(r.headline)}${r.score!=null&&!(r.v>=2)?` <span class="pill y">${esc(r.score)}/10</span>`:''}</h2>
+  ${r.score_line&&!(r.v>=2)?`<p><i>${esc(r.score_line)}</i></p>`:''}${bl(r.verdict)}
   ${P('פרסים',li(r.awards,a=>`<p><b>${esc(a.title)}</b> — ${esc(a.who)}: ${esc(a.why)}</p>`))}
   ${P('אנשים',li(r.people,p=>`<p><b>${esc(p.name)}</b> · ${esc(p.role)}<br>${esc(p.roast)}<br><i>${esc(p.kind)}</i><br>🟢 ${esc(p.green)} · 🔴 ${esc(p.red)}${A(p.habits).length?'<br>'+A(p.habits).map(esc).join(' · '):''}${A(p.signature).length?'<br>'+A(p.signature).map(q=>'״'+esc(q)+'״').join(' · '):''}${p.fun_fact?'<br>'+esc(p.fun_fact):''}</p>`))}
   ${P('מקרים ('+A(r.cases).length+')',li(r.cases,(c,i)=>`<p><b>${i+1}. ${esc(c.title)}</b> <span class="mute">${esc(c.when)} · ${esc(c.who)}</span><br>${esc(c.story)}${c.quote?`<br>״${esc(c.quote)}״`:''}<br><i>${esc(c.punchline)}</i></p>`))}

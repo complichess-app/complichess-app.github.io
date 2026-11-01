@@ -135,19 +135,31 @@
 
   /* ---------- excerpt for the writer: whole conversations spread across the history, private details masked ---------- */
   const mask = (s) => s.replace(/\b[\w.+-]+@[\w-]+\.[\w.]+\b/g, '[email]').replace(/https?:\/\/\S+/g, '[link]').replace(/(\+?\d[\d\s-]{7,}\d)/g, '[phone]').replace(/\b\d{9}\b/g, '[id]');
-  function excerpt(msgs, budget = 320000) {
+  /* the whole chat when it fits; otherwise whole days (the busiest first, then spread evenly), never cut mid-conversation */
+  function excerpt(msgs, budget = 330000) {
     const useful = msgs.filter((m) => !m.deleted);
-    const win = 45, slots = Math.max(1, Math.floor(budget / (win * 70)));
-    const out = []; const step = Math.max(win, Math.floor(useful.length / slots));
     const pad = (n) => String(n).padStart(2, '0');
-    for (let s = 0; s < useful.length && out.join('\n').length < budget; s += step) {
-      out.push('…');
-      for (const m of useful.slice(s, s + win)) {
-        const d = new Date(m.t);
-        const body = m.media ? '[media]' : mask(m.text).replace(/\n+/g, ' / ').slice(0, 300);
-        out.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} | ${m.who}: ${body}`);
-      }
+    const lines = []; let prevMedia = null;
+    for (const m of useful) {
+      if (m.media && prevMedia === m.who) continue; // a run of pictures from one person is one line
+      prevMedia = m.media ? m.who : null;
+      const d = new Date(m.t), day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const body = m.media ? '[media]' : mask(m.text).replace(/\n+/g, ' / ').slice(0, 500);
+      lines.push({ day, s: `${day} ${pad(d.getHours())}:${pad(d.getMinutes())} | ${m.who}: ${body}` });
     }
+    const total = lines.reduce((n, l) => n + l.s.length + 1, 0);
+    if (total <= budget) return lines.map((l) => l.s).join('\n');
+    const days = new Map();
+    for (const l of lines) { if (!days.has(l.day)) days.set(l.day, { size: 0, n: 0, rows: [] }); const g = days.get(l.day); g.rows.push(l.s); g.size += l.s.length + 1; g.n++; }
+    const order = [...days.keys()], keep = new Set(); let used = 0;
+    const take = (k) => { const g = days.get(k); if (keep.has(k) || used + g.size > budget) return; keep.add(k); used += g.size; };
+    [...order].sort((a, b) => days.get(b).n - days.get(a).n).forEach((k) => { if (used < budget * 0.6) take(k); });
+    for (let step = Math.max(1, Math.floor(order.length / 40)); step >= 1 && used < budget * 0.98; step = Math.floor(step / 2)) {
+      for (let i = 0; i < order.length; i += step) take(order[i]);
+      if (step === 1) break;
+    }
+    const out = []; let last = -2;
+    order.forEach((k, i) => { if (!keep.has(k)) return; if (i !== last + 1) out.push('…'); out.push(...days.get(k).rows); last = i; });
     return out.join('\n').slice(0, budget);
   }
 

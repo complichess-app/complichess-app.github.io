@@ -136,54 +136,194 @@
   css2.textContent = `.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.tile{display:flex;flex-direction:column;gap:6px;background:var(--plum);border-radius:20px;padding:16px;text-decoration:none;color:inherit;transition:transform .15s,background .15s}.tile:hover,.tile:focus-visible{transform:translateY(-3px);background:var(--plum-2)}.tile .te{font-size:30px;line-height:1}.tile b{font-family:var(--fd);font-weight:400;font-size:18px}.tile .td{color:var(--pearl-2);font-size:14px;flex:1}.tile .tg{color:var(--amber);font-weight:800;font-size:14px}`;
   document.head.appendChild(css2);
   const addPromo = () => { const el = $('#report'); el.querySelector('.promo')?.remove(); el.insertAdjacentHTML('beforeend', promoHTML()); };
+  /* extra words for the long report: the side legend, stories, ideas, games */
+  const X2 = {
+    he: { nav: 'מקרא', navOpen: 'פתיחת המקרא', navClose: 'סגירת המקרא', open2: 'הפתיחה', sagas: 'הסאגות', ideas: 'הרעיונות של פנינה', cameos: 'הופעות אורח', all: 'כולם', moreCh: 'עוד {n} פרקים', best: 'שיא', newBest: 'שיא חדש!', level: 'שלב {n}', ready: 'מוכנים?', avoid: 'לא לגעת ב{n}', streak: 'רצף', next: 'הבא', cast: 'משתתפים', star: 'במרכז', toTop: 'למעלה', triviaRes: 'ידעתם {n} מתוך {t}' },
+    en: { nav: 'Contents', navOpen: 'Open contents', navClose: 'Close contents', open2: 'Opening', sagas: 'The sagas', ideas: 'Penina’s ideas', cameos: 'Guest appearances', all: 'Everyone', moreCh: '{n} more chapters', best: 'Best', newBest: 'New best!', level: 'Level {n}', ready: 'Ready?', avoid: 'Don’t tap {n}', streak: 'Streak', next: 'Next', cast: 'Cast', star: 'Starring', toTop: 'Top', triviaRes: 'You knew {n} of {t}' },
+    ar: { nav: 'الفهرس', navOpen: 'افتح الفهرس', navClose: 'أغلق الفهرس', open2: 'الافتتاحية', sagas: 'الملاحم', ideas: 'أفكار بنينا', cameos: 'ضيوف الشرف', all: 'الجميع', moreCh: '{n} فصول أخرى', best: 'الأفضل', newBest: 'رقم قياسي جديد!', level: 'المرحلة {n}', ready: 'جاهزون؟', avoid: 'لا تلمسوا {n}', streak: 'سلسلة', next: 'التالي', cast: 'الأبطال', star: 'في المركز', toTop: 'للأعلى', triviaRes: 'عرفتم {n} من {t}' },
+    ru: { nav: 'Содержание', navOpen: 'Открыть содержание', navClose: 'Закрыть содержание', open2: 'Начало', sagas: 'Саги', ideas: 'Идеи Пнины', cameos: 'Гости', all: 'Все', moreCh: 'Ещё {n} глав', best: 'Рекорд', newBest: 'Новый рекорд!', level: 'Уровень {n}', ready: 'Готовы?', avoid: 'Не трогайте: {n}', streak: 'Серия', next: 'Дальше', cast: 'Участники', star: 'В центре', toTop: 'Наверх', triviaRes: 'Вы знали {n} из {t}' },
+    es: { nav: 'Índice', navOpen: 'Abrir índice', navClose: 'Cerrar índice', open2: 'Apertura', sagas: 'Las sagas', ideas: 'Las ideas de Penina', cameos: 'Invitados', all: 'Todos', moreCh: '{n} capítulos más', best: 'Récord', newBest: '¡Nuevo récord!', level: 'Nivel {n}', ready: '¿Listos?', avoid: 'No toques a {n}', streak: 'Racha', next: 'Siguiente', cast: 'Reparto', star: 'Protagonista', toTop: 'Arriba', triviaRes: 'Sabías {n} de {t}' },
+    fr: { nav: 'Sommaire', navOpen: 'Ouvrir le sommaire', navClose: 'Fermer le sommaire', open2: 'Ouverture', sagas: 'Les sagas', ideas: 'Les idées de Penina', cameos: 'Invités', all: 'Tout le monde', moreCh: 'Encore {n} chapitres', best: 'Record', newBest: 'Nouveau record !', level: 'Niveau {n}', ready: 'Prêts ?', avoid: 'Ne touchez pas {n}', streak: 'Série', next: 'Suivant', cast: 'Distribution', star: 'Au centre', toTop: 'Haut', triviaRes: 'Vous saviez {n} sur {t}' },
+  };
+  for (const l in X2) if (T[l]) Object.assign(T[l], X2[l]);
+
+  const css3 = document.createElement('style');
+  css3.textContent = `
+  .report .verdict .pearl{--s:120px}
+  .pnav-btn{position:fixed;bottom:20px;inset-inline-end:14px;z-index:60;width:48px;height:48px;border-radius:14px;background:var(--plum-2);box-shadow:0 8px 24px -8px rgba(0,0,0,.6);display:grid;place-content:center;gap:5px}
+  .pnav-btn i{display:block;width:22px;height:3px;border-radius:3px;background:var(--pearl);transition:transform .2s,opacity .2s}
+  .pnav-btn[aria-expanded="true"] i:nth-child(1){transform:translateY(8px) rotate(45deg)}
+  .pnav-btn[aria-expanded="true"] i:nth-child(2){opacity:0}
+  .pnav-btn[aria-expanded="true"] i:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+  .pnav{position:fixed;top:0;bottom:0;inset-inline-end:0;z-index:59;width:min(300px,84vw);background:var(--plum);border-inline-start:1px solid var(--line);padding:76px 14px 24px;overflow-y:auto;transform:translateX(calc(var(--side,1)*105%));transition:transform .25s ease;box-shadow:-20px 0 40px -20px rgba(0,0,0,.6)}
+  .pnav.open{transform:none}
+  .pnav b{display:block;font-family:var(--fd);font-weight:400;font-size:22px;margin:0 8px 10px}
+  .pnav a{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;color:var(--pearl);text-decoration:none;font-weight:600}
+  .pnav a span{color:var(--muted);font-weight:400;font-size:14px}
+  .pnav a:hover,.pnav a:focus-visible{background:var(--plum-2)}
+  .pnav a.on{background:var(--lip);color:var(--lip-ink)}
+  .pnav a.on span{color:var(--lip-ink)}
+  .pnav-dim{position:fixed;inset:0;z-index:58;background:rgba(10,4,14,.5)}
+  @media (min-width:1280px){
+    .pnav{transform:none;width:240px;top:90px;bottom:auto;max-height:calc(100vh - 110px);border-radius:20px;inset-inline-end:20px;border:1px solid var(--line);padding:16px 10px;box-shadow:none;background:rgba(51,28,66,.85)}
+    .pnav-btn,.pnav-dim{display:none}
+  }
+  .sec{scroll-margin-top:16px}
+  .saga{background:var(--plum);border-radius:24px;padding:20px 20px 16px;margin:0 0 18px}
+  .saga h3{margin:0;font-family:var(--fd);font-weight:400;font-size:26px;line-height:1.15}
+  .saga .per{color:var(--amber);font-weight:600;font-size:15px;margin:4px 0 0}
+  .tl{list-style:none;margin:16px 0 0;padding:0;position:relative}
+  .tl:before{content:'';position:absolute;inset-inline-start:7px;top:6px;bottom:6px;width:2px;background:var(--plum-2)}
+  .tl li{position:relative;padding:0 0 14px;padding-inline-start:28px}
+  .tl li:before{content:'';position:absolute;inset-inline-start:2px;top:7px;width:12px;height:12px;border-radius:50%;background:var(--lip)}
+  .tl li b{display:block;font-size:14px;color:var(--muted);font-weight:600}
+  .tl li p{margin:2px 0 0}
+  .saga .end{margin:4px 0 0;color:var(--pearl-2);font-style:italic}
+  .saga blockquote{border:0;padding:10px 0 4px}
+  .saga .morech{font-size:15px;color:var(--amber);font-weight:700;text-decoration:underline;text-underline-offset:4px;margin:0 0 6px}
+  .fchips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+  .fchips button{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:15px;font-weight:600;background:transparent}
+  .fchips button[aria-pressed="true"]{background:var(--amber);color:var(--lip-ink);border-color:var(--amber)}
+  .case .st{display:inline-block;background:var(--plum-2);border-radius:999px;padding:1px 10px;font-size:13px;margin-inline-start:6px;color:var(--pearl-2)}
+  .pjump{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+  .pjump a{background:var(--plum);border-radius:999px;padding:6px 14px;text-decoration:none;color:var(--pearl);font-weight:600;font-size:15px}
+  .idea{background:var(--plum);border-radius:20px;padding:16px 18px;margin:0 0 12px}
+  .idea b{display:block;font-size:19px}
+  .idea p{margin:6px 0 0;color:var(--pearl-2)}
+  .idea .for{color:var(--amber);font-size:14px;font-weight:600;margin-top:8px}
+  .cameo{padding:12px 0;border-bottom:1px solid var(--line)}
+  .cameo:last-child{border-bottom:0}
+  .gbubble{position:absolute;top:44px;left:8px;right:8px;text-align:center;pointer-events:none;transition:opacity .4s}
+  .gbubble span{display:inline-block;background:rgba(247,239,245,.94);color:#2a1536;border-radius:16px;padding:6px 12px;font-size:14px;font-weight:700;max-width:92%}
+  .gbubble small{display:block;color:#7a5b88;font-weight:600}
+  .gbanner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:var(--fd);font-size:44px;color:var(--amber);text-shadow:0 4px 18px rgba(0,0,0,.6)}
+  .gbox.shake{animation:gshake .25s}
+  @keyframes gshake{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+  .hole.decoy{background:#3a1a2a}
+  .jokes q{quotes:'״' '״'}
+  .qnote{margin:12px 0 0;color:var(--pearl-2);font-size:15px;min-height:1.4em}
+  .qdots{display:flex;gap:4px;justify-content:center;margin:8px 0 0}
+  .qdots i{width:8px;height:8px;border-radius:50%;background:var(--plum-2)}
+  .qdots i.ok{background:var(--mint)}
+  .qdots i.no{background:var(--lip)}
+  .gover .bst{color:var(--amber);font-weight:800}
+  `;
+  document.head.appendChild(css3);
+
+  /* the side legend: a three-stripe button that opens the list of sections (always visible on wide screens) */
+  let navCleanup = null;
+  function buildNav(el, items) {
+    if (navCleanup) navCleanup();
+    if (!items.length) return;
+    const btn = document.createElement('button'); btn.className = 'pnav-btn'; btn.type = 'button';
+    btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'pnav'); btn.setAttribute('aria-label', t('navOpen'));
+    btn.innerHTML = '<i></i><i></i><i></i>';
+    const nav = document.createElement('nav'); nav.className = 'pnav'; nav.id = 'pnav'; nav.setAttribute('aria-label', t('nav'));
+    nav.style.setProperty('--side', RTL[L] ? -1 : 1);
+    nav.innerHTML = `<b>${E(t('nav'))}</b>` + items.map(([id, label, n]) => `<a href="#${id}" data-id="${id}">${E(label)}${n ? `<span>${n}</span>` : ''}</a>`).join('');
+    let dim = null;
+    const wide = () => matchMedia('(min-width:1280px)').matches;
+    const close = () => { nav.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-label', t('navOpen')); dim?.remove(); dim = null; };
+    const open = () => { nav.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); btn.setAttribute('aria-label', t('navClose')); dim = document.createElement('div'); dim.className = 'pnav-dim'; dim.onclick = close; document.body.appendChild(dim); nav.querySelector('a')?.focus(); };
+    btn.onclick = () => (nav.classList.contains('open') ? close() : open());
+    nav.addEventListener('click', (e) => {
+      const a = e.target.closest('a'); if (!a) return; e.preventDefault();
+      const s = document.getElementById(a.dataset.id); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!wide()) close();
+    });
+    const key = (e) => { if (e.key === 'Escape' && nav.classList.contains('open')) { close(); btn.focus(); } };
+    addEventListener('keydown', key);
+    document.body.append(btn, nav);
+    const links = [...nav.querySelectorAll('a')];
+    const io = new IntersectionObserver((ents) => {
+      ents.forEach((en) => { if (en.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.dataset.id === en.target.id)); });
+    }, { rootMargin: '-35% 0px -60% 0px' });
+    items.forEach(([id]) => { const s = document.getElementById(id); if (s) io.observe(s); });
+    navCleanup = () => { io.disconnect(); removeEventListener('keydown', key); btn.remove(); nav.remove(); dim?.remove(); navCleanup = null; };
+  }
+
   const v1 = renderReport;
   window.renderReport = function (r) {
-    if (!r || r.v !== 2) { v1(r); linkBox($('#report')); addPromo(); return; }
+    if (navCleanup) navCleanup();
+    if (!r || !(r.v >= 2)) { v1(r); linkBox($('#report')); addPromo(); return; }
     const el = $('#report'); el.classList.remove('hide');
-    const sec = (title, inner) => (inner ? `<div class="sec"><h2>${E(title)}</h2>${inner}</div>` : '');
+    const navItems = [];
+    const sec = (id, title, inner, n) => { if (!inner) return ''; navItems.push([id, title, n]); return `<div class="sec" id="${id}"><h2>${E(title)}</h2>${inner}</div>`; };
     const lead = txt(r.verdict).split(/\n\s*\n/).filter(Boolean).map((p) => `<p>${E(p)}</p>`).join('');
+    const pid = (n) => 'p-' + (hue(txt(n)) + '-' + txt(n).length);
+    const people = arr(r.people);
     const awards = arr(r.awards).map((a) => `<div class="award"><b>🏆 ${E(a.title)}</b><span class="wn">${E(a.who)}</span><p>${E(a.why)}</p></div>`).join('');
-    const people = arr(r.people).map((p) => `
-      <article class="card"><div class="top"><span class="dot" style="background:hsl(${hue(txt(p.name))} 70% 72%)">${E(initial(txt(p.name)))}</span><div><h3>${E(p.name)}</h3><span class="role">${E(p.role)}</span></div></div>
+    const peopleHtml = people.length ? `<div class="pjump">${people.map((p) => `<a href="#${pid(p.name)}">${E(p.name)}</a>`).join('')}</div>` + people.map((p) => `
+      <article class="card" id="${pid(p.name)}" style="scroll-margin-top:16px"><div class="top"><span class="dot" style="background:hsl(${hue(txt(p.name))} 70% 72%)">${E(initial(txt(p.name)))}</span><div><h3>${E(p.name)}</h3><span class="role">${E(p.role)}</span></div></div>
         <p>${E(p.roast)}</p><p class="kind">${E(p.kind)}</p>
         ${arr(p.habits).length ? `<div class="chips" aria-label="${E(t('habits'))}">${arr(p.habits).map((h) => `<span>${E(h)}</span>`).join('')}</div>` : ''}
         ${arr(p.signature).length ? `<div class="sigq">${arr(p.signature).map((s) => `<div>״${E(s)}״</div>`).join('')}</div>` : ''}
         ${p.fun_fact ? `<div class="fact">${E(t('fact'))}: ${E(p.fun_fact)}</div>` : ''}
-        <div class="flags"><span class="g">${E(t('green'))}: ${E(p.green)}</span><span class="r">${E(t('red'))}: ${E(p.red)}</span></div></article>`).join('');
+        <div class="flags"><span class="g">${E(t('green'))}: ${E(p.green)}</span><span class="r">${E(t('red'))}: ${E(p.red)}</span></div></article>`).join('') : '';
+    const SHOW_CH = 3;
+    const sagas = arr(r.sagas).filter((s) => s && s.title && arr(s.chapters).length).map((s, si) => {
+      const ch = arr(s.chapters);
+      return `<article class="saga"><h3>${E(s.title)}</h3>${s.period ? `<p class="per">${E(s.period)}</p>` : ''}
+        ${arr(s.cast).length ? `<div class="chips" aria-label="${E(t('cast'))}">${arr(s.cast).map((c) => `<span>${E(c)}</span>`).join('')}</div>` : ''}
+        <ol class="tl">${ch.map((c, i) => `<li class="${i >= SHOW_CH ? 'ch-x hide' : ''}"><b>${E(c.when)}</b><p>${E(c.text)}</p></li>`).join('')}</ol>
+        ${ch.length > SHOW_CH ? `<button class="morech" type="button" data-s="${si}">${E(t('moreCh', { n: ch.length - SHOW_CH }))}</button>` : ''}
+        ${s.quote && s.quote.text ? `<blockquote><q>${E(s.quote.text)}</q><cite>${E(s.quote.who)}</cite></blockquote>` : ''}
+        ${s.ending ? `<p class="end">${E(s.ending)}</p>` : ''}</article>`;
+    }).join('');
     const cases = arr(r.cases);
-    const caseHtml = (c, i) => `<article class="case${i >= 10 ? ' extra hide' : ''}"><h3>${i + 1}. ${E(c.title)}</h3><div class="who2">${E(c.when)} · ${E(c.who)}</div><p>${E(c.story)}</p>${c.quote ? `<q>${E(c.quote)}</q>` : ''}<p class="pl">${E(c.punchline)}</p></article>`;
-    const jokes = arr(r.jokes).map((j) => `<div class="j"><b>${E(j.title)}</b> <span class="mute" style="color:var(--muted)">· ${E(j.who)}</span><p>${E(j.explain)}</p>${j.quote ? `<q>״${E(j.quote)}״</q>` : ''}</div>`).join('');
+    const starOf = (c) => txt(c.star || '').trim();
+    const stars = [...new Set(cases.map(starOf).filter(Boolean))];
+    const caseHtml = (c, i) => `<article class="case" data-star="${E(starOf(c))}"><h3>${E(c.title)}${starOf(c) ? `<span class="st">${E(starOf(c))}</span>` : ''}</h3><div class="who2">${E(c.when)} · ${E(c.who)}</div><p>${E(c.story)}</p>${c.quote ? `<q>${E(c.quote)}</q>` : ''}<p class="pl">${E(c.punchline)}</p></article>`;
+    const casesBlock = cases.length ? (stars.length > 1 ? `<div class="fchips" role="group">${[['', t('all')], ...stars.map((s) => [s, s])].map(([v, l], i) => `<button type="button" data-f="${E(v)}" aria-pressed="${i ? 'false' : 'true'}">${E(l)}</button>`).join('')}</div>` : '') + `<div id="caseList">${cases.map(caseHtml).join('')}</div><button class="morebtn hide" id="moreCases" type="button"></button>` : '';
+    const jokes = arr(r.jokes).map((j) => `<div class="j"><b>${E(j.title)}</b> <span class="mute" style="color:var(--muted)">· ${E(j.who)}</span><p>${E(j.explain)}</p>${j.quote ? `<q>${E(j.quote)}</q>` : ''}</div>`).join('');
     const pairs = arr(r.pairs).map((p) => `<div class="pairrow"><b>${E(p.a)} + ${E(p.b)}</b><p style="margin:4px 0 0;color:var(--pearl-2)">${E(p.note)}</p></div>`).join('');
-    const tips = arr(r.tips).map((x) => `<div class="j"><b>💡 ${E(x.title)}</b>${x.who ? ` <span style="color:var(--muted)">· ${E(x.who)}</span>` : ''}<p>${E(x.tip)}</p></div>`).join('');
+    const ideasArr = arr(r.ideas).length ? arr(r.ideas) : arr(r.tips).map((x) => ({ title: x.title, idea: x.tip, who: x.who }));
+    const ideas = ideasArr.map((x) => `<div class="idea"><b>💡 ${E(x.title)}</b><p>${E(x.idea || x.tip)}</p>${x.who ? `<div class="for">${E(x.who)}</div>` : ''}</div>`).join('');
     const eras = arr(r.eras).map((e) => `<div class="era"><b>${E(e.label)}</b>${E(e.note)}</div>`).join('');
     const dyn = arr(r.dynamics).length ? `<ul class="dyn">${arr(r.dynamics).map((x) => `<li>${E(x)}</li>`).join('')}</ul>` : '';
     const moments = arr(r.moments).map((x) => `<blockquote><q>${E(x.quote)}</q><cite>${E(x.who)} · ${E(x.note)}</cite></blockquote>`).join('');
+    const cameos = arr(r.cameos).map((c) => `<div class="cameo"><b>${E(c.name)}</b><p style="margin:4px 0 0;color:var(--pearl-2)">${E(c.note)}</p></div>`).join('');
     const games = arr(r.games).filter(validGame);
     const pic = {}; arr(r.photos).forEach((x) => { if (x && x.name && /^data:image\/jpeg;base64,/.test(x.data || '')) { const im = new Image(); im.src = x.data; pic[txt(x.name).toLowerCase().trim()] = im; } });
     const findPic = (n) => { n = txt(n).toLowerCase().trim(); if (!n) return null; for (const k in pic) if (k === n || (k.length > 2 && (n.includes(k) || k.includes(n)))) return pic[k]; return null; };
-    games.forEach((g) => { g._ph = g._ph || {}; [['hero', g.hero_name], ['bad', g.bad_name], ['good', g.good_name]].forEach(([k, n]) => { const im = findPic(n); if (im) g._ph[k] = im; }); });
-    el.innerHTML = `
-      <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L] ? -1 : 1}" role="img" aria-label="${E(t('score'))} ${E(r.score)}/10"><span class="score n">${E(r.score)}<small>/10</small></span></div>
-        <div><h1>${E(r.headline)}</h1>${r.score_line ? `<p class="sline">${E(r.score_line)}</p>` : ''}</div></div>
-      <div class="lead">${lead}</div>
-      ${sec(t('awards'), awards ? `<div class="awards">${awards}</div>` : '')}
-      ${sec(t('people2'), people)}
-      ${sec(t('cases'), cases.length ? cases.map(caseHtml).join('') + (cases.length > 10 ? `<button class="morebtn" id="moreCases" type="button">${E(t('more', { n: cases.length - 10 }))}</button>` : '') : '')}
-      ${sec(t('jokes'), jokes ? `<div class="jokes">${jokes}</div>` : '')}
-      ${sec(t('games'), games.length ? `<div id="games">${games.map((g, i) => `<div class="gcard"><h3>${E(g.title)}</h3><p>${E(g.intro)}</p>${photoPick(g,i)}<div class="gmount" data-g="${i}"><button class="gbtn" type="button">${E(t('play'))}</button></div></div>`).join('')}</div>` : '')}
-      ${sec(t('tips'), tips ? `<div class="jokes">${tips}</div>` : '')}
-      ${sec(t('pairs'), pairs)}
-      ${sec(t('eras'), eras)}
-      ${sec(t('dyn'), dyn)}
-      ${sec(t('moments'), moments)}
-      <div class="sec"><h2>${E(t('advice'))}</h2><p class="advice">${E(r.advice)}</p></div>
-      <div class="actions"><button class="go" id="shareBtn" style="padding:0 26px">${E(t('share'))}</button><button class="btn2" id="againBtn">${E(t('again'))}</button></div>`;
+    games.forEach((g) => { g._ph = g._ph || {}; [['hero', g.hero_name], ['bad', g.bad_name], ['good', g.good_name], ['decoy', g.decoy_name]].forEach(([k, n]) => { const im = findPic(n); if (im) g._ph[k] = im; }); });
+    const html = [
+      `<div class="sec" id="s-open" style="border-top:0;padding-top:0"><div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L] ? -1 : 1}" aria-hidden="true"></div><div><h1>${E(r.headline)}</h1></div></div><div class="lead">${lead}</div></div>`,
+      sec('s-awards', t('awards'), awards ? `<div class="awards">${awards}</div>` : '', arr(r.awards).length),
+      sec('s-people', t('people2'), peopleHtml, people.length),
+      sec('s-sagas', t('sagas'), sagas, arr(r.sagas).length),
+      sec('s-cases', t('cases'), casesBlock, cases.length),
+      sec('s-jokes', t('jokes'), jokes ? `<div class="jokes">${jokes}</div>` : '', arr(r.jokes).length),
+      sec('s-games', t('games'), games.length ? `<div id="games">${games.map((g, i) => `<div class="gcard"><h3>${E(g.title)}</h3><p>${E(g.intro)}</p>${photoPick(g, i)}<div class="gmount" data-g="${i}"><button class="gbtn" type="button">${E(t('play'))}</button></div></div>`).join('')}</div>` : '', games.length),
+      sec('s-ideas', t(arr(r.ideas).length ? 'ideas' : 'tips'), ideas, ideasArr.length),
+      sec('s-pairs', t('pairs'), pairs),
+      sec('s-eras', t('eras'), eras),
+      sec('s-dyn', t('dyn'), dyn),
+      sec('s-moments', t('moments'), moments),
+      sec('s-cameos', t('cameos'), cameos),
+      sec('s-advice', t('advice'), r.advice ? `<p class="advice">${E(r.advice)}</p>` : ''),
+    ].join('');
+    navItems.unshift(['s-open', t('open2')]);
+    el.innerHTML = html + `<div class="actions"><button class="go" id="shareBtn" style="padding:0 26px">${E(t('share'))}</button><button class="btn2" id="againBtn">${E(t('again'))}</button></div>`;
     $('#shareBtn').onclick = share;
-    $('#againBtn').onclick = () => { SHARED = false; CUR = null; REPORT = null; STATS = null; EXCERPT = null; forgetLocal(); el.classList.add('hide'); $('#start').classList.remove('hide'); $('#file').value = ''; scrollTo(0, 0); };
-    const more = $('#moreCases'); if (more) more.onclick = () => { el.querySelectorAll('.case.extra').forEach((c) => c.classList.remove('hide')); more.remove(); };
+    $('#againBtn').onclick = () => { if (navCleanup) navCleanup(); SHARED = false; CUR = null; REPORT = null; STATS = null; EXCERPT = null; forgetLocal(); el.classList.add('hide'); $('#start').classList.remove('hide'); $('#file').value = ''; scrollTo(0, 0); };
+    el.querySelectorAll('.morech').forEach((b) => b.onclick = () => { b.closest('.saga').querySelectorAll('.ch-x').forEach((x) => x.classList.remove('hide')); b.remove(); });
+    // cases: a filter by person, and a "more" button that respects the filter
+    const CAP = 12; let cap = CAP, who = '';
+    const list = el.querySelector('#caseList'), more = el.querySelector('#moreCases');
+    const paint = () => {
+      if (!list) return;
+      const all = [...list.children], vis = all.filter((c) => !who || c.dataset.star === who);
+      all.forEach((c) => c.classList.add('hide')); vis.slice(0, cap).forEach((c) => c.classList.remove('hide'));
+      if (more) { const left = vis.length - cap; more.classList.toggle('hide', left <= 0); more.textContent = t('more', { n: left }); }
+    };
+    if (more) more.onclick = () => { cap = Infinity; paint(); };
+    el.querySelectorAll('.fchips button').forEach((b) => b.onclick = () => { who = b.dataset.f; cap = CAP; el.querySelectorAll('.fchips button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); paint(); });
+    paint();
     el.querySelectorAll('.gph input').forEach((inp) => inp.onchange = () => { const f = inp.files[0]; if (!f || !f.type.startsWith('image/')) return; const g = games[+inp.dataset.g], im = new Image(); im.onload = () => { (g._ph = g._ph || {})[inp.dataset.k] = im; inp.parentElement.style.outline = '2px solid var(--mint)'; }; im.src = URL.createObjectURL(f); });
     el.querySelectorAll('.gmount').forEach((m) => { m.querySelector('button').onclick = () => launch(m, games[+m.dataset.g]); });
     linkBox(el); addPromo();
+    buildNav(el, navItems);
     scrollTo(0, 0);
   };
 
@@ -300,7 +440,7 @@
       } catch { /* no list */ }
       $('#myReports')?.remove(); if (!rows.length) return;
       const box = document.createElement('div'); box.id = 'myReports'; box.className = 'sec';
-      box.innerHTML = `<h2>${E(t('myT'))}</h2>` + rows.map((r) => `<div class="pairrow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.headline || '—')}</b><br><span style="color:var(--muted);font-size:14px">${r.done_at ? new Date(r.done_at).toLocaleDateString(L) : ''}${r.score ? ' · ' + E(r.score) + '/10' : ''}</span></div><button class="btn2" type="button" data-open="${r.id}" style="height:42px;padding:0 18px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${r.id}" style="height:42px;padding:0 18px">${E(t('mySend'))}</button></div>`).join('');
+      box.innerHTML = `<h2>${E(t('myT'))}</h2>` + rows.map((r) => `<div class="pairrow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.headline || '—')}</b><br><span style="color:var(--muted);font-size:14px">${r.done_at ? new Date(r.done_at).toLocaleDateString(L) : ''}</span></div><button class="btn2" type="button" data-open="${r.id}" style="height:42px;padding:0 18px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${r.id}" style="height:42px;padding:0 18px">${E(t('mySend'))}</button></div>`).join('');
       start.appendChild(box);
       box.querySelectorAll('[data-open]').forEach((b) => b.onclick = async () => {
         b.disabled = true;
@@ -318,15 +458,12 @@
   function validGame(g) {
     if (!g || !g.title || !g.intro) return false;
     if (g.type === 'quiz') return arr(g.rounds).filter((q) => q && q.quote && q.answer && arr(q.options).length >= 2).length >= 3;
+    if (g.type === 'trivia') return arr(g.rounds).filter((q) => q && q.q && q.answer && arr(q.options).length >= 2).length >= 3;
     return ['dodge', 'catch', 'tap'].includes(g.type);
   }
   function photoPick(g, i) {
-    const slots = g.type === 'dodge' ? [['hero', g.hero_name], ['bad', g.bad_name]] : g.type === 'catch' ? [['good', g.good_name], ['bad', g.bad_name]] : g.type === 'tap' ? [['bad', g.bad_name]] : [];
-    const ok = slots.filter(([, n]) => txt(n).trim());
     // photos are collected before the report is written, never in the shared page
     return '';
-    if (!ok.length) return '';
-    return `<div class="gph" title="${E(t('photoHint'))}">${ok.map(([k, n]) => `<label>📷 ${E(t('photoOf', { n: txt(n) }))}<input type="file" accept="image/*" data-g="${i}" data-k="${k}"></label>`).join('')}</div><p style="font-size:13px;color:var(--muted);margin:-4px 0 10px">${E(t('photoHint'))}</p>`;
   }
   function sprite(x, g, k, fallback, px, py, size) {
     const im = g._ph && g._ph[k];
@@ -336,18 +473,57 @@
       x.drawImage(im, px - w / 2, py - h / 2, w, h); x.restore();
     } else { x.font = size + 'px serif'; x.fillText(fallback, px, py); }
   }
+  /* a word falling instead of an emoji (for games built on words, like a dictionary of laughs) */
+  function pill(x, word, px, py, good) {
+    x.font = '700 17px Assistant, sans-serif';
+    const w = Math.max(44, x.measureText(word).width + 22), h = 30;
+    x.fillStyle = good ? '#7BE0B8' : '#F0507F';
+    x.beginPath(); if (x.roundRect) x.roundRect(px - w / 2, py - h / 2, w, h, 15); else x.rect(px - w / 2, py - h / 2, w, h); x.fill();
+    x.fillStyle = '#24122E'; x.fillText(word, px, py + 1);
+  }
   let stopCurrent = null;
   function launch(m, g) {
     if (stopCurrent) stopCurrent();
-    ({ dodge, catch: catchGame, tap, quiz }[g.type])(m, g);
+    ({ dodge, catch: catchGame, tap, quiz, trivia }[g.type])(m, g);
   }
   const emoji = (s, d) => (txt(s).trim() ? [...txt(s).trim()].slice(0, 6).join('') : d);
-  function overlay(box, title, line, onAgain) {
+  /* best scores stay on this device only */
+  const bestKey = (g) => 'penina_best_' + [...txt(g.type + g.title)].reduce((h, c) => ((h * 31 + c.codePointAt(0)) >>> 0), 7);
+  const getBest = (g) => { try { return +localStorage.getItem(bestKey(g)) || 0; } catch { return 0; } };
+  const setBest = (g, s) => { const b = getBest(g); if (s > b) { try { localStorage.setItem(bestKey(g), String(s)); } catch { /* private mode */ } return true; } return false; };
+  function overlay(box, title, line, onAgain, extra) {
     const o = document.createElement('div'); o.className = 'gover';
-    o.innerHTML = `<b>${E(title)}</b><div>${E(line)}</div><button class="gbtn" type="button">${E(t('again2'))}</button>`;
+    o.innerHTML = `<b>${E(title)}</b><div>${E(line)}</div>${extra ? `<div class="bst">${E(extra)}</div>` : ''}<button class="gbtn" type="button">${E(t('again2'))}</button>`;
     o.querySelector('button').onclick = () => { o.remove(); onAgain(); };
-    box.appendChild(o);
+    box.appendChild(o); o.querySelector('button').focus();
   }
+  function finish(box, g, won, score, onAgain) {
+    const nb = setBest(g, score), best = getBest(g);
+    overlay(box, won ? t('win') : t('over'), `${txt(won ? g.win_text : g.lose_text)} · ${t('score2')}: ${score}`, onAgain, nb && score > 0 ? t('newBest') : `${t('best')}: ${best}`);
+  }
+  /* real lines from the chat float in while you play */
+  function talker(box, g) {
+    const lines = arr(g.lines).filter((l) => l && l.text);
+    const b = document.createElement('div'); b.className = 'gbubble'; b.style.opacity = '0'; b.setAttribute('aria-live', 'polite'); box.appendChild(b);
+    let i = Math.floor(Math.random() * Math.max(1, lines.length)), timer = null, hide = null;
+    const say = () => {
+      if (!lines.length) return;
+      const l = lines[i++ % lines.length];
+      b.innerHTML = `<span>״${E(l.text)}״${l.who ? `<small>${E(l.who)}</small>` : ''}</span>`; b.style.opacity = '1';
+      clearTimeout(hide); hide = setTimeout(() => { b.style.opacity = '0'; }, 2600);
+    };
+    return { start() { if (lines.length) { setTimeout(say, 1200); timer = setInterval(say, 6500); } }, stop() { clearInterval(timer); clearTimeout(hide); b.remove(); } };
+  }
+  function banner(box, text, ms = 900) {
+    const d = document.createElement('div'); d.className = 'gbanner'; d.textContent = text; box.appendChild(d);
+    setTimeout(() => d.remove(), ms);
+  }
+  function countdown(box, go) {
+    const steps = [t('ready'), '3', '2', '1'];
+    let i = 0; const next = () => { if (i >= steps.length) return go(); banner(box, steps[i++], 560); setTimeout(next, 600); };
+    next();
+  }
+  const shake = (box) => { box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); };
   function canvasBox(m, hint) {
     m.innerHTML = `<div class="ghud"><span class="hl"></span><span class="hr"></span></div><div class="gbox"><canvas></canvas></div><p style="margin:10px 0 0;font-size:14px;color:var(--muted);text-align:center">${E(hint)}</p>`;
     const box = m.querySelector('.gbox'), cv = m.querySelector('canvas');
@@ -358,81 +534,163 @@
   }
   const heart = (n) => '❤️'.repeat(Math.max(0, n)) || '💔';
 
-  /* arcade: something falls, you move left and right. kind 'dodge' = avoid it, kind 'catch' = catch the good one, avoid the bad one */
+  /* arcade: things fall, you move left and right.
+     dodge = avoid them (a power-up gives a short shield); catch = catch the good ones (words or emoji), avoid the bad.
+     levels speed up every 10 seconds, catches in a row multiply the points */
   function arcade(m, g, kind) {
-    const hero = kind === 'dodge' ? emoji(g.hero_emoji, '🙂') : '🧺', bad = emoji(g.bad_emoji, kind === 'dodge' ? '🚗' : '💣'), good = emoji(g.good_emoji, '⭐');
+    const hero = kind === 'dodge' ? emoji(g.hero_emoji, '🙂') : '🧺', bad = emoji(g.bad_emoji, kind === 'dodge' ? '🚗' : '💣'), good = emoji(g.good_emoji, '⭐'), power = txt(g.power_emoji).trim() ? emoji(g.power_emoji, '⭐') : '';
+    const goodW = arr(g.good_words).map(txt).filter(Boolean), badW = arr(g.bad_words).map(txt).filter(Boolean);
     const C = canvasBox(m, t('hint1')), { box, cv, x, W, H } = C;
-    let px, lives, score, items, raf, last, t0, keys, dead, spawnAcc;
-    const DURATION = 40;
-    function reset() { px = W / 2; lives = 3; score = 0; items = []; keys = {}; dead = false; spawnAcc = 0; t0 = last = performance.now(); raf = requestAnimationFrame(frame); }
-    function end(won) {
-      dead = true; cancelAnimationFrame(raf); stopCurrent = null;
-      overlay(box, won ? t('win') : t('over'), `${txt(won ? g.win_text : g.lose_text)} · ${t('score2')}: ${score}`, reset);
+    const talk = talker(box, g);
+    let px, lives, score, items, raf, last, t0, keys, dead, spawnAcc, level, combo, shield, parts, pops, nextPower;
+    const DURATION = 45;
+    function reset() {
+      px = W / 2; lives = 3; score = 0; items = []; keys = {}; dead = false; spawnAcc = 0; level = 1; combo = 0; shield = 0; parts = []; pops = []; nextPower = 7 + Math.random() * 4;
+      draw(0); C.hl.textContent = heart(lives); C.hr.textContent = `${t('best')}: ${getBest(g)}`;
+      countdown(box, () => { if (dead) return; t0 = last = performance.now(); talk.start(); raf = requestAnimationFrame(frame); });
+    }
+    function end(won) { dead = true; cancelAnimationFrame(raf); talk.stop(); stopCurrent = null; finish(box, g, won, score, () => { stopCurrent = stop; Object.assign(talk, talker(box, g)); reset(); }); }
+    function burst(px2, py2, col) { for (let i = 0; i < 14; i++) { const a = Math.random() * 7, v = 60 + Math.random() * 160; parts.push({ x: px2, y: py2, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.6, col }); } }
+    function draw(el) {
+      x.clearRect(0, 0, W, H);
+      const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2a1536'); bg.addColorStop(1, '#1b0d24'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+      x.fillStyle = 'rgba(255,196,107,.9)'; x.fillRect(0, 0, W * Math.min(1, el / DURATION), 4);
+      for (const it of items) {
+        if (it.word) pill(x, it.word, it.x, it.y, it.good);
+        else if (it.power) { x.save(); x.shadowColor = '#FFC46B'; x.shadowBlur = 18; x.font = '36px serif'; x.fillText(power, it.x, it.y); x.restore(); }
+        else it.good ? sprite(x, g, 'good', good, it.x, it.y, 38) : sprite(x, g, 'bad', bad, it.x, it.y, 38);
+      }
+      if (shield > 0) { x.save(); x.strokeStyle = 'rgba(123,224,184,' + (0.5 + 0.4 * Math.sin(el * 12)) + ')'; x.lineWidth = 4; x.beginPath(); x.arc(px, H - 44, 34, 0, 7); x.stroke(); x.restore(); }
+      sprite(x, g, 'hero', hero, px, H - 44, 46);
+      for (const p of parts) { x.globalAlpha = Math.max(0, p.life / 0.6); x.fillStyle = p.col; x.fillRect(p.x - 3, p.y - 3, 6, 6); }
+      x.globalAlpha = 1;
+      for (const p of pops) { x.globalAlpha = Math.max(0, p.life); x.font = '800 18px Assistant, sans-serif'; x.fillStyle = p.col; x.fillText(p.t, p.x, p.y); }
+      x.globalAlpha = 1;
     }
     function frame(now) {
       if (dead) return;
       const dt = Math.min(0.05, (now - last) / 1000); last = now; const el = (now - t0) / 1000;
-      if (keys.ArrowLeft) px -= 330 * dt; if (keys.ArrowRight) px += 330 * dt; px = Math.max(24, Math.min(W - 24, px));
-      spawnAcc += dt * (1.1 + el * 0.045);
-      while (spawnAcc >= 1) { spawnAcc -= 1; const isGood = kind === 'catch' && Math.random() < 0.55; items.push({ x: 24 + Math.random() * (W - 48), y: -30, v: 110 + el * 5 + Math.random() * 70, good: isGood }); }
+      const lv = 1 + Math.floor(el / 10); if (lv !== level) { level = lv; banner(box, t('level', { n: level })); }
+      if (keys.ArrowLeft) px -= 340 * dt; if (keys.ArrowRight) px += 340 * dt; px = Math.max(24, Math.min(W - 24, px));
+      spawnAcc += dt * (1.05 + el * 0.05 + (level - 1) * 0.25);
+      while (spawnAcc >= 1) {
+        spawnAcc -= 1;
+        const isGood = kind === 'catch' && Math.random() < 0.55;
+        const it = { x: 26 + Math.random() * (W - 52), y: -30, v: 105 + el * 4 + (level - 1) * 22 + Math.random() * 70, good: isGood };
+        if (kind === 'catch' && (isGood ? goodW : badW).length) { const ws = isGood ? goodW : badW; it.word = ws[Math.floor(Math.random() * ws.length)]; }
+        items.push(it);
+      }
+      if (power && el > nextPower) { items.push({ x: 26 + Math.random() * (W - 52), y: -30, v: 120, power: true }); nextPower = el + 9 + Math.random() * 5; }
       for (const it of items) it.y += it.v * dt;
+      shield = Math.max(0, shield - dt);
       items = items.filter((it) => {
-        const hit = Math.abs(it.x - px) < 30 && Math.abs(it.y - (H - 44)) < 32;
-        if (hit) { if (kind === 'dodge') lives--; else if (it.good) score++; else lives--; return false; }
-        if (it.y > H + 30) { if (kind === 'dodge') score++; return false; }
+        const hit = Math.abs(it.x - px) < (it.word ? 40 : 30) && Math.abs(it.y - (H - 44)) < 32;
+        if (hit) {
+          if (it.power) { shield = 4.5; if (lives < 3 && kind !== 'dodge') lives++; pops.push({ t: txt(g.power_name) || '★', x: it.x, y: it.y - 20, life: 1, col: '#FFC46B' }); burst(it.x, it.y, '#FFC46B'); return false; }
+          if (kind === 'dodge') { if (shield > 0) { burst(it.x, it.y, '#7BE0B8'); score += 2; } else { lives--; shake(box); burst(it.x, it.y, '#F0507F'); } }
+          else if (it.good) { combo++; const mult = combo >= 10 ? 3 : combo >= 5 ? 2 : 1; score += mult; pops.push({ t: '+' + mult, x: it.x, y: it.y - 20, life: 1, col: '#7BE0B8' }); burst(it.x, it.y, '#7BE0B8'); if (combo === 5 || combo === 10) banner(box, '×' + mult, 600); }
+          else { lives--; combo = 0; shake(box); burst(it.x, it.y, '#F0507F'); }
+          C.hl.textContent = heart(lives);
+          return false;
+        }
+        if (it.y > H + 30) { if (kind === 'dodge' && !it.power) score++; else if (it.good) combo = 0; return false; }
         return true;
       });
-      x.clearRect(0, 0, W, H);
-      const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2a1536'); bg.addColorStop(1, '#1b0d24'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
-      for (const it of items) it.good ? sprite(x, g, 'good', good, it.x, it.y, 38) : sprite(x, g, 'bad', bad, it.x, it.y, 38);
-      sprite(x, g, 'hero', hero, px, H - 44, 46);
-      C.hl.textContent = heart(lives); C.hr.textContent = `${t('score2')}: ${score} · ${Math.max(0, Math.ceil(DURATION - el))}`;
+      for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt; }
+      parts = parts.filter((p) => p.life > 0);
+      for (const p of pops) { p.y -= 40 * dt; p.life -= dt; }
+      pops = pops.filter((p) => p.life > 0);
+      draw(el);
+      C.hr.textContent = `${t('score2')}: ${score} · ${Math.max(0, Math.ceil(DURATION - el))}`;
       if (lives <= 0) return end(false);
       if (el >= DURATION) return end(true);
       raf = requestAnimationFrame(frame);
     }
     const mv = (e) => { const r = cv.getBoundingClientRect(); px = (e.clientX - r.left) / r.width * W; };
     cv.addEventListener('pointermove', mv); cv.addEventListener('pointerdown', mv);
+    cv.style.touchAction = 'none';
     const kd = (e) => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { keys[e.key] = true; e.preventDefault(); } }, ku = (e) => { keys[e.key] = false; };
     addEventListener('keydown', kd); addEventListener('keyup', ku);
-    stopCurrent = () => { dead = true; cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); m.innerHTML = `<button class="gbtn" type="button">${E(t('play'))}</button>`; m.querySelector('button').onclick = () => launch(m, g); };
+    const stop = () => { dead = true; cancelAnimationFrame(raf); talk.stop(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); m.innerHTML = `<button class="gbtn" type="button">${E(t('play'))}</button>`; m.querySelector('button').onclick = () => launch(m, g); };
+    stopCurrent = stop;
     reset();
   }
   const dodge = (m, g) => arcade(m, g, 'dodge');
   const catchGame = (m, g) => arcade(m, g, 'catch');
 
+  /* tap: hit the target as it pops up, never the decoy. it gets faster, quick hits in a row count double */
   function tap(m, g) {
-    const target = emoji(g.bad_emoji, '🎯');
-    m.innerHTML = `<div class="ghud"><span class="hl"></span><span class="hr"></span></div><div class="gbox"><div class="holes">${Array.from({ length: 9 }, () => '<button class="hole" type="button" aria-label="' + E(txt(g.bad_name) || target) + '"></button>').join('')}</div></div><p style="margin:10px 0 0;font-size:14px;color:var(--muted);text-align:center">${E(t('hint2'))}</p>`;
+    const target = emoji(g.bad_emoji, '🎯'), decoy = txt(g.decoy_emoji).trim() ? emoji(g.decoy_emoji, '🙂') : '';
+    m.innerHTML = `<div class="ghud"><span class="hl"></span><span class="hr"></span></div><div class="gbox"><div class="holes">${Array.from({ length: 9 }, () => '<button class="hole" type="button"></button>').join('')}</div></div><p style="margin:10px 0 0;font-size:14px;color:var(--muted);text-align:center">${E(t('hint2'))}${decoy ? ' · ' + E(t('avoid', { n: txt(g.decoy_name) || decoy })) : ''}</p>`;
     const box = m.querySelector('.gbox'), holes = [...m.querySelectorAll('.hole')], hl = m.querySelector('.hl'), hr = m.querySelector('.hr');
-    let score = 0, left = 30, timer, popper, dead = false;
-    const clear = () => holes.forEach((h) => { h.textContent = ''; h.innerHTML = ''; h.dataset.on = ''; });
-    function pop() { clear(); const h = holes[Math.floor(Math.random() * 9)]; if (g._ph && g._ph.bad) { h.innerHTML = ''; const im = g._ph.bad.cloneNode(); im.style.cssText = 'width:80%;height:80%;object-fit:cover;border-radius:50%'; h.appendChild(im); } else h.textContent = target; h.dataset.on = '1'; popper = setTimeout(pop, 650 + Math.random() * 350); }
-    function stop(won) { dead = true; clearInterval(timer); clearTimeout(popper); clear(); stopCurrent = null; overlay(box, won ? t('win') : t('over'), `${txt(won ? g.win_text : g.lose_text)} · ${t('score2')}: ${score}`, () => tap(m, g)); }
-    holes.forEach((h) => h.onclick = () => { if (dead || h.dataset.on !== '1') return; score++; h.dataset.on = ''; h.textContent = '💥'; hl.textContent = `${t('score2')}: ${score}`; });
-    hl.textContent = `${t('score2')}: 0`; hr.textContent = String(left);
-    timer = setInterval(() => { left--; hr.textContent = String(left); if (left <= 0) stop(score >= 12); }, 1000);
-    pop();
-    stopCurrent = () => { dead = true; clearInterval(timer); clearTimeout(popper); m.innerHTML = `<button class="gbtn" type="button">${E(t('play'))}</button>`; m.querySelector('button').onclick = () => launch(m, g); };
+    const talk = talker(box, g);
+    let score = 0, left = 35, lives = 3, timer, popper, dead = false, lastHit = 0, streak = 0;
+    const face = (h, kind) => {
+      h.innerHTML = ''; h.classList.toggle('decoy', kind === 'decoy');
+      const im = g._ph && g._ph[kind === 'decoy' ? 'decoy' : 'bad'];
+      if (im) { const c = im.cloneNode(); c.style.cssText = 'width:80%;height:80%;object-fit:cover;border-radius:50%'; h.appendChild(c); } else h.textContent = kind === 'decoy' ? decoy : target;
+      h.dataset.on = kind; h.setAttribute('aria-label', kind === 'decoy' ? (txt(g.decoy_name) || decoy) : (txt(g.bad_name) || target));
+    };
+    const clear = () => holes.forEach((h) => { h.textContent = ''; h.innerHTML = ''; h.dataset.on = ''; h.classList.remove('decoy'); h.removeAttribute('aria-label'); });
+    const hud = () => { hl.textContent = `${t('score2')}: ${score}${decoy ? ' · ' + heart(lives) : ''}`; hr.textContent = String(left); };
+    function pop() {
+      clear();
+      const speed = Math.max(380, 760 - (35 - left) * 12);
+      const a = Math.floor(Math.random() * 9); face(holes[a], decoy && Math.random() < 0.28 ? 'decoy' : 'target');
+      if (left < 20 && Math.random() < 0.5) { let b = Math.floor(Math.random() * 9); if (b === a) b = (b + 4) % 9; face(holes[b], 'target'); }
+      popper = setTimeout(pop, speed + Math.random() * 260);
+    }
+    function stop(won) { dead = true; clearInterval(timer); clearTimeout(popper); clear(); talk.stop(); stopCurrent = null; finish(box, g, won, score, () => tap(m, g)); }
+    holes.forEach((h) => h.onclick = () => {
+      if (dead || !h.dataset.on) return;
+      if (h.dataset.on === 'decoy') { lives--; streak = 0; h.dataset.on = ''; h.textContent = '😬'; shake(box); hud(); if (lives <= 0) stop(false); return; }
+      const now = performance.now(); streak = now - lastHit < 900 ? streak + 1 : 1; lastHit = now;
+      const pts = streak >= 3 ? 2 : 1; score += pts; h.dataset.on = ''; h.textContent = pts > 1 ? '💥×2' : '💥'; hud();
+    });
+    hud();
+    countdown(box, () => {
+      if (dead) return;
+      talk.start();
+      timer = setInterval(() => { left--; hud(); if (left <= 0) stop(score >= 18); }, 1000);
+      pop();
+    });
+    stopCurrent = () => { dead = true; clearInterval(timer); clearTimeout(popper); talk.stop(); m.innerHTML = `<button class="gbtn" type="button">${E(t('play'))}</button>`; m.querySelector('button').onclick = () => launch(m, g); };
   }
 
-  function quiz(m, g) {
-    const rounds = arr(g.rounds).filter((q) => q && q.quote && q.answer && arr(q.options).length >= 2).slice(0, 8);
-    let i = 0, right = 0;
+  /* quiz ("who wrote this?") and trivia ("what really happened?") share one board: a note after each answer, a streak, progress dots */
+  function board(m, g, rounds, ask, resKey) {
+    let i = 0, right = 0, streak = 0; const marks = [];
     const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
+    const dots = () => `<div class="qdots" aria-hidden="true">${rounds.map((_, k) => `<i class="${marks[k] || ''}"></i>`).join('')}</div>`;
     function show() {
-      if (i >= rounds.length) { m.innerHTML = `<div class="gover" style="position:static;background:none"><b>${E(right >= rounds.length / 2 ? t('win') : t('over'))}</b><div>${E(t('quizRes', { n: right, t: rounds.length }))}</div><button class="gbtn" type="button">${E(t('again2'))}</button></div>`; m.querySelector('button').onclick = () => { i = 0; right = 0; show(); }; return; }
+      if (i >= rounds.length) {
+        const nb = setBest(g, right), won = right >= rounds.length / 2;
+        m.innerHTML = `<div class="gover" style="position:static;background:none"><b>${E(won ? t('win') : t('over'))}</b><div>${E(t(resKey, { n: right, t: rounds.length }))}</div><div class="bst">${E(nb && right > 0 ? t('newBest') : `${t('best')}: ${getBest(g)}`)}</div>${dots()}<button class="gbtn" type="button">${E(t('again2'))}</button></div>`;
+        m.querySelector('button').onclick = () => { i = 0; right = 0; streak = 0; marks.length = 0; show(); }; return;
+      }
       const q = rounds[i], opts = shuffle(arr(q.options).map(txt));
       if (!opts.includes(txt(q.answer))) opts[0] = txt(q.answer);
-      m.innerHTML = `<div class="ghud"><span>${E(t('quizQ'))}</span><span>${i + 1}/${rounds.length}</span></div><blockquote style="border:0;padding:6px 0 0"><q>${E(q.quote)}</q></blockquote><div class="qopts">${opts.map((o) => `<button class="qopt" type="button">${E(o)}</button>`).join('')}</div>`;
+      m.innerHTML = `<div class="ghud"><span>${E(ask(q).label)}</span><span>${i + 1}/${rounds.length}${streak >= 2 ? ` · ${E(t('streak'))} ${streak}🔥` : ''}</span></div>${ask(q).body}<div class="qopts">${opts.map((o) => `<button class="qopt" type="button">${E(o)}</button>`).join('')}</div><p class="qnote" aria-live="polite"></p>${dots()}`;
       m.querySelectorAll('.qopt').forEach((b) => b.onclick = () => {
-        const ok = b.textContent === txt(q.answer); if (ok) right++;
-        m.querySelectorAll('.qopt').forEach((x) => { x.disabled = true; if (x.textContent === txt(q.answer)) x.classList.add('ok'); });
+        const ok = b.textContent === txt(q.answer); if (ok) { right++; streak++; } else streak = 0;
+        marks[i] = ok ? 'ok' : 'no';
+        m.querySelectorAll('.qopt').forEach((x2) => { x2.disabled = true; if (x2.textContent === txt(q.answer)) x2.classList.add('ok'); });
         if (!ok) b.classList.add('no');
-        setTimeout(() => { i++; show(); }, 1100);
+        const note = m.querySelector('.qnote'); if (q.note) note.textContent = txt(q.note);
+        const nx = document.createElement('button'); nx.className = 'gbtn'; nx.type = 'button'; nx.style.marginTop = '10px'; nx.textContent = t('next') + (RTL[L] ? ' ←' : ' →');
+        nx.onclick = () => { i++; show(); };
+        if (q.note) { note.after(nx); nx.focus(); } else setTimeout(() => { i++; show(); }, 1100);
       });
     }
     stopCurrent = () => { m.innerHTML = `<button class="gbtn" type="button">${E(t('play'))}</button>`; m.querySelector('button').onclick = () => launch(m, g); };
     show();
+  }
+  function quiz(m, g) {
+    const rounds = arr(g.rounds).filter((q) => q && q.quote && q.answer && arr(q.options).length >= 2).slice(0, 12);
+    board(m, g, rounds, (q) => ({ label: t('quizQ'), body: `<blockquote style="border:0;padding:6px 0 0"><q>${E(q.quote)}</q></blockquote>` }), 'quizRes');
+  }
+  function trivia(m, g) {
+    const rounds = arr(g.rounds).filter((q) => q && q.q && q.answer && arr(q.options).length >= 2).slice(0, 12);
+    board(m, g, rounds, (q) => ({ label: txt(g.title), body: `<p style="font-family:var(--fd);font-size:22px;line-height:1.3;margin:10px 0 0">${E(q.q)}</p>` }), 'triviaRes');
   }
 })();
