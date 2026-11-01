@@ -223,7 +223,7 @@ async function openChat(f){
   try{
     const text=await PeninaChat.readFile(f);const msgs=PeninaChat.parse(text);
     if(!msgs.length)throw 0;if(msgs.length<50)return $('#readMsg').textContent=t('tooSmall');
-    EXCERPT=PeninaChat.excerpt(msgs);STATS=PeninaChat.stats(msgs);STATS.sizeMb=mb;REPORT=null;saveLocal();$('#report').classList.add('hide');
+    EXCERPT=PeninaChat.excerpt(msgs);STATS=PeninaChat.stats(msgs);STATS.sizeMb=mb;if(window.PNames)PNames.fix();REPORT=null;saveLocal();$('#report').classList.add('hide');
     $('#start').classList.add('hide');$('#local').classList.remove('hide');renderLocal();scrollTo(0,0);
   }catch(e){ $('#readMsg').textContent=(e instanceof RangeError||/memory|allocation/i.test(String(e&&e.message)))?t('memBig'):t('badFile') }
 }
@@ -275,13 +275,7 @@ function goBtn(){
   if(REQ?.status==='pending'){b.textContent=t('check');m.textContent=t('pending');pollReq=setInterval(async()=>{if(document.hidden)return;await loadReq();if(REQ?.status!=='pending')goBtn()},20000);return}
   b.textContent=t('request');if(REQ?.status==='declined')m.textContent=t('declined');
 }
-async function attachOld(){
-  if(!sb||!USER||!REPORT||!REPORT.headline||!BACKEND)return;
-  const mark='penina.att.'+USER.id+'.'+String(REPORT.headline).slice(0,40);
-  try{if(localStorage.getItem(mark))return}catch{}
-  try{const r=await sb.rpc('pn_attach_report',{p_report:REPORT});if(!r.error){try{localStorage.setItem(mark,'1')}catch{}}}catch{}
-}
-async function refreshAsk(){await loadReq();attachOld();$('#askMsg').textContent='';goBtn()}
+async function refreshAsk(){await loadReq();$('#askMsg').textContent='';goBtn()}
 
 $('#goBtn').onclick=async()=>{
   const m=$('#askMsg');m.textContent='';

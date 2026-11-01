@@ -2,12 +2,12 @@
 'use strict';
 (function () {
   const X = {
-    he: { lnk:'קישור לשיתוף עם חברים',lnkOk:'הקישור הועתק. כל מי שיש לו אותו יכול לראות את הדוח.',lnkOff:'לבטל את הקישור',lnkGone:'הקישור בוטל',tips:'טיפים מפנינה',photoHint:'אפשר להעלות תמונה כדי שהיא תופיע במשחק. לא חובה, התמונה נשארת רק אצלכם ולא נספרת ב־MB.',photoOf:'תמונה של {n}',tooBig:'הקובץ גדול מ־5GB. ייצאו את הצ׳אט ללא מדיה.',memBig:'הקובץ גדול מדי לדפדפן. ייצאו את הצ׳אט ללא מדיה.',qLoad: 'פנינה חושבת על שאלות…', qTitle: 'לפני שפנינה כותבת', qSub: 'כמה שאלות קצרות כדי שהדוח יהיה שלכם. אפשר לדלג על כל שאלה.', qGo: 'לכתוב את הדוח', qSkip: 'לדלג ולכתוב', awards: 'פרסים', cases: 'המקרים', jokes: 'בדיחות פנימיות', pairs: 'מי עם מי', eras: 'הצ׳אט לאורך הזמן', games: 'משחקונים', habits: 'הרגלים', sig: 'אמרות כנף', fact: 'עובדה', more: 'עוד {n} מקרים', play: 'לשחק', start: 'התחל', again2: 'עוד פעם', score2: 'ניקוד', hint1: 'גררו אצבע או לחצו על החצים', hint2: 'לחצו מהר על הדמות שקופצת', quizQ: 'מי כתב את זה?', quizRes: 'צדקתם ב־{n} מתוך {t}', win: 'כל הכבוד!', over: 'נגמר' },
-    en: { lnk:'Link to share with friends',lnkOk:'Link copied. Anyone who has it can see the report.',lnkOff:'Turn the link off',lnkGone:'Link turned off',tips:'Tips from Penina',photoHint:'You can add a picture to appear in the game. Optional; it stays on your device and is not counted in your MB.',photoOf:'Picture of {n}',tooBig:'The file is over 5 GB. Export the chat without media.',memBig:'The file is too big for the browser. Export the chat without media.',qLoad: 'Penina is thinking of questions…', qTitle: 'Before Penina writes', qSub: 'A few short questions to make the report yours. Skip any you like.', qGo: 'Write the report', qSkip: 'Skip and write', awards: 'Awards', cases: 'The cases', jokes: 'Inside jokes', pairs: 'Who with whom', eras: 'The chat through time', games: 'Little games', habits: 'Habits', sig: 'Signature lines', fact: 'Fact', more: '{n} more cases', play: 'Play', start: 'Start', again2: 'Again', score2: 'Score', hint1: 'Drag your finger or use the arrow keys', hint2: 'Tap the character fast', quizQ: 'Who wrote this?', quizRes: 'You got {n} of {t}', win: 'Well done!', over: 'Game over' },
-    ar: { lnk:'رابط للمشاركة مع الأصدقاء',lnkOk:'تم نسخ الرابط. كل من لديه الرابط يستطيع رؤية التقرير.',lnkOff:'إلغاء الرابط',lnkGone:'تم إلغاء الرابط',tips:'نصائح من بنينا',photoHint:'يمكنكم إضافة صورة لتظهر في اللعبة. اختياري، تبقى الصورة على جهازكم ولا تُحسب ضمن الميغابايت.',photoOf:'صورة {n}',tooBig:'الملف أكبر من 5 غيغابايت. صدّروا المحادثة بدون وسائط.',memBig:'الملف كبير جدًا للمتصفح. صدّروا المحادثة بدون وسائط.',qLoad: 'بنينا تفكر في أسئلة…', qTitle: 'قبل أن تكتب بنينا', qSub: 'بعض الأسئلة القصيرة لتصبح القراءة لكم. يمكنكم تخطي أي سؤال.', qGo: 'كتابة التقرير', qSkip: 'تخطٍّ والكتابة', awards: 'الجوائز', cases: 'المواقف', jokes: 'نكات داخلية', pairs: 'من مع من', eras: 'المحادثة عبر الزمن', games: 'ألعاب صغيرة', habits: 'العادات', sig: 'عبارات مميزة', fact: 'معلومة', more: '{n} مواقف أخرى', play: 'العب', start: 'ابدأ', again2: 'مرة أخرى', score2: 'النقاط', hint1: 'اسحبوا بإصبعكم أو استخدموا الأسهم', hint2: 'اضغطوا بسرعة على الشخصية', quizQ: 'من كتب هذا؟', quizRes: 'أجبتم صح على {n} من {t}', win: 'أحسنتم!', over: 'انتهت اللعبة' },
-    ru: { lnk:'Ссылка для друзей',lnkOk:'Ссылка скопирована. Любой, у кого она есть, увидит отчёт.',lnkOff:'Отключить ссылку',lnkGone:'Ссылка отключена',tips:'Советы от Пнины',photoHint:'Можно добавить картинку для игры. Необязательно, она остаётся у вас и не считается в МБ.',photoOf:'Фото: {n}',tooBig:'Файл больше 5 ГБ. Экспортируйте чат без медиа.',memBig:'Файл слишком большой для браузера. Экспортируйте чат без медиа.',qLoad: 'Пнина придумывает вопросы…', qTitle: 'Перед тем как Пнина напишет', qSub: 'Несколько коротких вопросов, чтобы отчёт был вашим. Любой можно пропустить.', qGo: 'Написать отчёт', qSkip: 'Пропустить и написать', awards: 'Награды', cases: 'Случаи', jokes: 'Внутренние шутки', pairs: 'Кто с кем', eras: 'Чат во времени', games: 'Мини-игры', habits: 'Привычки', sig: 'Коронные фразы', fact: 'Факт', more: 'Ещё {n} случаев', play: 'Играть', start: 'Старт', again2: 'Ещё раз', score2: 'Счёт', hint1: 'Проведите пальцем или используйте стрелки', hint2: 'Быстро жмите на персонажа', quizQ: 'Кто это написал?', quizRes: 'Верно {n} из {t}', win: 'Отлично!', over: 'Игра окончена' },
-    es: { lnk:'Enlace para compartir con amigos',lnkOk:'Enlace copiado. Quien lo tenga puede ver el informe.',lnkOff:'Desactivar el enlace',lnkGone:'Enlace desactivado',tips:'Consejos de Penina',photoHint:'Puedes añadir una imagen para el juego. Es opcional, se queda en tu dispositivo y no cuenta en tus MB.',photoOf:'Imagen de {n}',tooBig:'El archivo supera 5 GB. Exporta el chat sin archivos.',memBig:'El archivo es demasiado grande para el navegador. Exporta el chat sin archivos.',qLoad: 'Penina está pensando preguntas…', qTitle: 'Antes de que Penina escriba', qSub: 'Unas preguntas cortas para que el informe sea vuestro. Puedes saltarte cualquiera.', qGo: 'Escribir el informe', qSkip: 'Saltar y escribir', awards: 'Premios', cases: 'Los casos', jokes: 'Chistes internos', pairs: 'Quién con quién', eras: 'El chat a lo largo del tiempo', games: 'Minijuegos', habits: 'Hábitos', sig: 'Frases típicas', fact: 'Dato', more: '{n} casos más', play: 'Jugar', start: 'Empezar', again2: 'Otra vez', score2: 'Puntos', hint1: 'Arrastra el dedo o usa las flechas', hint2: 'Toca rápido al personaje', quizQ: '¿Quién escribió esto?', quizRes: 'Acertaste {n} de {t}', win: '¡Bien hecho!', over: 'Fin del juego' },
-    fr: { lnk:'Lien à partager avec des amis',lnkOk:'Lien copié. Toute personne qui l’a peut voir le rapport.',lnkOff:'Désactiver le lien',lnkGone:'Lien désactivé',tips:'Conseils de Penina',photoHint:'Vous pouvez ajouter une image pour le jeu. Facultatif, elle reste sur votre appareil et n’est pas comptée dans vos Mo.',photoOf:'Image de {n}',tooBig:'Le fichier dépasse 5 Go. Exportez le chat sans médias.',memBig:'Le fichier est trop grand pour le navigateur. Exportez le chat sans médias.',qLoad: 'Penina réfléchit à des questions…', qTitle: 'Avant que Penina écrive', qSub: 'Quelques questions courtes pour que le rapport soit à vous. Vous pouvez en passer.', qGo: 'Écrire le rapport', qSkip: 'Passer et écrire', awards: 'Prix', cases: 'Les cas', jokes: 'Blagues internes', pairs: 'Qui avec qui', eras: 'Le chat à travers le temps', games: 'Mini-jeux', habits: 'Habitudes', sig: 'Phrases cultes', fact: 'Fait', more: '{n} cas de plus', play: 'Jouer', start: 'Démarrer', again2: 'Encore', score2: 'Score', hint1: 'Glissez le doigt ou utilisez les flèches', hint2: 'Touchez vite le personnage', quizQ: 'Qui a écrit ça ?', quizRes: 'Vous avez {n} sur {t}', win: 'Bravo !', over: 'Fin de la partie' },
+    he: { img:'תמונה לסטורי',nmT:'מי זה? (לא חובה)',nmS:'אם מישהו לא שמור אצלך או שמור לא טוב, כתבו איך פנינה תקרא לו בדוח.',nmGo:'עדכון שמות',nmMore:'שמות נוספים',nmP:'משתתף',lnk:'קישור לשיתוף עם חברים',lnkOk:'הקישור הועתק. כל מי שיש לו אותו יכול לראות את הדוח.',lnkOff:'לבטל את הקישור',lnkGone:'הקישור בוטל',tips:'טיפים מפנינה',photoHint:'אפשר להעלות תמונה כדי שהיא תופיע במשחק. לא חובה, התמונה נשארת רק אצלכם ולא נספרת ב־MB.',photoOf:'תמונה של {n}',tooBig:'הקובץ גדול מ־5GB. ייצאו את הצ׳אט ללא מדיה.',memBig:'הקובץ גדול מדי לדפדפן. ייצאו את הצ׳אט ללא מדיה.',qLoad: 'פנינה חושבת על שאלות…', qTitle: 'לפני שפנינה כותבת', qSub: 'כמה שאלות קצרות כדי שהדוח יהיה שלכם. אפשר לדלג על כל שאלה.', qGo: 'לכתוב את הדוח', qSkip: 'לדלג ולכתוב', awards: 'פרסים', cases: 'המקרים', jokes: 'בדיחות פנימיות', pairs: 'מי עם מי', eras: 'הצ׳אט לאורך הזמן', games: 'משחקונים', habits: 'הרגלים', sig: 'אמרות כנף', fact: 'עובדה', more: 'עוד {n} מקרים', play: 'לשחק', start: 'התחל', again2: 'עוד פעם', score2: 'ניקוד', hint1: 'גררו אצבע או לחצו על החצים', hint2: 'לחצו מהר על הדמות שקופצת', quizQ: 'מי כתב את זה?', quizRes: 'צדקתם ב־{n} מתוך {t}', win: 'כל הכבוד!', over: 'נגמר' },
+    en: { img:'Story image',nmT:'Who is this? (optional)',nmS:'If someone isn’t saved in your contacts, or saved badly, write what Penina should call them in the report.',nmGo:'Update names',nmMore:'More names',nmP:'Person',lnk:'Link to share with friends',lnkOk:'Link copied. Anyone who has it can see the report.',lnkOff:'Turn the link off',lnkGone:'Link turned off',tips:'Tips from Penina',photoHint:'You can add a picture to appear in the game. Optional; it stays on your device and is not counted in your MB.',photoOf:'Picture of {n}',tooBig:'The file is over 5 GB. Export the chat without media.',memBig:'The file is too big for the browser. Export the chat without media.',qLoad: 'Penina is thinking of questions…', qTitle: 'Before Penina writes', qSub: 'A few short questions to make the report yours. Skip any you like.', qGo: 'Write the report', qSkip: 'Skip and write', awards: 'Awards', cases: 'The cases', jokes: 'Inside jokes', pairs: 'Who with whom', eras: 'The chat through time', games: 'Little games', habits: 'Habits', sig: 'Signature lines', fact: 'Fact', more: '{n} more cases', play: 'Play', start: 'Start', again2: 'Again', score2: 'Score', hint1: 'Drag your finger or use the arrow keys', hint2: 'Tap the character fast', quizQ: 'Who wrote this?', quizRes: 'You got {n} of {t}', win: 'Well done!', over: 'Game over' },
+    ar: { img:'صورة للستوري',nmT:'من هذا؟ (اختياري)',nmS:'إذا كان أحدهم غير محفوظ عندكم أو محفوظًا بشكل سيئ، اكتبوا بماذا تناديه بنينا في التقرير.',nmGo:'تحديث الأسماء',nmMore:'أسماء أخرى',nmP:'مشارك',lnk:'رابط للمشاركة مع الأصدقاء',lnkOk:'تم نسخ الرابط. كل من لديه الرابط يستطيع رؤية التقرير.',lnkOff:'إلغاء الرابط',lnkGone:'تم إلغاء الرابط',tips:'نصائح من بنينا',photoHint:'يمكنكم إضافة صورة لتظهر في اللعبة. اختياري، تبقى الصورة على جهازكم ولا تُحسب ضمن الميغابايت.',photoOf:'صورة {n}',tooBig:'الملف أكبر من 5 غيغابايت. صدّروا المحادثة بدون وسائط.',memBig:'الملف كبير جدًا للمتصفح. صدّروا المحادثة بدون وسائط.',qLoad: 'بنينا تفكر في أسئلة…', qTitle: 'قبل أن تكتب بنينا', qSub: 'بعض الأسئلة القصيرة لتصبح القراءة لكم. يمكنكم تخطي أي سؤال.', qGo: 'كتابة التقرير', qSkip: 'تخطٍّ والكتابة', awards: 'الجوائز', cases: 'المواقف', jokes: 'نكات داخلية', pairs: 'من مع من', eras: 'المحادثة عبر الزمن', games: 'ألعاب صغيرة', habits: 'العادات', sig: 'عبارات مميزة', fact: 'معلومة', more: '{n} مواقف أخرى', play: 'العب', start: 'ابدأ', again2: 'مرة أخرى', score2: 'النقاط', hint1: 'اسحبوا بإصبعكم أو استخدموا الأسهم', hint2: 'اضغطوا بسرعة على الشخصية', quizQ: 'من كتب هذا؟', quizRes: 'أجبتم صح على {n} من {t}', win: 'أحسنتم!', over: 'انتهت اللعبة' },
+    ru: { img:'Картинка для истории',nmT:'Кто это? (необязательно)',nmS:'Если кто-то не сохранён в контактах или сохранён неудачно, напишите, как Пнина будет его называть в отчёте.',nmGo:'Обновить имена',nmMore:'Другие имена',nmP:'Участник',lnk:'Ссылка для друзей',lnkOk:'Ссылка скопирована. Любой, у кого она есть, увидит отчёт.',lnkOff:'Отключить ссылку',lnkGone:'Ссылка отключена',tips:'Советы от Пнины',photoHint:'Можно добавить картинку для игры. Необязательно, она остаётся у вас и не считается в МБ.',photoOf:'Фото: {n}',tooBig:'Файл больше 5 ГБ. Экспортируйте чат без медиа.',memBig:'Файл слишком большой для браузера. Экспортируйте чат без медиа.',qLoad: 'Пнина придумывает вопросы…', qTitle: 'Перед тем как Пнина напишет', qSub: 'Несколько коротких вопросов, чтобы отчёт был вашим. Любой можно пропустить.', qGo: 'Написать отчёт', qSkip: 'Пропустить и написать', awards: 'Награды', cases: 'Случаи', jokes: 'Внутренние шутки', pairs: 'Кто с кем', eras: 'Чат во времени', games: 'Мини-игры', habits: 'Привычки', sig: 'Коронные фразы', fact: 'Факт', more: 'Ещё {n} случаев', play: 'Играть', start: 'Старт', again2: 'Ещё раз', score2: 'Счёт', hint1: 'Проведите пальцем или используйте стрелки', hint2: 'Быстро жмите на персонажа', quizQ: 'Кто это написал?', quizRes: 'Верно {n} из {t}', win: 'Отлично!', over: 'Игра окончена' },
+    es: { img:'Imagen para stories',nmT:'¿Quién es? (opcional)',nmS:'Si alguien no está guardado en tus contactos, o está mal guardado, escribe cómo lo llamará Penina en el informe.',nmGo:'Actualizar nombres',nmMore:'Más nombres',nmP:'Persona',lnk:'Enlace para compartir con amigos',lnkOk:'Enlace copiado. Quien lo tenga puede ver el informe.',lnkOff:'Desactivar el enlace',lnkGone:'Enlace desactivado',tips:'Consejos de Penina',photoHint:'Puedes añadir una imagen para el juego. Es opcional, se queda en tu dispositivo y no cuenta en tus MB.',photoOf:'Imagen de {n}',tooBig:'El archivo supera 5 GB. Exporta el chat sin archivos.',memBig:'El archivo es demasiado grande para el navegador. Exporta el chat sin archivos.',qLoad: 'Penina está pensando preguntas…', qTitle: 'Antes de que Penina escriba', qSub: 'Unas preguntas cortas para que el informe sea vuestro. Puedes saltarte cualquiera.', qGo: 'Escribir el informe', qSkip: 'Saltar y escribir', awards: 'Premios', cases: 'Los casos', jokes: 'Chistes internos', pairs: 'Quién con quién', eras: 'El chat a lo largo del tiempo', games: 'Minijuegos', habits: 'Hábitos', sig: 'Frases típicas', fact: 'Dato', more: '{n} casos más', play: 'Jugar', start: 'Empezar', again2: 'Otra vez', score2: 'Puntos', hint1: 'Arrastra el dedo o usa las flechas', hint2: 'Toca rápido al personaje', quizQ: '¿Quién escribió esto?', quizRes: 'Acertaste {n} de {t}', win: '¡Bien hecho!', over: 'Fin del juego' },
+    fr: { img:'Image pour story',nmT:'Qui est-ce ? (facultatif)',nmS:'Si quelqu’un n’est pas enregistré dans vos contacts, ou mal enregistré, écrivez comment Penina l’appellera dans le rapport.',nmGo:'Mettre à jour les noms',nmMore:'Autres noms',nmP:'Personne',lnk:'Lien à partager avec des amis',lnkOk:'Lien copié. Toute personne qui l’a peut voir le rapport.',lnkOff:'Désactiver le lien',lnkGone:'Lien désactivé',tips:'Conseils de Penina',photoHint:'Vous pouvez ajouter une image pour le jeu. Facultatif, elle reste sur votre appareil et n’est pas comptée dans vos Mo.',photoOf:'Image de {n}',tooBig:'Le fichier dépasse 5 Go. Exportez le chat sans médias.',memBig:'Le fichier est trop grand pour le navigateur. Exportez le chat sans médias.',qLoad: 'Penina réfléchit à des questions…', qTitle: 'Avant que Penina écrive', qSub: 'Quelques questions courtes pour que le rapport soit à vous. Vous pouvez en passer.', qGo: 'Écrire le rapport', qSkip: 'Passer et écrire', awards: 'Prix', cases: 'Les cas', jokes: 'Blagues internes', pairs: 'Qui avec qui', eras: 'Le chat à travers le temps', games: 'Mini-jeux', habits: 'Habitudes', sig: 'Phrases cultes', fact: 'Fait', more: '{n} cas de plus', play: 'Jouer', start: 'Démarrer', again2: 'Encore', score2: 'Score', hint1: 'Glissez le doigt ou utilisez les flèches', hint2: 'Touchez vite le personnage', quizQ: 'Qui a écrit ça ?', quizRes: 'Vous avez {n} sur {t}', win: 'Bravo !', over: 'Fin de la partie' },
   };
   for (const l in X) Object.assign(T[l], X[l]);
 
@@ -164,26 +164,31 @@
 
   /* ---------- a private link to the finished report ---------- */
   let SHARED = false;
+  async function savedId() {
+    const q = await sb.from('pn_requests').select('id').not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(1);
+    return q.data && q.data[0] && q.data[0].id;
+  }
   function linkBox(el) {
-    if (SHARED) return;
-    if (!USER) { [1500, 4000].forEach((ms) => setTimeout(() => { if (USER && !SHARED && !el.querySelector('[data-lnk]')) linkBox(el); }, ms)); return; }
-    const row = el.querySelector('.actions'); if (!row || row.querySelector('[data-lnk]')) return;
-    const b = document.createElement('button'); b.className = 'btn2'; b.type = 'button'; b.dataset.lnk = '1'; b.textContent = '🔗 ' + t('lnk');
-    const note = document.createElement('p'); note.style.cssText = 'margin:10px 0 0;font-size:14px;color:var(--muted);flex-basis:100%;word-break:break-all';
-    row.appendChild(b); row.appendChild(note);
-    b.onclick = async () => {
-      b.disabled = true; note.textContent = '';
+    const main = el.querySelector('#shareBtn'), row = el.querySelector('.actions'); if (!main || !row || row.querySelector('[data-img]')) return;
+    const imgBtn = document.createElement('button'); imgBtn.className = 'btn2'; imgBtn.type = 'button'; imgBtn.dataset.img = '1'; imgBtn.textContent = '🖼️ ' + t('img'); imgBtn.onclick = share;
+    main.after(imgBtn);
+    const note = document.createElement('p'); note.style.cssText = 'margin:10px 0 0;font-size:14px;color:var(--muted);flex-basis:100%;word-break:break-all'; row.appendChild(note);
+    if (SHARED) { main.textContent = t('img'); main.onclick = share; imgBtn.remove(); return; }
+    main.textContent = '🔗 ' + t('lnk');
+    main.onclick = async () => {
+      if (!USER) { share(); return; }
+      main.disabled = true; note.textContent = '';
       try {
-        const q = await sb.from('pn_requests').select('id').not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(1);
-        const id = q.data && q.data[0] && q.data[0].id; if (!id) throw 0;
+        const id = await savedId(); if (!id) throw 0;
         const r = await sb.rpc('pn_share_report', { p_id: id, p_on: true }); if (r.error || !r.data) throw 0;
         const url = location.origin + '/penina/?r=' + r.data;
-        if (navigator.share) { try { await navigator.share({ url, title: t('title') }); } catch { /* cancelled */ } }
-        try { await navigator.clipboard.writeText(url); } catch { /* the link is shown below anyway */ }
+        let shared = false;
+        if (navigator.share) { try { await navigator.share({ url, title: t('title'), text: t('title') }); shared = true; } catch { /* cancelled */ } }
+        if (!shared) { try { await navigator.clipboard.writeText(url); } catch { /* shown below anyway */ } }
         note.innerHTML = E(t('lnkOk')) + '<br><span dir="ltr">' + E(url) + '</span> · <a href="#" id="lnkOff" style="color:var(--amber)">' + E(t('lnkOff')) + '</a>';
         note.querySelector('#lnkOff').onclick = async (e) => { e.preventDefault(); await sb.rpc('pn_share_report', { p_id: id, p_on: false }); note.textContent = t('lnkGone'); };
       } catch { note.textContent = t('busy'); }
-      b.disabled = false;
+      main.disabled = false;
     };
   }
   window.PShare = {
@@ -196,6 +201,41 @@
       } catch { /* not a valid link: show the normal page */ }
     },
   };
+
+
+  /* ---------- names: contacts that are only a number get a neutral label, and the customer can name anyone ---------- */
+  const PHONEISH = (n) => (String(n).replace(/\D/g, '').length >= 6 && !/\p{L}/u.test(n)) || /^[~\s]*$/.test(n);
+  const isPlaceholder = (n) => n.startsWith(t('nmP') + ' ') && /\d+$/.test(n);
+  function renameAll(map) {
+    for (const p of STATS.people) if (map[p.name]) p.name = map[p.name];
+    EXCERPT = EXCERPT.split('\n').map((ln) => {
+      const m = ln.match(/^\d{4}-\d\d-\d\d \d\d:\d\d \| /); if (!m) return ln;
+      const k = ln.indexOf(': ', m[0].length); if (k < 0) return ln;
+      const who = ln.slice(m[0].length, k); return map[who] ? m[0] + map[who] + ln.slice(k) : ln;
+    }).join('\n');
+    if (REPORT === null) saveLocal();
+  }
+  window.PNames = {
+    fix() {
+      const map = {}; let n = 1;
+      for (const p of STATS.people) if (PHONEISH(p.name)) map[p.name] = t('nmP') + ' ' + n++;
+      if (Object.keys(map).length) renameAll(map);
+    },
+    render() {
+      const ask = $('#ask'); if (!ask || !STATS) return; $('#namesBox')?.remove();
+      const ppl = STATS.people.slice(0, 30), un = ppl.filter((p) => isPlaceholder(p.name)), rest = ppl.filter((p) => !isPlaceholder(p.name));
+      const row = (p) => `<label style="display:flex;flex-direction:column;gap:4px;font-weight:600"><span>${E(p.name)} <span style="color:var(--muted);font-weight:400">· ${p.msgs}</span></span><input data-old="${E(p.name)}" maxlength="40" placeholder="${E(p.name)}" style="height:44px;border-radius:12px;border:1px solid var(--line);background:var(--night);padding:0 12px;color:inherit;font:inherit"></label>`;
+      const box = document.createElement('div'); box.id = 'namesBox'; box.className = 'qform'; box.style.margin = '0 0 24px';
+      box.innerHTML = `<h3>${E(t('nmT'))}</h3><p>${E(t('nmS'))}</p>${un.map(row).join('')}${rest.length ? `<details${un.length ? '' : ' open'}><summary style="cursor:pointer;color:var(--amber);margin:4px 0 10px">${E(t('nmMore'))}</summary><div style="display:flex;flex-direction:column;gap:12px">${rest.map(row).join('')}</div></details>` : ''}<button class="go" type="button">${E(t('nmGo'))}</button>`;
+      ask.before(box);
+      box.querySelector('button').onclick = () => {
+        const map = {}; box.querySelectorAll('input').forEach((i) => { const v = i.value.trim().replace(/[:\n]/g, ' ').slice(0, 40); if (v && v !== i.dataset.old) map[i.dataset.old] = v; });
+        if (Object.keys(map).length) { renameAll(map); saveLocal(); renderLocal(); }
+      };
+    },
+  };
+  const rl = renderLocal;
+  window.renderLocal = function () { rl(); PNames.render(); };
 
   /* ---------- the games ---------- */
   function validGame(g) {
