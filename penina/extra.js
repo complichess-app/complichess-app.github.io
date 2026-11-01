@@ -95,9 +95,27 @@
   };
 
   /* ---------- the report ---------- */
+
+  /* the fixed "more from Barusik Platforms" block: static text, no tokens */
+  const PROMO = {
+    he: { h: 'עוד מבית BARUSIK PLATFORMS', s: 'מוזמנים לנסות', go: 'לפתוח', i: [['tr', '✈️', 'Bar Lvovski Travel', 'מלונות, טיסות וחבילות במחירי סוכן', '/travel/'], ['cx', '♟️', 'קומפליצס', 'שחמט עם דק כלים משוגע', '/complichess/'], ['pk', '💬', 'פלטפורמיקה', 'פוסטים, קליפים וצ׳אטים. 99% ליוצרים', '/platformika/'], ['cr', '🪙', 'Barusik Crypto', 'מסחר ומטבעות משלכם, בהדגמה', '/crypto/'], ['lr', '📚', 'LearnLume', 'אפליקציית למידה למבחן מהחומר שלכם', '/learnlume/']] },
+    en: { h: 'More from BARUSIK PLATFORMS', s: 'Come and try', go: 'Open', i: [['tr', '✈️', 'Bar Lvovski Travel', 'Hotels, flights and packages at agent prices', '/travel/'], ['cx', '♟️', 'Complichess', 'Chess with a wild deck of pieces', '/complichess/'], ['pk', '💬', 'Platformika', 'Posts, clips and chats. 99% to creators', '/platformika/'], ['cr', '🪙', 'Barusik Crypto', 'Trade or create your own coin, demo mode', '/crypto/'], ['lr', '📚', 'LearnLume', 'An exam-prep app built from your own course material', '/learnlume/']] },
+    ar: { h: 'المزيد من BARUSIK PLATFORMS', s: 'جرّبوا', go: 'افتح', i: [['tr', '✈️', 'Bar Lvovski Travel', 'فنادق ورحلات وباقات بأسعار الوكلاء', '/travel/'], ['cx', '♟️', 'كومبليتشس', 'شطرنج بتشكيلة قطع مجنونة', '/complichess/'], ['pk', '💬', 'بلاتفورميكا', 'منشورات ومقاطع ومحادثات. 99% للمبدعين', '/platformika/'], ['cr', '🪙', 'Barusik Crypto', 'تداول أو أنشئ عملتك، وضع تجريبي', '/crypto/'], ['lr', '📚', 'LearnLume', 'تطبيق استعداد للامتحان من مادتك', '/learnlume/']] },
+    ru: { h: 'Ещё от BARUSIK PLATFORMS', s: 'Попробуйте', go: 'Открыть', i: [['tr', '✈️', 'Bar Lvovski Travel', 'Отели, перелёты и туры по агентским ценам', '/travel/'], ['cx', '♟️', 'Complichess', 'Шахматы с безумной колодой фигур', '/complichess/'], ['pk', '💬', 'Platformika', 'Посты, клипы и чаты. 99% авторам', '/platformika/'], ['cr', '🪙', 'Barusik Crypto', 'Торгуйте или создайте свою монету, демо', '/crypto/'], ['lr', '📚', 'LearnLume', 'Приложение для экзамена из ваших материалов', '/learnlume/']] },
+    es: { h: 'Más de BARUSIK PLATFORMS', s: 'Anímate a probar', go: 'Abrir', i: [['tr', '✈️', 'Bar Lvovski Travel', 'Hoteles, vuelos y paquetes a precio de agente', '/travel/'], ['cx', '♟️', 'Complichess', 'Ajedrez con un mazo de piezas alocado', '/complichess/'], ['pk', '💬', 'Platformika', 'Publicaciones, clips y chats. 99% a los creadores', '/platformika/'], ['cr', '🪙', 'Barusik Crypto', 'Opera o crea tu moneda, modo demo', '/crypto/'], ['lr', '📚', 'LearnLume', 'App de examen hecha con tu material', '/learnlume/']] },
+    fr: { h: 'Encore chez BARUSIK PLATFORMS', s: 'Venez essayer', go: 'Ouvrir', i: [['tr', '✈️', 'Bar Lvovski Travel', 'Hôtels, vols et forfaits à prix agent', '/travel/'], ['cx', '♟️', 'Complichess', 'Échecs avec un jeu de pièces déjanté', '/complichess/'], ['pk', '💬', 'Platformika', 'Posts, clips et chats. 99 % aux créateurs', '/platformika/'], ['cr', '🪙', 'Barusik Crypto', 'Tradez ou créez votre monnaie, mode démo', '/crypto/'], ['lr', '📚', 'LearnLume', 'Appli d’examen faite avec vos cours', '/learnlume/']] },
+  };
+  function promoHTML() {
+    const P = PROMO[L] || PROMO.en;
+    return `<div class="sec promo"><h2>${E(P.h)}</h2><p class="mute" style="margin:0 0 12px;color:var(--muted)">${E(P.s)}</p><div class="tiles">${P.i.map(([k, em, n, d, u]) => `<a class="tile" href="${u}" data-k="${k}"><span class="te">${em}</span><b>${E(n)}</b><span class="td">${E(d)}</span><span class="tg">${E(P.go)} ↗</span></a>`).join('')}</div></div>`;
+  }
+  const css2 = document.createElement('style');
+  css2.textContent = `.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.tile{display:flex;flex-direction:column;gap:6px;background:var(--plum);border-radius:20px;padding:16px;text-decoration:none;color:inherit;transition:transform .15s,background .15s}.tile:hover,.tile:focus-visible{transform:translateY(-3px);background:var(--plum-2)}.tile .te{font-size:30px;line-height:1}.tile b{font-family:var(--fd);font-weight:400;font-size:18px}.tile .td{color:var(--pearl-2);font-size:14px;flex:1}.tile .tg{color:var(--amber);font-weight:800;font-size:14px}`;
+  document.head.appendChild(css2);
+  const addPromo = () => { const el = $('#report'); el.querySelector('.promo')?.remove(); el.insertAdjacentHTML('beforeend', promoHTML()); };
   const v1 = renderReport;
   window.renderReport = function (r) {
-    if (!r || r.v !== 2) return v1(r);
+    if (!r || r.v !== 2) { v1(r); addPromo(); return; }
     const el = $('#report'); el.classList.remove('hide');
     const sec = (title, inner) => (inner ? `<div class="sec"><h2>${E(title)}</h2>${inner}</div>` : '');
     const lead = txt(r.verdict).split(/\n\s*\n/).filter(Boolean).map((p) => `<p>${E(p)}</p>`).join('');
@@ -139,6 +157,7 @@
     const more = $('#moreCases'); if (more) more.onclick = () => { el.querySelectorAll('.case.extra').forEach((c) => c.classList.remove('hide')); more.remove(); };
     el.querySelectorAll('.gph input').forEach((inp) => inp.onchange = () => { const f = inp.files[0]; if (!f || !f.type.startsWith('image/')) return; const g = games[+inp.dataset.g], im = new Image(); im.onload = () => { (g._ph = g._ph || {})[inp.dataset.k] = im; inp.parentElement.style.outline = '2px solid var(--mint)'; }; im.src = URL.createObjectURL(f); });
     el.querySelectorAll('.gmount').forEach((m) => { m.querySelector('button').onclick = () => launch(m, games[+m.dataset.g]); });
+    addPromo();
     scrollTo(0, 0);
   };
 
