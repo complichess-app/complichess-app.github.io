@@ -500,7 +500,7 @@ const SINGLE={flights:false,hotels:true,cars:true,packages:true,tours:true,ticke
 let RES=[],SHOWN=0,CUR=null;
 async function search(params,label,title){
   const out=$('#out');
-  out.innerHTML=`<div class="box status"><div class="spin" aria-hidden="true"></div>מחפש את כל ההצעות… זה לוקח בדרך כלל 15–40 שניות</div>`;
+  out.innerHTML=`<div class="box status"><div class="spin" aria-hidden="true"></div>מחפש את כל ההצעות… זה לוקח ${params.kind==='tickets'?'עד שתי דקות':'בדרך כלל 15–40 שניות'}</div>`;
   out.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
   const b=document.querySelector('#panel .go');b&&(b.disabled=true);
   try{

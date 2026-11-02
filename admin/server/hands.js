@@ -257,7 +257,9 @@
     document.body.appendChild(f);
     try {
       let last = -1, stable = 0;
-      for (let i = 0; i < 60; i++) {
+      // BeAgent's tickets search takes about a minute, the others much less
+      const patience = q.kind === 'tickets' ? 100 : 60;
+      for (let i = 0; i < patience; i++) {
         await tick(1000);
         let d; try { d = f.contentDocument; } catch { continue; }
         if (!d || !d.body) continue;
