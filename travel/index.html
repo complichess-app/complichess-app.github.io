@@ -79,7 +79,6 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding:10px 16px 40px
 (()=>{
 const WA='972556630709';
 const OFFLINE='מחירים בזמן אמת לא זמינים כרגע, אבל אפשר להזמין: ממלאים פרטים ובר חוזר אליכם עם הצעה. בכל שעה.';
-const HOTELS='https://travel.barusik.com';
 const sb=window.supabase.createClient('https://iktmyrfbejtjsiehcrar.supabase.co','sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a',{auth:{persistSession:false,autoRefreshToken:false,storageKey:'bar-travel-anon'}});
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -290,8 +289,7 @@ function requestForm(){
       ${field('מאיפה',text('rfrom',S.from,'עיר או שדה תעופה',true))}${field('לאן',text('rto',S.to,'לאן טסים?',true))}
       ${field('הלוך',date('rdep',S.dep))}<label id="rretl" ${S.round?'':'hidden'}>חזור${date('rret',S.ret)}</label>
       ${field('נוסעים',`<select id="rpax">${opts(nums(1,9),S.pax)}</select>`)}${field('מחלקה',`<select id="rcls">${opts([[1,'תיירים'],[2,'פרימיום'],[3,'עסקים'],[4,'ראשונה']],S.cls)}</select>`)}`,'בקשת הצעה לטיסה'],
-    hotels:[`${field('יעד',text('rdest',S.dest,'עיר, אזור או מלון'),1)}${field("צ'ק-אין",date('rcin',S.cin))}${field("צ'ק-אאוט",date('rcout',S.cout))}${field('אורחים',`<select id="rgs">${opts(nums(1,12),S.guests)}</select>`)}
-      <p class="note">רוצים להזמין מלון לבד, עכשיו? <a href="${HOTELS}" target="_blank" rel="noopener">אתר המלונות שלנו</a> פתוח תמיד.</p>`,'בקשת הצעה למלון'],
+    hotels:[`${field('יעד',text('rdest',S.dest,'עיר, אזור או מלון'),1)}${field("צ'ק-אין",date('rcin',S.cin))}${field("צ'ק-אאוט",date('rcout',S.cout))}${field('אורחים',`<select id="rgs">${opts(nums(1,12),S.guests)}</select>`)}`,'בקשת הצעה למלון'],
     cars:[`${field('איפה אוספים',text('rplace',S.place,'עיר או שדה תעופה',true),1)}${field('איסוף',date('rcf',S.cfrom))}${field('החזרה',date('rct',S.cto))}${field('גיל הנהג',`<select id="rage">${opts(nums(18,85),S.age)}</select>`)}`,'בקשת הצעה לרכב'],
     packages:[`${field('יעד',text('rpd',S.pdest,'למשל: אתונה, דובאי, פראג',true),1)}${field('יציאה',date('rpf',S.pfrom))}${field('חזרה',date('rpt',S.pto))}${field('נוסעים',`<select id="rpa">${opts(nums(1,12),S.adults)}</select>`)}`,'בקשת הצעה לחבילה'],
     tours:[`${field('לאן',text('rtd',S.tdest,'למשל: רומא, יוון, תאילנד',true),1)}${field('חודש',`<input type="month" id="rtm" min="${TODAY.slice(0,7)}" value="${S.month}">`)}`,'בקשת הצעה לטיול'],
