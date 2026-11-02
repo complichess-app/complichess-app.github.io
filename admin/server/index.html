@@ -10,7 +10,7 @@
 <style>
 :root{--bg:#090B1F;--card:#12163A;--line:rgba(255,255,255,.1);--ink:#EEEAF8;--mute:#A3A5CB;--on:#22C55E;--off:#EF4444;--warn:#F59E0B}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif}
-body{padding:20px 16px 40px}.wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+body{padding:20px 16px 40px}.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 h1{margin:0;font-size:22px}.mute{color:var(--mute)}.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px}
 .light{display:flex;align-items:center;gap:16px}
 .dot{width:54px;height:54px;border-radius:50%;flex:0 0 auto;background:var(--off);box-shadow:0 0 28px var(--off)}
@@ -20,14 +20,14 @@ h1{margin:0;font-size:22px}.mute{color:var(--mute)}.card{background:var(--card);
 .big{font-size:22px;font-weight:800}
 button,.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:12px 20px;background:#6A63FF;color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
-.bm{background:#F59E0B;color:#1A1200;font-size:16px;padding:11px 20px}
 .go{font-size:19px;padding:15px 30px;background:#22C55E;color:#04210F}
 summary{cursor:pointer;list-style-position:inside}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.stats b{display:block;font-size:24px}
 .log{font-size:13px;max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:4px}.log div{border-bottom:1px solid var(--line);padding-bottom:4px}
-ol{margin:8px 0 0;padding-inline-start:22px;line-height:1.9}code{background:#0B0E28;padding:2px 6px;border-radius:6px}
-.step{display:flex;gap:12px;align-items:flex-start}.n{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:#6A63FF;display:grid;place-items:center;font-weight:800}
+code{background:#0B0E28;padding:2px 6px;border-radius:6px;direction:ltr;display:inline-block}
+.steps{display:flex;flex-direction:column;gap:14px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:flex;gap:12px;align-items:flex-start;counter-increment:s;line-height:1.6}.steps li::before{content:counter(s);flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:#6A63FF;display:grid;place-items:center;font-weight:800}
 :focus-visible{outline:3px solid #D8AE57;outline-offset:2px}
 </style>
 </head>
@@ -39,78 +39,92 @@ ol{margin:8px 0 0;padding-inline-start:22px;line-height:1.9}code{background:#0B0
 const sb=window.supabase.createClient('https://iktmyrfbejtjsiehcrar.supabase.co','sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a',{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}});
 const BEAGENT='https://travel.beagent.online';
 const BOOKMARK="javascript:(function(){if(!/beagent\\.online$/.test(location.hostname)){location.href='https://travel.beagent.online/he';return}var s=document.createElement('script');s.src='https://barusik.com/admin/server/hands.js?v='+Date.now();document.head.appendChild(s)})()";
+const EXT_ZIP='/admin/server/barusik-server.zip';
+const hasExt=()=>!!document.documentElement.dataset.btExt;
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const KIND={flights:'טיסות',hotels:'מלונות',cars:'רכב',packages:'חבילות',tours:'טיולים',tickets:'כרטיסים'};
-let HANDS=null,ALIVE=0,STATE='wait',LOGGED=null,RUN=false,CH=null,seq=0,ADMIN=false;
-const pending=new Map(),stats={search:0,other:0,fail:0},LOG=[];
+const go=new URLSearchParams(location.search);
+let HANDS=null,VIA=null,ALIVE=0,STATE='wait',LOGGED=null,RUN=false,CH=null,seq=0,ADMIN=false,ASKED=false;
+const PAGE=Math.random().toString(36).slice(2,8),pending=new Map(),stats={search:0,other:0,fail:0},LOG=[];
 const log=t=>{LOG.unshift(new Date().toLocaleTimeString('he-IL')+' · '+t);LOG.length=Math.min(LOG.length,40);draw()};
+const wantOn=()=>{try{return localStorage.getItem('bt-on')!=='0'}catch{return true}};
+const setOn=v=>{try{localStorage.setItem('bt-on',v?'1':'0')}catch{}};
 
 // timers that keep running when this window is in the background
 const tick=(()=>{try{const w=new Worker(URL.createObjectURL(new Blob(['onmessage=e=>setTimeout(()=>postMessage(e.data),e.data.ms)'],{type:'text/javascript'})));
   const cb=new Map();let n=0;w.onmessage=e=>{const f=cb.get(e.data.id);cb.delete(e.data.id);f&&f()};return ms=>new Promise(r=>{const id=++n;cb.set(id,r);w.postMessage({id,ms})})}catch{return ms=>new Promise(r=>setTimeout(r,ms))}})();
 const every=(ms,fn)=>{(async()=>{for(;;){await tick(ms);try{await fn()}catch{}}})()};
 
-// ---- talk to the BeAgent tab (started with the ⚡ bookmark) ----
+// ---------- talk to the BeAgent tab: through the extension, or (old way) through the window the ⚡ bookmark opened ----------
+const send=m=>{if(VIA==='ext')window.postMessage({src:'bt-page-ext',...m},location.origin);else if(HANDS)HANDS.postMessage({src:'bt-page',...m},BEAGENT)};
+const bg=m=>window.postMessage({src:'bt-page-ext',...m},location.origin);
 addEventListener('message',e=>{
-  if(e.origin!==BEAGENT||!e.data||e.data.src!=='bt-hands')return;
+  const ext=e.source===window&&e.data&&e.data.src==='bt-hands-ext';
+  const win=e.origin===BEAGENT&&e.data&&e.data.src==='bt-hands';
+  if(!ext&&!win)return;
   const m=e.data;
-  if(m.type==='hello'){HANDS=e.source;ALIVE=Date.now();HANDS.postMessage({src:'bt-page',type:'ack'},BEAGENT);if(ADMIN&&!RUN)start();return}
-  if(m.type==='alive'){ALIVE=Date.now();if(!HANDS)HANDS=e.source;return}
+  if(ext){VIA='ext';HANDS={closed:false}}
+  if(m.type==='need-login'){if(ASKED||hasExt()){LOGGED=false;RUN=false;if(STATE!=='login'){STATE='login';draw();heartbeat()}}return}
+  if(m.type==='focus-server'){focus();return}
+  if(m.type==='hello'){if(win){VIA='win';HANDS=e.source}ALIVE=Date.now();send({type:'ack'});if(ADMIN&&!RUN&&wantOn())start();return}
+  if(m.type==='alive'){ALIVE=Date.now();if(win&&!HANDS)HANDS=e.source;return}
   if(m.type==='result'){ALIVE=Date.now();const p=pending.get(m.id);if(p){pending.delete(m.id);m.ok?p.res(m.data):p.rej(new Error(m.error||'failed'))}}
 });
 const hands=(job,ms=120000)=>new Promise((res,rej)=>{
   if(!HANDS||HANDS.closed)return rej(new Error('no-hands'));
-  const id=++seq+'';pending.set(id,{res,rej});HANDS.postMessage({src:'bt-page',type:'job',id,job},BEAGENT);
+  const id=PAGE+(++seq);pending.set(id,{res,rej});send({type:'job',id,job});
   tick(ms).then(()=>{if(pending.has(id)){pending.delete(id);rej(new Error('timeout'))}})});
 
 function draw(){
   const st=document.getElementById('setup');if(st&&st.open&&st.contains(document.activeElement)&&(STATE==='wait'||STATE==='login')&&draw.last===STATE)return;draw.last=STATE;
-  const on=STATE==='on',warn=STATE==='login';
+  const on=STATE==='on',warn=STATE==='login'||STATE==='starting';
   document.title=(on?'🟢':warn?'🟠':'🔴')+' שרת הנסיעות';
-  const title={on:'השרת פועל',login:'צריך להתחבר ל-BeAgent',wait:'השרת כבוי',stopped:'השרת כבוי'}[STATE]||'מפעיל…';
-  const sub={on:'הלקוחות יכולים לחפש ולהזמין עכשיו. השאר פתוחים את החלון הזה ואת לשונית BeAgent (אפשר למזער).',
-    login:'בלשונית BeAgent התחבר כרגיל, ואז לחץ שם שוב על הסימניה ⚡.',
-    wait:'הלקוחות רואים כרגע את הודעת הוואטסאפ. כדי להפעיל — הכפתור הירוק למטה.',stopped:'הלקוחות רואים כרגע את הודעת הוואטסאפ.'}[STATE]||'';
+  const title={on:'השרת פועל',login:'צריך להתחבר ל-BeAgent',starting:'מפעיל…',wait:'השרת כבוי',stopped:'השרת כבוי'}[STATE]||'השרת כבוי';
+  const sub={on:'הלקוחות מחפשים ורואים מחירים עכשיו. אפשר למזער את כרום, רק לא לסגור אותו.',
+    login:'לשונית BeAgent מבקשת התחברות. מתחברים שם פעם אחת (עם "זכור אותי"), והשרת עולה לבד.',
+    starting:'פותח את BeAgent בלשונית נעוצה.',
+    wait:'הלקוחות יכולים לשלוח בקשה, אבל לא רואים מחירים.',stopped:'הלקוחות יכולים לשלוח בקשה, אבל לא רואים מחירים.'}[STATE]||'';
   const head=`<div class="card light"><div class="dot ${on?'on':warn?'warn':''}" role="img" aria-label="${on?'פועל':'כבוי'}"></div><div><div class="big">${title}</div><div class="mute">${sub}</div></div></div>`;
   let body='';
-  const SET=(()=>{try{return localStorage.getItem('bt-bm')==='1'}catch{return false}})();
-  if(STATE==='wait'||STATE==='login')body=`<div class="card" style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">
-    <button id="ob" class="go">⚡ הפעלת השרת</button>
-    <div class="mute" style="line-height:1.7">נפתחת לשונית BeAgent. שם לוחצים פעם אחת על <b>⚡ שרת ברוסיק</b> בסרגל הסימניות, והשרת עולה לבד.</div>
-    ${STATE==='login'?'<div class="mute">אם BeAgent מבקש התחברות — התחבר שם כרגיל ואז לחץ שוב על ⚡.</div>':''}</div>
-    <details class="card" id="setup" ${SET?'':'open'}><summary><b>${SET?'הסימניה ⚡ כבר מוגדרת? אם לא — הגדרה מחדש':'הגדרה חד־פעמית: הוספת הסימניה ⚡'}</b></summary>
-    <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
-    <div class="step"><span class="n">1</span><div>לחץ כאן כדי להעתיק את הסימניה:<div class="row" style="margin-top:10px"><button id="cp" class="bm">📋 העתקת הסימניה</button><span id="cpok" class="mute"></span></div></div></div>
-    <div class="step"><span class="n">2</span><div>לחץ <code>Ctrl+Shift+O</code> (נפתח מנהל הסימניות). בצד שמאל בחר <b>סרגל הסימניות</b>, ולמעלה מימין לחץ על <b>⋮</b> ← <b>הוספת סימניה חדשה</b>.</div></div>
-    <div class="step"><span class="n">3</span><div>בשם כתוב <code>⚡ שרת ברוסיק</code>, בכתובת הדבק (<code>Ctrl+V</code>) ולחץ <b>שמירה</b>. סרגל הסימניות מוסתר? <code>Ctrl+Shift+B</code>.</div></div>
-    <div class="row"><button class="ghost" id="done">סיימתי</button><a class="btn ghost" id="bm" title="אפשר גם לגרור את הכפתור הזה לסרגל הסימניות" draggable="true">⚡ שרת ברוסיק (גרירה)</a></div>
-    </div></details>`;
-  if(on||STATE==='stopped')body=`<div class="card stats"><div><b>${stats.search}</b><span class="mute">חיפושים</span></div><div><b>${stats.other}</b><span class="mute">השלמות</span></div><div><b>${stats.fail}</b><span class="mute">נכשלו</span></div></div>
-    <div class="card row">${on?'<button class="ghost" id="stop">כיבוי השרת</button>':'<button id="go">הפעלת השרת</button>'}<a class="btn ghost" href="/admin/" target="_blank">דף הניהול</a><a class="btn ghost" href="/travel/" target="_blank">האתר ללקוחות</a></div>`;
+  if(!hasExt()&&!RUN)body=`<div class="card" style="display:flex;flex-direction:column;gap:14px"><b style="font-size:18px">פעם אחת בלבד: התקנת התוסף (דקה)</b>
+    <ol class="steps">
+      <li><div>מורידים את התוסף ופותחים את הקובץ: לחיצה ימנית על הקובץ ← <b>חילוץ הכל</b>.<div class="row" style="margin-top:10px"><a class="btn go" href="${EXT_ZIP}" download>הורדת התוסף</a></div></div></li>
+      <li><div>פותחים לשונית חדשה, כותבים <code>chrome://extensions</code> ומדליקים למעלה את <b>מצב מפתח</b>.<div class="row" style="margin-top:10px"><button class="ghost" id="cpx">העתקת הכתובת</button><span id="cpxok" class="mute"></span></div></div></li>
+      <li><div>לוחצים <b>טעינת פריט לא ארוז</b> ובוחרים את התיקייה <b>barusik-server</b> שחילצתם.</div></li>
+      <li><div>הדף הזה ייטען מחדש לבד, והשרת יעלה. אם לא, מרעננים אותו.</div></li>
+    </ol>
+    <details id="setup"><summary class="mute">בלי תוסף: הדרך הישנה עם סימניה</summary>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="cp">העתקת הסימניה</button><span id="cpok" class="mute"></span></div>
+      <p class="mute" style="line-height:1.7">מוסיפים סימניה חדשה (<code>Ctrl+Shift+O</code> ← ⋮ ← הוספת סימניה חדשה) ומדביקים בכתובת. אחר כך <a style="color:#D8AE57" href="${BEAGENT}/he" target="bt-hands">פותחים את BeAgent</a> ולוחצים שם על הסימניה.</p>
+    </details></div>`;
+  else if(STATE==='wait'||STATE==='stopped')body=`<div class="card"><button id="go" class="go">⚡ הפעלת השרת</button></div>`;
+  else if(STATE==='login')body=`<div class="card row"><button id="fb" class="go">מעבר ללשונית BeAgent</button></div>`;
+  if(on)body=`<div class="card stats"><div><b>${stats.search}</b><span class="mute">חיפושים</span></div><div><b>${stats.other}</b><span class="mute">השלמות</span></div><div><b>${stats.fail}</b><span class="mute">נכשלו</span></div></div>
+    <div class="card row"><button class="ghost" id="stop">כיבוי השרת</button><a class="btn ghost" href="/admin/" target="_blank">דף הניהול</a><a class="btn ghost" href="/travel/" target="_blank">האתר ללקוחות</a></div>`;
   const lg=LOG.length?`<div class="card"><b>פעילות</b><div class="log">${LOG.map(l=>`<div>${esc(l)}</div>`).join('')}</div></div>`:'';
   app.innerHTML=`<h1>שרת Bar Lvovski Travel</h1>${head}${body}${lg}`;
   const $=id=>document.getElementById(id);
-  if($('bm')){$('bm').setAttribute('href',BOOKMARK);$('bm').onclick=e=>{e.preventDefault();alert('את הכפתור הזה גוררים לסרגל הסימניות. קל יותר: "העתקת הסימניה" והשלבים שמעליו.')}}
-  $('cp')&&($('cp').onclick=async()=>{let ok=false;try{await navigator.clipboard.writeText(BOOKMARK);ok=true}catch{try{const t=document.createElement('textarea');t.value=BOOKMARK;document.body.appendChild(t);t.select();ok=document.execCommand('copy');t.remove()}catch{}}
-    $('cpok').textContent=ok?'✓ הועתק':'ההעתקה נחסמה — נסה שוב';});
-  $('done')&&($('done').onclick=()=>{try{localStorage.setItem('bt-bm','1')}catch{}$('setup').open=false});
-  $('ob')&&($('ob').onclick=()=>{const w=window.open(BEAGENT+'/he','bt-hands');w&&w.focus()});
-  $('stop')&&($('stop').onclick=stop);$('go')&&($('go').onclick=start);
+  const copy=async(text,el)=>{let ok=false;try{await navigator.clipboard.writeText(text);ok=true}catch{}el.textContent=ok?'✓ הועתק':'ההעתקה נחסמה, נסו שוב'};
+  $('cp')&&($('cp').onclick=()=>copy(BOOKMARK,$('cpok')));
+  $('cpx')&&($('cpx').onclick=()=>copy('chrome://extensions',$('cpxok')));
+  $('go')&&($('go').onclick=turnOn);$('stop')&&($('stop').onclick=stop);
+  $('fb')&&($('fb').onclick=()=>{if(hasExt())bg({type:'focus-hands'});else{const w=window.open(BEAGENT+'/he','bt-hands');w&&w.focus()}});
 }
 
-async function heartbeat(){try{await sb.rpc('travel_heartbeat',{p_on:STATE==='on',p_logged_in:LOGGED!==false,p_version:2})}catch{}}
+function turnOn(){setOn(true);ASKED=true;if(hasExt()){if(STATE!=='on'){STATE='starting';draw()}bg({type:'ensure'});bg({type:'ping'});tick(25000).then(()=>{if(STATE==='starting'){STATE='login';draw()}})}else draw()}
+async function heartbeat(){try{await sb.rpc('travel_heartbeat',{p_on:STATE==='on',p_logged_in:LOGGED!==false,p_version:3})}catch{}}
 async function start(){
-  if(!HANDS||HANDS.closed||Date.now()-ALIVE>35000){STATE='wait';draw();return}
+  if(!HANDS||HANDS.closed||Date.now()-ALIVE>35000){if(STATE!=='starting'){STATE='wait';draw()}return}
   let r;try{r=await hands({type:'start'},20000)}catch(e){STATE='wait';draw();return}
   LOGGED=!!r.loggedIn;
   if(!LOGGED){STATE='login';RUN=false;draw();heartbeat();return}
   STATE='on';RUN=true;log('השרת הופעל');heartbeat();pickQueued();
   if(!CH)CH=sb.channel('travel-jobs').on('postgres_changes',{event:'INSERT',schema:'public',table:'travel_jobs'},p=>{if(RUN&&p.new&&p.new.status==='queued')take(p.new)}).subscribe();
 }
-async function stop(){RUN=false;STATE='stopped';try{HANDS&&HANDS.postMessage({src:'bt-page',type:'stop'},BEAGENT)}catch{}await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:2}).catch(()=>{});log('השרת כובה');draw()}
+async function stop(){setOn(false);RUN=false;STATE='stopped';send({type:'off'});try{await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:3})}catch{}log('השרת כובה');draw()}
 every(12000,async()=>{
-  if(RUN&&(!HANDS||HANDS.closed||Date.now()-ALIVE>35000)){RUN=false;STATE='wait';log('לשונית BeAgent נסגרה או נטענה מחדש — לחץ שם שוב על ⚡');draw()}
+  if(RUN&&(!HANDS||HANDS.closed||Date.now()-ALIVE>35000)){RUN=false;STATE=hasExt()?'starting':'wait';log('לשונית BeAgent נסגרה או נטענה מחדש');draw();if(hasExt())bg({type:'ensure'})}
   heartbeat();
 });
 every(5000,()=>pickQueued());
@@ -139,7 +153,7 @@ async function take(j){
 
 (async()=>{
   const{data:{session}}=await sb.auth.getSession();
-  if(!session){app.innerHTML=`<div class="card"><h1>שרת הנסיעות</h1><p>צריך להתחבר עם משתמש המנהל באתר.</p><a class="btn" href="/he/" target="_blank">לאתר להתחברות</a></div>`;return}
+  if(!session){app.innerHTML=`<div class="card"><h1>שרת הנסיעות</h1><p>צריך להתחבר עם משתמש המנהל.</p><a class="btn" href="/admin/" target="_blank">לדף הניהול</a></div>`;return}
   const{data:isAdmin}=await sb.rpc('is_admin');
   if(isAdmin!==true){
     // the admin's own account without the second step yet: send him to /admin/ to enter the code
@@ -149,6 +163,7 @@ async function take(j){
       :`<div class="card"><h1>אין הרשאה</h1><p class="mute">הדף פתוח רק למנהל.</p></div>`;
     return}
   ADMIN=true;draw();
+  if(go.has('go')||go.has('auto')||wantOn()){if(go.has('go'))setOn(true);if(hasExt())turnOn()}
   if(HANDS)start();
 })();
 })();

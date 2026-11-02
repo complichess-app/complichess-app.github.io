@@ -78,7 +78,8 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding:10px 16px 40px
 <script>
 (()=>{
 const WA='972556630709';
-const OFFLINE='האתר כרגע לא פעיל, ניתן להזמין בפנייה לווצאפ 0556630709';
+const OFFLINE='מחירים בזמן אמת לא זמינים כרגע, אבל אפשר להזמין: ממלאים פרטים ובר חוזר אליכם עם הצעה. בכל שעה.';
+const HOTELS='https://travel.barusik.com';
 const sb=window.supabase.createClient('https://iktmyrfbejtjsiehcrar.supabase.co','sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a',{auth:{persistSession:false,autoRefreshToken:false,storageKey:'bar-travel-anon'}});
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -87,7 +88,7 @@ const iso=d=>d.toISOString().slice(0,10);
 const add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
 const heD=s=>s?new Date(s+'T12:00:00').toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
 const TODAY=iso(new Date());
-let ONLINE=null;
+let ONLINE=null,SHOWN_MODE=null;
 
 // Destinations people from Israel fly to most. Code | Hebrew | English
 const AIR=`TLV|תל אביב · נתב"ג|Tel Aviv Ben Gurion
@@ -269,13 +270,59 @@ function tabs(){
   $('#panel').setAttribute('aria-labelledby','t-'+TAB);
 }
 function panel(){
-  if(ONLINE===false){$('#panel').innerHTML=`<div style="padding:22px">${offlineBox()}</div>`;return}
+  SHOWN_MODE=ONLINE;
+  if(ONLINE===null){$('#panel').innerHTML='<div class="status"><div class="spin" aria-hidden="true"></div></div>';return}
+  if(ONLINE===false){requestForm();return}
   ({flights:flightsForm,hotels:hotelsForm,cars:carsForm,packages:packagesForm,tours:toursForm,tickets:ticketsForm})[TAB]();
   const ask=document.createElement('p');ask.className='note';ask.style.cssText='padding:0 18px 16px;margin:0';
   ask.innerHTML=`לא מוצאים מה שחיפשתם? <a href="#" id="askbar">שלחו לבר בקשה אישית</a> והוא יחפש בשבילכם.`;$('#panel').appendChild(ask);
   $('#askbar').onclick=e=>{e.preventDefault();book({kind:TAB,title:'בקשה אישית · '+KINDNAME[TAB],search:'',lines:[],price:null,free:true})};
 }
-function offlineBox(){return`<div class="banner" role="status"><span style="flex:1">${OFFLINE}</span><a class="wa" href="https://wa.me/${WA}" target="_blank" rel="noopener">לוואטסאפ</a></div>`}
+function offlineBox(){return`<div class="banner" role="status" style="grid-column:1/-1"><span style="flex:1">${OFFLINE}</span><a class="wa" href="https://wa.me/${WA}" target="_blank" rel="noopener">לוואטסאפ</a></div>`}
+// While the live search is off every tab still takes an order: the same questions, no live prices, and the request reaches Bar on /admin/.
+const RQ={from:'תל אביב',to:'',dep:D21,ret:D26,round:true,pax:2,cls:1,dest:'',cin:D21,cout:D26,guests:2,place:'',cfrom:D21,cto:D26,age:30,pdest:'',pfrom:D21,pto:D26,adults:2,tdest:'',month:TODAY.slice(0,7),what:'',kfrom:iso(add(new Date(),1)),kto:iso(add(new Date(),60))};
+function requestForm(){
+  const S=RQ,dl=`<datalist id="airs">${AIR.map(a=>`<option value="${esc(a.h)}"></option>`).join('')}</datalist>`;
+  const text=(id,val,ph,list)=>`<input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}" maxlength="80" ${list?'list="airs"':''}>`;
+  const date=(id,val)=>`<input type="date" id="${id}" min="${TODAY}" value="${val}">`;
+  const parts={
+    flights:[`<div class="row2" role="radiogroup" aria-label="סוג טיסה"><label><input type="radio" name="rt" value="1" ${S.round?'checked':''}> הלוך ושוב</label><label><input type="radio" name="rt" value="0" ${S.round?'':'checked'}> כיוון אחד</label></div>
+      ${field('מאיפה',text('rfrom',S.from,'עיר או שדה תעופה',true))}${field('לאן',text('rto',S.to,'לאן טסים?',true))}
+      ${field('הלוך',date('rdep',S.dep))}<label id="rretl" ${S.round?'':'hidden'}>חזור${date('rret',S.ret)}</label>
+      ${field('נוסעים',`<select id="rpax">${opts(nums(1,9),S.pax)}</select>`)}${field('מחלקה',`<select id="rcls">${opts([[1,'תיירים'],[2,'פרימיום'],[3,'עסקים'],[4,'ראשונה']],S.cls)}</select>`)}`,'בקשת הצעה לטיסה'],
+    hotels:[`${field('יעד',text('rdest',S.dest,'עיר, אזור או מלון'),1)}${field("צ'ק-אין",date('rcin',S.cin))}${field("צ'ק-אאוט",date('rcout',S.cout))}${field('אורחים',`<select id="rgs">${opts(nums(1,12),S.guests)}</select>`)}
+      <p class="note">רוצים להזמין מלון לבד, עכשיו? <a href="${HOTELS}" target="_blank" rel="noopener">אתר המלונות שלנו</a> פתוח תמיד.</p>`,'בקשת הצעה למלון'],
+    cars:[`${field('איפה אוספים',text('rplace',S.place,'עיר או שדה תעופה',true),1)}${field('איסוף',date('rcf',S.cfrom))}${field('החזרה',date('rct',S.cto))}${field('גיל הנהג',`<select id="rage">${opts(nums(18,85),S.age)}</select>`)}`,'בקשת הצעה לרכב'],
+    packages:[`${field('יעד',text('rpd',S.pdest,'למשל: אתונה, דובאי, פראג',true),1)}${field('יציאה',date('rpf',S.pfrom))}${field('חזרה',date('rpt',S.pto))}${field('נוסעים',`<select id="rpa">${opts(nums(1,12),S.adults)}</select>`)}`,'בקשת הצעה לחבילה'],
+    tours:[`${field('לאן',text('rtd',S.tdest,'למשל: רומא, יוון, תאילנד',true),1)}${field('חודש',`<input type="month" id="rtm" min="${TODAY.slice(0,7)}" value="${S.month}">`)}`,'בקשת הצעה לטיול'],
+    tickets:[`${field('קבוצה, אמן, ספורט או מקום',text('rw',S.what,'למשל: מכבי תל אביב, ריאל מדריד, קולדפליי'),1)}${field('מתאריך',date('rkf',S.kfrom))}${field('עד תאריך',date('rkt',S.kto))}`,'בקשת הצעה לכרטיסים'],
+  };
+  const[inner,btn]=parts[TAB];
+  $('#panel').innerHTML=dl+formShell('rf',offlineBox()+inner,btn);
+  const v=id=>$('#'+id).value.trim();
+  document.querySelectorAll('[name=rt]').forEach(r=>r.onchange=()=>{S.round=document.querySelector('[name=rt]:checked').value==='1';$('#rretl').hidden=!S.round});
+  $('#rf').onsubmit=e=>{e.preventDefault();let er='',title='',search='';
+    if(TAB==='flights'){Object.assign(S,{from:v('rfrom'),to:v('rto'),dep:v('rdep'),ret:v('rret'),pax:+v('rpax'),cls:+v('rcls')});
+      er=!S.from?'כתבו מאיפה טסים':!S.to?'כתבו לאן טסים':!S.dep||S.dep<TODAY?'בחרו תאריך הלוך':S.round&&(!S.ret||S.ret<S.dep)?'תאריך החזור לפני ההלוך':'';
+      title=`${S.from} ← ${S.to}`;search=`${heD(S.dep)}${S.round?'–'+heD(S.ret):' (כיוון אחד)'} · ${S.pax} נוסעים · ${$('#rcls').selectedOptions[0].textContent}`}
+    if(TAB==='hotels'){Object.assign(S,{dest:v('rdest'),cin:v('rcin'),cout:v('rcout'),guests:+v('rgs')});
+      er=!S.dest?'כתבו יעד':!S.cin||S.cin<TODAY?"בחרו תאריך צ'ק-אין":!S.cout||S.cout<=S.cin?"הצ'ק-אאוט צריך להיות אחרי הצ'ק-אין":'';
+      title=`מלון ב${S.dest}`;search=`${heD(S.cin)}–${heD(S.cout)} · ${S.guests} אורחים`}
+    if(TAB==='cars'){Object.assign(S,{place:v('rplace'),cfrom:v('rcf'),cto:v('rct'),age:+v('rage')});
+      er=!S.place?'כתבו איפה אוספים':!S.cfrom||S.cfrom<TODAY?'בחרו תאריך איסוף':!S.cto||S.cto<S.cfrom?'ההחזרה לפני האיסוף':'';
+      title=`רכב ב${S.place}`;search=`${heD(S.cfrom)}–${heD(S.cto)} · נהג בן ${S.age}`}
+    if(TAB==='packages'){Object.assign(S,{pdest:v('rpd'),pfrom:v('rpf'),pto:v('rpt'),adults:+v('rpa')});
+      er=!S.pdest?'כתבו יעד':!S.pfrom||S.pfrom<TODAY?'בחרו תאריך יציאה':!S.pto||S.pto<=S.pfrom?'החזרה צריכה להיות אחרי היציאה':'';
+      title=`חבילה ל${S.pdest}`;search=`${heD(S.pfrom)}–${heD(S.pto)} · ${S.adults} נוסעים`}
+    if(TAB==='tours'){Object.assign(S,{tdest:v('rtd'),month:v('rtm')});
+      er=!S.tdest?'כתבו לאן':!S.month?'בחרו חודש':'';
+      title=`טיול מאורגן ל${S.tdest}`;search=S.month}
+    if(TAB==='tickets'){Object.assign(S,{what:v('rw'),kfrom:v('rkf'),kto:v('rkt')});
+      er=!S.what?'כתבו למה מחפשים כרטיסים':!S.kfrom||S.kfrom<TODAY?'בחרו מתאריך':!S.kto||S.kto<S.kfrom?'טווח התאריכים לא תקין':'';
+      title=`כרטיסים · ${S.what}`;search=`${heD(S.kfrom)}–${heD(S.kto)}`}
+    if(!guard('rf',er))return;
+    book({kind:TAB,title,search,lines:[],price:null})};
+}
 // Every search runs on Bar's own computer: we leave a job, his server page answers it.
 const strs=o=>Object.fromEntries(Object.entries(o).filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=>[k,String(v)]));
 async function job(kind,params,ms){
@@ -287,7 +334,7 @@ async function job(kind,params,ms){
   throw new Error('timeout');
 }
 async function online(){try{const{data}=await sb.rpc('travel_status');return!!(data&&data.online)}catch{return false}}
-const sug=async(kind,q,extra={})=>{try{return((await job('suggest',{kind,q,...extra},15000))||{}).data||[]}catch{return[]}};
+const sug=async(kind,q,extra={})=>{if(ONLINE===false)return[];try{return((await job('suggest',{kind,q,...extra},15000))||{}).data||[]}catch{return[]}};
 const get=async(path,params)=>({data:((await job('pkgdates',params,25000))||{}).data||[]});
 
 // ---------- one picker for every "type and choose" field ----------
@@ -470,7 +517,7 @@ async function search(params,label,title){
       $('#askbar2').onclick=e=>{e.preventDefault();book({kind:params.kind,title,search:label,lines:[],price:null})};return}
     out.innerHTML=`<h2 style="margin:6px 0 10px;font-size:19px">${nf(RES.length)} תוצאות · <span style="font-weight:500;color:var(--mute)">${esc(label)}</span></h2><div class="res" id="list"></div>`;
     more();
-  }catch(e){ONLINE=false;panel();out.innerHTML=''}
+  }catch(e){ONLINE=false;panel();out.innerHTML='';book({kind:params.kind,title,search:label,lines:[],price:null})}
   finally{const b2=document.querySelector('#panel .go');b2&&(b2.disabled=false)}
 }
 function view(x){
@@ -529,8 +576,10 @@ $('#dlg').addEventListener('click',e=>{if(e.target===$('#dlg'))$('#dlg').close()
 
 // ---------- laptop status ----------
 async function health(){
-  const was=ONLINE;ONLINE=await online();
-  if(ONLINE!==was&&(was!==null||ONLINE===false))panel();
+  ONLINE=await online();
+  // never pull a form from under someone who is typing: it switches on the next check
+  const a=document.activeElement,typing=(a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&$('#panel').contains(a))||$('#dlg').open;
+  if(ONLINE!==SHOWN_MODE&&!typing)panel();
   setTimeout(health,ONLINE?60000:15000);
 }
 tabs();panel();health();
