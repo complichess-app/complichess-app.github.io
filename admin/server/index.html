@@ -68,7 +68,7 @@ addEventListener('message',e=>{
   if(m.type==='need-login'){if(ASKED||hasExt()){LOGGED=false;RUN=false;if(STATE!=='login'){STATE='login';draw();heartbeat()}}return}
   if(m.type==='focus-server'){focus();return}
   if(m.type==='hello'){if(win){VIA='win';HANDS=e.source}ALIVE=Date.now();send({type:'ack'});if(ADMIN&&!RUN&&wantOn())start();return}
-  if(m.type==='alive'){ALIVE=Date.now();if(win&&!HANDS)HANDS=e.source;return}
+  if(m.type==='alive'){ALIVE=Date.now();if(win&&!HANDS)HANDS=e.source;if(ADMIN&&!RUN&&wantOn()&&STATE==='wait')start();return}
   if(m.type==='result'){ALIVE=Date.now();const p=pending.get(m.id);if(p){pending.delete(m.id);m.ok?p.res(m.data):p.rej(new Error(m.error||'failed'))}}
 });
 const hands=(job,ms=120000)=>new Promise((res,rej)=>{
@@ -113,7 +113,7 @@ function draw(){
 }
 
 function turnOn(){setOn(true);ASKED=true;if(hasExt()){if(STATE!=='on'){STATE='starting';draw()}bg({type:'ensure'});bg({type:'ping'});tick(25000).then(()=>{if(STATE==='starting'){STATE='login';draw()}})}else draw()}
-async function heartbeat(){try{await sb.rpc('travel_heartbeat',{p_on:STATE==='on',p_logged_in:LOGGED!==false,p_version:3})}catch{}}
+async function heartbeat(){try{await sb.rpc('travel_heartbeat',{p_on:STATE==='on',p_logged_in:LOGGED!==false,p_version:4})}catch{}}
 async function start(){
   if(!HANDS||HANDS.closed||Date.now()-ALIVE>35000){if(STATE!=='starting'){STATE='wait';draw()}return}
   let r;try{r=await hands({type:'start'},20000)}catch(e){STATE='wait';draw();return}
@@ -122,10 +122,10 @@ async function start(){
   STATE='on';RUN=true;log('השרת הופעל');heartbeat();pickQueued();
   if(!CH)CH=sb.channel('travel-jobs').on('postgres_changes',{event:'INSERT',schema:'public',table:'travel_jobs'},p=>{if(RUN&&p.new&&p.new.status==='queued')take(p.new)}).subscribe();
 }
-async function stop(){setOn(false);RUN=false;STATE='stopped';send({type:'off'});try{await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:3})}catch{}log('השרת כובה');draw()}
+async function stop(){setOn(false);RUN=false;STATE='stopped';send({type:'off'});try{await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:4})}catch{}log('השרת כובה');draw()}
 every(12000,async()=>{
-  if(RUN&&(!HANDS||HANDS.closed||Date.now()-ALIVE>35000)){RUN=false;STATE=hasExt()?'starting':'wait';log('לשונית BeAgent נסגרה או נטענה מחדש');draw();if(hasExt())bg({type:'ensure'})}
-  heartbeat();
+  if(RUN&&(!HANDS||HANDS.closed||Date.now()-ALIVE>35000)){RUN=false;STATE=hasExt()?'starting':'wait';log('לשונית BeAgent נסגרה או נטענה מחדש');draw();heartbeat();if(hasExt())bg({type:'ensure'})}
+  if(RUN)heartbeat();
 });
 every(5000,()=>pickQueued());
 
