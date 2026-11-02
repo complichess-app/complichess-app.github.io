@@ -1,6 +1,6 @@
-/* Bar Lvovski Travel — runs inside Bar's own BeAgent tab (started by the ⚡ bookmark).
-   It does the searches in hidden frames of BeAgent itself and answers Barusik's server page. Nothing is installed:
-   closing or reloading the BeAgent tab stops it. Jobs are accepted only from https://barusik.com, and every job is
+/* Bar Lvovski Travel — runs inside Bar's own BeAgent tab (loaded by the "שרת ברוסיק" Chrome extension, or by the old ⚡ bookmark).
+   It does the searches in hidden frames of BeAgent itself and answers Barusik's server page.
+   Jobs are accepted only from https://barusik.com (the extension carries them from there), and every job is
    checked and turned into a BeAgent results address here, so it can never open anything else. */
 (() => {
   'use strict';
@@ -9,7 +9,8 @@
   const SERVER = 'https://barusik.com';
   const MARKUP = 1.12;
   const API = 'https://book-api.travelor.com/api';
-  const VERSION = 2;
+  const VERSION = 3;
+  const EXT = !!window.__btExt; // the extension carries the messages; the bookmark talks to the server page's window
 
   // ---- timers that keep running even when this tab is in the background ----
   const tick = (() => {
@@ -17,7 +18,8 @@
       const w = new Worker(URL.createObjectURL(new Blob(['onmessage=e=>setTimeout(()=>postMessage(e.data),e.data.ms)'], { type: 'text/javascript' })));
       const cb = new Map(); let n = 0;
       w.onmessage = (e) => { const f = cb.get(e.data.id); cb.delete(e.data.id); f && f(); };
-      return (ms) => new Promise((r) => { const id = ++n; cb.set(id, r); w.postMessage({ id, ms }); });
+      w.onerror = () => {};
+      return (ms) => new Promise((r) => { const id = ++n; cb.set(id, r); w.postMessage({ id, ms }); setTimeout(r, ms + 1500); });
     } catch { return (ms) => new Promise((r) => setTimeout(r, ms)); }
   })();
 
@@ -31,19 +33,30 @@
   document.body.appendChild(badge);
 
   // ---- talking to the server page ----
-  let server = null, acked = false;
-  const post = (m) => { try { server && server.postMessage({ src: 'bt-hands', ...m }, SERVER); } catch {} };
+  let server = null, acked = false, stopped = false;
+  const post = (m) => {
+    if (EXT) { window.postMessage({ src: 'bt-hands-ext', ...m }, location.origin); return; }
+    try { server && server.postMessage({ src: 'bt-hands', ...m }, SERVER); } catch {}
+  };
   // the named tab is reused if it's already open, so Bar never ends up with two server tabs
-  function openServer() { server = window.open(SERVER + '/admin/server/', 'bt-server'); }
-  badge.onclick = () => { server = window.open(SERVER + '/admin/server/', 'bt-server'); acked = false; hello(); };
-  async function hello() { for (let i = 0; i < 60 && !acked; i++) { post({ type: 'hello', version: VERSION }); await tick(1000); } }
+  function openServer() { if (!EXT) server = window.open(SERVER + '/admin/server/', 'bt-server'); }
+  badge.onclick = () => { if (EXT) { post({ type: 'focus-server' }); return; } server = window.open(SERVER + '/admin/server/', 'bt-server'); acked = false; hello(); };
+  let saying = false;
+  async function hello() {
+    if (saying) return; saying = true;
+    // with the extension the server page may open only later, so keep saying hello until it answers
+    for (let i = 0; (EXT || i < 60) && !acked; i++) { post({ type: 'hello', version: VERSION }); await tick(EXT ? 3000 : 1000); }
+    saying = false;
+  }
   (async () => { for (;;) { await tick(10000); if (acked) post({ type: 'alive' }); } })();
 
   addEventListener('message', (e) => {
-    if (e.origin !== SERVER || !e.data || e.data.src !== 'bt-page') return;
-    server = e.source;
+    if (!e.data) return;
+    if (EXT ? (e.source !== window || e.data.src !== 'bt-page-ext') : (e.origin !== SERVER || e.data.src !== 'bt-page')) return;
+    if (!EXT) server = e.source;
+    if (e.data.type === 'ping') { acked = false; hello(); return; }
     if (e.data.type === 'ack') { acked = true; setBadge('#22C55E', 'שרת ברוסיק פעיל — השאר את הלשונית פתוחה'); return; }
-    if (e.data.type === 'stop') { acked = false; setBadge('#EF4444', 'שרת ברוסיק כבוי (לחץ להפעלה)'); return; }
+    if (e.data.type === 'stop' || e.data.type === 'off') { acked = false; stopped = true; setBadge('#EF4444', 'שרת ברוסיק כבוי'); return; }
     if (e.data.type !== 'job' || !e.data.id) return;
     const { id, job } = e.data;
     run(job || {}).then((data) => post({ type: 'result', id, ok: true, data }), (err) => post({ type: 'result', id, ok: false, error: String((err && err.message) || err).slice(0, 200) }));
@@ -278,6 +291,6 @@
   }
 
   window.__btHands = { reconnect: () => { acked = false; openServer(); hello(); } };
-  if (!loggedIn()) setBadge('#EF4444', 'צריך להתחבר ל-BeAgent ואז ללחוץ שוב על ⚡');
+  if (!loggedIn()) setBadge('#EF4444', EXT ? 'צריך להתחבר ל-BeAgent' : 'צריך להתחבר ל-BeAgent ואז ללחוץ שוב על ⚡');
   openServer(); hello();
 })();

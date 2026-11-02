@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>תשלום · Barusik</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap">
+<style>
+:root{--bg:#090B1F;--card:#12163A;--line:rgba(255,255,255,.12);--ink:#EEEAF8;--mute:#A9ABD0;--pk:#6A63FF;--gold:#D8AE57;--ok:#49E8C8;--bad:#FF8A8A}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif}
+body{min-height:100svh;display:flex;flex-direction:column;align-items:center;padding:max(20px,env(safe-area-inset-top)) 16px 32px}
+.brand{align-self:center;color:var(--gold);font-weight:800;text-decoration:none;margin-bottom:18px;font-size:15px}
+main{width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px}
+.ticket{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:12px}
+h1{margin:0;font-size:22px;font-weight:800;line-height:1.25}p{margin:0;line-height:1.55}
+.mute{color:var(--mute)}.small{font-size:13.5px}
+.sum{border-top:1px dashed var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums}
+.sum div{display:flex;justify-content:space-between;gap:12px}
+.total{font-size:30px;font-weight:800}.total small{font-size:14px;font-weight:500;color:var(--mute);align-self:center}
+label{display:flex;flex-direction:column;gap:5px;font-size:14px;color:var(--mute)}
+input{font:inherit;font-size:16px;background:#0B0E28;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:12px 14px;width:100%}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button{font:inherit;font-weight:800;border:0;border-radius:14px;padding:15px 18px;background:var(--pk);color:#fff;cursor:pointer;font-size:17px}
+button:disabled{opacity:.6;cursor:wait}
+.btn{display:inline-block;font-weight:800;border-radius:14px;padding:15px 22px;background:var(--pk);color:#fff;text-decoration:none;font-size:17px}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:15px;padding:12px 16px}
+.row{display:flex;gap:8px}.row input{flex:1;min-width:0}.row button{white-space:nowrap}
+.err{color:var(--bad);font-size:14px;min-height:1em}.good{color:var(--ok);font-size:14px}
+details summary{cursor:pointer;color:var(--mute);font-size:14.5px}details[open] summary{margin-bottom:8px}
+.big{font-size:44px;line-height:1}a{color:var(--gold)}
+footer{margin-top:18px;max-width:440px;text-align:center;color:var(--mute);font-size:12.5px;line-height:1.6}
+.spin{width:34px;height:34px;border:4px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:r 1s linear infinite;align-self:center}@keyframes r{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+</style>
+</head>
+<body>
+<a class="brand" href="/">Barusik Platforms</a>
+<main id="app" aria-live="polite"><div class="ticket"><div class="spin" aria-hidden="true"></div></div></main>
+<footer id="foot"></footer>
+<script src="/lib/supabase.js"></script>
+<script>
+(()=>{
+const SB_URL='https://iktmyrfbejtjsiehcrar.supabase.co',SB_KEY='sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}});
+const T={
+he:{title:'תשלום',price:'מחיר',discount:'הנחה',total:'לתשלום',coupon:'יש לכם שובר?',code:'קוד השובר',apply:'הפעלה',cOk:'השובר הופעל',cinvalid:'השובר לא נמצא',cexpired:'תוקף השובר פג',cused:'השובר כבר נוצל',cother:'השובר לא מתאים למוצר הזה',ctoo:'יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.',name:'שם מלא',phone:'טלפון נייד',mail:'מייל לקבלה (לא חובה)',pay:'לתשלום ₪{a}',free:'לקבל בחינם',secure:'התשלום נעשה בעמוד המאובטח של חברת הסליקה. פרטי האשראי לא עוברים דרכנו.',agree:'בלחיצה על התשלום אתם מסכימים ל<a href="/he/terms/" target="_blank" rel="noopener">תנאי השימוש ולמדיניות הביטולים</a>.',login:'כדי לשלם צריך להתחבר לחשבון ברוסיק',email:'מייל',pass:'סיסמה',loginBtn:'התחברות',noAcc:'אין לכם חשבון? <a href="/he/">נרשמים באתר הראשי</a> וחוזרים לכאן.',badLogin:'מייל או סיסמה לא נכונים',details:'צריך שם פרטי ושם משפחה, ומספר נייד ישראלי של 10 ספרות.',busy:'משהו השתבש. שום דבר לא חויב. נסו שוב בעוד דקה.',paid:'התשלום התקבל',paidSub:'תודה! אפשר להמשיך.',cont:'המשך',checking:'בודקים את התשלום מול חברת הסליקה…',notPaid:'התשלום לא הושלם ושום דבר לא חויב. אפשר לנסות שוב.',again:'לנסות שוב',wait:'התשלום עוד לא אושר אצל חברת הסליקה. אם חויבתם, זה יתעדכן כאן תוך דקות. אפשר לרענן את הדף.',off:'תשלום באתר עוד לא פתוח. אפשר לכתוב לנו ונסדר את זה.',gone:'הקישור הזה לא תקף יותר.',demo:'הדגמה: לא ייגבה כסף',demoBtn:'לסמן כשולם (הדגמה)',none:'המוצר הזה לא זמין כרגע.',foot:'כל המחירים בשקלים.'},
+en:{title:'Payment',price:'Price',discount:'Discount',total:'To pay',coupon:'Have a coupon?',code:'Coupon code',apply:'Apply',cOk:'Coupon applied',cinvalid:'Coupon not found',cexpired:'This coupon has expired',cused:'This coupon was already used',cother:'This coupon is for something else',ctoo:'Too many tries. Try again in a few minutes.',name:'Full name',phone:'Mobile phone',mail:'Email for the receipt (optional)',pay:'Pay ₪{a}',free:'Get it for free',secure:'You pay on the secure page of the payment company. Your card details never pass through us.',agree:'By paying you agree to the <a href="/en/terms/" target="_blank" rel="noopener">terms of use and cancellation policy</a>.',login:'Sign in to your Barusik account to pay',email:'Email',pass:'Password',loginBtn:'Sign in',noAcc:'No account? <a href="/en/">Sign up on the main site</a> and come back.',badLogin:'Wrong email or password',details:'Enter a first and last name and a 10-digit Israeli mobile number.',busy:'Something went wrong. Nothing was charged. Try again in a minute.',paid:'Payment received',paidSub:'Thank you! You can continue.',cont:'Continue',checking:'Checking the payment with the payment company…',notPaid:'The payment was not completed and nothing was charged. You can try again.',again:'Try again',wait:'The payment company has not confirmed yet. If you were charged, this page will update within minutes. You can refresh it.',off:'Paying on the site is not open yet. Write to us and we will sort it out.',gone:'This link is no longer valid.',demo:'Demo: no money is charged',demoBtn:'Mark as paid (demo)',none:'This product is not available right now.',foot:'All prices in Israeli shekels.'},
+ar:{title:'الدفع',price:'السعر',discount:'خصم',total:'للدفع',coupon:'هل لديك قسيمة؟',code:'رمز القسيمة',apply:'تفعيل',cOk:'تم تفعيل القسيمة',cinvalid:'القسيمة غير موجودة',cexpired:'انتهت صلاحية القسيمة',cused:'تم استخدام القسيمة',cother:'القسيمة لا تناسب هذا المنتج',ctoo:'محاولات كثيرة. حاولوا بعد دقائق.',name:'الاسم الكامل',phone:'الهاتف المحمول',mail:'البريد للإيصال (اختياري)',pay:'ادفع ₪{a}',free:'احصل عليه مجانًا',secure:'يتم الدفع في صفحة آمنة لشركة الدفع. بيانات البطاقة لا تمر عبرنا.',agree:'بالدفع أنتم توافقون على <a href="/ar/terms/" target="_blank" rel="noopener">شروط الاستخدام وسياسة الإلغاء</a>.',login:'سجلوا الدخول إلى حساب باروسيك للدفع',email:'البريد',pass:'كلمة المرور',loginBtn:'تسجيل الدخول',noAcc:'لا يوجد حساب؟ <a href="/ar/">سجلوا في الموقع الرئيسي</a> ثم عودوا.',badLogin:'البريد أو كلمة المرور غير صحيحة',details:'أدخلوا الاسم الأول واسم العائلة ورقم هاتف محمول إسرائيلي من 10 أرقام.',busy:'حدث خطأ. لم يتم خصم أي مبلغ. حاولوا بعد دقيقة.',paid:'تم استلام الدفع',paidSub:'شكرًا! يمكنكم المتابعة.',cont:'متابعة',checking:'نتحقق من الدفع مع شركة الدفع…',notPaid:'لم يكتمل الدفع ولم يتم خصم أي مبلغ. يمكنكم المحاولة مرة أخرى.',again:'حاولوا مرة أخرى',wait:'لم تؤكد شركة الدفع بعد. إذا تم الخصم فستتحدث الصفحة خلال دقائق.',off:'الدفع في الموقع غير متاح بعد. اكتبوا لنا وسنرتب الأمر.',gone:'هذا الرابط لم يعد صالحًا.',demo:'عرض تجريبي: لن يتم خصم مال',demoBtn:'وضع علامة مدفوع (تجريبي)',none:'هذا المنتج غير متاح حاليًا.',foot:'جميع الأسعار بالشيكل.'},
+ru:{title:'Оплата',price:'Цена',discount:'Скидка',total:'К оплате',coupon:'Есть купон?',code:'Код купона',apply:'Применить',cOk:'Купон применён',cinvalid:'Купон не найден',cexpired:'Срок купона истёк',cused:'Купон уже использован',cother:'Купон не подходит к этому товару',ctoo:'Слишком много попыток. Попробуйте через несколько минут.',name:'Полное имя',phone:'Мобильный телефон',mail:'Почта для чека (необязательно)',pay:'Оплатить ₪{a}',free:'Получить бесплатно',secure:'Оплата проходит на защищённой странице платёжной компании. Данные карты не проходят через нас.',agree:'Оплачивая, вы соглашаетесь с <a href="/ru/terms/" target="_blank" rel="noopener">условиями использования и правилами отмены</a>.',login:'Войдите в аккаунт Barusik, чтобы оплатить',email:'Почта',pass:'Пароль',loginBtn:'Войти',noAcc:'Нет аккаунта? <a href="/ru/">Зарегистрируйтесь на главном сайте</a> и вернитесь.',badLogin:'Неверная почта или пароль',details:'Укажите имя и фамилию и израильский мобильный номер из 10 цифр.',busy:'Что-то пошло не так. Деньги не списаны. Попробуйте через минуту.',paid:'Оплата получена',paidSub:'Спасибо! Можно продолжать.',cont:'Продолжить',checking:'Проверяем оплату в платёжной компании…',notPaid:'Оплата не завершена, деньги не списаны. Можно попробовать снова.',again:'Попробовать снова',wait:'Платёжная компания ещё не подтвердила. Если деньги списаны, страница обновится в течение нескольких минут.',off:'Оплата на сайте пока не открыта. Напишите нам, и мы всё устроим.',gone:'Эта ссылка больше не действует.',demo:'Демо: деньги не списываются',demoBtn:'Отметить как оплачено (демо)',none:'Этот товар сейчас недоступен.',foot:'Все цены в шекелях.'},
+es:{title:'Pago',price:'Precio',discount:'Descuento',total:'A pagar',coupon:'¿Tienes un cupón?',code:'Código del cupón',apply:'Aplicar',cOk:'Cupón aplicado',cinvalid:'Cupón no encontrado',cexpired:'Este cupón ha caducado',cused:'Este cupón ya se usó',cother:'Este cupón no sirve para este producto',ctoo:'Demasiados intentos. Prueba dentro de unos minutos.',name:'Nombre completo',phone:'Teléfono móvil',mail:'Correo para el recibo (opcional)',pay:'Pagar ₪{a}',free:'Obtener gratis',secure:'Pagas en la página segura de la empresa de pagos. Los datos de tu tarjeta no pasan por nosotros.',agree:'Al pagar aceptas los <a href="/es/terms/" target="_blank" rel="noopener">términos de uso y la política de cancelación</a>.',login:'Inicia sesión en tu cuenta Barusik para pagar',email:'Correo',pass:'Contraseña',loginBtn:'Iniciar sesión',noAcc:'¿Sin cuenta? <a href="/es/">Regístrate en el sitio principal</a> y vuelve.',badLogin:'Correo o contraseña incorrectos',details:'Escribe nombre y apellido y un móvil israelí de 10 dígitos.',busy:'Algo salió mal. No se cobró nada. Prueba dentro de un minuto.',paid:'Pago recibido',paidSub:'¡Gracias! Puedes continuar.',cont:'Continuar',checking:'Comprobando el pago con la empresa de pagos…',notPaid:'El pago no se completó y no se cobró nada. Puedes intentarlo de nuevo.',again:'Intentar de nuevo',wait:'La empresa de pagos aún no lo ha confirmado. Si se te cobró, esta página se actualizará en minutos.',off:'El pago en el sitio aún no está abierto. Escríbenos y lo arreglamos.',gone:'Este enlace ya no es válido.',demo:'Demostración: no se cobra dinero',demoBtn:'Marcar como pagado (demo)',none:'Este producto no está disponible ahora.',foot:'Todos los precios en shekels.'},
+fr:{title:'Paiement',price:'Prix',discount:'Réduction',total:'À payer',coupon:'Vous avez un coupon ?',code:'Code du coupon',apply:'Appliquer',cOk:'Coupon appliqué',cinvalid:'Coupon introuvable',cexpired:'Ce coupon a expiré',cused:'Ce coupon a déjà été utilisé',cother:'Ce coupon ne convient pas à ce produit',ctoo:'Trop d’essais. Réessayez dans quelques minutes.',name:'Nom complet',phone:'Téléphone mobile',mail:'E-mail pour le reçu (facultatif)',pay:'Payer ₪{a}',free:'Obtenir gratuitement',secure:'Vous payez sur la page sécurisée de la société de paiement. Vos données de carte ne passent pas par nous.',agree:'En payant, vous acceptez les <a href="/fr/terms/" target="_blank" rel="noopener">conditions d’utilisation et la politique d’annulation</a>.',login:'Connectez-vous à votre compte Barusik pour payer',email:'E-mail',pass:'Mot de passe',loginBtn:'Se connecter',noAcc:'Pas de compte ? <a href="/fr/">Inscrivez-vous sur le site principal</a> puis revenez.',badLogin:'E-mail ou mot de passe incorrect',details:'Indiquez un prénom et un nom, et un mobile israélien à 10 chiffres.',busy:'Une erreur est survenue. Rien n’a été débité. Réessayez dans une minute.',paid:'Paiement reçu',paidSub:'Merci ! Vous pouvez continuer.',cont:'Continuer',checking:'Vérification du paiement auprès de la société de paiement…',notPaid:'Le paiement n’a pas abouti et rien n’a été débité. Vous pouvez réessayer.',again:'Réessayer',wait:'La société de paiement n’a pas encore confirmé. Si vous avez été débité, cette page se mettra à jour en quelques minutes.',off:'Le paiement sur le site n’est pas encore ouvert. Écrivez-nous et nous arrangerons cela.',gone:'Ce lien n’est plus valable.',demo:'Démo : aucun argent n’est débité',demoBtn:'Marquer comme payé (démo)',none:'Ce produit n’est pas disponible pour le moment.',foot:'Tous les prix sont en shekels.'}};
+const q=new URLSearchParams(location.search);
+const pick=()=>{const a=q.get('lang');if(T[a])return a;try{const s=localStorage.getItem('barusik.lang');if(T[s])return s}catch{}const n=(navigator.language||'he').slice(0,2);return T[n]?n:'he'};
+const L=pick(),t=(k,v={})=>String(T[L][k]||T.he[k]||'').replace(/\{(\w+)\}/g,(_,x)=>v[x]??'');
+document.documentElement.lang=L;document.documentElement.dir=L==='he'||L==='ar'?'rtl':'ltr';document.title=t('title')+' · Barusik';
+const app=document.getElementById('app');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nis=n=>{const x=Number(n||0);return Number.isInteger(x)?String(x):x.toFixed(2)};
+const safeBack=u=>/^\/[^/\\]/.test(u||'')?u:'/';
+const say=(title,sub,btn,href)=>{app.innerHTML=`<div class="ticket" style="align-items:center;text-align:center"><h1>${esc(title)}</h1>${sub?`<p class="mute">${esc(sub)}</p>`:''}${btn?`<a class="btn" href="${esc(href)}">${esc(btn)}</a>`:''}</div>`};
+const fn=async b=>{const{data:{session}}=await sb.auth.getSession();const r=await fetch(`${SB_URL}/functions/v1/pay`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,...(session?{Authorization:`Bearer ${session.access_token}`}:{})},body:JSON.stringify({lang:L,...b})});let j={};try{j=await r.json()}catch{}return j};
+const saved=()=>{try{return JSON.parse(localStorage.getItem('barusik-pay')||'{}')}catch{return{}}};
+const save=o=>{try{localStorage.setItem('barusik-pay',JSON.stringify(o))}catch{}};
+let PUB=null;
+document.getElementById('foot').textContent=t('foot');
+
+function paidView(back){say(t('paid'),t('paidSub'),t('cont'),safeBack(back))}
+
+// back from the payment company: ask the server, which asks the company
+async function confirmView(id,params,back){
+  app.innerHTML=`<div class="ticket" style="align-items:center;text-align:center"><div class="spin" aria-hidden="true"></div><p>${esc(t('checking'))}</p></div>`;
+  for(let i=0;i<8;i++){
+    const j=await fn({mode:'confirm',order:id||undefined,params});
+    if(j.paid){let b=back;if(!b&&j.id){const{data}=await sb.rpc('pay_order_view',{p_id:j.id});b=data&&data.back_url}return paidView(b)}
+    if(id){const{data}=await sb.rpc('pay_order_view',{p_id:id});if(data&&data.status==='paid')return paidView(back||data.back_url)}
+    await new Promise(r=>setTimeout(r,2500));
+  }
+  say(t('title'),t('wait'));
+}
+
+function form(o){
+  // o: {title,desc,list,discount,amount,coupon?,onPay(fields),couponable,demo,needLogin,noDetails}
+  const S=saved();
+  app.innerHTML=`<form class="ticket" id="f" novalidate>
+    <h1>${esc(o.title)}</h1>${o.desc?`<p class="mute small">${esc(o.desc)}</p>`:''}
+    ${PUB&&PUB.mode==='demo'?`<p class="good">${esc(t('demo'))}</p>`:''}
+    <div class="sum" id="sum"></div>
+    ${o.couponable?`<details id="cp"><summary>${esc(t('coupon'))}</summary><div class="row"><input id="code" aria-label="${esc(t('code'))}" placeholder="${esc(t('code'))}" dir="ltr" autocomplete="off" autocapitalize="characters"><button type="button" class="ghost" id="ap">${esc(t('apply'))}</button></div><p class="small" id="cm"></p></details>`:''}
+    <div id="fields" style="display:flex;flex-direction:column;gap:10px">
+      <label>${esc(t('name'))}<input id="nm" autocomplete="name" maxlength="120" value="${esc(o.name||S.name||'')}"></label>
+      <label>${esc(t('phone'))}<input id="ph" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" maxlength="20" placeholder="05X-XXXXXXX" value="${esc(o.phone||S.phone||'')}"></label>
+      <label>${esc(t('mail'))}<input id="ml" type="email" dir="ltr" autocomplete="email" maxlength="160" value="${esc(o.email||S.email||'')}"></label>
+    </div>
+    <p class="err" id="e" role="alert"></p>
+    <button id="go"></button>
+    <p class="mute small">${esc(t('secure'))}</p><p class="mute small">${t('agree')}</p>
+  </form>`;
+  const $=id=>document.getElementById(id);let cur={...o};
+  const draw=()=>{$('sum').innerHTML=`${Number(cur.discount)>0?`<div><span class="mute">${esc(t('price'))}</span><span>₪${nis(cur.list)}</span></div><div><span class="mute">${esc(t('discount'))}</span><span>−₪${nis(cur.discount)}</span></div>`:''}<div class="total"><small>${esc(t('total'))}</small><span>₪${nis(cur.amount)}</span></div>`;
+    $('go').textContent=Number(cur.amount)>0?t('pay',{a:nis(cur.amount)}):t('free');$('fields').style.display=Number(cur.amount)>0?'flex':'none'};
+  draw();
+  if($('ap'))$('ap').onclick=async()=>{const c=$('code').value.trim();if(!c)return;$('ap').disabled=true;$('cm').className='small';$('cm').textContent='';
+    const{data,error}=await sb.rpc('pay_quote',{p_product:o.product,p_coupon:c,p_ref:o.ref||null});$('ap').disabled=false;
+    if(error||!data||(!data.ok&&data.reason!=='too many')){$('cm').className='small err';$('cm').textContent=t('busy');return}
+    if(data.reason==='too many'){$('cm').className='small err';$('cm').textContent=t('ctoo');return}
+    if(data.coupon_error){$('cm').className='small err';$('cm').textContent=t('c'+data.coupon_error);cur={...cur,list:data.list,discount:0,amount:data.amount,code:''};draw();return}
+    $('cm').className='small good';$('cm').textContent=t('cOk');cur={...cur,list:data.list,discount:data.discount,amount:data.amount,code:data.coupon};draw()};
+  $('f').onsubmit=async e=>{e.preventDefault();$('e').textContent='';
+    const name=$('nm').value.trim(),phone=$('ph').value.replace(/\D/g,'').replace(/^972/,'0'),email=$('ml').value.trim();
+    if(Number(cur.amount)>0&&PUB.mode==='live'&&(name.split(/\s+/).length<2||!/^05\d{8}$/.test(phone))){$('e').textContent=t('details');return}
+    save({name,phone,email});$('go').disabled=true;
+    const j=await o.onPay({name,phone,email,coupon:cur.code||''});
+    if(j.url){location.href=j.url;return}
+    if(j.paid)return paidView(o.back);
+    if(j.demo){$('go').textContent=t('demoBtn');$('go').disabled=false;$('f').onsubmit=async ev=>{ev.preventDefault();$('go').disabled=true;const d=await fn({mode:'demo_paid',order:j.id});if(d.paid)return paidView(o.back);$('e').textContent=t('busy');$('go').disabled=false};return}
+    $('go').disabled=false;$('e').textContent=j.error==='details'?t('details'):j.error==='off'?t('off'):j.error==='sign in'?t('login'):t('busy')};
+}
+
+function loginView(then){
+  app.innerHTML=`<form class="ticket" id="l" novalidate><h1>${esc(t('login'))}</h1>
+    <label>${esc(t('email'))}<input id="em" type="email" dir="ltr" autocomplete="email"></label>
+    <label>${esc(t('pass'))}<input id="pw" type="password" dir="ltr" autocomplete="current-password"></label>
+    <p class="err" id="e" role="alert"></p><button>${esc(t('loginBtn'))}</button><p class="mute small">${t('noAcc')}</p></form>`;
+  document.getElementById('l').onsubmit=async e=>{e.preventDefault();const r=await sb.auth.signInWithPassword({email:document.getElementById('em').value.trim(),password:document.getElementById('pw').value});
+    if(r.error){document.getElementById('e').textContent=t('badLogin');return}then()};
+}
+
+async function productView(id,ref,back){
+  const prod=(PUB.products||[]).find(p=>p.id===id);
+  if(!prod)return say(t('title'),t('none'),t('cont'),safeBack(back));
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session)return loginView(()=>productView(id,ref,back));
+  const{data}=await sb.rpc('pay_quote',{p_product:id,p_coupon:null,p_ref:ref||null});
+  if(!data||!data.ok)return say(t('title'),t('none'),t('cont'),safeBack(back||prod.back_url));
+  form({product:id,ref,title:prod.name,desc:prod.description,list:data.list,discount:data.discount,amount:data.amount,couponable:true,back:back||prod.back_url,
+    onPay:f=>fn({mode:'create',product:id,ref:ref||undefined,...f})});
+}
+
+async function orderView(id,back){
+  const{data}=await sb.rpc('pay_order_view',{p_id:id});
+  if(!data)return say(t('title'),t('gone'));
+  if(data.status==='paid')return paidView(back||data.back_url);
+  if(data.status==='cancelled'||data.status==='refunded')return say(t('title'),t('gone'));
+  form({title:data.title,list:data.list,discount:data.discount,amount:data.amount,couponable:false,back:back||data.back_url,
+    onPay:f=>fn({mode:'order',order:id,...f})});
+}
+
+(async()=>{
+  try{const{data}=await sb.rpc('pay_public');PUB=data}catch{}
+  if(!PUB)return say(t('title'),t('busy'));
+  const id=q.get('o'),back=q.get('back');
+  // Hyp comes back with its own parameters in the address
+  if(q.get('Order')&&q.get('CCode')!==null){
+    if(q.get('CCode')!=='0')return say(t('title'),t('notPaid'));
+    return confirmView(null,Object.fromEntries(q.entries()),back);
+  }
+  if(q.has('cancel'))return id?(say(t('title'),t('notPaid'),t('again'),`/pay/?o=${encodeURIComponent(id)}${back?'&back='+encodeURIComponent(back):''}`)):say(t('title'),t('notPaid'));
+  if(q.has('done')&&id)return confirmView(id,{},back);
+  if(id)return orderView(id,back);
+  if(PUB.mode==='off')return say(t('title'),t('off'));
+  const p=q.get('p');if(!p)return say(t('title'),t('none'),t('cont'),'/');
+  productView(p,/^[0-9a-f-]{36}$/i.test(q.get('ref')||'')?q.get('ref'):null,back);
+})();
+})();
+</script>
+</body>
+</html>

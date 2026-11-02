@@ -263,8 +263,18 @@ ru:{resume:'Продолжить отчёт',resumeMsg:'Пнина на сере
 es:{resume:'Continuar el informe',resumeMsg:'Penina va por la mitad de tu informe. Toca para que siga donde lo dejó.',prog:'Penina ha escrito {n} de {t} partes',keepOpen:'Un informe de un chat largo tarda unos minutos. Mejor deja la página abierta. Si sales, Penina sigue donde lo dejó cuando vuelvas.',partFail:'Penina no pudo terminar una parte. Lo escrito está guardado; toca «Continuar el informe».',myNone:'Aún no hay informes. Cada informe que recibas te esperará aquí.',myNav:'Mis informes'},
 fr:{resume:'Reprendre le rapport',resumeMsg:'Penina est au milieu de votre rapport. Touchez pour qu’elle reprenne là où elle s’est arrêtée.',prog:'Penina a écrit {n} parties sur {t}',keepOpen:'Le rapport d’un long chat prend quelques minutes. Mieux vaut garder la page ouverte. Si vous partez, Penina reprend à votre retour.',partFail:'Penina n’a pas pu finir une partie. Ce qui est écrit est gardé ; touchez « Reprendre le rapport ».',myNone:'Pas encore de rapports. Chaque rapport que vous recevrez vous attendra ici.',myNav:'Mes rapports'}};
 for(const l in T3)Object.assign(T[l],T3[l]);
+const T4={he:{payBtn:'לתשלום וקבלת הדוח · ₪{p}',paySub:'דוח אישי על כל אחד, הדינמיקה של הקבוצה, והציטוטים שפנינה לא שוכחת. אחרי התשלום הדוח מתחיל להיכתב מיד.',payMsg:'יש לכם שובר? מזינים אותו בעמוד התשלום.'},
+en:{payBtn:'Pay and get the report · ₪{p}',paySub:'A personal read on everyone, how the group works, and the quotes Penina won’t forget. The report starts right after you pay.',payMsg:'Have a coupon? Enter it on the payment page.'},
+ar:{payBtn:'ادفع واحصل على التقرير · ₪{p}',paySub:'قراءة شخصية لكل واحد، وكيف تعمل المجموعة، والاقتباسات التي لن تنساها بنينا. يبدأ التقرير فور الدفع.',payMsg:'لديكم قسيمة؟ أدخلوها في صفحة الدفع.'},
+ru:{payBtn:'Оплатить и получить отчёт · ₪{p}',paySub:'Личный разбор каждого, как устроена группа и цитаты, которые Пнина не забудет. Отчёт начнётся сразу после оплаты.',payMsg:'Есть купон? Введите его на странице оплаты.'},
+es:{payBtn:'Pagar y recibir el informe · ₪{p}',paySub:'Una lectura personal de cada uno, cómo funciona el grupo y las frases que Penina no olvida. El informe empieza justo después de pagar.',payMsg:'¿Tienes un cupón? Escríbelo en la página de pago.'},
+fr:{payBtn:'Payer et recevoir le rapport · ₪{p}',paySub:'Une lecture personnelle de chacun, le fonctionnement du groupe et les phrases que Penina n’oublie pas. Le rapport démarre juste après le paiement.',payMsg:'Vous avez un coupon ? Saisissez-le sur la page de paiement.'}};
+for(const l in T4)Object.assign(T[l],T4[l]);
 const NOT_READY=e=>/does not exist|schema cache|not find the function|relation .* does not exist|404/i.test(String(e?.message||e||''));
-let ADMIN=false,REQ=null,BACKEND=true,pollReq=null;
+let ADMIN=false,REQ=null,BACKEND=true,pollReq=null,PAY=null;
+// A report costs money when Bar switched payments on (in demo mode only he sees it). Free otherwise: the request waits for his approval.
+const payProduct=()=>{if(!PAY||PAY.mode==='off'||(PAY.mode==='demo'&&!ADMIN))return null;return(PAY.products||[]).find(p=>p.id==='penina_report')||null};
+const payPrice=()=>{const p=payProduct();if(!p)return null;const v=Number(p.price)+Number(p.price_per_mb||0)*Math.ceil(Number(STATS&&STATS.sizeMb||0));return v>0?(Number.isInteger(v)?v:v.toFixed(2)):null};
 const KEY='penina.chat';
 const saveLocal=()=>{try{localStorage.setItem(KEY,JSON.stringify({stats:STATS,excerpt:EXCERPT,report:REPORT,at:Date.now()}))}catch{}};
 const forgetLocal=()=>{try{localStorage.removeItem(KEY);localStorage.removeItem('penina.job')}catch{}};
@@ -272,6 +282,7 @@ const forgetLocal=()=>{try{localStorage.removeItem(KEY);localStorage.removeItem(
 async function loadReq(){
   REQ=null;if(!sb||!USER)return;
   try{ADMIN=(await sb.rpc('is_admin')).data===true}catch{ADMIN=false}
+  try{PAY=(await sb.rpc('pay_public')).data||null}catch{PAY=null}
   const r=await sb.from('pn_requests').select('id,status,created_at,decided_at').eq('uid',USER.id).order('created_at',{ascending:false}).limit(5);
   if(r.error){BACKEND=!NOT_READY(r.error);return}
   BACKEND=true;const rows=r.data||[];
@@ -284,6 +295,8 @@ function goBtn(){
   if(!BACKEND){b.classList.add('hide');m.textContent=t('soon');return}
   if(getJob()){b.textContent=t('resume');m.textContent=t('resumeMsg');return}
   if(REQ?.status==='approved'){b.textContent=t('getReport');m.textContent=t('approved');return}
+  const price=payPrice();
+  if(price!==null){b.textContent=t('payBtn',{p:price});m.textContent=t('payMsg');const s=document.querySelector('[data-t=askSub]');if(s)s.textContent=t('paySub');return}
   if(REQ?.status==='pending'){b.textContent=t('check');m.textContent=t('pending');pollReq=setInterval(async()=>{if(document.hidden)return;await loadReq();if(REQ?.status!=='pending')goBtn()},20000);return}
   b.textContent=t('request');if(REQ?.status==='declined')m.textContent=t('declined');
 }
@@ -294,6 +307,12 @@ $('#goBtn').onclick=async()=>{
   if(!sb)return m.textContent=t('busy');
   if(!USER){const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error)return m.textContent=t('badLogin');USER=r.data.user;await refreshAsk();if(REQ?.status==='approved'||REQ?.status==='pending')return;}
   if(getJob())return runJob(getJob());
+  if(REQ?.status!=='approved'&&payPrice()!==null){
+    let id=REQ?.status==='pending'?REQ.id:null;
+    if(!id){const r=await sb.rpc('pn_request',{p_msgs:STATS.total,p_people:STATS.people.length,p_lang:L,p_mb:STATS.sizeMb||0});
+      if(r.error){m.textContent=NOT_READY(r.error)?t('soon'):/too many/.test(r.error.message)?t('tooMany'):t('busy');return}id=r.data&&r.data.id}
+    saveLocal();location.href=`/pay/?p=penina_report&ref=${id}&lang=${L}&back=${encodeURIComponent('/penina/')}`;return;
+  }
   if(REQ?.status==='pending'){await refreshAsk();if(REQ?.status==='pending')m.textContent=t('pending');return}
   if(REQ?.status!=='approved'){
     const r=await sb.rpc('pn_request',{p_msgs:STATS.total,p_people:STATS.people.length,p_lang:L,p_mb:STATS.sizeMb||0});
@@ -331,11 +350,19 @@ async function runJob(job){
     let st;
     for(let k=0;;k++){try{st=await callFn({...base,mode:'start',id:job.id});break}catch(e){if(e.status===403||e.status===401||k>=3)throw e;await visible();await new Promise(r=>setTimeout(r,3000))}}
     job={...job,id:st.id,at:Date.now()};setJob(job);
-    const todo=st.parts.filter(p=>!st.done.includes(p)),tot=st.parts.length;let n=tot-todo.length;show(n,tot);
+    let n=st.done.length,tot=Math.max(st.parts.length,22);show(n,tot);
     const one=async p=>{for(let k=0;k<4;k++){try{await callFn({...base,mode:'part',id:job.id,part:p});n++;show(n,tot);return}catch(e){if(e.status===404||e.status===400)throw e;await visible();await new Promise(r=>setTimeout(r,2000+k*3000))}}};
+    // first Opus reads the chat once and decides who writes what, one call after the other so the second reads the first one's cache
+    if(st.ready===false){
+      for(const p of st.parts)if(!st.done.includes(p))await one(p);
+      st=await callFn({...base,mode:'status',id:job.id});
+      if(st.ready===false)throw new Error('plan');
+    }
+    // then the writer: every part on its own, with only the lines it needs
+    const todo=st.parts.filter(p=>!st.done.includes(p));tot=st.parts.length;n=tot-todo.length;show(n,tot);
     if(todo.includes('warm'))await one('warm').catch(()=>{});
     const rest=todo.filter(p=>p!=='warm');let q=0;
-    await Promise.all(Array.from({length:Math.min(8,rest.length)},async()=>{while(q<rest.length){const p=rest[q++];await one(p).catch(()=>{})}}));
+    await Promise.all(Array.from({length:Math.min(5,rest.length)},async()=>{while(q<rest.length){const p=rest[q++];await one(p).catch(()=>{})}}));
     let fin;
     for(let k=0;;k++){try{fin=await callFn({...base,mode:'finish',id:job.id,photos:job.photos||[]});break}catch(e){if(e.status===409||k>=2)throw e;await visible();await new Promise(r=>setTimeout(r,3000))}}
     REPORT=fin.report;setJob(null);saveLocal();$('#wait').classList.add('hide');renderReport(REPORT);refreshAsk();
