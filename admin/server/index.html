@@ -125,7 +125,7 @@ async function start(){
 async function stop(){setOn(false);RUN=false;STATE='stopped';send({type:'off'});try{await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:4})}catch{}log('השרת כובה');draw()}
 every(12000,async()=>{
   if(RUN&&(!HANDS||HANDS.closed||Date.now()-ALIVE>35000)){RUN=false;STATE=hasExt()?'starting':'wait';log('לשונית BeAgent נסגרה או נטענה מחדש');draw();heartbeat();if(hasExt())bg({type:'ensure'})}
-  if(RUN)heartbeat();
+  if(RUN)heartbeat(); // only the page that's really running reports: an idle one would switch it off
 });
 every(5000,()=>pickQueued());
 
