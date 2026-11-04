@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>🔴 שרת הנסיעות</title>
+<title>🔴 שרת ברוסיק</title>
 <link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap">
 <style>
@@ -29,6 +29,7 @@ code{background:#0B0E28;padding:2px 6px;border-radius:6px;direction:ltr;display:
 .steps{display:flex;flex-direction:column;gap:14px;margin:0;padding:0;list-style:none;counter-reset:s}
 .steps li{display:flex;gap:12px;align-items:flex-start;counter-increment:s;line-height:1.6}.steps li::before{content:counter(s);flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:#6A63FF;display:grid;place-items:center;font-weight:800}
 :focus-visible{outline:3px solid #D8AE57;outline-offset:2px}
+.small{font-size:13px}button:disabled{opacity:.45;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -55,6 +56,9 @@ const setOn=v=>{try{localStorage.setItem('bt-on',v?'1':'0')}catch{}};
 const tick=(()=>{try{const w=new Worker(URL.createObjectURL(new Blob(['onmessage=e=>setTimeout(()=>postMessage(e.data),e.data.ms)'],{type:'text/javascript'})));
   const cb=new Map();let n=0;w.onmessage=e=>{const f=cb.get(e.data.id);cb.delete(e.data.id);f&&f()};return ms=>new Promise(r=>{const id=++n;cb.set(id,r);w.postMessage({id,ms})})}catch{return ms=>new Promise(r=>setTimeout(r,ms))}})();
 const every=(ms,fn)=>{(async()=>{for(;;){await tick(ms);try{await fn()}catch{}}})()};
+// the wallet half of this page (wallets.js) uses the same pieces
+window.BS={sb,esc,tick,every,hasExt,isAdmin:()=>ADMIN};
+const power=on=>window.dispatchEvent(new CustomEvent('bs-power',{detail:on}));
 
 // ---------- talk to the BeAgent tab: through the extension, or (old way) through the window the ⚡ bookmark opened ----------
 const send=m=>{if(VIA==='ext')window.postMessage({src:'bt-page-ext',...m},location.origin);else if(HANDS)HANDS.postMessage({src:'bt-page',...m},BEAGENT)};
@@ -112,7 +116,7 @@ function draw(){
   $('fb')&&($('fb').onclick=()=>{if(hasExt())bg({type:'focus-hands'});else{const w=window.open(BEAGENT+'/he','bt-hands');w&&w.focus()}});
 }
 
-function turnOn(){setOn(true);ASKED=true;if(hasExt()){if(STATE!=='on'){STATE='starting';draw()}bg({type:'ensure'});bg({type:'ping'});tick(25000).then(()=>{if(STATE==='starting'){STATE='login';draw()}})}else draw()}
+function turnOn(){setOn(true);ASKED=true;power(true);if(hasExt()){if(STATE!=='on'){STATE='starting';draw()}bg({type:'ensure'});bg({type:'ping'});tick(25000).then(()=>{if(STATE==='starting'){STATE='login';draw()}})}else draw()}
 async function heartbeat(){try{await sb.rpc('travel_heartbeat',{p_on:STATE==='on',p_logged_in:LOGGED!==false,p_version:4})}catch{}}
 async function start(){
   if(!HANDS||HANDS.closed||Date.now()-ALIVE>35000){if(STATE!=='starting'){STATE='wait';draw()}return}
@@ -122,7 +126,7 @@ async function start(){
   STATE='on';RUN=true;log('השרת הופעל');heartbeat();pickQueued();
   if(!CH)CH=sb.channel('travel-jobs').on('postgres_changes',{event:'INSERT',schema:'public',table:'travel_jobs'},p=>{if(RUN&&p.new&&p.new.status==='queued')take(p.new)}).subscribe();
 }
-async function stop(){setOn(false);RUN=false;STATE='stopped';send({type:'off'});try{await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:4})}catch{}log('השרת כובה');draw()}
+async function stop(){setOn(false);power(false);RUN=false;STATE='stopped';send({type:'off'});try{await sb.rpc('travel_heartbeat',{p_on:false,p_logged_in:true,p_version:4})}catch{}log('השרת כובה');draw()}
 every(12000,async()=>{
   if(RUN&&(!HANDS||HANDS.closed||Date.now()-ALIVE>35000)){RUN=false;STATE=hasExt()?'starting':'wait';log('לשונית BeAgent נסגרה או נטענה מחדש');draw();heartbeat();if(hasExt())bg({type:'ensure'})}
   if(RUN)heartbeat(); // only the page that's really running reports: an idle one would switch it off
@@ -168,5 +172,6 @@ async function take(j){
 })();
 })();
 </script>
+<script src="wallets.js?v=1"></script>
 </body>
 </html>
