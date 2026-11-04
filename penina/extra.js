@@ -150,12 +150,12 @@
   const css3 = document.createElement('style');
   css3.textContent = `
   .report .verdict .pearl{--s:120px}
-  .pnav-btn{position:fixed;bottom:20px;inset-inline-end:14px;z-index:60;width:48px;height:48px;border-radius:14px;background:var(--plum-2);box-shadow:0 8px 24px -8px rgba(0,0,0,.6);display:grid;place-content:center;gap:5px}
+  .pnav-btn{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));inset-inline-end:14px;z-index:60;width:48px;height:48px;border-radius:14px;background:var(--plum-2);box-shadow:0 8px 24px -8px rgba(0,0,0,.6);display:grid;place-content:center;gap:5px}
   .pnav-btn i{display:block;width:22px;height:3px;border-radius:3px;background:var(--pearl);transition:transform .2s,opacity .2s}
   .pnav-btn[aria-expanded="true"] i:nth-child(1){transform:translateY(8px) rotate(45deg)}
   .pnav-btn[aria-expanded="true"] i:nth-child(2){opacity:0}
   .pnav-btn[aria-expanded="true"] i:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
-  .pnav{position:fixed;top:0;bottom:0;inset-inline-end:0;z-index:59;width:min(300px,84vw);background:var(--plum);border-inline-start:1px solid var(--line);padding:76px 14px 24px;overflow-y:auto;transform:translateX(calc(var(--side,1)*105%));transition:transform .25s ease;box-shadow:-20px 0 40px -20px rgba(0,0,0,.6)}
+  .pnav{position:fixed;top:0;bottom:0;inset-inline-end:0;z-index:59;width:min(300px,84vw);background:var(--plum);border-inline-start:1px solid var(--line);padding:76px 14px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;transform:translateX(calc(var(--side,1)*105%));transition:transform .25s ease;box-shadow:-20px 0 40px -20px rgba(0,0,0,.6)}
   .pnav.open{transform:none}
   .pnav b{display:block;font-family:var(--fd);font-weight:400;font-size:22px;margin:0 8px 10px}
   .pnav a{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;color:var(--pearl);text-decoration:none;font-weight:600}
@@ -180,13 +180,13 @@
   .tl li p{margin:2px 0 0}
   .saga .end{margin:4px 0 0;color:var(--pearl-2);font-style:italic}
   .saga blockquote{border:0;padding:10px 0 4px}
-  .saga .morech{font-size:15px;color:var(--amber);font-weight:700;text-decoration:underline;text-underline-offset:4px;margin:0 0 6px}
+  .saga .morech{min-height:40px;font-size:15px;color:var(--amber);font-weight:700;text-decoration:underline;text-underline-offset:4px;margin:0 0 6px}
   .fchips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
-  .fchips button{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:15px;font-weight:600;background:transparent}
+  .fchips button{min-height:40px;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:15px;font-weight:600;background:transparent}
   .fchips button[aria-pressed="true"]{background:var(--amber);color:var(--lip-ink);border-color:var(--amber)}
   .case .st{display:inline-block;background:var(--plum-2);border-radius:999px;padding:1px 10px;font-size:13px;margin-inline-start:6px;color:var(--pearl-2)}
   .pjump{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
-  .pjump a{background:var(--plum);border-radius:999px;padding:6px 14px;text-decoration:none;color:var(--pearl);font-weight:600;font-size:15px}
+  .pjump a{display:inline-flex;align-items:center;min-height:40px;background:var(--plum);border-radius:999px;padding:6px 14px;text-decoration:none;color:var(--pearl);font-weight:600;font-size:15px}
   .idea{background:var(--plum);border-radius:20px;padding:16px 18px;margin:0 0 12px}
   .idea b{display:block;font-size:19px}
   .idea p{margin:6px 0 0;color:var(--pearl-2)}
@@ -407,7 +407,7 @@
       const ppl = STATS.people.slice(0, 30), un = ppl.filter((p) => isPlaceholder(p.name)), rest = ppl.filter((p) => !isPlaceholder(p.name));
       const row = (p) => `<label style="display:flex;flex-direction:column;gap:4px;font-weight:600"><span>${E(p.name)} <span style="color:var(--muted);font-weight:400">· ${p.msgs}</span></span><input data-old="${E(p.name)}" maxlength="40" placeholder="${E(p.name)}" style="height:44px;border-radius:12px;border:1px solid var(--line);background:var(--night);padding:0 12px;color:inherit;font:inherit"></label>`;
       const box = document.createElement('div'); box.id = 'namesBox'; box.className = 'qform'; box.style.margin = '0 0 24px';
-      box.innerHTML = `<h3>${E(t('nmT'))}</h3><p>${E(t('nmS'))}</p>${un.map(row).join('')}${rest.length ? `<details${un.length ? '' : ' open'}><summary style="cursor:pointer;color:var(--amber);margin:4px 0 10px">${E(t('nmMore'))}</summary><div style="display:flex;flex-direction:column;gap:12px">${rest.map(row).join('')}</div></details>` : ''}<button class="go" type="button">${E(t('nmGo'))}</button>`;
+      box.innerHTML = `<h3>${E(t('nmT'))}</h3><p>${E(t('nmS'))}</p>${un.map(row).join('')}${rest.length ? `<details${un.length ? '' : ' open'}><summary style="cursor:pointer;color:var(--amber);margin:4px 0 10px;min-height:44px;display:flex;align-items:center">${E(t('nmMore'))}</summary><div style="display:flex;flex-direction:column;gap:12px">${rest.map(row).join('')}</div></details>` : ''}<button class="go" type="button">${E(t('nmGo'))}</button>`;
       ask.before(box);
       box.querySelector('button').onclick = () => {
         const map = {}; box.querySelectorAll('input').forEach((i) => { const v = i.value.trim().replace(/[:\n]/g, ' ').slice(0, 40); if (v && v !== i.dataset.old) map[i.dataset.old] = v; });
@@ -447,7 +447,7 @@
       } catch { /* no list */ }
       $('#myReports')?.remove(); myNav(true);
       const box = document.createElement('section'); box.id = 'myReports'; box.className = 'sec'; box.style.scrollMarginTop = '20px';
-      box.innerHTML = `<h2>${E(t('myT'))}</h2>` + (rows.length ? rows.map((r) => `<div class="pairrow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.headline || '—')}</b><br><span style="color:var(--muted);font-size:14px">${r.done_at ? new Date(r.done_at).toLocaleDateString(L) : ''}</span></div><button class="btn2" type="button" data-open="${r.id}" style="height:42px;padding:0 18px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${r.id}" style="height:42px;padding:0 18px">${E(t('mySend'))}</button></div>`).join('') : `<p style="color:var(--muted);margin:0">${E(t('myNone'))}</p>`);
+      box.innerHTML = `<h2>${E(t('myT'))}</h2>` + (rows.length ? rows.map((r) => `<div class="pairrow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.headline || '—')}</b><br><span style="color:var(--muted);font-size:14px">${r.done_at ? new Date(r.done_at).toLocaleDateString(L) : ''}</span></div><button class="btn2" type="button" data-open="${E(r.id)}" style="height:42px;padding:0 18px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${E(r.id)}" style="height:42px;padding:0 18px">${E(t('mySend'))}</button></div>`).join('') : `<p style="color:var(--muted);margin:0">${E(t('myNone'))}</p>`);
       main.appendChild(box);
       box.querySelectorAll('[data-open]').forEach((b) => b.onclick = async () => {
         b.disabled = true;
