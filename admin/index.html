@@ -90,10 +90,15 @@ const copy=async t=>{try{await navigator.clipboard.writeText(t);toast('הועת�
 
 const TABS=[['home','בית'],['travel','נסיעות'],['penina','פנינה'],['pay','תשלומים ושוברים'],['users','משתמשים'],['pk','פלטפורמיקה'],['links','קישורים']];
 let VIEW=TABS.some(t=>t[0]===location.hash.slice(1))?location.hash.slice(1):'home';
-let EMAIL='',DATA=null,TRQ=[],TRF='open',REP=null,PNR=null,PNERR='',SRV=null,PAY=null,LIVE=[];
+let EMAIL='',DATA=null,TRQ=[],TRF='open',REP=null,PNR=null,PNERR='',PNS=null,BILL=null,SRV=null,PAY=null,LIVE=[];
 let TAB='all',Q='',SORT={k:'created_at',dir:-1};
-const PLAT={pn:'פנינה',tr:'נסיעות',cx:'קומפליצס',pk:'פלטפורמיקה',lr:'LearnLume',cr:'קריפטו',other:'אחר'};
+const PLAT={pn:'פנינה',cx:'קומפליצס',pk:'פלטפורמיקה',lr:'LearnLume',cr:'קריפטו',other:'אחר'};
 const KIND={flights:'טיסות',hotels:'מלונות',cars:'השכרת רכב',packages:'חבילות נופש',tours:'טיולים מאורגנים',tickets:'כרטיסים'};
+const PROV={
+  allpay:{name:'Allpay',open:'https://www.allpay.co.il/en/signup',keys:'<b dir="ltr">ALLPAY_LOGIN, ALLPAY_KEY</b>. מוצאים אותם ב־Allpay תחת Settings ← Integrations. כדי לנסות קודם בכרטיסי בדיקה מוסיפים <b dir="ltr">ALLPAY_TEST</b> עם הערך <b dir="ltr">1</b>, ומוחקים אותו כשעוברים לכסף אמיתי.'},
+  grow:{name:'Grow',open:'https://grow.business/join-us/',keys:'<b dir="ltr">GROW_USER_ID, GROW_PAGE_CODE</b>, ואם נתנו לך גם <b dir="ltr">GROW_API_KEY</b>. כש־Grow מאשרים מעבר לייצור, מוסיפים <b dir="ltr">GROW_ENV</b> עם הערך <b dir="ltr">live</b>.'},
+  hyp:{name:'Hyp',open:'https://hyp.co.il/online-payments/',keys:'<b dir="ltr">HYP_MASOF, HYP_KEY, HYP_PASSP</b>. בהגדרות המסוף ב־Hyp מגדירים דף הצלחה וכישלון: <span dir="ltr">https://barusik.com/pay/</span>'},
+};
 const ST={new:['ממתין לאישור','n'],quoted:['אושר · נשלחה הצעה','y'],paid:['שולם','y'],closed:['הושלם','y'],cancelled:['בוטל','n']};
 const PN_LANG={he:'עברית',en:'אנגלית',ar:'ערבית',ru:'רוסית',es:'ספרדית',fr:'צרפתית'};
 const PN_MODEL={sonnet:['סונט כותב · אופוס מתכנן','כ־$1–2 לדוח'],opus:['אופוס כותב ומתכנן','כ־$1.5–3.5 לדוח'],fable:['פייבל כותב · אופוס מתכנן','כ־$3.5–8 לדוח']};
@@ -160,6 +165,7 @@ async function load(){
   if(!data||!data.totals){app.innerHTML=`<div class="box"><h1>אין נתונים</h1><p class="mute">השרת לא החזיר נתונים. נסו לרענן.</p><button id="r">רענון</button></div>`;document.getElementById('r').onclick=load;return}
   DATA=data;EMAIL=session.user.email;
   await Promise.all([loadTravel(),loadReports(),loadPenina(),loadPay(),loadSrv()]);
+  loadBill();
   draw();listen();
 }
 function listen(){
@@ -174,12 +180,15 @@ function listen(){
 async function loadSrv(){try{const{data}=await sb.rpc('travel_status');SRV=data||{online:false}}catch{SRV={online:false}}}
 async function loadTravel(){const{data,error}=await sb.from('travel_requests').select('*').order('created_at',{ascending:false}).limit(300);TRQ=error?null:(data||[])}
 async function loadReports(){try{const{data,error}=await sb.from('pk_reports').select('*').order('created_at',{ascending:false}).limit(100);REP=error?null:(data||[])}catch{REP=null}}
-async function loadPenina(){PNERR='';try{const{data,error}=await sb.rpc('pn_admin_list');if(error)PNERR=error.message||'';PNR=error?null:(data||[])}catch(e){PNR=null;PNERR=String(e&&e.message||e)}}
+async function loadPenina(){PNERR='';try{const[{data,error},sp]=await Promise.all([sb.rpc('pn_admin_list'),sb.rpc('pn_admin_spend')]);if(error)PNERR=error.message||'';PNR=error?null:(data||[]);PNS=sp.error?null:sp.data}catch(e){PNR=null;PNERR=String(e&&e.message||e)}}
+const callFn=async(name,body)=>{const{data:{session}}=await sb.auth.getSession();const r=await fetch(`${SB_URL}/functions/v1/${name}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`,apikey:'sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a'},body:JSON.stringify(body)});return r.json()};
+// what Anthropic itself charged. The page works without it, so it never holds anything up
+async function loadBill(){try{BILL=await callFn('penina',{mode:'billing'});if(VIEW==='penina')draw()}catch{BILL={connected:false,failed:true}}}
 async function loadPay(){
   try{
     const [s,p,c,o]=await Promise.all([sb.from('pay_settings').select('*').eq('id',1).maybeSingle(),sb.from('pay_products').select('*').order('sort'),sb.from('pay_coupons').select('*').order('created_at',{ascending:false}),sb.from('pay_orders').select('id,created_at,email,name,phone,title,platform,product_id,amount,list_price,discount,coupon,status,provider,receipt,paid_at,by_admin').order('created_at',{ascending:false}).limit(300)]);
     if(s.error)throw s.error;
-    PAY={s:s.data||{mode:'off',provider:'grow'},products:p.data||[],coupons:c.data||[],orders:o.data||[],check:PAY&&PAY.check||null};
+    PAY={s:s.data||{mode:'off',provider:'allpay'},products:(p.data||[]).filter(x=>x.platform!=='tr'),coupons:c.data||[],orders:o.data||[],check:PAY&&PAY.check||null};
   }catch(e){PAY={err:String(e&&e.message||e)}}
 }
 // ---------- what's new, for the badges and the home page ----------
@@ -224,25 +233,39 @@ function travelHTML(){
   if(TRQ===null)return`${lampHTML()}<section class="panel"><p class="err">לא הצלחתי לטעון את ההזמנות.</p></section>`;
   const open=TRQ.filter(r=>r.status==='new'),list=TRF==='open'?open:TRQ;
   const det=r=>{const x=r.details||{};const lines=(x.lines||[]).slice(0,14).map(esc).join(' · ');
-    return`${x.title?`<b>${esc(x.title)}</b><br>`:''}${x.search?`<span class="mute">${esc(x.search)}</span><br>`:''}${lines?`<span class="small">${lines}</span><br>`:''}${x.customer_price?`<b>מחיר ללקוח: ₪${n(x.customer_price)}</b> <span class="mute small">(מחיר סוכן בערך ₪${n(Math.round(x.customer_price/1.12))} · רווח בערך ₪${n(x.customer_price-Math.round(x.customer_price/1.12))})</span>`:''}${x.link?`<br><a href="${esc(x.link)}" target="_blank" rel="noopener">פתיחת החיפוש ב־BeAgent ←</a>`:''}`};
+    return`${x.title?`<b>${esc(x.title)}</b><br>`:''}${x.search?`<span class="mute">${esc(x.search)}</span><br>`:''}${lines?`<span class="small">${lines}</span><br>`:''}${x.customer_price?`<b>מחיר ללקוח: ₪${n(x.customer_price)}</b> <span class="mute small">(מחיר סוכן בערך ₪${n(Math.round(x.customer_price/1.12))} · רווח בערך ₪${n(x.customer_price-Math.round(x.customer_price/1.12))})</span>`:''}${/^https:\/\/([a-z0-9-]+\.)*beagent\.online\//i.test(x.link||'')?`<br><a href="${esc(x.link)}" target="_blank" rel="noopener">פתיחת החיפוש ב־BeAgent ←</a>`:''}`};
   return`${lampHTML()}
   <section><h2>הזמנות Bar Lvovski Travel ${open.length?`<span class="pill n">${open.length} ממתינות</span>`:''}<span class="sp"></span><span class="tabs">${[['open','ממתינות'],['all','הכל']].map(([k,l])=>`<button data-a="trf" data-k="${k}" aria-selected="${TRF===k}">${l}</button>`).join('')}</span></h2>
   <div class="panel rows">${list.map(r=>`<div class="rowx" style="align-items:flex-start">
     <small>${d(r.created_at)}</small><span class="pill y">${KIND[r.kind]||esc(r.kind)}</span>
     <div class="grow">${det(r)}${r.notes?`<br><span class="mute">הערות הלקוח:</span> ${esc(r.notes)}`:''}</div>
     <div style="display:flex;flex-direction:column;gap:6px;min-width:200px"><b>${esc(r.name)}</b><a class="okc" href="${wa(r.phone)}" target="_blank" rel="noopener" dir="ltr" style="text-align:right">${esc(r.phone)} · וואטסאפ</a>${r.email?`<a class="mute" href="mailto:${esc(r.email)}" dir="ltr" style="text-align:right">${esc(r.email)}</a>`:''}
-      <select data-st="${esc(r.id)}">${Object.entries(ST).map(([k,[l]])=>`<option value="${k}" ${r.status===k?'selected':''}>${l}</option>`).join('')}</select>
-      <button class="ghost" data-a="trpay" data-id="${esc(r.id)}">קישור תשלום ללקוח</button></div></div>`).join('')||`<p class="mute">${TRF==='open'?'אין הזמנות שממתינות לאישור':'עוד אין הזמנות'}</p>`}</div></section>`;
+      <select data-st="${esc(r.id)}">${Object.entries(ST).map(([k,[l]])=>`<option value="${k}" ${r.status===k?'selected':''}>${l}</option>`).join('')}</select></div></div>`).join('')||`<p class="mute">${TRF==='open'?'אין הזמנות שממתינות לאישור':'עוד אין הזמנות'}</p>`}</div></section>`;
+}
+const pnCost=r=>{if(r.cost_usd==null)return'';const k=x=>n(Math.round(Number(x||0)/1000))+'K';
+  return` · ${r.cost_partial?'לפחות ':'עלה '}${usd(r.cost_usd)}${r.tokens_in?` · טוקנים: ${k(r.tokens_in)} נכנסו, ${k(r.tokens_out)} יצאו`:''}${r.calls?` · ${n(r.calls)} קריאות${r.calls_bad?`, ${n(r.calls_bad)} נקטעו`:''}`:''}${r.cost_partial?' · נספר חלקית':''}`};
+function spendHTML(){
+  const S=PNS||{},B=BILL,days=B&&B.days?B.days.filter(x=>x.usd>=0.005).sort((a,b)=>a.day<b.day?1:-1):[],total=days.reduce((a,x)=>a+x.usd,0);
+  const MODEL=m=>String(m).replace(/^claude-/,'').replace(/-(\d)-(\d).*$/,' $1.$2');
+  const bill=!B?'<p class="mute small">בודק מול Anthropic…</p>':B.connected&&!B.error?`<p class="small"><b>החיוב של Anthropic ב־30 הימים האחרונים: ${usd(total)}</b> <span class="mute">(כל החשבון, ישירות מהם)</span></p>
+    <div class="rows" style="margin-top:6px">${days.slice(0,14).map(x=>`<div class="rowx"><small>${new Date(x.day+'T12:00:00Z').toLocaleDateString('he-IL',{day:'numeric',month:'short'})}</small><b>${usd(x.usd)}</b><small class="mute" dir="ltr">${Object.entries(x.models).filter(([,v])=>v>=0.005).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(MODEL(k))} ${usd(v)}`).join(' · ')}</small></div>`).join('')||'<p class="mute small">אין חיובים בתקופה הזו.</p>'}</div>`
+    :B.connected?`<p class="err small">Anthropic לא קיבלה את מפתח המנהל (${esc(B.error)}). צריך מפתח חדש ב־<a class="okc" href="https://platform.claude.com/settings/admin-keys" target="_blank" rel="noopener">Admin keys</a>.</p>`
+    :`<details><summary class="small">להציג כאן את החיוב של Anthropic עצמה</summary><ol class="small mute" style="margin:8px 0 0;padding-inline-start:20px;line-height:1.8"><li>ב־<a class="okc" href="https://platform.claude.com/settings/admin-keys" target="_blank" rel="noopener">Admin keys</a> יוצרים מפתח מנהל. אם אין שם עמוד כזה, קודם מגדירים ארגון ב־<a class="okc" href="https://platform.claude.com/settings/organization" target="_blank" rel="noopener">Organization</a>.</li><li>ב־<a class="okc" href="https://supabase.com/dashboard/project/${REF}/functions/secrets" target="_blank" rel="noopener">סודות של Supabase</a> מוסיפים <b dir="ltr">ANTHROPIC_ADMIN_KEY</b> עם המפתח.</li></ol></details>`;
+  return`<section><h2>כמה פנינה עלתה <a class="btn ghost small" href="https://platform.claude.com/cost" target="_blank" rel="noopener">החיוב ב־Claude Console</a></h2>
+    ${PNS?`<div class="panel nums"><div><b>${usd(S.month)}</b><small>החודש, מכל קריאה ל־Claude</small></div>
+      <div><b>${usd(S.total)}</b><small>סך הכול מאז שסופרים כל קריאה</small></div>
+      <div><b>${n(S.calls)}</b><small>קריאות${S.bad?`, ${n(S.bad)} נקטעו (${usd(S.bad_cost)}, כלול)`:''}</small></div></div>`:''}
+    <div class="panel" style="margin-top:10px">${bill}${Number(S.old_partial)>0?`<p class="mute small" style="margin-top:8px;line-height:1.7">דוחות ישנים נספרו חלקית (רשום ${usd(S.old_partial)}): קריאות שנכשלו, חזרות וחימום המטמון לא נרשמו, אז הם עלו יותר מזה. מדוחות חדשים כל קריאה נרשמת בזמן שהיא רצה.</p>`:''}</div></section>`;
 }
 function peninaHTML(){
   if(PNR===null)return`<section class="panel"><h2>פנינה <span class="pill n">לא זמין</span></h2><p class="err">${esc(PNERR||'השרת לא ענה')}</p></section>`;
-  const wait=PNR.filter(r=>r.status==='pending'),tot=PNR.reduce((a,r)=>a+Number(r.cost_usd||0),0),s=PAY&&!PAY.err?PAY.s:null;
+  const wait=PNR.filter(r=>r.status==='pending'),s=PAY&&!PAY.err?PAY.s:null;
   const def=s&&s.penina_model||'sonnet';
   const opts=cur=>Object.entries(PN_MODEL).map(([k,v])=>`<option value="${k}"${k===cur?' selected':''}>${v[0]} · ${v[1]}</option>`).join('');
-  return`<section><h2>בקשות לדוח <span class="pill ${wait.length?'n':'y'}">${n(wait.length)} מחכות</span>${tot?`<span class="mute small">עלו עד היום ${usd(tot)}</span>`:''}</h2>
-  <p class="mute small" style="margin-bottom:10px">אופוס קורא את הצ׳אט פעם אחת ואומר מה לכתוב ומאיזה שורות, והמודל שבחרת כותב את הדוח בלי לקרוא שוב את כל הצ׳אט. ההערכות תלויות בגודל הצ׳אט, והעלות האמיתית מופיעה ליד כל דוח.${s&&s.mode==='live'&&s.penina_auto?' דוח ששולם מתחיל בלי לחכות לאישור שלך.':''}</p>
+  return`${spendHTML()}<section><h2>בקשות לדוח <span class="pill ${wait.length?'n':'y'}">${n(wait.length)} מחכות</span></h2>
+  <p class="mute small" style="margin-bottom:10px">אופוס קורא את הצ׳אט פעם אחת ואומר מה לכתוב ומאיזה שורות, והמודל שבחרת כותב את הדוח בלי לקרוא שוב את כל הצ׳אט. העלות מופיעה ליד כל דוח.${s&&s.mode==='live'&&s.penina_auto?' דוח ששולם מתחיל בלי לחכות לאישור שלך.':''}</p>
   ${PNR.length?`<div class="panel rows">${PNR.map(r=>{const v=PN_ST[r.status]||[r.status,'m'];return`<div class="rowx"><small>${d(r.created_at)}</small><b dir="ltr">${esc(r.email)}</b><span>${n(r.msgs)} הודעות${Number(r.mb)?' · '+Number(r.mb).toLocaleString(undefined,{maximumFractionDigits:1})+' MB':''} · ${n(r.people)} משתתפים · ${PN_LANG[r.lang]||esc(r.lang)}</span>${r.paid?'<span class="pill y">שולם</span>':''}<span class="sp"></span>
-    ${r.status==='pending'?`<select data-pnm aria-label="מודל">${opts(def)}</select><button data-a="pn" data-id="${esc(r.id)}" data-ok="1">אישור</button><button class="ghost" data-a="pn" data-id="${esc(r.id)}" data-ok="0">דחייה</button>`:`<span class="pill ${v[1]}">${v[0]}</span> <span class="mute small">${(PN_MODEL[r.model]||[r.model])[0]}${r.cost_usd!=null?' · עלה '+usd(r.cost_usd):''}</span>${r.has_report?`<button class="ghost" data-a="pnopen" data-id="${esc(r.id)}">פתיחת הדוח</button>`:''}${r.status==='approved'?`<select data-pns aria-label="מודל">${opts(r.model)}</select><button class="ghost" data-a="pnset" data-id="${esc(r.id)}">החלפת מודל</button>`:''}`}</div>`}).join('')}</div>`:'<p class="mute panel">עוד אין בקשות.</p>'}</section>`;
+    ${r.status==='pending'?`<select data-pnm aria-label="מודל">${opts(def)}</select><button data-a="pn" data-id="${esc(r.id)}" data-ok="1">אישור</button><button class="ghost" data-a="pn" data-id="${esc(r.id)}" data-ok="0">דחייה</button>`:`<span class="pill ${v[1]}">${v[0]}</span> <span class="mute small">${(PN_MODEL[r.model]||[r.model])[0]}${pnCost(r)}</span>${r.has_report?`<button class="ghost" data-a="pnopen" data-id="${esc(r.id)}">פתיחת הדוח</button>`:''}${r.status==='approved'?`<select data-pns aria-label="מודל">${opts(r.model)}</select><button class="ghost" data-a="pnset" data-id="${esc(r.id)}">החלפת מודל</button>`:''}`}</div>`}).join('')}</div>`:'<p class="mute panel">עוד אין בקשות.</p>'}</section>`;
 }
 function payHTML(){
   if(!PAY||PAY.err)return`<section class="panel"><h2>תשלומים</h2><p class="err">הטבלאות עוד לא קיימות ב־Supabase.</p><p class="mute small">${esc(PAY&&PAY.err||'')}</p></section>`;
@@ -262,15 +285,15 @@ function payHTML(){
   return`<section><h2>מצב התשלומים</h2><div class="panel" style="display:flex;flex-direction:column;gap:12px">
     <div class="form">
       <label>מצב<select data-set="mode"><option value="off"${s.mode==='off'?' selected':''}>כבוי: לא גובים כסף</option><option value="demo"${s.mode==='demo'?' selected':''}>הדגמה: רק אתה רואה, בלי כסף</option><option value="live"${s.mode==='live'?' selected':''}>חי: גובים כסף אמיתי</option></select></label>
-      <label>חברת סליקה<select data-set="provider"><option value="grow"${s.provider==='grow'?' selected':''}>Grow</option><option value="hyp"${s.provider==='hyp'?' selected':''}>Hyp</option></select></label>
+      <label>חברת סליקה<select data-set="provider">${Object.entries(PROV).map(([k,v])=>`<option value="${k}"${s.provider===k?' selected':''}>${v.name}</option>`).join('')}</select></label>
       <label>מודל לדוח ששולם<select data-set="penina_model">${Object.entries(PN_MODEL).map(([k,v])=>`<option value="${k}"${k===s.penina_model?' selected':''}>${v[0]}</option>`).join('')}</select></label>
       <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-set="penina_auto" ${s.penina_auto?'checked':''}> דוח ששולם מתחיל בלי אישור שלי</label>
     </div>
     <div class="form"><label>שם העסק (מופיע ללקוחות)<input data-set="business_name" value="${esc(s.business_name||'')}" placeholder="בר לבובסקי"></label><label>מספר עוסק<input data-set="business_id" dir="ltr" value="${esc(s.business_id||'')}"></label></div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b>חיבור ל־${s.provider==='hyp'?'Hyp':'Grow'}:</b> ${conn}<button class="ghost" data-a="paycheck">בדיקה</button>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b>חיבור ל־${(PROV[s.provider]||PROV.allpay).name}:</b> ${conn}<button class="ghost" data-a="paycheck">בדיקה</button>
       <a class="btn ghost" href="https://supabase.com/dashboard/project/${REF}/functions/secrets" target="_blank" rel="noopener">הכנסת הפרטים ב־Supabase</a>
-      <a class="btn ghost" href="${s.provider==='hyp'?'https://hyp.co.il/online-payments/':'https://grow.business/join-us/'}" target="_blank" rel="noopener">פתיחת מסוף</a></div>
-    <details><summary class="small mute">אילו פרטים מכניסים ב־Supabase?</summary><p class="small mute" style="margin-top:8px;line-height:1.7">${s.provider==='hyp'?'<b dir="ltr">HYP_MASOF, HYP_KEY, HYP_PASSP</b>. בהגדרות המסוף ב־Hyp מגדירים דף הצלחה וכישלון: <span dir="ltr">https://barusik.com/pay/</span>':'<b dir="ltr">GROW_USER_ID, GROW_PAGE_CODE</b>, ואם נתנו לך גם <b dir="ltr">GROW_API_KEY</b>. כש־Grow מאשרים מעבר לייצור, מוסיפים <b dir="ltr">GROW_ENV</b> עם הערך <b dir="ltr">live</b>.'}</p></details>
+      <a class="btn ghost" href="${(PROV[s.provider]||PROV.allpay).open}" target="_blank" rel="noopener">פתיחת חשבון</a></div>
+    <details><summary class="small mute">אילו פרטים מכניסים ב־Supabase?</summary><p class="small mute" style="margin-top:8px;line-height:1.7">${(PROV[s.provider]||PROV.allpay).keys}</p></details>
   </div></section>
   <section><h2>מוצרים ומחירים</h2><div class="panel rows">${products.map(prodRow).join('')}</div>
     <form class="panel form" id="newp" style="margin-top:10px"><label>מוצר חדש<input name="name" required maxlength="80" placeholder="שם המוצר"></label><label>פלטפורמה<select name="platform">${Object.entries(PLAT).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label><label>מחיר ₪<input name="price" type="number" min="0" required value="0"></label><button>הוספה</button></form></section>
@@ -282,7 +305,7 @@ function payHTML(){
       <label>עד תאריך (לא חובה)<input name="expires_at" type="date"></label>
       <label>הערה לעצמך<input name="note" maxlength="200"></label><button>יצירת שובר</button></form>
     <div class="panel rows" style="margin-top:10px">${coupons.map(cpRow).join('')||'<p class="mute">עוד אין שוברים. 100% הנחה נותן מוצר בחינם, בלי סליקה.</p>'}</div></section>
-  <section><h2>קישור תשלום על כל סכום</h2><form class="panel form" id="newl"><label>על מה<input name="title" required maxlength="200" placeholder="חבילה למילאנו, 2 נוסעים"></label><label>סכום ₪<input name="amount" type="number" min="1" required></label><label>פלטפורמה<select name="platform">${Object.entries(PLAT).map(([k,v])=>`<option value="${k}"${k==='tr'?' selected':''}>${v}</option>`).join('')}</select></label><button>יצירה והעתקה</button></form></section>
+  <section><h2>קישור תשלום על כל סכום</h2><form class="panel form" id="newl"><label>על מה<input name="title" required maxlength="200" placeholder="דוח מיוחד ללקוח"></label><label>סכום ₪<input name="amount" type="number" min="1" required></label><label>פלטפורמה<select name="platform">${Object.entries(PLAT).map(([k,v])=>`<option value="${k}"${k==='other'?' selected':''}>${v}</option>`).join('')}</select></label><button>יצירה והעתקה</button></form></section>
   <section><h2>תשלומים <span class="mute small">סך הכול ${nis(m.all)}</span></h2><div class="panel rows">${orders.map(o=>{const v=ORD[o.status]||[o.status,'m'];return`<div class="rowx"><small>${d(o.created_at)}</small><span class="pill ${v[1]}">${v[0]}</span><b>${nis(o.amount)}</b><span class="grow">${esc(o.title)} <small>${PLAT[o.platform]||''}${o.coupon?' · שובר '+esc(o.coupon):''}${o.receipt?' · אסמכתא '+esc(o.receipt):''}</small></span><small dir="ltr">${esc(o.email||o.phone||'')}</small>${o.by_admin&&o.status!=='paid'?`<button class="ghost" data-a="olink" data-id="${esc(o.id)}">קישור</button>`:''}${o.status!=='paid'&&o.status!=='refunded'?`<button class="ghost" data-a="ostat" data-id="${esc(o.id)}" data-s="paid">סימון כשולם</button>`:''}${o.status==='paid'?`<button class="ghost" data-a="ostat" data-id="${esc(o.id)}" data-s="refunded">סימון כהוחזר</button>`:''}</div>`}).join('')||'<p class="mute">עוד אין תשלומים.</p>'}</div>
     <p class="mute small" style="margin-top:8px">סימון כהוחזר רק מעדכן כאן. את ההחזר עצמו עושים בחשבון של חברת הסליקה.</p></section>`;
 }
@@ -305,7 +328,7 @@ function cell(x,k){
     case'email':return`<td class="l">${esc(x.email)}</td>`;
     case'created_at':case'last_sign_in_at':return`<td>${d(x[k])}</td>`;
     case'confirmed':return`<td><span class="pill ${x.confirmed?'y':'n'}">${x.confirmed?'מאומת':'לא'}</span></td>`;
-    case'cxn':return`<td>${esc(x.cxn)||'—'}</td>`;case'rating':return`<td>${x.rating??'—'}</td>`;case'games':return`<td>${n(x.games)}</td>`;
+    case'cxn':return`<td>${esc(x.cxn)||'—'}</td>`;case'rating':return`<td>${x.rating==null?'—':esc(x.rating)}</td>`;case'games':return`<td>${n(x.games)}</td>`;
     case'pkh':return`<td class="l">${x.pkh?'@'+esc(x.pkh):'—'}</td>`;case'pkp':return`<td>${n(x.pkp)}</td>`;
     case'pkc':return`<td>${n(pk.comments)}</td>`;case'pkl':return`<td>${n(pk.likes_received)}</td>`;case'pkm':return`<td>${n(pk.messages_sent)}</td>`;
   }return'<td></td>';
@@ -342,11 +365,11 @@ function linksHTML(){
   const S=`https://supabase.com/dashboard/project/${REF}`,C='https://platform.claude.com',G='https://github.com/complichess-app',CF='https://dash.cloudflare.com/?to=/:account/barusik.com';
   const groups=[
     ['Supabase (חשבון complichess-app)',[['הפרויקט',S,'מבט כללי'],['עורך SQL',S+'/sql/new',''],['פונקציות שרת',S+'/functions','penina, pay'],['סודות ומפתחות',S+'/functions/secrets','Claude, סליקה'],['לוגים של פונקציות',S+'/logs/edge-functions',''],['משתמשים',S+'/auth/users',''],['קבצים',S+'/storage/buckets','']]],
-    ['Claude API',[['שימוש',C+'/usage','כמה נצרך'],['עלויות',C+'/cost',''],['קרדיט וחיוב',C+'/settings/billing','טעינה ותקרה'],['מפתחות API',C+'/settings/keys',''],['מגבלות קצב',C+'/settings/limits',''],['מחירון מודלים',C+'/docs/en/about-claude/pricing','']]],
+    ['Claude API',[['שימוש',C+'/usage','כמה נצרך'],['עלויות',C+'/cost','החיוב האמיתי'],['מפתחות מנהל',C+'/settings/admin-keys','לחיוב בדף הזה'],['קרדיט וחיוב',C+'/settings/billing','טעינה ותקרה'],['מפתחות API',C+'/settings/keys',''],['מגבלות קצב',C+'/settings/limits',''],['מחירון מודלים',C+'/docs/en/about-claude/pricing','']]],
     ['קוד ופרסום',[['קוד האתר (פרטי)',G+'/barusik',''],['פרסום אוטומטי',G+'/barusik/actions',''],['האתר החי',G+'/complichess-app.github.io',''],['קוד קומפליצס',G+'/complichess','']]],
     ['Cloudflare',[['DNS',CF+'/dns/records',''],['כותרות אבטחה וכללים',CF+'/rules',''],['ניתוב מייל',CF+'/email/routing/overview','']]],
     ['נסיעות',[['BeAgent לסוכן','https://travel.beagent.online/he','חיפוש והזמנה'],['לוח הבקרה של BeAgent','https://dashboard.beagent.online/','עמלות והגדרות'],['האתר ללקוחות שלך','/travel/','']]],
-    ['סליקה ועסק',[['הצטרפות ל־Grow','https://grow.business/join-us/',''],['מחירון Grow','https://grow.business/price-offer/',''],['Hyp','https://hyp.co.il/online-payments/',''],['מייל העסק','https://mail.google.com/mail/u/?authuser=barusik.official@gmail.com','']]],
+    ['סליקה ועסק',[['פתיחת חשבון ב־Allpay','https://www.allpay.co.il/en/signup',''],['מחירון Allpay','https://www.allpay.co.il/en/pricing',''],['Grow','https://grow.business/price-offer/',''],['Hyp','https://hyp.co.il/online-payments/',''],['מייל העסק','https://mail.google.com/mail/u/?authuser=barusik.official@gmail.com','']]],
     ['האתרים שלך',[['barusik.com','/he/',''],['פנינה','/penina/',''],['פלטפורמיקה','/platformika/',''],['קומפליצס','/complichess/',''],['קריפטו','/crypto/',''],['תנאי שימוש','/he/terms/','']]],
   ];
   return`<section class="links">${groups.map(([h,l])=>`<div class="panel"><h3>${esc(h)}</h3>${l.map(([t,u,sub])=>`<a href="${esc(u)}" ${u.startsWith('http')?'target="_blank" rel="noopener"':''}><span>${esc(t)}</span><small>${esc(sub)}</small></a>`).join('')}</div>`).join('')}</section>`;
@@ -378,16 +401,7 @@ const ACT={
     if(await after(()=>sb.rpc('pn_admin_decide',{p_id:el.dataset.id,p_approve:el.dataset.ok==='1',p_model:row.querySelector('[data-pnm]')?.value||'sonnet'}))){await loadPenina();draw()}else row.querySelectorAll('button').forEach(x=>x.disabled=false)},
   pnset:async el=>{el.disabled=true;if(await after(()=>sb.rpc('pn_admin_set_model',{p_id:el.dataset.id,p_model:el.closest('.rowx').querySelector('[data-pns]').value}),'המודל הוחלף')){await loadPenina();draw()}else el.disabled=false},
   pnopen:async el=>{el.disabled=true;const{data,error}=await sb.rpc('pn_admin_share',{p_id:el.dataset.id});el.disabled=false;if(error||!data){toast('שגיאה: '+(error?error.message:'אין דוח'),5000);return}window.open('/penina/?r='+data,'_blank')},
-  trpay:async el=>{const r=TRQ.find(x=>x.id===el.dataset.id);if(!r)return;const x=r.details||{};
-    const row=el.parentElement;if(row.querySelector('form'))return;
-    const f=document.createElement('form');f.style.cssText='display:flex;gap:6px';f.innerHTML=`<input type="number" min="1" required value="${esc(x.customer_price||'')}" placeholder="סכום ₪" aria-label="סכום" style="width:110px"><button>יצירה</button>`;row.appendChild(f);f.querySelector('input').focus();
-    f.onsubmit=async e=>{e.preventDefault();const amount=Number(f.querySelector('input').value);f.querySelector('button').disabled=true;
-      const{data,error}=await sb.rpc('pay_admin_link',{p_title:x.title||KIND[r.kind]||'הזמנת נסיעה',p_amount:amount,p_platform:'tr',p_ref:r.id,p_name:r.name,p_phone:r.phone,p_email:r.email});
-      if(error){toast('שגיאה: '+error.message,5000);f.querySelector('button').disabled=false;return}
-      const link=`https://barusik.com/pay/?o=${data}`;await copy(link);await loadPay();
-      f.outerHTML=`<a class="btn go" target="_blank" rel="noopener" href="${esc(wa(r.phone))}?text=${encodeURIComponent(`היי ${r.name}, הקישור לתשלום על ההזמנה (₪${amount}):\n${link}`)}">שליחה בוואטסאפ</a>`}},
-  paycheck:async el=>{el.disabled=true;const{data:{session}}=await sb.auth.getSession();
-    try{const r=await fetch(`${SB_URL}/functions/v1/pay`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`,apikey:'sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a'},body:JSON.stringify({mode:'check'})});PAY.check=await r.json()}catch{toast('הפונקציה לא ענתה',4000)}draw()},
+  paycheck:async el=>{el.disabled=true;try{PAY.check=await callFn('pay',{mode:'check'})}catch{toast('הפונקציה לא ענתה',4000)}draw()},
   plink:el=>copy(`https://barusik.com/pay/?p=${el.dataset.id}`),
   olink:el=>copy(`https://barusik.com/pay/?o=${el.dataset.id}`),
   cpcopy:el=>copy(el.dataset.code),

@@ -378,7 +378,7 @@ async function runJob(job){
 function renderReport(r){
   const el=$('#report');el.classList.remove('hide');
   el.innerHTML=`
-  <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L]?-1:1}" role="img" aria-label="${esc(t('score'))} ${r.score}/10"><span class="score n">${r.score}<small>/10</small></span></div>
+  <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L]?-1:1}" role="img" aria-label="${esc(t('score'))} ${Number(r.score)||0}/10"><span class="score n">${Number(r.score)||0}<small>/10</small></span></div>
     <div><h1>${esc(r.headline)}</h1>${r.score_line?`<p class="sline">${esc(r.score_line)}</p>`:''}</div></div>
   <p class="lead">${esc(r.verdict)}</p>
   <div class="sec"><h2>${t('people2')}</h2>${(r.people||[]).map(p=>`

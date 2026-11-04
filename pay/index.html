@@ -100,7 +100,7 @@ function form(o){
   </form>`;
   const $=id=>document.getElementById(id);let cur={...o};
   const draw=()=>{$('sum').innerHTML=`${Number(cur.discount)>0?`<div><span class="mute">${esc(t('price'))}</span><span>₪${nis(cur.list)}</span></div><div><span class="mute">${esc(t('discount'))}</span><span>−₪${nis(cur.discount)}</span></div>`:''}<div class="total"><small>${esc(t('total'))}</small><span>₪${nis(cur.amount)}</span></div>`;
-    $('go').textContent=Number(cur.amount)>0?t('pay',{a:nis(cur.amount)}):t('free');$('fields').style.display=Number(cur.amount)>0?'flex':'none'};
+    $('go').textContent=Number(cur.amount)>0?t('pay',{a:nis(cur.amount)}):t('free');$('fields').style.display=Number(cur.amount)>0&&PUB.provider!=='allpay'?'flex':'none'};
   draw();
   if($('ap'))$('ap').onclick=async()=>{const c=$('code').value.trim();if(!c)return;$('ap').disabled=true;$('cm').className='small';$('cm').textContent='';
     const{data,error}=await sb.rpc('pay_quote',{p_product:o.product,p_coupon:c,p_ref:o.ref||null});$('ap').disabled=false;
@@ -110,7 +110,7 @@ function form(o){
     $('cm').className='small good';$('cm').textContent=t('cOk');cur={...cur,list:data.list,discount:data.discount,amount:data.amount,code:data.coupon};draw()};
   $('f').onsubmit=async e=>{e.preventDefault();$('e').textContent='';
     const name=$('nm').value.trim(),phone=$('ph').value.replace(/\D/g,'').replace(/^972/,'0'),email=$('ml').value.trim();
-    if(Number(cur.amount)>0&&PUB.mode==='live'&&(name.split(/\s+/).length<2||!/^05\d{8}$/.test(phone))){$('e').textContent=t('details');return}
+    if(Number(cur.amount)>0&&PUB.mode==='live'&&PUB.provider==='grow'&&(name.split(/\s+/).length<2||!/^05\d{8}$/.test(phone))){$('e').textContent=t('details');return}
     save({name,phone,email});$('go').disabled=true;
     const j=await o.onPay({name,phone,email,coupon:cur.code||''});
     if(j.url){location.href=j.url;return}
