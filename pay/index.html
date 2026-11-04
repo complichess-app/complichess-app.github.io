@@ -59,9 +59,9 @@ document.documentElement.lang=L;document.documentElement.dir=L==='he'||L==='ar'?
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nis=n=>{const x=Number(n||0);return Number.isInteger(x)?String(x):x.toFixed(2)};
-const safeBack=u=>/^\/[^/\\]/.test(u||'')?u:'/';
+const safeBack=u=>{try{const x=new URL(u||'/',location.origin);return x.origin===location.origin?x.pathname+x.search+x.hash:'/'}catch{return'/'}};
 const say=(title,sub,btn,href)=>{app.innerHTML=`<div class="ticket" style="align-items:center;text-align:center"><h1>${esc(title)}</h1>${sub?`<p class="mute">${esc(sub)}</p>`:''}${btn?`<a class="btn" href="${esc(href)}">${esc(btn)}</a>`:''}</div>`};
-const fn=async b=>{const{data:{session}}=await sb.auth.getSession();const r=await fetch(`${SB_URL}/functions/v1/pay`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,...(session?{Authorization:`Bearer ${session.access_token}`}:{})},body:JSON.stringify({lang:L,...b})});let j={};try{j=await r.json()}catch{}return j};
+const fn=async b=>{try{const{data:{session}}=await sb.auth.getSession();const r=await fetch(`${SB_URL}/functions/v1/pay`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,...(session?{Authorization:`Bearer ${session.access_token}`}:{})},body:JSON.stringify({lang:L,...b})});let j={};try{j=await r.json()}catch{}return j}catch(e){console.error('pay',e);return{error:'busy'}}};
 const saved=()=>{try{return JSON.parse(localStorage.getItem('barusik-pay')||'{}')}catch{return{}}};
 const save=o=>{try{localStorage.setItem('barusik-pay',JSON.stringify(o))}catch{}};
 let PUB=null;
@@ -134,6 +134,7 @@ async function productView(id,ref,back){
   const{data:{session}}=await sb.auth.getSession();
   if(!session)return loginView(()=>productView(id,ref,back));
   const{data}=await sb.rpc('pay_quote',{p_product:id,p_coupon:null,p_ref:ref||null});
+  if(data&&data.reason==='already paid')return paidView(back||prod.back_url);
   if(!data||!data.ok)return say(t('title'),t('none'),t('cont'),safeBack(back||prod.back_url));
   form({product:id,ref,title:prod.name,desc:prod.description,list:data.list,discount:data.discount,amount:data.amount,couponable:true,back:back||prod.back_url,
     onPay:f=>fn({mode:'create',product:id,ref:ref||undefined,...f})});

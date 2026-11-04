@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bar Lvovski Travel · טיסות, מלונות וחופשות</title>
-<meta name="description" content="Bar Lvovski Travel — חיפוש טיסות, מלונות, רכבים, חבילות נופש, טיולים מאורגנים וכרטיסים. שולחים בקשה באתר ובר חוזר אליכם אישית.">
+<meta name="description" content="Bar Lvovski Travel — חיפוש טיסות, מלונות, רכבים, חבילות נופש, טיולים מאורגנים וכרטיסים. מזמינים באתר ובר מאשר אישית.">
 <meta property="og:title" content="Bar Lvovski Travel"><meta property="og:image" content="https://barusik.com/og.png">
 <link rel="icon" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,7 +61,7 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding:10px 16px 40px
 <a class="skip" href="#main">דילוג לתוכן</a>
 <header class="top"><a class="logo" href="/travel/">BAR LVOVSKI TRAVEL</a><span class="sp"></span>
 <a class="wa" href="https://wa.me/972556630709" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>055-6630709</a></header>
-<section class="hero"><h1>לאן טסים?</h1><p>מחפשים כאן ושולחים בקשה — בר בודק זמינות וחוזר אליכם אישית.</p></section>
+<section class="hero"><h1>לאן טסים?</h1><p>מחפשים כאן, מזמינים כאן — ובר מאשר לכם אישית ושולח את כל הפרטים.</p></section>
 <main id="main">
   <div id="banner"></div>
   <div class="box">
@@ -70,7 +70,7 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding:10px 16px 40px
   </div>
   <section id="out" aria-live="polite"></section>
 </main>
-<footer>Bar Lvovski Travel · המחירים בש"ח, לפי זמן החיפוש · שליחת בקשה אינה הזמנה ואינה מחייבת לבצע אותה · התשלום מתבצע ישירות מול ספק ההזמנות, לא דרך האתר · <a href="/he/accessibility/">הצהרת נגישות</a> · <a href="/">Barusik Platforms</a></footer>
+<footer>Bar Lvovski Travel · כל המחירים בש"ח וכוללים את השירות של בר · ההזמנה סופית רק אחרי אישור אישי · <a href="/he/accessibility/">הצהרת נגישות</a> · <a href="/">Barusik Platforms</a></footer>
 
 <dialog id="dlg"><div style="position:relative"><button class="x" type="button" aria-label="סגירה" id="dlgx">✕</button><div id="dlgc"></div></div></dialog>
 
@@ -550,7 +550,7 @@ function book(o){
     ${field('טלפון (וואטסאפ)',`<input id="bp" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" required maxlength="30" placeholder="05X-XXXXXXX">`)}
     ${field('מייל (לא חובה)',`<input id="be" type="email" dir="ltr" autocomplete="email" maxlength="120">`)}
     ${field(o.free?'מה מחפשים? (יעד, תאריכים, כמה אנשים, תקציב)':'הערות לבר',`<textarea id="bt" maxlength="1500" ${o.free?'required':''} placeholder="${o.free?'':'שמות הנוסעים, מזוודות, בקשות מיוחדות…'}"></textarea>`)}
-    <p class="note" style="font-size:13px">${o.price?'המחיר נכון לרגע החיפוש. זו בקשה, לא הזמנה: בר יבדוק זמינות ויחזור אליכם, ואין התחייבות שההזמנה תתבצע. התשלום, אם תחליטו להזמין, נעשה ישירות מול ספק ההזמנות ולא דרך האתר. שום דבר לא מחויב עכשיו.':'בר יחזור אליכם עם הצעות מחיר. שום דבר לא מחויב עכשיו.'}</p>
+    <p class="note" style="font-size:13px">${o.price?'המחיר נכון לרגע החיפוש. ההזמנה סופית רק אחרי שבר מאשר ושולח לכם פרטי תשלום — שום דבר לא מחויב עכשיו.':'בר יחזור אליכם עם הצעות מחיר. שום דבר לא מחויב עכשיו.'}</p>
     <p class="note" style="font-size:12px">הפרטים נשלחים לבר רק כדי לטפל בבקשה. <a href="https://barusik.com/he/privacy/" target="_blank" rel="noopener">מדיניות פרטיות</a></p>
     <p class="err" id="bx" role="alert"></p>
     <button class="go">${o.price?'שליחת ההזמנה לאישור':'שליחת הבקשה'}</button></form>`;
@@ -566,7 +566,7 @@ function book(o){
     const waL=`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`;
     $('#dlgc').innerHTML=error
       ?`<div class="okmsg"><h2>משהו השתבש בשליחה</h2><p>אפשר לשלוח לבר ישירות בוואטסאפ — הכל כבר כתוב:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`
-      :`<div class="okmsg"><div style="font-size:44px" aria-hidden="true">✈️</div><h2>${o.price?'הבקשה נשלחה לבר':'הבקשה נשלחה לבר'}</h2><p>בר יבדוק זמינות ויחזור אליכם ב־${esc(phone)}.<br>רוצים לזרז? שלחו לו הודעה:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`;
+      :`<div class="okmsg"><div style="font-size:44px" aria-hidden="true">✈️</div><h2>${o.price?'ההזמנה נשלחה לבר':'הבקשה נשלחה לבר'}</h2><p>בר יבדוק ויחזור אליכם בהקדם ב־${esc(phone)}.<br>רוצים לזרז? שלחו לו הודעה:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`;
   };
 }
 $('#dlgx').onclick=()=>$('#dlg').close();

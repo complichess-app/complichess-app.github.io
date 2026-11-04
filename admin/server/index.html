@@ -65,7 +65,7 @@ addEventListener('message',e=>{
   if(!ext&&!win)return;
   const m=e.data;
   if(ext){VIA='ext';HANDS={closed:false}}
-  if(m.type==='need-login'){if(ASKED||hasExt()){LOGGED=false;RUN=false;if(STATE!=='login'){STATE='login';draw();heartbeat()}}return}
+  if(m.type==='need-login'){if(ASKED||hasExt()){const was=RUN;LOGGED=false;RUN=false;if(STATE!=='login'){STATE='login';draw();if(was)heartbeat()}}return}
   if(m.type==='focus-server'){focus();return}
   if(m.type==='hello'){if(win){VIA='win';HANDS=e.source}ALIVE=Date.now();send({type:'ack'});if(ADMIN&&!RUN&&wantOn())start();return}
   if(m.type==='alive'){ALIVE=Date.now();if(win&&!HANDS)HANDS=e.source;if(ADMIN&&!RUN&&wantOn()&&STATE==='wait')start();return}

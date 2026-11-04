@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
+<!doctype html><html lang="he" dir="rtl"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
 <meta name="theme-color" content="#3B34E8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Platformika"><meta name="apple-mobile-web-app-status-bar-style" content="default"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>פלטפורמיקה</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -846,7 +846,7 @@ function reportSheet(uid,postId){
     $('#rpForm',sh).onsubmit=async e=>{e.preventDefault();const why=$('#rpWhy',sh).value.trim();if(!why){toast('כתבו בקצרה מה הבעיה');return}
       const b=$('button.primary',sh);busy(b,true,'שולח…');
       const{error}=await sb.from('pk_reports').insert({target_user:uid||null,post:postId||null,reason:why});
-      if(error){busy(b,false);toast(NOT_READY(error)?'הדיווח יהיה זמין בקרוב. בינתיים אפשר לכתוב ל-complichess.app@gmail.com':errText(error));return}
+      if(error){busy(b,false);toast(NOT_READY(error)?'הדיווח יהיה זמין בקרוב. בינתיים אפשר לכתוב ל-barusik.official@gmail.com':errText(error));return}
       closeLayer();toast('תודה, הדיווח נשלח')};
   }});
 }
@@ -865,7 +865,7 @@ function deleteAccountSheet(){
         if(files&&files.length)await sb.storage.from(BUCKET).remove(files.map(f=>USER.id+'/'+f.name));
         const{error}=await sb.rpc('delete_my_account');if(error)throw error;
         await sb.auth.signOut().catch(()=>{});closeLayer();toast('החשבון נמחק');setTimeout(()=>location.reload(),1200);
-      }catch(x){busy(b,false);toast(NOT_READY(x)?'מחיקה עצמית תהיה זמינה בקרוב. בינתיים כתבו ל-complichess.app@gmail.com ונמחק תוך 7 ימים':errText(x))}};
+      }catch(x){busy(b,false);toast(NOT_READY(x)?'מחיקה עצמית תהיה זמינה בקרוב. בינתיים כתבו ל-barusik.official@gmail.com ונמחק תוך 7 ימים':errText(x))}};
   }});
 }
 function editProfile(){
@@ -1083,5 +1083,5 @@ if(sb){
 </script>
 
 
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.0.0').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.0.1').catch(()=>{}));</script>
 </body></html>
