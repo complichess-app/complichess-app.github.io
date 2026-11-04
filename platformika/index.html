@@ -1,11 +1,17 @@
-<!doctype html><html lang="he" dir="rtl"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
-<meta name="theme-color" content="#3B34E8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Platformika"><meta name="apple-mobile-web-app-status-bar-style" content="default"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>פלטפורמיקה</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="פלטפורמה אחת. כולם מחוברים. היוצרים קודם.">
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>פלטפורמיקה · Platformika</title>
+<meta name="description" content="פלטפורמיקה: פוסטים, סטוריז, קליפים וצ'אטים במקום אחד, ו־99% מהרווח הולך ליוצרים. משתמש אחד לכל הפלטפורמות של ברוסיק.">
+<link rel="canonical" href="https://barusik.com/platformika/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Barusik Platforms"><meta property="og:locale" content="he_IL">
+<meta property="og:title" content="פלטפורמיקה · Platformika"><meta property="og:description" content="פלטפורמה אחת. כולם מחוברים. היוצרים קודם."><meta property="og:url" content="https://barusik.com/platformika/"><meta property="og:image" content="https://barusik.com/og.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#3B34E8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Platformika"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://iktmyrfbejtjsiehcrar.supabase.co" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap"></noscript>
+<style>img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <style>
 /* Layout: social super-app. Desktop = nav column (start) · feed · rail (end). Phone = top bar + feed + bottom tab bar. RTL throughout. */
 :root{
@@ -15,7 +21,7 @@
   --surface-3:#ECECF5;     /* pressed, chips */
   --ink:#16152B;           /* primary text */
   --ink-2:#4C4B68;         /* secondary text */
-  --muted:#8C8BA6;         /* meta */
+  --muted:#6B6A87;         /* meta (AA on white and canvas) */
   --line:rgba(22,21,43,.09);
   --line-2:rgba(22,21,43,.16);
   --brand:#3B34E8;         /* Platformika blue-violet: actions, links, active nav */
@@ -24,7 +30,7 @@
   --gold:#E9A800;          /* creator money: the 99% */
   --gold-soft:rgba(233,168,0,.14);
   --gold-ink:#7A5600;
-  --like:#E8344E;
+  --like:#D42A44;
   --online:#14A673;
   --chat-me:#DDDBFF;       /* my bubble */
   --chat-wall:#EBEAF4;
@@ -40,7 +46,7 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --canvas:#0D0D19; --surface:#161629; --surface-2:#1D1D34; --surface-3:#26263F;
-  --ink:#EDEDF9; --ink-2:#B7B6D3; --muted:#7E7D9E;
+  --ink:#EDEDF9; --ink-2:#B7B6D3; --muted:#9897B8;
   --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
   --brand:#7C77FF; --brand-ink:#0D0D19; --brand-soft:rgba(124,119,255,.16);
   --gold:#FFC93C; --gold-soft:rgba(255,201,60,.14); --gold-ink:#FFD978;
@@ -52,7 +58,7 @@
 }}
 :root[data-theme="dark"]{
   --canvas:#0D0D19; --surface:#161629; --surface-2:#1D1D34; --surface-3:#26263F;
-  --ink:#EDEDF9; --ink-2:#B7B6D3; --muted:#7E7D9E;
+  --ink:#EDEDF9; --ink-2:#B7B6D3; --muted:#9897B8;
   --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
   --brand:#7C77FF; --brand-ink:#0D0D19; --brand-soft:rgba(124,119,255,.16);
   --gold:#FFC93C; --gold-soft:rgba(255,201,60,.14); --gold-ink:#FFD978;
@@ -72,6 +78,9 @@ a{color:var(--brand)}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
 svg.i{width:22px;height:22px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));inset-inline-start:8px;z-index:70;background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:12px;font-weight:600;text-decoration:none;transform:translateY(-200%)}
+.skip:focus{transform:none}
+main:focus{outline:0}
 h1,h2,h3{text-wrap:balance;margin:0}
 p{text-wrap:pretty;margin:0}
 
@@ -99,7 +108,7 @@ p{text-wrap:pretty;margin:0}
 .btn.sm{height:36px;padding:0 14px;font-size:14px}
 .btn[disabled]{opacity:.45;pointer-events:none}
 .nav .btn.primary{margin-top:14px;height:50px;font-size:16px}
-.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--like);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#D42A44;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
 
 main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:18px;max-width:var(--feed-w);width:100%;justify-self:center}
 .rail{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;max-height:100dvh;overflow-y:auto;padding-block:22px;display:flex;flex-direction:column;gap:16px;scrollbar-width:none}
@@ -145,6 +154,7 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .post-h .who{min-width:0;flex:1;line-height:1.25}
 .post-h .who b{display:block;font-weight:600}
 .post-h .who small{color:var(--muted);font-size:13px}
+.post-h a{text-decoration:none}.post-h a:hover b{text-decoration:underline}
 .iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);flex:none}
 .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
 .post-text{padding:0 16px 12px;font-size:16px;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -174,6 +184,13 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .menu button{display:flex;gap:10px;align-items:center;width:100%;padding:10px 12px;border-radius:10px;text-align:start}
 .menu button:hover{background:var(--surface-2)}
 .menu .danger{color:var(--like)}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%,30%{box-shadow:0 0 0 3px var(--brand)}100%{box-shadow:var(--shadow)}}
+.promo{display:inline-flex;align-items:center;gap:4px;margin-inline-start:6px;padding:1px 8px;border-radius:999px;background:var(--gold-soft);color:var(--gold-ink);font-size:12px;font-weight:600;vertical-align:1px}
+.boost{display:flex;align-items:center;gap:10px;margin:0 12px 10px;padding:8px;padding-inline-start:12px;border-radius:14px;background:var(--gold-soft);color:var(--gold-ink);font-size:13.5px;text-decoration:none}
+.boost span{flex:1;min-width:0}
+.boost b{flex:none;background:var(--gold);color:#241900;padding:6px 12px;border-radius:999px;font-size:13.5px;white-space:nowrap}
+.boost:hover b{opacity:.9}
 
 /* ---------- empty state ---------- */
 .empty{padding:40px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
@@ -364,10 +381,12 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
   .search.desk{display:none}
   .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
   .search.desk.show{display:flex}
+  input,textarea{font-size:16px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-
+</head><body>
+<a class="skip" href="#view">דילוג לתוכן</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></symbol>
   <symbol id="i-clips" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10.5 11.5 4 2.5-4 2.5z"/></symbol>
@@ -448,11 +467,16 @@ const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ic=(n,c='i')=>`<svg class="${c}"><use href="#i-${n}"/></svg>`;
 const ts=x=>new Date(x).getTime();
+const MEDIA=SB_URL+'/storage/v1/object/public/'+BUCKET+'/';
+const media=u=>typeof u==='string'&&u.startsWith(MEDIA)&&!/["'<>\\\s]/.test(u)?u:'';
+const hue=h=>{const n=Math.round(+h);return n>=0&&n<=360?n:200};
+const bgOf=b=>BGS[Number.isInteger(+b)&&+b>=0?+b:0]||BGS[0];
 
 /* ---------- state (from the server) ---------- */
 let USER=null,ME=null,READY=false,OFFLINE=!sb,AUTHKNOWN=false;
 const PROF={};                        // id -> pk_profiles row
 let POSTS=[],LIKES=[],CMTS=[],MSGS=[],BLOCKED=new Set();
+let BOOST=new Map(),PAY=null;           // post id -> boosted until; PAY = {price} when the paid boost is on sale
 const OPEN={};                        // post id -> comments open
 try{const r=new URLSearchParams(location.search).get('ref');if(r)localStorage.setItem('platformika.ref',r)}catch(e){}
 
@@ -477,6 +501,8 @@ async function loadAll(){
   OFFLINE=false;POSTS=pr.data||[];MSGS=mr.data||[];
   if(USER){try{const br=await sb.from('pk_blocks').select('blocked');BLOCKED=new Set(br.error?[]:(br.data||[]).map(b=>b.blocked))}catch(e){BLOCKED=new Set()}}
   if(BLOCKED.size){POSTS=POSTS.filter(p=>!BLOCKED.has(p.author));MSGS=MSGS.filter(m=>!BLOCKED.has(m.sender)&&!BLOCKED.has(m.recipient))}
+  // paid boosts: active rows only (RLS hides expired ones); quiet if the table is not there yet
+  try{const br=await sb.from('pk_boosts').select('post_id,until');BOOST=new Map(br.error?[]:(br.data||[]).filter(b=>ts(b.until)>Date.now()).map(b=>[b.post_id,b.until]))}catch(e){BOOST=new Map()}
   const ids=POSTS.map(p=>p.id);
   if(ids.length){
     const[lr,cr]=await Promise.all([sb.from('pk_likes').select('post,uid,created_at').in('post',ids),sb.from('pk_comments').select('*').in('post',ids).order('created_at')]);
@@ -484,6 +510,16 @@ async function loadAll(){
   }else{LIKES=[];CMTS=[]}
   await loadProfiles(POSTS.map(p=>p.author).concat(CMTS.map(c=>c.author),LIKES.map(l=>l.uid),MSGS.map(m=>m.sender),MSGS.map(m=>m.recipient)));
 }
+async function loadPay(){
+  PAY=null;
+  try{const{data,error}=await sb.rpc('pay_public');if(error||!data)return;
+    const pr=(data.products||[]).find(x=>x.id==='platformika_boost');if(!pr||!(+pr.price>0))return;
+    let ok=data.mode==='manual'||data.mode==='live';
+    if(!ok&&data.mode==='demo'){const a=await sb.rpc('is_admin');ok=a.data===true}
+    if(ok)PAY={price:+pr.price};
+  }catch(e){PAY=null}
+}
+const boostUntil=x=>new Date(x).toLocaleDateString('he-IL',{day:'numeric',month:'short'});
 let reloadT=0;
 function reloadSoon(){clearTimeout(reloadT);reloadT=setTimeout(async()=>{await loadAll();render(true)},350)}
 let live=null;
@@ -502,7 +538,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&READY)rel
 function rel(x){const d=(Date.now()-ts(x))/1000;if(d<60)return'עכשיו';if(d<3600)return`לפני ${Math.floor(d/60)} דק׳`;if(d<86400)return`לפני ${Math.floor(d/3600)} שע׳`;if(d<172800)return'אתמול';return new Date(x).toLocaleDateString('he-IL',{day:'numeric',month:'short'})}
 const hm=x=>new Date(x).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
 function dayLabel(x){const d=new Date(x),t=new Date();const k=v=>v.toDateString();if(k(d)===k(t))return'היום';const y=new Date(t);y.setDate(t.getDate()-1);if(k(d)===k(y))return'אתמול';return d.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'})}
-function av(p,size=''){if(!p)return`<span class="av ${size}"></span>`;return`<span class="av ${size}" style="--h:${p.hue||200}">${p.avatar_url?`<img src="${esc(p.avatar_url)}" alt="">`:esc([...(p.name||'?').trim()][0]||'?')}</span>`}
+function av(p,size=''){if(!p)return`<span class="av ${size}"></span>`;const src=p.avatar_url&&(p.avatar_url.startsWith('blob:')?p.avatar_url:media(p.avatar_url));return`<span class="av ${size}" style="--h:${hue(p.hue)}">${src?`<img src="${esc(src)}" alt="" decoding="async">`:esc([...(p.name||'?').trim()][0]||'?')}</span>`}
 function toast(t){$('.toast')?.remove();const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2800)}
 async function copy(text,btn){try{await navigator.clipboard.writeText(text);toast('הקישור הועתק')}catch(e){const c=btn?.closest('.linkbox')?.querySelector('code');if(c){const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast('סמנו את הקישור והעתיקו אותו')}}
 function compress(file,max=1600,q=.84){return new Promise((res,rej)=>{if(!file||!file.type.startsWith('image/'))return rej(new Error('type'));const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('blob')),'image/jpeg',q)};im.onerror=rej;im.src=u})}
@@ -529,9 +565,19 @@ function errText(e){const m=String(e?.message||e||'').toLowerCase();
   return'משהו השתבש: '+(e?.message||'נסו שוב')}
 
 /* ---------- layers (sheets) ---------- */
-function openLayer(html,{onMount,cls='',lock=false}={}){const L=$('#layer');L.innerHTML=`<div class="scrim" data-scrim ${lock?'data-lock="1"':''}><div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;const sc=$('[data-scrim]',L);sc.addEventListener('click',e=>{if(e.target===sc&&!sc.dataset.lock)closeLayer()});onMount?.($('.sheet',L));const f=$('[autofocus]',L)||$('input,textarea,button',L);f?.focus()}
-function closeLayer(){$('#layer').innerHTML='';stopStory()}
-addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#layer').innerHTML&&!$('[data-scrim][data-lock]')){closeLayer()}});
+let opener=null;
+function openLayer(html,{onMount,cls='',lock=false}={}){const L=$('#layer');if(!L.innerHTML)opener=document.activeElement;L.innerHTML=`<div class="scrim" data-scrim ${lock?'data-lock="1"':''}><div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;const sc=$('[data-scrim]',L);sc.addEventListener('click',e=>{if(e.target===sc&&!sc.dataset.lock)closeLayer()});const sh=$('.sheet',L),h=$('h1,h2',sh);if(h){h.id='layerTitle';sh.setAttribute('aria-labelledby','layerTitle')}onMount?.(sh);const f=$('[autofocus]',L)||$('input,textarea,button',L);f?.focus()}
+function closeLayer(){const had=$('#layer').innerHTML;$('#layer').innerHTML='';stopStory();if(had&&opener&&opener.isConnected)opener.focus({preventScroll:true});opener=null}
+function closeMenus(){$$('.menu').forEach(m=>m.remove());$$('[data-act="post-menu"][aria-expanded="true"]').forEach(b=>b.setAttribute('aria-expanded','false'))}
+addEventListener('keydown',e=>{
+  const L=$('#layer');
+  if(e.key==='Escape'){const m=$('.menu');if(m){const b=m.parentElement?.querySelector('[data-act="post-menu"]');closeMenus();b?.focus();return}
+    if(L.innerHTML&&!$('[data-scrim][data-lock]'))closeLayer();return}
+  // keep Tab inside an open sheet or the story viewer
+  if(e.key==='Tab'&&L.innerHTML){const f=$$('a[href],button:not([disabled]),input,textarea,video[controls]',L).filter(x=>x.offsetParent!==null||x.closest('.viewer'));if(!f.length)return;const a=f[0],z=f[f.length-1];
+    if(!L.contains(document.activeElement)){e.preventDefault();a.focus()}else if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
+  const m=$('.menu');if(m&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const bs=$$('button',m),i=bs.indexOf(document.activeElement);bs[(i+(e.key==='ArrowDown'?1:-1)+bs.length)%bs.length].focus()}
+});
 
 /* ---------- account (one Barusik account for every platform) ---------- */
 function authSheet(tab='login'){
@@ -604,7 +650,7 @@ async function signedIn(user){
   USER=user;
   const{data}=await sb.from('pk_profiles').select('*').eq('id',user.id).maybeSingle();
   ME=data||null;if(ME)PROF[ME.id]=ME;
-  READY=true;await loadAll();goLive();render();
+  READY=true;await Promise.all([loadAll(),loadPay()]);goLive();render();
   if(!ME){let s='';try{const r=await sb.from('profiles').select('username').eq('id',user.id).maybeSingle();s=r.data?.username||user.user_metadata?.username||''}catch(e){}onboarding(s)}
   else if($('[data-scrim][data-lock]'))closeLayer();
 }
@@ -661,12 +707,12 @@ const storySeen=(()=>{try{return JSON.parse(localStorage.getItem('platformika.se
 function stopStory(){cancelAnimationFrame(stTimer);stTimer=null}
 function viewStories(author){
   const list=activeStories().filter(s=>s.author===author);if(!list.length)return;
-  let i=Math.max(0,list.findIndex(s=>!storySeen[s.id]));const L=$('#layer');
+  let i=Math.max(0,list.findIndex(s=>!storySeen[s.id]));const L=$('#layer');if(!L.innerHTML)opener=document.activeElement;
   const show=()=>{
     stopStory();const s=list[i];storySeen[s.id]=1;try{localStorage.setItem('platformika.seen',JSON.stringify(storySeen))}catch(e){}
     const w=who(s.author);
     L.innerHTML=`<div class="viewer" role="dialog" aria-modal="true" aria-label="צפייה בסטורי">
-      <div class="frame" style="background:${BGS[s.bg]||BGS[0]}">${esc(s.body)}
+      <div class="frame" style="background:${bgOf(s.bg)}">${esc(s.body)}
         <div class="bars">${list.map((_,k)=>`<i><b style="width:${k<i?100:0}%"></b></i>`).join('')}</div>
         <div class="vh">${av(w,'s32')}<span>${esc(w.name)} <small>${rel(s.created_at)}</small></span><button class="iconbtn x" data-close aria-label="סגירה">${ic('x')}</button></div>
         <button class="tapzone prev" aria-label="הקודם"></button><button class="tapzone next" aria-label="הבא"></button>
@@ -674,8 +720,10 @@ function viewStories(author){
     const bar=$$('.bars b',L)[i];const t0=performance.now(),D=5000;
     const tick=now=>{const p=Math.min(1,(now-t0)/D);bar.style.width=p*100+'%';if(p<1)stTimer=requestAnimationFrame(tick);else next()};
     stTimer=requestAnimationFrame(tick);
-    $('.tapzone.next',L).onclick=next;$('.tapzone.prev',L).onclick=()=>{i=Math.max(0,i-1);show()};
+    $('.tapzone.next',L).onclick=next;$('.tapzone.prev',L).onclick=prev;$('.x',L).focus();
+    $('.viewer',L).onkeydown=e=>{if(e.key==='ArrowLeft'){e.preventDefault();next()}else if(e.key==='ArrowRight'){e.preventDefault();prev()}};
   };
+  const prev=()=>{i=Math.max(0,i-1);show()};
   const next=()=>{if(i<list.length-1){i++;show()}else{closeLayer();render()}};
   show();
 }
@@ -687,18 +735,18 @@ function storiesTray(){
   return`<section class="card" aria-label="סטוריז"><div class="stories">
     <button class="story" data-act="story-new"><span class="ring add"><span class="inner">${ic('plus')}</span></span><span>הוספת סטורי</span></button>
     ${by.map(a=>{const mine=st.filter(s=>s.author===a),last=mine[mine.length-1],seen=mine.every(s=>storySeen[s.id]),w=who(a);
-      return`<button class="story" data-act="story-view" data-author="${a}"><span class="ring ${seen?'seen':''}"><span class="inner" style="background:${BGS[last.bg]||BGS[0]}">${esc(last.body.slice(0,26))}</span></span><span>${a===USER.id?'הסטורי שלך':esc(w.name)}</span></button>`}).join('')}
+      return`<button class="story" data-act="story-view" data-author="${esc(a)}" aria-label="${a===USER.id?'הסטורי שלך':'הסטורי של '+esc(w.name)}"><span class="ring ${seen?'seen':''}"><span class="inner" style="background:${bgOf(last.bg)}" aria-hidden="true">${esc((last.body||'').slice(0,26))}</span></span><span>${a===USER.id?'הסטורי שלך':esc(w.name)}</span></button>`}).join('')}
   </div></section>`;
 }
 function composer(){return`<section class="card composer" aria-label="יצירת פוסט"><div class="row">${av(ME)}<button class="fake" data-act="compose">מה חדש, ${esc(ME.name.split(' ')[0])}?</button></div>
   <div class="acts"><button data-act="compose-img">${ic('image')}תמונה</button><button data-act="story-new">${ic('story')}סטורי</button><button data-act="clip-new">${ic('video')}קליפ</button></div></section>`}
 function postHTML(p){
-  const w=who(p.author),cs=cmtsOf(p.id),nl=likesOf(p.id).length,liked=likedByMe(p.id),big=!p.media_url&&p.body.length<90,mine=p.author===USER.id;
+  const w=who(p.author),cs=cmtsOf(p.id),nl=likesOf(p.id).length,liked=likedByMe(p.id),m=media(p.media_url),big=!m&&(p.body||'').length<90,mine=p.author===USER.id,bo=BOOST.get(p.id);
   return`<article class="card post" data-post="${p.id}" id="post-${p.id}" style="position:relative">
-  <div class="post-h"><a href="#u-${esc(w.handle)}">${av(w)}</a><div class="who"><a href="#u-${esc(w.handle)}" style="color:inherit"><b>${esc(w.name)}</b></a><small>${rel(p.created_at)} · ציבורי</small></div><button class="iconbtn" data-act="post-menu" data-mine="${mine?1:''}" aria-label="אפשרויות" aria-haspopup="menu">${ic('more')}</button></div>
+  <div class="post-h"><a href="#u-${esc(w.handle)}">${av(w)}</a><div class="who"><a href="#u-${esc(w.handle)}" style="color:inherit"><b>${esc(w.name)}</b></a><small>${rel(p.created_at)} · ציבורי${bo?'<span class="promo">מקודם</span>':''}</small></div><button class="iconbtn" data-act="post-menu" data-mine="${mine?1:''}" aria-label="אפשרויות" aria-haspopup="menu" aria-expanded="false">${ic('more')}</button></div>
   ${p.body?`<p class="post-text ${big?'big':''}" dir="auto">${esc(p.body)}</p>`:''}
-  ${p.media_type==='image'?`<img class="post-img" src="${esc(p.media_url)}" alt="תמונה מהפוסט" loading="lazy">`:''}
-  ${p.media_type==='video'?`<video class="post-img" src="${esc(p.media_url)}" controls playsinline preload="metadata"></video>`:''}
+  ${p.media_type==='image'&&m?`<img class="post-img" src="${esc(m)}" alt="תמונה מהפוסט" loading="lazy" decoding="async">`:''}
+  ${p.media_type==='video'&&m?`<video class="post-img" src="${esc(m)}" controls playsinline preload="metadata"></video>`:''}
   ${(nl||cs.length)?`<div class="post-stats">${nl?`<span><svg class="i" style="width:16px;height:16px;fill:var(--like);stroke:var(--like);vertical-align:-3px"><use href="#i-heart"/></svg></span><span>${liked?(nl===1?'אהבת את זה':`את/ה ועוד ${fmt(nl-1)}`):fmt(nl)}</span>`:''}${cs.length?`<span style="margin-inline-start:auto">${cs.length===1?'תגובה אחת':fmt(cs.length)+' תגובות'}</span>`:''}</div>`:''}
   <div class="post-acts">
     <button class="${liked?'on':''}" data-act="like" aria-pressed="${liked}">${ic('heart')}אהבתי</button>
@@ -706,6 +754,7 @@ function postHTML(p){
     <button data-act="share">${ic('share')}שיתוף</button>
     <button class="tip" data-act="tip">${ic('gift')}תמיכה</button>
   </div>
+  ${mine&&p.kind==='post'&&PAY?`<a class="boost" href="/pay/?p=platformika_boost&amp;ref=${encodeURIComponent(p.id)}&amp;lang=he&amp;back=/platformika/"><span>${bo?`מקודם עד ${esc(boostUntil(bo))}. הארכה מוסיפה עוד 7 ימים.`:'הפוסט יופיע ראשון בפיד של כולם למשך 7 ימים.'}</span><b>${bo?'הארכה':'קידום'} · ₪${fmt(PAY.price)}</b></a>`:''}
   <div class="comments" ${OPEN[p.id]?'':'hidden'}>
     ${cs.map(c=>{const cw=who(c.author);return`<div class="cmt">${av(cw,'s32')}<div class="bub"><b>${esc(cw.name)}</b><p dir="auto">${esc(c.body)}</p></div></div>`}).join('')}
     <form class="cmt-in" data-act="cmt-form">${av(ME,'s32')}<label class="sr" for="c-${p.id}">תגובה</label><input id="c-${p.id}" placeholder="כתבו תגובה…" maxlength="500"><button class="iconbtn" aria-label="שליחת תגובה">${ic('send')}</button></form>
@@ -713,10 +762,10 @@ function postHTML(p){
 }
 function vHome(){
   const q=(state.q||'').trim().toLowerCase();
-  const list=posts('post').concat(q?posts('clip'):[]).filter(p=>!q||p.body.toLowerCase().includes(q)||who(p.author).name.toLowerCase().includes(q)||(who(p.author).handle||'').includes(q)).sort((a,b)=>ts(b.created_at)-ts(a.created_at));
+  const list=posts('post').concat(q?posts('clip'):[]).filter(p=>!q||(p.body||'').toLowerCase().includes(q)||(who(p.author).name||'').toLowerCase().includes(q)||(who(p.author).handle||'').includes(q)).sort((a,b)=>(BOOST.has(b.id)-BOOST.has(a.id))||ts(b.created_at)-ts(a.created_at));
   const people=q?Object.values(PROF).filter(u=>u.name.toLowerCase().includes(q)||(u.handle||'').includes(q)).slice(0,8):[];
   return`
-  <label class="search desk ${q||state.showSearch?'show':''}" for="q">${ic('search')}<input id="q" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
+  <label class="search desk ${q||state.showSearch?'show':''}" for="q">${ic('search')}<input id="q" type="search" aria-label="חיפוש בפלטפורמיקה" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
   ${OFFLINE?`<div class="note">${ic('info')}<span>אין חיבור לשרת כרגע. בדקו את האינטרנט — הפיד יתעדכן לבד כשהחיבור יחזור.</span></div>`:''}
   ${q?'':storiesTray()}
   ${q?'':composer()}
@@ -727,11 +776,11 @@ function vHome(){
 function vClips(){
   const cl=posts('clip');
   return`<div class="page-h"><h1>קליפים</h1><button class="btn primary sm" data-act="clip-new">${ic('plus')}העלאת קליפ</button></div>
-  ${cl.length?`<div class="clips">${cl.map(c=>{const w=who(c.author);return`<div class="clip" data-post="${c.id}"><video src="${esc(c.media_url)}" muted loop playsinline preload="metadata" data-clip></video>
+  ${cl.length?`<div class="clips">${cl.map(c=>{const w=who(c.author);return`<div class="clip" data-post="${c.id}"><video src="${esc(media(c.media_url))}" muted loop playsinline preload="metadata" data-clip aria-label="${esc(c.body||'קליפ')}"></video>
     <div class="cap"><a href="#u-${esc(w.handle)}" style="color:#fff;font-weight:700">@${esc(w.handle)}</a>${c.body?' · '+esc(c.body):''}</div>
     <button class="iconbtn" data-act="clip-sound" aria-label="הפעלת סאונד" style="position:absolute;top:8px;inset-inline-end:8px;background:rgba(0,0,0,.45);color:#fff">🔊</button>
     <button class="iconbtn ${likedByMe(c.id)?'on':''}" data-act="like" aria-pressed="${likedByMe(c.id)}" aria-label="אהבתי" style="position:absolute;bottom:42px;inset-inline-end:8px;background:rgba(0,0,0,.45);color:${likedByMe(c.id)?'#ff5a72':'#fff'}">${ic('heart')}</button>
-    ${c.author===USER.id?`<button class="iconbtn" data-act="post-menu" data-mine="1" aria-label="אפשרויות" style="position:absolute;top:8px;inset-inline-start:8px;background:rgba(0,0,0,.45);color:#fff">${ic('more')}</button>`:''}</div>`}).join('')}</div>`:
+    <button class="iconbtn" data-act="post-menu" data-mine="${c.author===USER.id?1:''}" aria-label="אפשרויות" aria-haspopup="menu" aria-expanded="false" style="position:absolute;top:8px;inset-inline-start:8px;background:rgba(0,0,0,.45);color:#fff">${ic('more')}</button></div>`}).join('')}</div>`:
   `<section class="card empty"><div class="art">${ic('clips')}</div><h2>עוד אין כאן קליפים</h2><p>סרטונים אנכיים קצרים מכם ומהחברים שלכם יופיעו כאן, אחד אחרי השני.</p><button class="btn primary" data-act="clip-new">${ic('video')}העלאת קליפ</button></section>`}`;
 }
 function convos(){
@@ -768,8 +817,8 @@ function vChat(id){
 function alerts(){
   const mine=new Set(POSTS.filter(p=>p.author===USER.id).map(p=>p.id)),out=[];
   LIKES.forEach(l=>{if(mine.has(l.post)&&l.uid!==USER.id)out.push({icon:'heart',text:`${who(l.uid).name} אהב/ה את הפוסט שלך`,at:l.created_at,href:'#home',post:l.post})});
-  CMTS.forEach(c=>{if(mine.has(c.post)&&c.author!==USER.id)out.push({icon:'comment',text:`${who(c.author).name} הגיב/ה: ${c.body.slice(0,60)}`,at:c.created_at,post:c.post})});
-  MSGS.forEach(m=>{if(m.recipient===USER.id&&m.sender!==USER.id)out.push({icon:'chat',text:`הודעה מ־${who(m.sender).name}: ${m.body.slice(0,60)}`,at:m.created_at,href:'#chat-'+m.sender})});
+  CMTS.forEach(c=>{if(mine.has(c.post)&&c.author!==USER.id)out.push({icon:'comment',text:`${who(c.author).name} הגיב/ה: ${(c.body||'').slice(0,60)}`,at:c.created_at,post:c.post})});
+  MSGS.forEach(m=>{if(m.recipient===USER.id&&m.sender!==USER.id)out.push({icon:'chat',text:`הודעה מ־${who(m.sender).name}: ${(m.body||'').slice(0,60)}`,at:m.created_at,href:'#chat-'+m.sender})});
   return out.sort((a,b)=>ts(b.at)-ts(a.at)).slice(0,80);
 }
 const seenAlerts=()=>{try{return+localStorage.getItem('platformika.alertsSeen')||0}catch(e){return 0}};
@@ -809,10 +858,10 @@ function linkBox(){return`<div class="linkbox"><code>${esc(refLink())}</code><bu
 function vProfile(handle){
   const u=handle?Object.values(PROF).find(p=>p.handle===handle):ME;
   if(!u)return`<section class="card empty"><div class="art">${ic('user')}</div><h2>המשתמש לא נמצא</h2><p>אולי שם המשתמש השתנה.</p><a class="btn primary" href="#home">חזרה לבית</a></section>`;
-  const mine=u.id===USER.id,tab=state.ptab||'posts',ps=POSTS.filter(p=>p.author===u.id&&p.kind!=='story'),media=ps.filter(p=>p.media_url),list=tab==='media'?media:ps;
+  const mine=u.id===USER.id,tab=state.ptab||'posts',ps=POSTS.filter(p=>p.author===u.id&&p.kind!=='story'),withMedia=ps.filter(p=>p.media_url),list=tab==='media'?withMedia:ps;
   const got=LIKES.filter(l=>ps.some(p=>p.id===l.post)).length;
   return`<section class="card" style="overflow:hidden">
-    <div class="cover">${u.cover_url?`<img src="${esc(u.cover_url)}" alt="">`:''}</div>
+    <div class="cover">${media(u.cover_url)?`<img src="${esc(media(u.cover_url))}" alt="">`:''}</div>
     <div class="prof">
       <div class="head">${av(u,'s120')}<div style="display:flex;gap:8px;margin-bottom:6px">${mine?`<button class="btn ghost sm" data-act="edit-profile">${ic('edit')}עריכת פרופיל</button><button class="btn ghost sm" data-act="logout">התנתקות</button>`:`${BLOCKED.has(u.id)?'':`<a class="btn primary sm" href="#chat-${u.id}">${ic('chat')}הודעה</a>`}<button class="btn ghost sm" data-act="${BLOCKED.has(u.id)?'unblock':'block'}" data-uid="${u.id}">${BLOCKED.has(u.id)?'ביטול חסימה':'חסימה'}</button><button class="btn ghost sm" data-act="report" data-uid="${u.id}">דיווח</button>`}</div></div>
       <div><h1>${esc(u.name)}</h1><div class="handle">@${esc(u.handle)}</div></div>
@@ -821,7 +870,7 @@ function vProfile(handle){
       ${mine?`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px"><a href="https://barusik.com/he/privacy/" target="_blank" rel="noopener" style="color:var(--muted)">מדיניות פרטיות</a><a href="https://barusik.com/he/terms/" target="_blank" rel="noopener" style="color:var(--muted)">תנאי שימוש</a><button class="linkish" data-act="delete-account" style="background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit">מחיקת החשבון</button></div>`:''}
     </div>
     <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='posts'}" data-ptab="posts">פוסטים</button><button role="tab" aria-selected="${tab==='media'}" data-ptab="media">תמונות וסרטונים</button></div>
-    ${list.length?`<div class="grid">${list.map(p=>`<a class="cell ${p.media_url?'has-img':''}" href="${p.kind==='clip'?'#clips':'#home'}" data-jump="${p.kind==='clip'?'':p.id}">${p.media_type==='image'?`<img src="${esc(p.media_url)}" alt="" loading="lazy">`:p.media_type==='video'?`<video src="${esc(p.media_url)}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`:esc(p.body.slice(0,80))}</a>`).join('')}</div>`:
+    ${list.length?`<div class="grid">${list.map(p=>`<a class="cell ${p.media_url?'has-img':''}" href="${p.kind==='clip'?'#clips':'#home'}" data-jump="${p.kind==='clip'?'':p.id}">${p.media_type==='image'&&media(p.media_url)?`<img src="${esc(media(p.media_url))}" alt="" loading="lazy" decoding="async">`:p.media_type==='video'&&media(p.media_url)?`<video src="${esc(media(p.media_url))}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`:esc((p.body||'').slice(0,80))}</a>`).join('')}</div>`:
     `<div class="empty"><div class="art">${ic(tab==='media'?'camera':'edit')}</div><h2>${tab==='media'?'עוד אין תמונות':'עוד אין פוסטים'}</h2>${mine?`<button class="btn primary" data-act="${tab==='media'?'compose-img':'compose'}">יצירת פוסט</button>`:''}</div>`}
   </section>`;
 }
@@ -948,7 +997,7 @@ function clipNew(){
 /* ---------- rail ---------- */
 function railHTML(){
   return`
-  <label class="search" for="qr">${ic('search')}<input id="qr" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
+  <label class="search" for="qr">${ic('search')}<input id="qr" type="search" aria-label="חיפוש בפלטפורמיקה" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
   <section class="card wallet" aria-label="ארנק יוצרים">
     <div class="top"><div><div class="lbl">הארנק שלי</div><div class="amt">₪0.00</div></div><span class="av s36" style="background:var(--gold-soft);color:var(--gold-ink)">${ic('coins','i')}</span></div>
     <div class="split"><div class="bar" aria-hidden="true"><i class="c"></i><i class="o"></i></div></div>
@@ -992,7 +1041,7 @@ function render(soft){
   $$('[data-clip]').forEach(v=>{v.play?.().catch(()=>{})});
   document.title=r.startsWith('chat-')?"צ'אט · פלטפורמיקה":r.startsWith('u-')?`${r.slice(2)} · פלטפורמיקה`:({home:'פלטפורמיקה',clips:'קליפים · פלטפורמיקה',chats:"צ'אטים · פלטפורמיקה",alerts:'התראות · פלטפורמיקה',creators:'מרכז היוצרים · פלטפורמיקה',profile:`${ME.name} · פלטפורמיקה`})[state.route]||'פלטפורמיקה';
 }
-addEventListener('hashchange',()=>{render();scrollTo(0,0)});
+addEventListener('hashchange',()=>{render();scrollTo(0,0);const ae=document.activeElement;if(!ae||ae===document.body||!ae.matches('input,textarea'))$('#view').focus({preventScroll:true})});
 
 function bindChat(){
   const f=$('#chatForm'),t=$('#chatText');if(!f)return;
@@ -1017,7 +1066,7 @@ document.addEventListener('submit',async e=>{
 });
 document.addEventListener('click',async e=>{
   const close=e.target.closest('[data-close]');if(close){closeLayer();if(close.tagName!=='A')return}
-  if(!e.target.closest('.menu'))$$('.menu').forEach(m=>m.remove());
+  if(!e.target.closest('.menu'))closeMenus();
   const pt=e.target.closest('[data-ptab]');if(pt){state.ptab=pt.dataset.ptab;render(true);return}
   const jump=e.target.closest('[data-jump]');if(jump&&jump.dataset.jump){e.preventDefault();state.q='';go('home');setTimeout(()=>{document.getElementById('post-'+jump.dataset.jump)?.scrollIntoView({block:'center',behavior:'smooth'})},40);return}
   const a=e.target.closest('[data-act]');if(!a)return;
@@ -1029,7 +1078,7 @@ document.addEventListener('click',async e=>{
     case'story-new':storyCompose();break;
     case'story-view':viewStories(a.dataset.author);break;
     case'clip-new':clipNew();break;
-    case'clip-sound':{const v=$('video',postEl);if(v){v.muted=!v.muted;a.textContent=v.muted?'🔊':'🔇';v.play?.().catch(()=>{})}break}
+    case'clip-sound':{const v=$('video',postEl);if(v){v.muted=!v.muted;a.textContent=v.muted?'🔊':'🔇';a.setAttribute('aria-label',v.muted?'הפעלת סאונד':'השתקה');v.play?.().catch(()=>{})}break}
     case'chat-new':chatNew();break;
     case'invite':inviteSheet();break;
     case'tip':tipSheet();break;
@@ -1050,7 +1099,7 @@ document.addEventListener('click',async e=>{
     case'share':if(p)copy(SITE+'#post-'+p.id,a);break;
     case'post-menu':{if(!p)break;const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
       m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}העתקת קישור</button>${a.dataset.mine?`<button role="menuitem" class="danger" data-m="del">${ic('trash')}מחיקה</button>`:`<button role="menuitem" data-m="report">${ic('info')}דיווח על הפוסט</button><button role="menuitem" data-m="block">חסימת המפרסם/ת</button>`}`;
-      postEl.append(m);m.querySelector('button').focus();
+      postEl.append(m);a.setAttribute('aria-expanded','true');m.querySelector('button').focus();
       m.addEventListener('click',async ev=>{const b=ev.target.closest('[data-m]');if(!b)return;
         if(b.dataset.m==='copy'){copy(SITE+'#post-'+p.id);m.remove()}
         else if(b.dataset.m==='report'){m.remove();reportSheet(p.author,p.id)}
@@ -1083,5 +1132,5 @@ if(sb){
 </script>
 
 
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.0.1').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.1.0').catch(()=>{}));</script>
 </body></html>

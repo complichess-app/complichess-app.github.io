@@ -103,7 +103,7 @@ const ST={new:['ממתין לאישור','n'],quoted:['אושר · נשלחה ה
 const PN_LANG={he:'עברית',en:'אנגלית',ar:'ערבית',ru:'רוסית',es:'ספרדית',fr:'צרפתית'};
 const PN_MODEL={sonnet:['סונט כותב · אופוס מתכנן','כ־$1–2 לדוח'],opus:['אופוס כותב ומתכנן','כ־$1.5–3.5 לדוח'],fable:['פייבל כותב · אופוס מתכנן','כ־$3.5–8 לדוח']};
 const PN_ST={pending:['מחכה','n'],approved:['אושר, עוד לא נוצל','y'],used:['הדוח נכתב','y'],declined:['נדחה','m']};
-const ORD={created:['נפתח','m'],pending:['בתשלום','w'],paid:['שולם','y'],failed:['נכשל','n'],cancelled:['בוטל','m'],refunded:['הוחזר','m']};
+const ORD={created:['נפתח','m'],pending:['ממתין לתשלום','w'],paid:['שולם','y'],failed:['נכשל','n'],cancelled:['בוטל','m'],refunded:['הוחזר','m']};
 
 // ---------- sign-in and the second step ----------
 function login(msg){
@@ -284,7 +284,7 @@ function payHTML(){
     <button class="ghost" data-a="cptoggle" data-code="${esc(c.code)}" data-on="${c.active?0:1}">${c.active?'כיבוי':'הפעלה'}</button><button class="ghost" data-a="cpcopy" data-code="${esc(c.code)}">העתקה</button></div>`};
   return`<section><h2>מצב התשלומים</h2><div class="panel" style="display:flex;flex-direction:column;gap:12px">
     <div class="form">
-      <label>מצב<select data-set="mode"><option value="off"${s.mode==='off'?' selected':''}>כבוי: לא גובים כסף</option><option value="demo"${s.mode==='demo'?' selected':''}>הדגמה: רק אתה רואה, בלי כסף</option><option value="live"${s.mode==='live'?' selected':''}>חי: גובים כסף אמיתי</option></select></label>
+      <label>מצב<select data-set="mode"><option value="off"${s.mode==='off'?' selected':''}>כבוי: לא גובים כסף</option><option value="demo"${s.mode==='demo'?' selected':''}>הדגמה: רק אתה רואה, בלי כסף</option><option value="manual"${s.mode==='manual'?' selected':''}>העברה בנקאית: ההזמנה ממתינה, אתה מסמן שולם</option><option value="live"${s.mode==='live'?' selected':''}>חי: גובים כסף אמיתי</option></select></label>
       <label>חברת סליקה<select data-set="provider">${Object.entries(PROV).map(([k,v])=>`<option value="${k}"${s.provider===k?' selected':''}>${v.name}</option>`).join('')}</select></label>
       <label>מודל לדוח ששולם<select data-set="penina_model">${Object.entries(PN_MODEL).map(([k,v])=>`<option value="${k}"${k===s.penina_model?' selected':''}>${v[0]}</option>`).join('')}</select></label>
       <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-set="penina_auto" ${s.penina_auto?'checked':''}> דוח ששולם מתחיל בלי אישור שלי</label>
@@ -306,7 +306,7 @@ function payHTML(){
       <label>הערה לעצמך<input name="note" maxlength="200"></label><button>יצירת שובר</button></form>
     <div class="panel rows" style="margin-top:10px">${coupons.map(cpRow).join('')||'<p class="mute">עוד אין שוברים. 100% הנחה נותן מוצר בחינם, בלי סליקה.</p>'}</div></section>
   <section><h2>קישור תשלום על כל סכום</h2><form class="panel form" id="newl"><label>על מה<input name="title" required maxlength="200" placeholder="דוח מיוחד ללקוח"></label><label>סכום ₪<input name="amount" type="number" min="1" required></label><label>פלטפורמה<select name="platform">${Object.entries(PLAT).map(([k,v])=>`<option value="${k}"${k==='other'?' selected':''}>${v}</option>`).join('')}</select></label><button>יצירה והעתקה</button></form></section>
-  <section><h2>תשלומים <span class="mute small">סך הכול ${nis(m.all)}</span></h2><div class="panel rows">${orders.map(o=>{const v=ORD[o.status]||[o.status,'m'];return`<div class="rowx"><small>${d(o.created_at)}</small><span class="pill ${v[1]}">${v[0]}</span><b>${nis(o.amount)}</b><span class="grow">${esc(o.title)} <small>${PLAT[o.platform]||''}${o.coupon?' · שובר '+esc(o.coupon):''}${o.receipt?' · אסמכתא '+esc(o.receipt):''}</small></span><small dir="ltr">${esc(o.email||o.phone||'')}</small>${o.by_admin&&o.status!=='paid'?`<button class="ghost" data-a="olink" data-id="${esc(o.id)}">קישור</button>`:''}${o.status!=='paid'&&o.status!=='refunded'?`<button class="ghost" data-a="ostat" data-id="${esc(o.id)}" data-s="paid">סימון כשולם</button>`:''}${o.status==='paid'?`<button class="ghost" data-a="ostat" data-id="${esc(o.id)}" data-s="refunded">סימון כהוחזר</button>`:''}</div>`}).join('')||'<p class="mute">עוד אין תשלומים.</p>'}</div>
+  <section><h2>תשלומים <span class="mute small">סך הכול ${nis(m.all)}</span></h2><div class="panel rows">${orders.map(o=>{const v=ORD[o.status]||[o.status,'m'];return`<div class="rowx"><small>${d(o.created_at)}</small><span class="pill ${v[1]}">${v[0]}</span><b>${nis(o.amount)}</b><span class="grow">${esc(o.title)} <small dir="ltr">#${esc(String(o.id).replace(/-/g,'').slice(0,8).toUpperCase())}</small> <small>${o.provider==='bank'?'העברה בנקאית · ':''}${o.name?esc(o.name)+' · ':''}${PLAT[o.platform]||''}${o.coupon?' · שובר '+esc(o.coupon):''}${o.receipt?' · אסמכתא '+esc(o.receipt):''}</small></span><small dir="ltr">${esc(o.email||o.phone||'')}</small>${o.by_admin&&o.status!=='paid'?`<button class="ghost" data-a="olink" data-id="${esc(o.id)}">קישור</button>`:''}${o.status!=='paid'&&o.status!=='refunded'?`<button class="ghost" data-a="ostat" data-id="${esc(o.id)}" data-s="paid">סימון כשולם</button>`:''}${o.status==='paid'?`<button class="ghost" data-a="ostat" data-id="${esc(o.id)}" data-s="refunded">סימון כהוחזר</button>`:''}</div>`}).join('')||'<p class="mute">עוד אין תשלומים.</p>'}</div>
     <p class="mute small" style="margin-top:8px">סימון כהוחזר רק מעדכן כאן. את ההחזר עצמו עושים בחשבון של חברת הסליקה.</p></section>`;
 }
 function rows(){
@@ -406,7 +406,7 @@ const ACT={
   olink:el=>copy(`https://barusik.com/pay/?o=${el.dataset.id}`),
   cpcopy:el=>copy(el.dataset.code),
   cptoggle:async el=>{el.disabled=true;if(await after(()=>sb.from('pay_coupons').update({active:el.dataset.on==='1'}).eq('code',el.dataset.code))){await loadPay();draw()}else el.disabled=false},
-  ostat:async el=>{el.disabled=true;if(await after(()=>sb.rpc('pay_admin_set_status',{p_id:el.dataset.id,p_status:el.dataset.s}),'עודכן')){await Promise.all([loadPay(),loadPenina(),loadTravel()]);draw()}else el.disabled=false},
+  ostat:async el=>{if(el.dataset.s==='paid'&&!confirm('לסמן את ההזמנה כשולמה? הלקוח יקבל מיד את מה ששילם עליו. רק אחרי שראית את הכסף בחשבון.'))return;if(el.dataset.s==='refunded'&&!confirm('לסמן כהוחזר? מה שהתשלום פתח ייסגר (אם עוד אפשר).'))return;el.disabled=true;if(await after(()=>sb.rpc('pay_admin_set_status',{p_id:el.dataset.id,p_status:el.dataset.s}),'עודכן')){await Promise.all([loadPay(),loadPenina(),loadTravel()]);draw()}else el.disabled=false},
 };
 const saveSet=async(k,v)=>{if(await after(()=>sb.from('pay_settings').update({[k]:v,updated_at:new Date().toISOString()}).eq('id',1),'נשמר')){PAY.s[k]=v;draw()}};
 const saveProd=async(id,k,v)=>{await after(()=>sb.from('pay_products').update({[k]:v,updated_at:new Date().toISOString()}).eq('id',id),'נשמר');const p=PAY.products.find(x=>x.id===id);if(p)p[k]=v};

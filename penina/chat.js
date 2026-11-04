@@ -4,45 +4,68 @@
 (function (root) {
   'use strict';
 
-  /* ---------- zip: just enough to pull _chat.txt out of a WhatsApp export ---------- */
-  async function readZip(buf) {
-    const u8 = new Uint8Array(buf), dv = new DataView(buf);
-    let eocd = -1;
-    for (let i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
-    if (eocd < 0) throw new Error('zip');
-    const count = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
-    const files = [];
-    for (let n = 0; n < count; n++) {
+  /* ---------- zip: just enough to pull _chat.txt out of a WhatsApp export ----------
+     Reads only the directory at the end and the one text entry, so an export "with media" of a few GB
+     never has to fit in the phone's memory. ZIP64 is handled for exports over 4 GB. */
+  const n64 = (dv, o) => dv.getUint32(o, true) + dv.getUint32(o + 4, true) * 4294967296;
+  const bytes = async (blob, from, to) => new Uint8Array(await blob.slice(from, to).arrayBuffer());
+  function decode(u8) {
+    if (u8[0] === 0xff && u8[1] === 0xfe) return new TextDecoder('utf-16le').decode(u8);
+    if (u8[0] === 0xfe && u8[1] === 0xff) return new TextDecoder('utf-16be').decode(u8);
+    return new TextDecoder().decode(u8);
+  }
+  async function readZip(src) {
+    const file = src instanceof Blob ? src : new Blob([src]), size = file.size;
+    const tailFrom = Math.max(0, size - 65600), tail = await bytes(file, tailFrom, size), tdv = new DataView(tail.buffer);
+    let e = -1;
+    for (let i = tail.length - 22; i >= 0; i--) if (tdv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+    if (e < 0) throw new Error('zip');
+    let count = tdv.getUint16(e + 10, true), cdSize = tdv.getUint32(e + 12, true), cdOff = tdv.getUint32(e + 16, true);
+    if ((count === 0xffff || cdSize === 0xffffffff || cdOff === 0xffffffff) && e >= 20 && tdv.getUint32(e - 20, true) === 0x07064b50) {
+      const at = n64(tdv, e - 20 + 8), h = await bytes(file, at, at + 56), hdv = new DataView(h.buffer);
+      if (h.length >= 56 && hdv.getUint32(0, true) === 0x06064b50) { count = n64(hdv, 32); cdSize = n64(hdv, 40); cdOff = n64(hdv, 48); }
+    }
+    const cd = await bytes(file, cdOff, cdOff + cdSize), dv = new DataView(cd.buffer);
+    const files = []; let p = 0;
+    for (let n = 0; n < count && p + 46 <= cd.length; n++) {
       if (dv.getUint32(p, true) !== 0x02014b50) break;
-      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+      const method = dv.getUint16(p + 10, true); let csize = dv.getUint32(p + 20, true), usize = dv.getUint32(p + 24, true);
       const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
-      const local = dv.getUint32(p + 42, true);
-      const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nlen));
+      let local = dv.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(cd.subarray(p + 46, p + 46 + nlen));
+      if (csize === 0xffffffff || usize === 0xffffffff || local === 0xffffffff) {
+        for (let q = p + 46 + nlen, end = q + xlen; q + 4 <= end;) {
+          const id = dv.getUint16(q, true), len = dv.getUint16(q + 2, true);
+          if (id === 1) { let r = q + 4; if (usize === 0xffffffff) { usize = n64(dv, r); r += 8; } if (csize === 0xffffffff) { csize = n64(dv, r); r += 8; } if (local === 0xffffffff) local = n64(dv, r); break; }
+          q += 4 + len;
+        }
+      }
       files.push({ name, method, csize, local });
       p += 46 + nlen + xlen + clen;
     }
-    const txt = files.filter((f) => /\.txt$/i.test(f.name) && !/__MACOSX/.test(f.name));
+    const txt = files.filter((f) => /\.txt$/i.test(f.name) && !/__MACOSX|(^|\/)\._/.test(f.name));
     const f = txt.find((x) => /_chat\.txt$/i.test(x.name)) || txt.sort((a, b) => b.csize - a.csize)[0];
     if (!f) throw new Error('no txt');
-    const start = f.local + 30 + dv.getUint16(f.local + 26, true) + dv.getUint16(f.local + 28, true);
-    const data = u8.subarray(start, start + f.csize);
-    if (f.method === 0) return new TextDecoder().decode(data);
+    const lh = await bytes(file, f.local, f.local + 30), ldv = new DataView(lh.buffer);
+    if (lh.length < 30 || ldv.getUint32(0, true) !== 0x04034b50) throw new Error('zip');
+    const start = f.local + 30 + ldv.getUint16(26, true) + ldv.getUint16(28, true);
+    const data = file.slice(start, start + f.csize);
+    if (f.method === 0) return decode(new Uint8Array(await data.arrayBuffer()));
     if (f.method !== 8) throw new Error('zip method');
-    const ds = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-    return await new Response(ds).text();
+    if (typeof DecompressionStream === 'undefined') throw new Error('nodeflate');
+    return decode(new Uint8Array(await new Response(data.stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()));
   }
 
   async function readFile(file) {
-    const buf = await file.arrayBuffer();
-    const head = new Uint8Array(buf, 0, 4);
-    if (head[0] === 0x50 && head[1] === 0x4b) return readZip(buf);
-    return new TextDecoder().decode(buf);
+    const head = await bytes(file, 0, 4);
+    if (head[0] === 0x50 && head[1] === 0x4b) return readZip(file);
+    return decode(new Uint8Array(await file.arrayBuffer()));
   }
 
   /* ---------- parse ---------- */
   const INVIS = /[‎‏‪-‮⁦-⁩﻿]/g;
-  const IOS = /^\[(\d{1,4})[./-](\d{1,2})[./-](\d{1,4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?\s?[Mm]\.?)?\]\s+([\s\S]+)$/;
-  const AND = /^(\d{1,4})[./-](\d{1,2})[./-](\d{1,4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?\s?[Mm]\.?)?\s+[-–]\s+([\s\S]+)$/;
+  const IOS = /^\[(\d{1,4})[./-](\d{1,2})[./-](\d{1,4}),?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?\s?[Mm]\.?|ص|م|(?:לפנה|אחה)[״"]צ)?\]\s+([\s\S]+)$/;
+  const AND = /^(\d{1,4})[./-](\d{1,2})[./-](\d{1,4}),?\s+(?:à\s+)?(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp]\.?\s?[Mm]\.?|ص|م|(?:לפנה|אחה)[״"]צ)?\s+[-–]\s+([\s\S]+)$/;
   const MEDIA = /(omitted|הושמט|לא נכלל|<attached:|‏?<.+>$|\.(jpg|jpeg|png|webp|opus|mp4|pdf) \(file attached\)|קובץ מצורף)/i;
   const DELETED = /^(this message was deleted|you deleted this message|ההודעה נמחקה|מחקת את ההודעה הזו|تم حذف هذه الرسالة|данное сообщение удалено|se eliminó este mensaje|ce message a été supprimé)\.?$/i;
 
@@ -51,6 +74,8 @@
     const raw = [];
     for (let line of lines) {
       line = line.replace(INVIS, '');
+      // Arabic-Indic digits and the Arabic comma in the date part
+      if (/[٠-٩۰-۹،]/.test(line.slice(0, 40))) line = line.slice(0, 40).replace(/[٠-٩]/g, (d) => d.charCodeAt(0) - 0x660).replace(/[۰-۹]/g, (d) => d.charCodeAt(0) - 0x6f0).replace(/،/g, ',') + line.slice(40);
       const m = line.match(IOS) || line.match(AND);
       if (m) {
         const rest = m[8]; const c = rest.indexOf(': ');
@@ -68,7 +93,7 @@
       let [a, b, c] = r.d.map(Number); let y, mo, da;
       if (ymd) { y = a; mo = b; da = c; } else if (dmy) { da = a; mo = b; y = c; } else { mo = a; da = b; y = c; }
       if (y < 100) y += 2000;
-      let h = r.h; if (r.ap) { const pm = /p/i.test(r.ap); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
+      let h = r.h; if (r.ap) { const pm = /p|م|אחה/i.test(r.ap); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
       const t = new Date(y, mo - 1, da, h, r.mi, r.s).getTime();
       if (isNaN(t)) continue;
       const text = r.text.trim();
@@ -166,5 +191,34 @@
     return out.join('\n').slice(0, budget);
   }
 
-  root.PeninaChat = { readFile, parse, stats, excerpt, readZip };
+  /* the whole job in one call: read, parse, count. Runs in a worker when it can, so a long chat never freezes the page */
+  async function analyze(file) {
+    const msgs = parse(await readFile(file));
+    if (!msgs.length) throw new Error('bad');
+    return msgs.length < 50 ? { n: msgs.length } : { n: msgs.length, stats: stats(msgs), excerpt: excerpt(msgs) };
+  }
+  const SRC = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : null;
+  function open(file) {
+    if (!SRC || typeof Worker === 'undefined') return analyze(file);
+    return new Promise((res, rej) => {
+      let w, done = false;
+      const inline = () => { if (done) return; done = true; try { w && w.terminate(); } catch { /* gone */ } analyze(file).then(res, rej); };
+      try { w = new Worker(SRC); } catch { return inline(); }
+      w.onerror = (ev) => { ev.preventDefault && ev.preventDefault(); inline(); };
+      w.onmessage = (ev) => {
+        done = true; w.terminate(); const d = ev.data || {};
+        if (d.ok) return res(d.out);
+        const err = new Error(d.message || 'bad'); if (d.name === 'RangeError') err.name = 'RangeError'; rej(err);
+      };
+      w.postMessage(file);
+    });
+  }
+  if (typeof document === 'undefined' && typeof self !== 'undefined' && typeof importScripts === 'function') {
+    self.onmessage = async (ev) => {
+      try { self.postMessage({ ok: true, out: await analyze(ev.data) }); }
+      catch (e) { self.postMessage({ ok: false, name: e && e.name, message: String((e && e.message) || e) }); }
+    };
+  }
+
+  root.PeninaChat = { readFile, parse, stats, excerpt, readZip, analyze, open };
 })(typeof window !== 'undefined' ? window : globalThis);

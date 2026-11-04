@@ -12,7 +12,10 @@ const $ = (id) => document.getElementById(id);
 const ASSETS = { BTC: { dp: 8, unit: 1e8, name: 'ביטקוין (Wasabi)' }, XMR: { dp: 12, unit: 1e12, name: 'מונרו (monero-wallet-rpc)' } };
 let ON = false, ST = null, CFG = null, conn = { BTC: null, XMR: null }, wbal = { BTC: null, XMR: null }, LOG = [], busy = false, seq = 0;
 const log = (t) => { LOG.unshift(new Date().toLocaleTimeString('he-IL') + ' · ' + t); LOG.length = Math.min(LOG.length, 30); draw(); };
-const fmt = (n, a) => Number(n || 0).toFixed(a === 'BTC' ? 8 : 6).replace(/\.?0+$/, '') || '0';
+const fmt = (n, a) => Number(n || 0).toFixed(a === 'BTC' ? 8 : 12).replace(/\.?0+$/, '') || '0';
+// wallet amounts arrive in sats / piconero: turn them into an exact decimal string, never a float
+const dec = (n, dp) => { const x = Number(n); if (!Number.isSafeInteger(x) || x <= 0) return null; const s = String(x).padStart(dp + 1, '0'); return s.slice(0, -dp) + '.' + s.slice(-dp); };
+const HEX64 = /^[0-9a-fA-F]{64}$/;
 const want = () => { try { return localStorage.getItem('bt-on') !== '0'; } catch { return true; } };
 
 // ---------- the extension ----------
@@ -20,17 +23,17 @@ const waiting = new Map();
 addEventListener('message', (e) => {
   if (e.source !== window || !e.data || e.data.src !== 'bt-hands-ext' || e.data.type !== 'wallet-result') return;
   const p = waiting.get(e.data.id); if (!p) return; waiting.delete(e.data.id);
-  e.data.ok ? p.res(e.data.data) : p.rej(new Error(e.data.error || 'failed'));
+  if (e.data.ok) p.res(e.data.data); else { const err = new Error(e.data.error || 'failed'); err.sure = !!e.data.sure; p.rej(err); }
 });
 const ext = (msg, ms = 60000) => new Promise((res, rej) => {
   if (!hasExt()) return rej(new Error('no extension'));
-  const id = 'w' + (++seq) + Math.random().toString(36).slice(2, 6); waiting.set(id, { res, rej });
+  const id = 'w' + (++seq) + '-' + crypto.randomUUID(); waiting.set(id, { res, rej });
   window.postMessage({ src: 'bt-page-ext', ...msg, id }, location.origin);
   tick(ms).then(() => { if (waiting.has(id)) { waiting.delete(id); rej(new Error('the wallet did not answer')); } });
 });
 const rpc = (wallet, method, params, ms) => ext({ type: 'wallet', wallet, method, params }, ms);
 const extVersion = () => document.documentElement.dataset.btExt || '';
-const extOk = () => { const v = extVersion().split('.').map(Number); return v[0] > 1 || (v[0] === 1 && v[1] >= 1); };
+const extOk = () => { const v = extVersion().split('.').map(Number); return v[0] > 1 || (v[0] === 1 && v[1] >= 2); };
 
 // ---------- database ----------
 const call = async (fn, args) => { const { data, error } = await sb.rpc(fn, args); if (error) throw new Error(error.message); return data; };
@@ -51,6 +54,7 @@ async function makeAddresses() {
       if (a.asset === 'XMR') {
         if (conn.XMR !== true) continue;
         const r = await rpc('xmr', 'create_address', { account_index: 0, label });
+        if (!r || !Number.isSafeInteger(r.address_index) || r.address_index < 1) throw new Error('unexpected answer');
         await call('cw_admin_set_address', { p_uid: a.uid, p_asset: 'XMR', p_address: r.address, p_ext: 'sub ' + r.address_index });
       } else {
         if (conn.BTC !== true) continue;
@@ -68,20 +72,31 @@ async function scanDeposits() {
   if (conn.XMR === true) {
     try {
       const r = await rpc('xmr', 'get_transfers', { in: true, pool: true, account_index: 0 });
-      for (const t of [...(r.in || []), ...(r.pool || [])]) if (ours.has('XMR:' + t.address))
-        seen.push(['XMR', t.address, t.txid, String(t.subaddr_index?.minor ?? 0), t.amount / 1e12, t.confirmations ?? 0]);
+      for (const t of [...(r.in || []), ...(r.pool || [])]) {
+        if (!ours.has('XMR:' + t.address) || (t.subaddr_index?.major ?? 0) !== 0) continue;
+        const amt = dec(t.amount, 12);
+        if (!amt || !HEX64.test(t.txid || '')) { log('הפקדת מונרו לא ברורה, לבדוק בארנק: ' + String(t.txid).slice(0, 16)); continue; }
+        // money locked for later (unlock_time) does not count yet
+        if (Number(t.unlock_time || 0) > 0) { log('הפקדת מונרו נעולה (unlock_time), לא נספרת: ' + t.txid.slice(0, 16)); continue; }
+        seen.push(['XMR', t.address, t.txid, String(t.subaddr_index?.minor ?? 0), amt, Number(t.confirmations) || 0]);
+      }
     } catch (e) { log('סריקת מונרו נכשלה: ' + e.message); }
   }
   if (conn.BTC === true) {
     let coins = null;
     try { coins = await rpc('btc', 'listcoins', []); } catch { try { coins = await rpc('btc', 'listunspentcoins', []); } catch (e) { log('סריקת ביטקוין נכשלה: ' + e.message); } }
-    for (const c of coins || []) if (ours.has('BTC:' + c.address))
-      seen.push(['BTC', c.address, c.txid, String(c.index), Number(c.amount) / 1e8, c.confirmations ?? (c.confirmed ? 1 : 0)]);
+    for (const c of coins || []) {
+      if (!ours.has('BTC:' + c.address)) continue;
+      const amt = dec(c.amount, 8);
+      if (!amt || !HEX64.test(c.txid || '') || !Number.isSafeInteger(Number(c.index))) { log('הפקדת ביטקוין לא ברורה, לבדוק בארנק: ' + String(c.txid).slice(0, 16)); continue; }
+      seen.push(['BTC', c.address, c.txid, String(c.index), amt, Number(c.confirmations ?? (c.confirmed ? 1 : 0)) || 0]);
+    }
   }
   for (const [asset, address, txid, idx, amount, conf] of seen) {
     try {
       const r = await call('cw_admin_deposit', { p_asset: asset, p_address: address, p_txid: txid, p_idx: idx, p_amount: amount, p_conf: conf });
       if (r === 'credited now') log(`הפקדה של ${fmt(amount, asset)} ${asset} נכנסה ליתרת הלקוח`);
+      else if (r !== 'waiting' && r !== 'credited' && r !== 'not ours') log(`הפקדה ${asset} ${txid.slice(0, 12)}… לא נרשמה (${r}). לבדוק בארנק`);
     } catch (e) { log('רישום הפקדה נכשל: ' + e.message); }
   }
 }
@@ -94,35 +109,39 @@ function coinsFor(coins, sats) {
 }
 async function send(w) {
   const what = `${fmt(w.amount, w.asset)} ${w.asset}\nאל: ${w.address}\nלקוח: ${w.email}`;
-  let pass = '';
-  if (w.asset === 'BTC') { pass = prompt(`שליחה מ-Wasabi\n${what}\n\nסיסמת הארנק ב-Wasabi (לא נשמרת בשום מקום):`); if (pass === null) return; }
-  else if (!confirm(`שליחה מארנק המונרו\n${what}\n\nלשלוח עכשיו?`)) return;
+  // the real approval (and the Wasabi password) is in the extension's own window, which no web page can click
+  if (!confirm(`שליחה מהארנק\n${what}\n\nייפתח חלון אישור של התוסף.`)) return;
   busy = true; draw();
-  try { await call('cw_admin_claim', { p_id: w.id }); } catch (e) { busy = false; log('הבקשה כבר לא פתוחה'); await load(); return; }
-  let txid = null;
+  let r;
   try {
-    if (w.asset === 'XMR') {
-      const r = await rpc('xmr', 'transfer', { destinations: [{ amount: Math.round(Number(w.amount) * 1e12), address: w.address }], account_index: 0, priority: 0 }, 120000);
-      txid = r.tx_hash;
-    } else {
-      const sats = Math.round(Number(w.amount) * 1e8);
-      let coins; try { coins = await rpc('btc', 'listunspentcoins', []); } catch { coins = []; }
-      const pick = coinsFor(coins, sats);
-      if (!pick) throw new Error('אין מספיק מטבעות מאושרים בארנק');
-      const r = await rpc('btc', 'send', { payments: [{ sendto: w.address, amount: sats, label: 'barusik withdrawal ' + w.id }], coins: pick, feeTarget: 6, password: pass }, 120000);
-      txid = r.txid;
+    let coins = [];
+    if (w.asset === 'BTC') {
+      try { coins = coinsFor(await rpc('btc', 'listunspentcoins', []), Math.round(Number(w.amount) * 1e8)); } catch { coins = null; }
+      if (!coins) throw Object.assign(new Error('אין מספיק מטבעות מאושרים בארנק'), { sure: true });
     }
+    // the extension claims this withdrawal in the database itself and pays exactly what the database says
+    const token = (await sb.auth.getSession()).data.session?.access_token;
+    if (!token) throw Object.assign(new Error('לא מחובר'), { sure: true });
+    r = await ext({ type: 'wallet-send', wid: w.id, token, coins }, 240000);
   } catch (e) {
-    await call('cw_admin_unclaim', { p_id: w.id, p_note: String(e.message).slice(0, 200) }).catch(() => {});
-    busy = false; log(`השליחה נכשלה ולא יצא כסף: ${e.message}`); await load(); return;
+    busy = false;
+    log(e.sure ? `השליחה נכשלה ולא יצא כסף: ${e.message}` : `לא ברור אם יצא כסף (${e.message}). לבדוק בארנק: אם נשלח, "נשלח ידנית" עם ה-txid; אם לא, "החזרה לתור".`);
+    await load(); return;
   }
-  try { await call('cw_admin_sent', { p_id: w.id, p_txid: txid }); log(`נשלח ${fmt(w.amount, w.asset)} ${w.asset} · ${txid.slice(0, 12)}…`); }
-  catch (e) { log(`נשלח (${txid}) אבל הרישום נכשל: ${e.message}. לסמן ידנית עם ה-txid`); }
+  if (!r || !HEX64.test(r.txid || '')) { busy = false; log('הארנק לא החזיר txid. לבדוק בארנק ולסמן ידנית.'); await load(); return; }
+  try { await call('cw_admin_sent', { p_id: w.id, p_txid: r.txid }); log(`נשלח ${fmt(w.amount, w.asset)} ${w.asset} · ${r.txid.slice(0, 12)}…`); }
+  catch (e) { log(`נשלח (${r.txid}) אבל הרישום נכשל: ${e.message}. לסמן ידנית עם ה-txid`); }
   busy = false; await load();
 }
+async function unclaim(w) {
+  if (!confirm(`להחזיר לתור את ${fmt(w.amount, w.asset)} ${w.asset}?\n\nרק אם בדקת בארנק שהכסף לא יצא! אם יצא, לבחור "נשלח ידנית" עם ה-txid.`)) return;
+  try { await call('cw_admin_unclaim', { p_id: w.id, p_note: null }); log('הוחזר לתור'); } catch (e) { log(e.message); }
+  await load();
+}
 async function manual(w) {
-  const t = prompt(`שלחת ידנית מהארנק? הדבק את ה-txid של ${fmt(w.amount, w.asset)} ${w.asset}:`);
+  const t = (prompt(`שלחת ידנית מהארנק? הדבק את ה-txid של ${fmt(w.amount, w.asset)} ${w.asset}:`) || '').trim();
   if (!t) return;
+  if (!HEX64.test(t)) { log('txid צריך להיות 64 תווים הקסדצימליים'); return; }
   try { await call('cw_admin_sent', { p_id: w.id, p_txid: t.trim() }); log('סומן כנשלח'); } catch (e) { log('לא נשמר: ' + e.message); }
   await load();
 }
@@ -134,10 +153,12 @@ async function reject(w) {
 }
 
 // ---------- the loop ----------
+let cycling = false;
 async function cycle() {
-  if (!ON || busy) return;
-  await check(); await load();
-  if (ST && !ST.error) { await makeAddresses(); await scanDeposits(); await load(); }
+  if (!ON || busy || cycling) return;
+  cycling = true;
+  try { await check(); await load(); if (ST && !ST.error) { await makeAddresses(); await scanDeposits(); await load(); } }
+  finally { cycling = false; }
 }
 every(30000, cycle);
 window.addEventListener('bs-power', (e) => { ON = !!e.detail; if (ON) { log('שרת הארנקים הופעל'); cycle(); } else { log('שרת הארנקים כובה'); draw(); } });
@@ -153,19 +174,19 @@ function draw() {
   let html = `<div class="card" style="display:flex;flex-direction:column;gap:12px">
     <div class="row" style="justify-content:space-between"><b style="font-size:19px">💰 ארנקי Barusik Crypto</b><span class="mute">${ON ? '<span style="color:var(--on)">פועל</span>' : 'כבוי (נדלק עם כפתור השרת)'}</span></div>`;
   if (!hasExt()) html += `<p class="mute">צריך את התוסף (למעלה).</p>`;
-  else if (!extOk()) html += `<p style="color:var(--warn)">צריך לעדכן את התוסף לגרסה 1.1.0: מורידים שוב את התוסף מלמעלה, מחליפים את התיקייה ולוחצים ⟳ ב-chrome://extensions.</p>`;
+  else if (!extOk()) html += `<p style="color:var(--warn)">צריך לעדכן את התוסף לגרסה 1.2.0: מורידים שוב את התוסף מלמעלה, מחליפים את התיקייה ולוחצים ⟳ ב-chrome://extensions.</p>`;
   else {
     html += `<div>BTC: ${dot(conn.BTC)}${solv('BTC')}</div><div>XMR: ${dot(conn.XMR)}${solv('XMR')}</div>`;
     if (ST?.error) html += `<p style="color:var(--off)">${esc(ST.error)}${/cw_admin_state/.test(ST.error) ? ' · צריך להריץ את wallets.sql' : ''}</p>`;
   }
   html += `</div>`;
   if (pend.length || true) html += `<div class="card" style="display:flex;flex-direction:column;gap:10px"><b>משתמשים</b>
-    ${pend.map((m) => `<div class="row"><span>${esc(m.email)}</span><span class="mute small">${esc(m.note || '')}</span><button data-ok="${m.uid}">אישור</button><button class="ghost" data-no="${m.uid}">חסימה</button></div>`).join('') || '<span class="mute small">אין בקשות הצטרפות.</span>'}
-    ${mem.map((m) => `<div class="row small"><span>${esc(m.email)}</span><span class="mute">${m.status === 'approved' ? 'מאושר' : 'חסום'}</span>${m.status === 'approved' ? `<button class="ghost" data-no="${m.uid}">חסימה</button>` : `<button class="ghost" data-ok="${m.uid}">אישור</button>`}</div>`).join('')}
+    ${pend.map((m) => `<div class="row"><span>${esc(m.email)}</span><span class="mute small">${esc(m.note || '')}</span><button data-ok="${esc(m.uid)}">אישור</button><button class="ghost" data-no="${esc(m.uid)}">חסימה</button></div>`).join('') || '<span class="mute small">אין בקשות הצטרפות.</span>'}
+    ${mem.map((m) => `<div class="row small"><span>${esc(m.email)}</span><span class="mute">${m.status === 'approved' ? 'מאושר' : 'חסום'}</span>${m.status === 'approved' ? `<button class="ghost" data-no="${esc(m.uid)}">חסימה</button>` : `<button class="ghost" data-ok="${esc(m.uid)}">אישור</button>`}</div>`).join('')}
     <div class="row"><input id="cwEmail" type="email" dir="ltr" placeholder="email של משתמש קיים" style="flex:1;min-width:180px;padding:10px;border-radius:12px;border:1px solid var(--line);background:#0B0E28;color:var(--ink)"><button id="cwAdd" class="ghost">הוספה</button></div></div>`;
   html += `<div class="card" style="display:flex;flex-direction:column;gap:10px"><b>בקשות משיכה</b>
     ${wd.map((w) => `<div style="border-bottom:1px solid var(--line);padding-bottom:8px"><div><b>${fmt(w.amount, w.asset)} ${w.asset}</b> · ${esc(w.email)} ${w.status === 'sending' ? '<span style="color:var(--warn)">· בשליחה</span>' : ''}</div><div class="small" dir="ltr" style="word-break:break-all">${esc(w.address)}</div>
-      <div class="row" style="margin-top:6px"><button data-send="${w.id}" ${busy || !ON || conn[w.asset] !== true || w.status !== 'requested' ? 'disabled' : ''}>שליחה מהארנק</button><button class="ghost" data-manual="${w.id}">נשלח ידנית</button><button class="ghost" data-rej="${w.id}">דחייה</button></div></div>`).join('') || '<span class="mute small">אין בקשות פתוחות.</span>'}
+      <div class="row" style="margin-top:6px"><button data-send="${esc(w.id)}" ${busy || !ON || conn[w.asset] !== true || w.status !== 'requested' ? 'disabled' : ''}>שליחה מהארנק</button><button class="ghost" data-manual="${esc(w.id)}">נשלח ידנית</button>${w.status === 'sending' ? `<button class="ghost" data-back="${esc(w.id)}">החזרה לתור</button>` : `<button class="ghost" data-rej="${esc(w.id)}">דחייה</button>`}</div></div>`).join('') || '<span class="mute small">אין בקשות פתוחות.</span>'}
     ${done.length ? `<details><summary class="mute small">אחרונות</summary>${done.map((w) => `<div class="small">${fmt(w.amount, w.asset)} ${w.asset} · ${esc(w.email)} · ${w.status === 'sent' ? 'נשלח' : w.status === 'rejected' ? 'נדחה' : 'בוטל'} ${w.txid ? `<code>${esc(w.txid.slice(0, 16))}…</code>` : ''}</div>`).join('')}</details>` : ''}</div>`;
   const c = CFG || {};
   html += `<details class="card"><summary><b>חיבור לארנקים במחשב</b></summary>
@@ -183,6 +204,7 @@ function draw() {
   box.querySelectorAll('[data-send]').forEach((b) => b.onclick = () => send(W(b.dataset.send)));
   box.querySelectorAll('[data-manual]').forEach((b) => b.onclick = () => manual(W(b.dataset.manual)));
   box.querySelectorAll('[data-rej]').forEach((b) => b.onclick = () => reject(W(b.dataset.rej)));
+  box.querySelectorAll('[data-back]').forEach((b) => b.onclick = () => unclaim(W(b.dataset.back)));
   $('cwAdd') && ($('cwAdd').onclick = async () => { const v = $('cwEmail').value.trim(); if (!v) return; try { await call('cw_admin_add', { p_email: v }); log('נוסף ואושר: ' + v); } catch (e) { log(e.message); } load(); });
   $('cwSave') && ($('cwSave').onclick = async () => {
     const set = {}; box.querySelectorAll('[data-cfg]').forEach((i) => { set[i.dataset.cfg] = i.value; });

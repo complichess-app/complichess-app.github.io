@@ -4,12 +4,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>מה פנינה חושבת על הצ'אט שלכם</title>
-<meta name="description" content="מעלים צ'אט מוואטסאפ ופנינה כותבת עליו דוח: מי מחזיק את הקבוצה, מי נעלם, מי מתנצל יותר מדי.">
+<title>מה פנינה חושבת על הצ׳אט שלכם · ברוסיק</title>
+<meta name="description" content="מעלים צ׳אט מוואטסאפ (קובץ ‎.txt‎ או ‎.zip‎) ופנינה כותבת עליו דוח: מי מחזיק את הקבוצה, מי נעלם ומי מתנצל יותר מדי. הסטטיסטיקה מחושבת אצלכם בדפדפן.">
+<link rel="canonical" href="https://barusik.com/penina/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Barusik">
+<meta property="og:url" content="https://barusik.com/penina/">
+<meta property="og:title" content="מה פנינה חושבת על הצ׳אט שלכם">
+<meta property="og:description" content="מעלים צ׳אט מוואטסאפ ופנינה כותבת עליו דוח: מי מחזיק את הקבוצה, מי נעלם ומי מתנצל יותר מדי.">
+<meta property="og:image" content="https://barusik.com/og.png">
+<meta property="og:locale" content="he_IL">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#24122E">
+<meta name="format-detection" content="telephone=no">
 <link rel="icon" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap"></noscript>
 <style>
 /* Penina. The pearl is the one loud thing: it sits on the first screen, it holds the score in the report.
    Everything else is plain text on aubergine, set like a letter from your aunt. */
@@ -21,8 +33,11 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--night);color:var(--pearl);font:18px/1.6 var(--fb);-webkit-font-smoothing:antialiased}
-button,input{font:inherit;color:inherit}
+body{margin:0;background:var(--night);color:var(--pearl);font:18px/1.6 var(--fb);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;padding:0 env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+button,input,select,textarea{font:inherit;color:inherit}
+main{overflow-x:clip;overflow-wrap:break-word}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+[tabindex="-1"]:focus{outline:none}
 button{cursor:pointer;border:0;background:none;padding:0}
 a{color:var(--lip)}
 :focus-visible{outline:3px solid var(--amber);outline-offset:3px;border-radius:8px}
@@ -31,8 +46,8 @@ a{color:var(--lip)}
 .wrap{max-width:720px;margin:0 auto;padding:0 20px}
 
 header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;max-width:1100px;margin:0 auto}
-header a.home{color:var(--pearl-2);text-decoration:none;font-weight:600;font-size:15px}
-header select{background:var(--plum);border:1px solid var(--line);border-radius:999px;height:38px;padding:0 10px}
+header a.home{color:var(--pearl-2);text-decoration:none;font-weight:600;font-size:15px;padding:10px 0}
+header select{background:var(--plum);border:1px solid var(--line);border-radius:999px;height:44px;padding:0 12px;font-size:16px}
 
 /* the pearl */
 .pearl{--s:180px;width:var(--s);height:var(--s);border-radius:50%;position:relative;flex:none;
@@ -47,15 +62,18 @@ header select{background:var(--plum);border:1px solid var(--line);border-radius:
 .hero h1{font-family:var(--fd);font-weight:400;font-size:clamp(40px,7vw,76px);line-height:1;margin:0 0 14px;letter-spacing:-.01em}
 .hero p{margin:0;color:var(--pearl-2);font-size:19px;max-width:34ch}
 
-.drop{display:block;margin:26px 0 8px;border:2px dashed rgba(247,239,245,.28);border-radius:26px;padding:34px 24px;text-align:center;transition:border-color .2s,background .2s}
+.drop{display:block;position:relative;cursor:pointer;margin:26px 0 8px;border:2px dashed rgba(247,239,245,.28);border-radius:26px;padding:34px 24px;text-align:center;transition:border-color .2s,background .2s}
 .drop.over{border-color:var(--lip);background:rgba(240,80,127,.07)}
+.drop:focus-within{border-color:var(--amber)}
+.drop.busy{opacity:.6;pointer-events:none}
 .drop b{display:block;font-family:var(--fd);font-weight:400;font-size:26px;margin-bottom:6px}
 .drop p{margin:0 0 18px;color:var(--muted)}
 .pick{display:inline-flex;align-items:center;height:54px;padding:0 28px;border-radius:999px;background:var(--lip);color:var(--lip-ink);font-weight:800;font-size:18px}
 .private{color:var(--muted);font-size:15px;text-align:center;margin:6px 0 34px}
 
 details.how{border-top:1px solid var(--line);padding:16px 0}
-details.how summary{cursor:pointer;font-weight:800;font-size:18px;list-style:none}
+details.how summary{cursor:pointer;font-weight:800;font-size:18px;list-style:none;min-height:44px;display:flex;align-items:center}
+details.how summary::-webkit-details-marker{display:none}
 details.how summary::before{content:'+';display:inline-block;width:22px;color:var(--lip)}
 details.how[open] summary::before{content:'–'}
 .how ol{margin:12px 0 0;padding-inline-start:44px;color:var(--pearl-2)}
@@ -70,6 +88,7 @@ details.how[open] summary::before{content:'–'}
 .who{display:grid;gap:0}
 .person{display:grid;grid-template-columns:44px 1fr auto;gap:4px 14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
 .dot{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:var(--night);grid-row:span 2}
+.person>*{min-width:0}
 .person .nm{font-weight:800}
 .person .meta{grid-column:2/4;color:var(--muted);font-size:15px}
 .bar{height:8px;border-radius:999px;background:var(--plum-2);overflow:hidden;width:120px}
@@ -86,14 +105,15 @@ details.how[open] summary::before{content:'–'}
 .go:disabled{opacity:.6;cursor:wait}
 .msg{color:var(--amber);font-weight:600;min-height:1em;margin:0}
 .fld{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:15px}
-.fld input{height:50px;border-radius:14px;border:1px solid var(--line);background:var(--night);padding:0 14px;direction:ltr;text-align:start}
+.fld input{font-size:17px;height:50px;border-radius:14px;border:1px solid var(--line);background:var(--night);padding:0 14px;direction:ltr;text-align:start}
 
 /* report */
 .report .verdict{display:flex;gap:28px;align-items:center;padding:34px 0 10px}
 .report .verdict .pearl{--s:150px;display:grid;place-items:center}
 .score{font-family:var(--fd);font-size:54px;color:var(--lip-ink);line-height:1}
 .score small{font-size:20px;opacity:.6}
-.report h1{font-family:var(--fd);font-weight:400;font-size:clamp(32px,5.6vw,54px);line-height:1.05;margin:0}
+.report .verdict>div{min-width:0;max-width:100%}
+.report h1{overflow-wrap:anywhere;font-family:var(--fd);font-weight:400;font-size:clamp(32px,5.6vw,54px);line-height:1.05;margin:0}
 .report .lead{font-size:20px;color:var(--pearl);margin:18px 0 0}
 .report .sline{color:var(--muted);margin:8px 0 0}
 .card{padding:24px 0;border-bottom:1px solid var(--line)}
@@ -113,7 +133,7 @@ blockquote cite{display:block;color:var(--muted);font-style:normal;font-size:15p
 ul.dyn{margin:0;padding-inline-start:20px}
 ul.dyn li{margin:8px 0}
 .advice{font-family:var(--fd);font-size:24px;line-height:1.35;margin:0}
-.actions{display:flex;flex-wrap:wrap;gap:12px;padding:30px 0 60px}
+.actions{display:flex;flex-wrap:wrap;gap:12px;padding:30px 0 calc(60px + env(safe-area-inset-bottom))}
 .btn2{height:50px;padding:0 22px;border-radius:999px;border:1px solid rgba(247,239,245,.3);font-weight:800}
 
 .wait{display:flex;flex-direction:column;align-items:center;gap:20px;padding:60px 0;text-align:center}
@@ -123,7 +143,8 @@ ul.dyn li{margin:8px 0}
 .prog i{display:block;height:100%;width:4%;background:var(--amber);border-radius:999px;transition:width .6s}
 .wait .sub{color:var(--muted);margin:0}
 
-footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px 50px;border-top:1px solid var(--line)}
+footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px calc(50px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+#forgetBtn{min-height:44px;padding:0 10px}
 
 @media (max-width:640px){
   .hero{flex-direction:column;align-items:flex-start;gap:20px;padding-top:20px}
@@ -144,17 +165,17 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px 50p
     <label class="drop" id="drop">
       <b data-t="drop"></b><p data-t="dropSub"></p>
       <span class="pick" data-t="choose"></span>
-      <input type="file" id="file" accept=".txt,.zip,text/plain,application/zip" class="hide">
+      <input type="file" id="file" accept=".txt,.zip,text/plain,application/zip,application/x-zip-compressed" class="sr">
     </label>
     <p class="private" data-t="private"></p>
     <details class="how"><summary data-t="howIphone"></summary><ol data-list="stepsIphone"></ol></details>
     <details class="how"><summary data-t="howAndroid"></summary><ol data-list="stepsAndroid"></ol></details>
-    <p class="msg" id="readMsg" role="alert"></p>
+    <p class="msg" id="readMsg" role="status" aria-live="polite"></p>
   </section>
 
   <!-- 2. what the browser found on its own -->
   <section id="local" class="hide">
-    <div class="sec"><h2 id="chatTitle"></h2><p class="sub" data-t="localSub"></p><div class="facts" id="facts"></div></div>
+    <div class="sec"><h2 id="chatTitle" tabindex="-1"></h2><p class="sub" data-t="localSub"></p><div class="facts" id="facts"></div></div>
     <div class="sec"><h2 data-t="whoTalks"></h2><div class="who" id="people"></div></div>
     <div class="sec"><h2 data-t="when"></h2><div class="clock" id="clock" aria-hidden="true"></div><div class="clock-l"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div><p class="sub" id="clockLine" style="margin-top:12px"></p></div>
     <div class="ask" id="ask">
@@ -162,16 +183,16 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px 50p
       <div id="loginBox" class="hide">
         <div class="fld"><label for="em" data-t="email"></label><input id="em" type="email" autocomplete="email"></div>
         <div class="fld" style="margin-top:10px"><label for="pw" data-t="password"></label><input id="pw" type="password" autocomplete="current-password"></div>
-        <p style="margin-top:10px"><a href="/he/" data-t="noAcc"></a></p>
+        <p style="margin-top:10px"><a href="/he/" data-t="noAcc" style="display:inline-block;padding:10px 0"></a></p>
       </div>
-      <p class="msg" id="askMsg" role="alert"></p>
+      <p class="msg" id="askMsg" role="status" aria-live="polite"></p>
       <button class="go" id="goBtn" type="button"></button>
       <button type="button" id="forgetBtn" data-t="forget" style="color:var(--muted);font-size:15px;text-decoration:underline;text-underline-offset:4px;align-self:center"></button>
     </div>
   </section>
 
   <!-- 3. waiting -->
-  <section id="wait" class="wait hide" aria-live="polite"><div class="pearl" aria-hidden="true"></div><p id="waitLine"></p><div class="prog" aria-hidden="true"><i id="progBar"></i></div><p id="progLine" class="sub"></p><p id="keepLine" class="sub" style="max-width:420px"></p></section>
+  <section id="wait" class="wait hide"><div class="pearl" aria-hidden="true"></div><p id="waitLine" aria-hidden="true"></p><div class="prog" id="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="progLine"><i id="progBar"></i></div><p id="progLine" class="sub" role="status"></p><p id="keepLine" class="sub" style="max-width:420px"></p></section>
 
   <!-- 4. the report -->
   <section id="report" class="report hide"></section>
@@ -179,7 +200,7 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px 50p
 <footer data-t="foot"></footer>
 
 <script src="/lib/supabase.js"></script>
-<script src="chat.js?v=5"></script>
+<script src="chat.js?v=7"></script>
 <script>
 'use strict';
 const T={
@@ -194,8 +215,9 @@ const LANGS={he:'עברית',en:'English',ar:'العربية',ru:'Русский
 let L=(()=>{const q=new URLSearchParams(location.search).get('lang');let s;try{s=localStorage.getItem('barusik.lang')}catch{}return T[q]?q:T[s]?s:'he'})();
 const t=(k,v)=>{let s=T[L][k]??T.en[k]??k;if(typeof s==='string'&&v)for(const x in v)s=s.replaceAll('{'+x+'}',v[x]);return s};
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const hue=n=>{let h=0;for(const c of n)h=(h*31+c.codePointAt(0))%360;return h};
-const initial=n=>[...n.replace(/[^\p{L}\p{N}]/gu,'')][0]||'?';
+const hue=n=>{let h=0;for(const c of String(n??''))h=(h*31+c.codePointAt(0))%360;return h};
+const initial=n=>[...String(n??'').replace(/[^\p{L}\p{N}]/gu,'')][0]||'?';
+const A=v=>Array.isArray(v)?v:[];
 
 const SB_URL='https://iktmyrfbejtjsiehcrar.supabase.co',SB_KEY='sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
 const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}}):null;
@@ -207,11 +229,13 @@ function paint(){
   document.querySelectorAll('[data-t]').forEach(e=>e.textContent=t(e.dataset.t));
   document.querySelectorAll('[data-list]').forEach(e=>e.innerHTML=t(e.dataset.list).map(x=>`<li>${esc(x)}</li>`).join(''));
   $('#lang').innerHTML=Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===L?' selected':''}>${v}</option>`).join('');
-  document.title=t('title');
+  document.title=t('title');document.querySelector('meta[name=description]')?.setAttribute('content',t('lead'));
+  const na=document.querySelector('#loginBox a');if(na)na.href='/'+L+'/';
   if(STATS)renderLocal();if(REPORT)renderReport(REPORT);goBtn();
 }
 $('#forgetBtn').onclick=()=>{forgetLocal();STATS=null;EXCERPT=null;REPORT=null;$('#local').classList.add('hide');$('#start').classList.remove('hide');$('#file').value='';scrollTo(0,0)};
-$('#lang').onchange=e=>{L=e.target.value;try{localStorage.setItem('barusik.lang',L)}catch{}paint()};
+$('#lang').onchange=e=>{L=e.target.value;try{localStorage.setItem('barusik.lang',L)}catch{}
+  try{const u=new URL(location.href);if(u.searchParams.has('lang')){u.searchParams.set('lang',L);history.replaceState(null,'',u)}}catch{}paint()};
 
 /* ---------- reading the file ---------- */
 const drop=$('#drop');
@@ -219,28 +243,31 @@ const drop=$('#drop');
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
 drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)openChat(f)});
 $('#file').onchange=e=>{const f=e.target.files[0];if(f)openChat(f)};
+let READING=false;
 async function openChat(f){
-  $('#readMsg').textContent='';
+  const msg=$('#readMsg');if(READING)return;msg.textContent='';
   const mb=Math.round(f.size/1048576*100)/100;
-  if(mb>5120)return $('#readMsg').textContent=t('tooBig');
+  if(mb>5120){$('#file').value='';return msg.textContent=t('tooBig')}
+  READING=true;drop.classList.add('busy');drop.setAttribute('aria-busy','true');msg.textContent=t('reading');
   try{
-    const text=await PeninaChat.readFile(f);const msgs=PeninaChat.parse(text);
-    if(!msgs.length)throw 0;if(msgs.length<50)return $('#readMsg').textContent=t('tooSmall');
-    EXCERPT=PeninaChat.excerpt(msgs);STATS=PeninaChat.stats(msgs);STATS.sizeMb=mb;if(window.PNames)PNames.fix();REPORT=null;saveLocal();$('#report').classList.add('hide');
-    $('#start').classList.add('hide');$('#local').classList.remove('hide');renderLocal();scrollTo(0,0);
-  }catch(e){ $('#readMsg').textContent=(e instanceof RangeError||/memory|allocation/i.test(String(e&&e.message)))?t('memBig'):t('badFile') }
+    const r=await PeninaChat.open(f);
+    if(!r||!r.n)throw new Error('bad');if(r.n<50||!r.stats){msg.textContent=t('tooSmall');return}
+    EXCERPT=r.excerpt;STATS=r.stats;STATS.sizeMb=mb;if(window.PNames)PNames.fix();REPORT=null;saveLocal();$('#report').classList.add('hide');
+    msg.textContent='';$('#start').classList.add('hide');$('#local').classList.remove('hide');renderLocal();goBtn();scrollTo(0,0);$('#chatTitle').focus({preventScroll:true});
+  }catch(e){const s=String(e&&e.message);msg.textContent=s==='nodeflate'?t('zipOld'):(e&&e.name==='RangeError'||/memory|allocation|too large|array buffer/i.test(s))?t('memBig'):t('badFile')}
+  finally{READING=false;drop.classList.remove('busy');drop.removeAttribute('aria-busy');$('#file').value=''}
 }
 
 /* ---------- local stats ---------- */
 function renderLocal(){
   const s=STATS,ppl=s.people;
   $('#chatTitle').textContent=ppl.slice(0,3).map(p=>p.name).join(', ')+(ppl.length>3?` \u2066+${ppl.length-3}\u2069`:'');
-  const f=[[s.total.toLocaleString(),t('msgs')],[s.spanDays.toLocaleString(),t('days')],[s.activeDays.toLocaleString(),t('active')],[s.bestStreakDays,t('streak')],[ppl.length,t('people')]];
-  $('#facts').innerHTML=f.map(([v,l])=>`<div><b class="n">${v}</b>${esc(l)}</div>`).join('');
+  const f=[[s.total.toLocaleString(),t('msgs')],[s.spanDays.toLocaleString(),t('days')],[s.activeDays.toLocaleString(),t('active')],[s.bestStreakDays,t('streakDays')],[ppl.length,t('people')]];
+  $('#facts').innerHTML=f.map(([v,l])=>`<div><b class="n">${esc(v)}</b>${esc(l)}</div>`).join('');
   const max=ppl[0]?.msgs||1;
   $('#people').innerHTML=ppl.slice(0,12).map(p=>{
     const bits=[t('starts',{n:p.starts})];if(p.medianReplyMin!=null)bits.push(t('reply',{m:p.medianReplyMin}));if(p.media)bits.push(t('media',{n:p.media}));if(p.sorry)bits.push(t('sorry',{n:p.sorry}));if(p.nightPct>=8)bits.push(t('night',{p:p.nightPct}));
-    return `<div class="person"><span class="dot" style="background:hsl(${hue(p.name)} 70% 72%)">${esc(initial(p.name))}</span><span class="nm">${esc(p.name)} <span class="n" style="color:var(--muted);font-weight:400">· ${p.share}%</span></span><span class="bar" aria-hidden="true"><i style="width:${(p.msgs/max*100).toFixed(0)}%"></i></span><span class="meta">${bits.map(esc).join(' · ')} ${p.topEmojis.slice(0,3).join('')}</span></div>`}).join('');
+    return `<div class="person"><span class="dot" style="background:hsl(${hue(p.name)} 70% 72%)">${esc(initial(p.name))}</span><span class="nm">${esc(p.name)} <span class="n" style="color:var(--muted);font-weight:400">· ${p.share}%</span></span><span class="bar" aria-hidden="true"><i style="width:${(p.msgs/max*100).toFixed(0)}%"></i></span><span class="meta">${bits.map(esc).join(' · ')} ${esc(A(p.topEmojis).slice(0,3).join(''))}</span></div>`}).join('');
   const hm=Math.max(...s.hours,1);
   $('#clock').innerHTML=s.hours.map((v,i)=>`<i class="${i===s.busiestHour?'top':''}" style="height:${(v/hm*100).toFixed(0)}%"></i>`).join('');
   $('#clockLine').textContent=t('peak',{h:String(s.busiestHour).padStart(2,'0')});
@@ -263,13 +290,20 @@ ru:{resume:'Продолжить отчёт',resumeMsg:'Пнина на сере
 es:{resume:'Continuar el informe',resumeMsg:'Penina va por la mitad de tu informe. Toca para que siga donde lo dejó.',prog:'Penina ha escrito {n} de {t} partes',keepOpen:'Un informe de un chat largo tarda unos minutos. Mejor deja la página abierta. Si sales, Penina sigue donde lo dejó cuando vuelvas.',partFail:'Penina no pudo terminar una parte. Lo escrito está guardado; toca «Continuar el informe».',myNone:'Aún no hay informes. Cada informe que recibas te esperará aquí.',myNav:'Mis informes'},
 fr:{resume:'Reprendre le rapport',resumeMsg:'Penina est au milieu de votre rapport. Touchez pour qu’elle reprenne là où elle s’est arrêtée.',prog:'Penina a écrit {n} parties sur {t}',keepOpen:'Le rapport d’un long chat prend quelques minutes. Mieux vaut garder la page ouverte. Si vous partez, Penina reprend à votre retour.',partFail:'Penina n’a pas pu finir une partie. Ce qui est écrit est gardé ; touchez « Reprendre le rapport ».',myNone:'Pas encore de rapports. Chaque rapport que vous recevrez vous attendra ici.',myNav:'Mes rapports'}};
 for(const l in T3)Object.assign(T[l],T3[l]);
-const T4={he:{payBtn:'לתשלום וקבלת הדוח · ₪{p}',paySub:'דוח אישי על כל אחד, הדינמיקה של הקבוצה, והציטוטים שפנינה לא שוכחת. אחרי התשלום הדוח מתחיל להיכתב מיד.',payMsg:'יש לכם שובר? מזינים אותו בעמוד התשלום.'},
-en:{payBtn:'Pay and get the report · ₪{p}',paySub:'A personal read on everyone, how the group works, and the quotes Penina won’t forget. The report starts right after you pay.',payMsg:'Have a coupon? Enter it on the payment page.'},
-ar:{payBtn:'ادفع واحصل على التقرير · ₪{p}',paySub:'قراءة شخصية لكل واحد، وكيف تعمل المجموعة، والاقتباسات التي لن تنساها بنينا. يبدأ التقرير فور الدفع.',payMsg:'لديكم قسيمة؟ أدخلوها في صفحة الدفع.'},
-ru:{payBtn:'Оплатить и получить отчёт · ₪{p}',paySub:'Личный разбор каждого, как устроена группа и цитаты, которые Пнина не забудет. Отчёт начнётся сразу после оплаты.',payMsg:'Есть купон? Введите его на странице оплаты.'},
-es:{payBtn:'Pagar y recibir el informe · ₪{p}',paySub:'Una lectura personal de cada uno, cómo funciona el grupo y las frases que Penina no olvida. El informe empieza justo después de pagar.',payMsg:'¿Tienes un cupón? Escríbelo en la página de pago.'},
-fr:{payBtn:'Payer et recevoir le rapport · ₪{p}',paySub:'Une lecture personnelle de chacun, le fonctionnement du groupe et les phrases que Penina n’oublie pas. Le rapport démarre juste après le paiement.',payMsg:'Vous avez un coupon ? Saisissez-le sur la page de paiement.'}};
+const T4={he:{payBtnM:'להזמין את הדוח · ₪{p}',paySubM:'דוח אישי על כל אחד, איך הקבוצה עובדת והמשפטים שפנינה לא שוכחת. התשלום בהעברה בנקאית: אחרי שבר מאשר שההעברה התקבלה, הדוח נפתח כאן.',payBtn:'לתשלום וקבלת הדוח · ₪{p}',paySub:'דוח אישי על כל אחד, הדינמיקה של הקבוצה, והציטוטים שפנינה לא שוכחת. אחרי התשלום הדוח מתחיל להיכתב מיד.',payMsg:'יש לכם שובר? מזינים אותו בעמוד התשלום.'},
+en:{payBtnM:'Order the report · ₪{p}',paySubM:'A personal read on everyone, how the group works and the lines Penina won’t forget. Payment is by bank transfer: once Bar confirms the transfer arrived, the report opens here.',payBtn:'Pay and get the report · ₪{p}',paySub:'A personal read on everyone, how the group works, and the quotes Penina won’t forget. The report starts right after you pay.',payMsg:'Have a coupon? Enter it on the payment page.'},
+ar:{payBtnM:'اطلب التقرير · ₪{p}',paySubM:'قراءة شخصية لكل واحد، وكيف تعمل المجموعة، والجمل التي لن تنساها بنينا. الدفع بتحويل بنكي: بعد أن يؤكد بار وصول التحويل يُفتح التقرير هنا.',payBtn:'ادفع واحصل على التقرير · ₪{p}',paySub:'قراءة شخصية لكل واحد، وكيف تعمل المجموعة، والاقتباسات التي لن تنساها بنينا. يبدأ التقرير فور الدفع.',payMsg:'لديكم قسيمة؟ أدخلوها في صفحة الدفع.'},
+ru:{payBtnM:'Заказать отчёт · ₪{p}',paySubM:'Личный разбор каждого, как устроена группа и фразы, которые Пнина не забудет. Оплата банковским переводом: когда Бар подтвердит поступление, отчёт откроется здесь.',payBtn:'Оплатить и получить отчёт · ₪{p}',paySub:'Личный разбор каждого, как устроена группа и цитаты, которые Пнина не забудет. Отчёт начнётся сразу после оплаты.',payMsg:'Есть купон? Введите его на странице оплаты.'},
+es:{payBtnM:'Pedir el informe · ₪{p}',paySubM:'Una lectura personal de cada uno, cómo funciona el grupo y las frases que Penina no olvida. El pago es por transferencia: cuando Bar confirme que llegó, el informe se abre aquí.',payBtn:'Pagar y recibir el informe · ₪{p}',paySub:'Una lectura personal de cada uno, cómo funciona el grupo y las frases que Penina no olvida. El informe empieza justo después de pagar.',payMsg:'¿Tienes un cupón? Escríbelo en la página de pago.'},
+fr:{payBtnM:'Commander le rapport · ₪{p}',paySubM:'Une lecture personnelle de chacun, le fonctionnement du groupe et les phrases que Penina n’oublie pas. Paiement par virement : dès que Bar confirme sa réception, le rapport s’ouvre ici.',payBtn:'Payer et recevoir le rapport · ₪{p}',paySub:'Une lecture personnelle de chacun, le fonctionnement du groupe et les phrases que Penina n’oublie pas. Le rapport démarre juste après le paiement.',payMsg:'Vous avez un coupon ? Saisissez-le sur la page de paiement.'}};
 for(const l in T4)Object.assign(T[l],T4[l]);
+const T5={he:{streakDays:'רצף ימים הכי ארוך',reading:'פנינה פותחת את הקובץ…',zipOld:'הדפדפן הזה לא יודע לפתוח קובצי ‎.zip‎. פתחו את הקובץ באפליקציית "קבצים" (הוא ייפתח לתיקייה) והעלו כאן את ‎_chat.txt‎ שבתוכה, או עדכנו את הדפדפן.',unconfirmed:'צריך קודם לאשר את המייל: חפשו את המייל מברוסיק ולחצו על הקישור שבו.',offline:'אין חיבור כרגע. בדקו את האינטרנט ונסו שוב.'},
+en:{streakDays:'longest daily streak',reading:'Penina is opening the file…',zipOld:'This browser can’t open .zip files. Open the file in the Files app (it unpacks into a folder) and upload the _chat.txt inside, or update your browser.',unconfirmed:'Please confirm your email first: find the email from Barusik and tap the link in it.',offline:'No connection right now. Check your internet and try again.'},
+ar:{streakDays:'أطول سلسلة أيام',reading:'بنينا تفتح الملف…',zipOld:'هذا المتصفح لا يفتح ملفات ‎.zip‎. افتحوا الملف في تطبيق "الملفات" (سيُفكّ إلى مجلد) وارفعوا ملف ‎_chat.txt‎ الذي بداخله، أو حدّثوا المتصفح.',unconfirmed:'يجب تأكيد البريد أولًا: ابحثوا عن رسالة Barusik واضغطوا على الرابط فيها.',offline:'لا يوجد اتصال الآن. تحققوا من الإنترنت وحاولوا مجددًا.'},
+ru:{streakDays:'самая длинная серия дней',reading:'Пнина открывает файл…',zipOld:'Этот браузер не открывает .zip. Откройте файл в приложении «Файлы» (он распакуется в папку) и загрузите оттуда _chat.txt — или обновите браузер.',unconfirmed:'Сначала подтвердите почту: найдите письмо от Barusik и нажмите на ссылку в нём.',offline:'Сейчас нет связи. Проверьте интернет и попробуйте снова.'},
+es:{streakDays:'racha diaria más larga',reading:'Penina está abriendo el archivo…',zipOld:'Este navegador no abre archivos .zip. Ábrelo en la app Archivos (se descomprime en una carpeta) y sube el _chat.txt de dentro, o actualiza el navegador.',unconfirmed:'Primero confirma tu correo: busca el email de Barusik y toca el enlace.',offline:'Ahora no hay conexión. Revisa internet y vuelve a intentarlo.'},
+fr:{streakDays:'plus longue série de jours',reading:'Penina ouvre le fichier…',zipOld:'Ce navigateur ne sait pas ouvrir les .zip. Ouvrez le fichier dans l’app Fichiers (il se décompresse dans un dossier) et envoyez le _chat.txt qu’il contient, ou mettez à jour le navigateur.',unconfirmed:'Confirmez d’abord votre e-mail : cherchez le message de Barusik et touchez le lien.',offline:'Pas de connexion pour l’instant. Vérifiez internet et réessayez.',tooBig:'Le fichier dépasse 5 Go. Exportez la discussion sans médias.',memBig:'Le fichier est trop lourd pour le navigateur. Exportez la discussion sans médias.'}};
+for(const l in T5)Object.assign(T[l],T5[l]);
 const NOT_READY=e=>/does not exist|schema cache|not find the function|relation .* does not exist|404/i.test(String(e?.message||e||''));
 let ADMIN=false,REQ=null,BACKEND=true,pollReq=null,PAY=null;
 // A report costs money when Bar switched payments on (in demo mode only he sees it). Free otherwise: the request waits for his approval.
@@ -296,16 +330,27 @@ function goBtn(){
   if(getJob()){b.textContent=t('resume');m.textContent=t('resumeMsg');return}
   if(REQ?.status==='approved'){b.textContent=t('getReport');m.textContent=t('approved');return}
   const price=payPrice();
-  if(price!==null){b.textContent=t('payBtn',{p:price});m.textContent=t('payMsg');const s=document.querySelector('[data-t=askSub]');if(s)s.textContent=t('paySub');return}
+  if(price!==null){const bank=PAY&&PAY.mode==='manual';b.textContent=t(bank?'payBtnM':'payBtn',{p:price});m.textContent=t('payMsg');const s=document.querySelector('[data-t=askSub]');if(s)s.textContent=t(bank?'paySubM':'paySub');return}
   if(REQ?.status==='pending'){b.textContent=t('check');m.textContent=t('pending');pollReq=setInterval(async()=>{if(document.hidden)return;await loadReq();if(REQ?.status!=='pending')goBtn()},20000);return}
   b.textContent=t('request');if(REQ?.status==='declined')m.textContent=t('declined');
 }
 async function refreshAsk(){await loadReq();$('#askMsg').textContent='';goBtn()}
 
+// one tap at a time: a double tap must not open two requests
+let GOING=false;
 $('#goBtn').onclick=async()=>{
+  if(GOING)return;GOING=true;const b=$('#goBtn');b.disabled=true;
+  try{await go()}catch{$('#askMsg').textContent=navigator.onLine===false?t('offline'):t('busy')}
+  finally{GOING=false;b.disabled=false}
+};
+['#em','#pw'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#goBtn').click()}}));
+async function go(){
   const m=$('#askMsg');m.textContent='';
   if(!sb)return m.textContent=t('busy');
-  if(!USER){const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(r.error)return m.textContent=t('badLogin');USER=r.data.user;await refreshAsk();if(REQ?.status==='approved'||REQ?.status==='pending')return;}
+  if(!USER){const em=$('#em').value.trim(),pw=$('#pw').value;if(!em||!pw){m.textContent=t('badLogin');$(em?'#pw':'#em').focus();return}
+    const r=await sb.auth.signInWithPassword({email:em,password:pw});
+    if(r.error){const s=String(r.error.message||'');m.textContent=/confirm/i.test(s)?t('unconfirmed'):(r.error.status===400||/invalid|credentials/i.test(s))?t('badLogin'):navigator.onLine===false||!r.error.status?t('offline'):t('busy');return}
+    USER=r.data.user;await refreshAsk();if(REQ?.status==='approved'||REQ?.status==='pending')return;}
   if(getJob())return runJob(getJob());
   if(REQ?.status!=='approved'&&payPrice()!==null){
     let id=REQ?.status==='pending'?REQ.id:null;
@@ -322,7 +367,7 @@ $('#goBtn').onclick=async()=>{
   let answers=[],photos=[];
   if(window.PQ){try{const q=await PQ.run();answers=q.answers||[];photos=q.photos||[]}catch{answers=[];photos=[]}}
   runJob({answers,photos});
-};
+}
 
 /* ---------- writing the report in parts: each part is saved on the server, so a sleeping phone just carries on ---------- */
 const JOB='penina.job';
@@ -344,7 +389,7 @@ async function runJob(job){
   $('#start').classList.add('hide');$('#local').classList.add('hide');$('#report').classList.add('hide');$('#wait').classList.remove('hide');scrollTo(0,0);
   let i=0;const lines=t('w');$('#waitLine').textContent=lines[0];const tick=setInterval(()=>$('#waitLine').textContent=lines[++i%lines.length],2600);
   $('#keepLine').textContent=t('keepOpen');keepAwake();
-  const show=(n,tot)=>{$('#progBar').style.width=Math.max(4,Math.round(n/tot*100))+'%';$('#progLine').textContent=t('prog',{n,t:tot})};
+  const show=(n,tot)=>{const pc=Math.min(100,Math.round(n/tot*100));$('#progBar').style.width=Math.max(4,pc)+'%';$('#prog').setAttribute('aria-valuenow',pc);$('#progLine').textContent=t('prog',{n,t:tot})};
   const base={lang:L,stats:STATS,excerpt:EXCERPT,answers:job.answers||[],photoNames:(job.photos||[]).map(p=>p.name)};
   try{
     let st;
@@ -366,6 +411,7 @@ async function runJob(job){
     let fin;
     for(let k=0;;k++){try{fin=await callFn({...base,mode:'finish',id:job.id,photos:job.photos||[]});break}catch(e){if(e.status===409||k>=2)throw e;await visible();await new Promise(r=>setTimeout(r,3000))}}
     REPORT=fin.report;setJob(null);saveLocal();$('#wait').classList.add('hide');renderReport(REPORT);refreshAsk();
+    const h=$('#report h1');if(h){h.tabIndex=-1;h.focus({preventScroll:true})}
   }catch(e){
     const msg=String(e.message);
     if(e.status===404&&msg==='gone')setJob(null);
@@ -381,14 +427,14 @@ function renderReport(r){
   <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L]?-1:1}" role="img" aria-label="${esc(t('score'))} ${Number(r.score)||0}/10"><span class="score n">${Number(r.score)||0}<small>/10</small></span></div>
     <div><h1>${esc(r.headline)}</h1>${r.score_line?`<p class="sline">${esc(r.score_line)}</p>`:''}</div></div>
   <p class="lead">${esc(r.verdict)}</p>
-  <div class="sec"><h2>${t('people2')}</h2>${(r.people||[]).map(p=>`
+  <div class="sec"><h2>${esc(t('people2'))}</h2>${A(r.people).map(p=>`
     <article class="card"><div class="top"><span class="dot" style="background:hsl(${hue(p.name)} 70% 72%)">${esc(initial(p.name))}</span><div><h3>${esc(p.name)}</h3><span class="role">${esc(p.role)}</span></div></div>
       <p>${esc(p.roast)}</p><p class="kind">${esc(p.kind)}</p>
-      <div class="flags"><span class="g">${t('green')}: ${esc(p.green)}</span><span class="r">${t('red')}: ${esc(p.red)}</span></div></article>`).join('')}</div>
-  ${r.dynamics?.length?`<div class="sec"><h2>${t('dyn')}</h2><ul class="dyn">${r.dynamics.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
-  ${r.moments?.length?`<div class="sec"><h2>${t('moments')}</h2>${r.moments.map(x=>`<blockquote><q>${esc(x.quote)}</q><cite>${esc(x.who)} · ${esc(x.note)}</cite></blockquote>`).join('')}</div>`:''}
-  <div class="sec"><h2>${t('advice')}</h2><p class="advice">${esc(r.advice)}</p></div>
-  <div class="actions"><button class="go" id="shareBtn" style="padding:0 26px">${t('share')}</button><button class="btn2" id="againBtn">${t('again')}</button></div>`;
+      <div class="flags"><span class="g">${esc(t('green'))}: ${esc(p.green)}</span><span class="r">${esc(t('red'))}: ${esc(p.red)}</span></div></article>`).join('')}</div>
+  ${A(r.dynamics).length?`<div class="sec"><h2>${esc(t('dyn'))}</h2><ul class="dyn">${A(r.dynamics).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+  ${A(r.moments).length?`<div class="sec"><h2>${esc(t('moments'))}</h2>${A(r.moments).map(x=>`<blockquote><q>${esc(x&&x.quote)}</q><cite>${esc(x&&x.who)} · ${esc(x&&x.note)}</cite></blockquote>`).join('')}</div>`:''}
+  <div class="sec"><h2>${esc(t('advice'))}</h2><p class="advice">${esc(r.advice)}</p></div>
+  <div class="actions"><button class="go" id="shareBtn" type="button" style="padding:0 26px">${esc(t('share'))}</button><button class="btn2" id="againBtn" type="button">${esc(t('again'))}</button></div>`;
   $('#shareBtn').onclick=share;$('#againBtn').onclick=()=>{REPORT=null;STATS=null;EXCERPT=null;forgetLocal();el.classList.add('hide');$('#start').classList.remove('hide');$('#file').value='';scrollTo(0,0)};
   scrollTo(0,0);
 }
@@ -402,8 +448,8 @@ async function share(){
   x.fillStyle=g;x.beginPath();x.arc(540,600,250,0,7);x.fill();
   x.textAlign='center';if(r.v<2&&r.score!=null){x.fillStyle='#2A0A17';x.font='120px "Secular One"';x.fillText(`${r.score}/10`,540,640);}
   const wrap=(txt,y,size,color,maxW=900,font='"Secular One"')=>{x.font=`${size}px ${font}`;x.fillStyle=color;const words=String(txt).split(' ');let line='',lines=[];for(const w of words){const tr=line?line+' '+w:w;if(x.measureText(tr).width>maxW){lines.push(line);line=w}else line=tr}lines.push(line);lines.forEach((l,i)=>x.fillText(l,540,y+i*size*1.2));return y+lines.length*size*1.2};
-  let y=wrap(r.headline,1000,76,'#F7EFF5');y+=30;
-  for(const p of (r.people||[]).slice(0,4)){y=wrap(`${p.name} · ${p.role}`,y+30,46,'#FFC46B',900,'Assistant');}
+  let y=wrap(r.headline??'',1000,76,'#F7EFF5');y+=30;
+  for(const p of A(r.people).slice(0,4)){if(y>1700)break;y=wrap(`${p.name??''}${p.role?' · '+p.role:''}`,y+30,46,'#FFC46B',900,'Assistant');}
   x.font='40px Assistant';x.fillStyle='#A891B3';x.fillText('barusik.com/penina',540,1840);
   const blob=await new Promise(res=>c.toBlob(res,'image/png'));const file=new File([blob],'penina.png',{type:'image/png'});
   if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:t('title')});return}catch{}}
@@ -411,10 +457,11 @@ async function share(){
 }
 
 </script>
-<script src="extra.js?v=5"></script>
+<script src="extra.js?v=7"></script>
 <script>
 try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stats&&sv.excerpt&&Date.now()-sv.at<14*864e5){STATS=sv.stats;EXCERPT=sv.excerpt;REPORT=sv.report||null;$('#start').classList.add('hide');if(REPORT){renderReport(REPORT)}else $('#local').classList.remove('hide')}}catch{}
 const SHARED_VIEW=()=>/[?&](r|a)=/.test(location.search);
+if(SHARED_VIEW()){const m=document.createElement('meta');m.name='robots';m.content='noindex';document.head.appendChild(m)}
 paint();
 if(window.PShare)PShare.boot();
 if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;refreshAsk()});

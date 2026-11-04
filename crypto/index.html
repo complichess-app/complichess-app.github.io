@@ -100,7 +100,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let L=(()=>{const q=new URLSearchParams(location.search).get('lang');let s;try{s=localStorage.getItem('barusik.lang')}catch{}return T[q]?q:T[s]?s:'he'})();
 const t=(k,v={})=>String(T[L][k]??T.en[k]??'').replace(/\{(\w+)\}/g,(_,x)=>v[x]??'');
-const num=(n,a)=>{const x=Number(n||0);return x.toLocaleString('en-US',{maximumFractionDigits:a==='BTC'?8:8,minimumFractionDigits:0})};
+const num=(n,a)=>{const x=Number(n||0);return x.toLocaleString('en-US',{maximumFractionDigits:a==='BTC'?8:12,minimumFractionDigits:0})};
 let USER=null,ME=null,drafts={};
 
 function frame(){
@@ -128,14 +128,14 @@ function render(){
       <div class="coin"><i style="background:${c.color}">${c.sym}</i>${c.name} <span class="mute small">${a}</span></div>
       <div><div class="mute small">${t('bal')}</div><div class="bal">${num((ME.balances||{})[a],a)} ${a}</div></div>
       <div><b>${t('dep')}</b>
-        ${ad&&ad.status==='done'?`<div class="addr" style="margin-top:6px">${esc(ad.address)}</div><div class="row" style="margin-top:6px"><button class="ghost" data-copy="${esc(ad.address)}">${t('copy')}</button><span class="mute small" aria-live="polite"></span></div><p class="mute small">${t('depRule',{c:a,n:R[k+'_conf']})}</p>`
+        ${ad&&ad.status==='done'?`<div class="addr" style="margin-top:6px">${esc(ad.address)}</div><div class="row" style="margin-top:6px"><button class="ghost" data-copy="${esc(ad.address)}">${t('copy')}</button><span class="mute small" aria-live="polite"></span></div><p class="mute small">${t('depRule',{c:a,n:esc(R[k+'_conf'])})}</p>`
         :ad&&ad.status==='queued'?`<p class="mute small">${t('making')}</p>`
         :`${ad&&ad.status==='failed'?`<p class="bad small">${t('failAddr')}</p>`:''}<div class="row" style="margin-top:6px"><button class="ghost" data-addr="${a}">${t('getAddr')}</button></div>`}</div>
       <form data-wd="${a}" style="display:flex;flex-direction:column;gap:8px"><b>${t('wd')}</b>
         ${ME.open?'':`<p class="bad small">${t('paused')}</p>`}
         <label>${t('to')}<input data-k="${a}to" name="to" autocomplete="off" spellcheck="false" value="${esc(drafts[a+'to']||'')}" required></label>
         <label>${t('amount')} (${a})<input data-k="${a}amt" name="amt" inputmode="decimal" autocomplete="off" value="${esc(drafts[a+'amt']||'')}" required></label>
-        <p class="mute small" style="margin:0">${t('fee')}: ${R[k+'_fee']} ${a} · ${t('min')}: ${R[k+'_min']} ${a} · ${t('day',{d:R[k+'_day']+' '+a})}</p>
+        <p class="mute small" style="margin:0">${t('fee')}: ${esc(R[k+'_fee'])} ${a} · ${t('min')}: ${esc(R[k+'_min'])} ${a} · ${t('day',{d:esc(R[k+'_day'])+' '+a})}</p>
         <p class="small bad" role="alert" style="margin:0"></p>
         <div class="row"><button ${ME.open?'':'disabled'}>${t('send')}</button></div>
         <p class="mute small" style="margin:0">${t('wdRule')}</p></form>
@@ -154,7 +154,7 @@ function render(){
 }
 function hist(){
   const rows=[...(ME.deposits||[]).map(d=>({at:d.at,h:`<b>${t('in')}</b> ${num(d.amount,d.asset)} ${d.asset} · <span class="${d.credited?'ok':'mute'}">${d.credited?t('credited'):t('wait')+` (${d.conf})`}</span> <span class="mute small" dir="ltr">${esc(d.txid.slice(0,12))}…</span>`})),
-    ...(ME.withdrawals||[]).map(w=>({at:w.at,h:`<b>${t('out')}</b> ${num(w.amount,w.asset)} ${w.asset} · <span class="${w.status==='sent'?'ok':w.status==='rejected'?'bad':'mute'}">${t(w.status)}</span>${w.note?` <span class="mute small">(${esc(w.note)})</span>`:''}${w.txid?` <span class="mute small" dir="ltr">${esc(w.txid.slice(0,12))}…</span>`:''}${w.status==='requested'?` <button class="ghost" style="padding:4px 12px" data-cancel="${w.id}">${t('cancel')}</button>`:''}`}))];
+    ...(ME.withdrawals||[]).map(w=>({at:w.at,h:`<b>${t('out')}</b> ${num(w.amount,w.asset)} ${w.asset} · <span class="${w.status==='sent'?'ok':w.status==='rejected'?'bad':'mute'}">${t(w.status)}</span>${w.note?` <span class="mute small">(${esc(w.note)})</span>`:''}${w.txid?` <span class="mute small" dir="ltr">${esc(w.txid.slice(0,12))}…</span>`:''}${w.status==='requested'?` <button class="ghost" style="padding:4px 12px" data-cancel="${esc(w.id)}">${t('cancel')}</button>`:''}`}))];
   return rows.sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,30).map(r=>`<div>${r.h} <span class="mute small">${new Date(r.at).toLocaleString(L)}</span></div>`).join('');
 }
 async function refresh(){if(!sb||!USER){ME=null;render();return}const{data,error}=await sb.rpc('cw_me');ME=error?{status:'none'}:data;render()}
