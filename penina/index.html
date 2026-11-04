@@ -179,7 +179,7 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px 50p
 <footer data-t="foot"></footer>
 
 <script src="/lib/supabase.js"></script>
-<script src="chat.js?v=4"></script>
+<script src="chat.js?v=5"></script>
 <script>
 'use strict';
 const T={
@@ -378,7 +378,7 @@ async function runJob(job){
 function renderReport(r){
   const el=$('#report');el.classList.remove('hide');
   el.innerHTML=`
-  <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L]?-1:1}" role="img" aria-label="${esc(t('score'))} ${Number(r.score)||0}/10"><span class="score n">${Number(r.score)||0}<small>/10</small></span></div>
+  <div class="verdict"><div class="pearl rolls" style="--dir:${RTL[L]?-1:1}" role="img" aria-label="${esc(t('score'))} ${esc(r.score)}/10"><span class="score n">${esc(r.score)}<small>/10</small></span></div>
     <div><h1>${esc(r.headline)}</h1>${r.score_line?`<p class="sline">${esc(r.score_line)}</p>`:''}</div></div>
   <p class="lead">${esc(r.verdict)}</p>
   <div class="sec"><h2>${t('people2')}</h2>${(r.people||[]).map(p=>`
@@ -411,7 +411,7 @@ async function share(){
 }
 
 </script>
-<script src="extra.js?v=4"></script>
+<script src="extra.js?v=5"></script>
 <script>
 try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stats&&sv.excerpt&&Date.now()-sv.at<14*864e5){STATS=sv.stats;EXCERPT=sv.excerpt;REPORT=sv.report||null;$('#start').classList.add('hide');if(REPORT){renderReport(REPORT)}else $('#local').classList.remove('hide')}}catch{}
 const SHARED_VIEW=()=>/[?&](r|a)=/.test(location.search);

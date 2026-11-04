@@ -75,6 +75,9 @@
       msgs.push({ t, who: r.who, text, media: MEDIA.test(text), deleted: DELETED.test(text) });
     }
     msgs.sort((a, b) => a.t - b.t);
+    // someone not saved in the phone shows up as a phone number: give them a plain label instead, it never leaves the device
+    const nums = new Map();
+    for (const m of msgs) if (/^[\s+\d()\u200e\u200f-]{8,}$/.test(m.who) && /\d{3}/.test(m.who)) { if (!nums.has(m.who)) nums.set(m.who, '👤' + (nums.size + 1)); m.who = nums.get(m.who); }
     return msgs;
   }
 

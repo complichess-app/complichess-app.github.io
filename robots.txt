@@ -1,0 +1,6 @@
+User-Agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /pay/
+
+Sitemap: https://barusik.com/sitemap.xml
