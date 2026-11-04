@@ -233,7 +233,7 @@ function travelHTML(){
   if(TRQ===null)return`${lampHTML()}<section class="panel"><p class="err">לא הצלחתי לטעון את ההזמנות.</p></section>`;
   const open=TRQ.filter(r=>r.status==='new'),list=TRF==='open'?open:TRQ;
   const det=r=>{const x=r.details||{};const lines=(x.lines||[]).slice(0,14).map(esc).join(' · ');
-    return`${x.title?`<b>${esc(x.title)}</b><br>`:''}${x.search?`<span class="mute">${esc(x.search)}</span><br>`:''}${lines?`<span class="small">${lines}</span><br>`:''}${x.customer_price?`<b>מחיר ללקוח: ₪${n(x.customer_price)}</b> <span class="mute small">(מחיר סוכן בערך ₪${n(Math.round(x.customer_price/1.12))} · רווח בערך ₪${n(x.customer_price-Math.round(x.customer_price/1.12))})</span>`:''}${x.link?`<br><a href="${esc(x.link)}" target="_blank" rel="noopener">פתיחת החיפוש ב־BeAgent ←</a>`:''}`};
+    return`${x.title?`<b>${esc(x.title)}</b><br>`:''}${x.search?`<span class="mute">${esc(x.search)}</span><br>`:''}${lines?`<span class="small">${lines}</span><br>`:''}${x.customer_price?`<b>מחיר ללקוח: ₪${n(x.customer_price)}</b> <span class="mute small">(מחיר סוכן בערך ₪${n(Math.round(x.customer_price/1.12))} · רווח בערך ₪${n(x.customer_price-Math.round(x.customer_price/1.12))})</span>`:''}${/^https:\/\/([a-z0-9-]+\.)*beagent\.online\//i.test(x.link||'')?`<br><a href="${esc(x.link)}" target="_blank" rel="noopener">פתיחת החיפוש ב־BeAgent ←</a>`:''}`};
   return`${lampHTML()}
   <section><h2>הזמנות Bar Lvovski Travel ${open.length?`<span class="pill n">${open.length} ממתינות</span>`:''}<span class="sp"></span><span class="tabs">${[['open','ממתינות'],['all','הכל']].map(([k,l])=>`<button data-a="trf" data-k="${k}" aria-selected="${TRF===k}">${l}</button>`).join('')}</span></h2>
   <div class="panel rows">${list.map(r=>`<div class="rowx" style="align-items:flex-start">
@@ -328,7 +328,7 @@ function cell(x,k){
     case'email':return`<td class="l">${esc(x.email)}</td>`;
     case'created_at':case'last_sign_in_at':return`<td>${d(x[k])}</td>`;
     case'confirmed':return`<td><span class="pill ${x.confirmed?'y':'n'}">${x.confirmed?'מאומת':'לא'}</span></td>`;
-    case'cxn':return`<td>${esc(x.cxn)||'—'}</td>`;case'rating':return`<td>${x.rating??'—'}</td>`;case'games':return`<td>${n(x.games)}</td>`;
+    case'cxn':return`<td>${esc(x.cxn)||'—'}</td>`;case'rating':return`<td>${x.rating==null?'—':esc(x.rating)}</td>`;case'games':return`<td>${n(x.games)}</td>`;
     case'pkh':return`<td class="l">${x.pkh?'@'+esc(x.pkh):'—'}</td>`;case'pkp':return`<td>${n(x.pkp)}</td>`;
     case'pkc':return`<td>${n(pk.comments)}</td>`;case'pkl':return`<td>${n(pk.likes_received)}</td>`;case'pkm':return`<td>${n(pk.messages_sent)}</td>`;
   }return'<td></td>';
