@@ -1,0 +1,31 @@
+{
+  "name": "מה פנינה חושבת · What Penina thinks",
+  "short_name": "Penina",
+  "description": "דוח על הצ׳אט שלכם",
+  "lang": "he",
+  "dir": "rtl",
+  "id": "/penina/",
+  "start_url": "/penina/",
+  "scope": "/penina/",
+  "display": "standalone",
+  "background_color": "#F0507F",
+  "theme_color": "#F0507F",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

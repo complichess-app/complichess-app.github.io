@@ -154,6 +154,7 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px cal
 }
 @media (prefers-reduced-motion:reduce){.pearl.rolls,.wait .pearl{animation:none}html{scroll-behavior:auto}}
 </style>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Penina">
 </head>
 <body>
 <header><a class="home" href="/" data-t="home"></a><select id="lang" aria-label="Language"></select></header>
@@ -468,5 +469,7 @@ if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;refreshAsk()});
 // a report that was half written when the page closed carries on by itself
 if(sb&&getJob())sb.auth.getSession().then(({data})=>{if(data.session&&getJob()&&!SHARED_VIEW()){USER=data.session.user;runJob(getJob())}});
 </script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.0.0').catch(()=>{}));</script>
+<script src="/lib/app.js?v=1" data-app="pn" defer></script>
 </body>
 </html>
