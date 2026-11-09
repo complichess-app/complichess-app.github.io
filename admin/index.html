@@ -88,10 +88,10 @@ const wa=p=>{let x=String(p||'').replace(/\D/g,'');if(x.startsWith('0'))x='972'+
 function toast(t,ms=2600){const e=document.getElementById('toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,ms)}
 const copy=async t=>{try{await navigator.clipboard.writeText(t);toast('הועתק');return true}catch{toast('לא הצלחתי להעתיק: '+t,6000);return false}};
 
-const TABS=[['home','בית'],['travel','נסיעות'],['penina','פנינה'],['pay','תשלומים ושוברים'],['cx','קומפליצס'],['users','משתמשים'],['pk','פלטפורמיקה'],['links','קישורים']];
+const TABS=[['home','בית'],['apps','אפליקציות'],['travel','נסיעות'],['penina','פנינה'],['pay','תשלומים ושוברים'],['cx','קומפליצס'],['users','משתמשים'],['pk','פלטפורמיקה'],['links','קישורים']];
 let VIEW=TABS.some(t=>t[0]===location.hash.slice(1))?location.hash.slice(1):'home';
 let CG=null,CGT='ads',CGQ='';
-let EMAIL='',DATA=null,TRQ=[],TRF='open',REP=null,PNR=null,PNERR='',PNS=null,BILL=null,SRV=null,PAY=null,LIVE=[];
+let APPST=null,EMAIL='',DATA=null,TRQ=[],TRF='open',REP=null,PNR=null,PNERR='',PNS=null,BILL=null,SRV=null,PAY=null,LIVE=[];
 let TAB='all',Q='',SORT={k:'created_at',dir:-1};
 const PLAT={pn:'פנינה',cx:'קומפליצס',pk:'פלטפורמיקה',lr:'LearnLume',cr:'קריפטו',other:'אחר'};
 const KIND={flights:'טיסות',hotels:'מלונות',cars:'השכרת רכב',packages:'חבילות נופש',tours:'טיולים מאורגנים',tickets:'כרטיסים'};
@@ -165,7 +165,7 @@ async function load(){
   if(error){if(/not allowed|42501|permission/i.test(error.message+error.code))denied(session.user.email);else{app.innerHTML=`<div class="box"><h1>שגיאה</h1><p class="err">${esc(error.message)}</p><button id="r">נסו שוב</button></div>`;document.getElementById('r').onclick=load}return}
   if(!data||!data.totals){app.innerHTML=`<div class="box"><h1>אין נתונים</h1><p class="mute">השרת לא החזיר נתונים. נסו לרענן.</p><button id="r">רענון</button></div>`;document.getElementById('r').onclick=load;return}
   DATA=data;EMAIL=session.user.email;
-  await Promise.all([loadTravel(),loadReports(),loadPenina(),loadPay(),loadSrv(),loadCg()]);
+  await Promise.all([loadApps(),loadTravel(),loadReports(),loadPenina(),loadPay(),loadSrv(),loadCg()]);
   loadBill();
   draw();listen();
 }
@@ -178,6 +178,19 @@ function listen(){
   setInterval(async()=>{if(document.hidden)return;const was=SRV&&SRV.online;await loadSrv();if((SRV&&SRV.online)!==was)draw()},10000);
 }
 // ---------- data ----------
+const APPN=[['tr','Bar Lvovski Travel','/travel/'],['pk','פלטפורמיקה','/platformika/'],['cx','קומפליצס','/complichess/'],['cr','Barusik Crypto','/crypto/'],['lr','LearnLume','/#ch-lr'],['pn','מה פנינה חושבת','/penina/']];
+async function loadApps(){try{const{data,error}=await sb.from('app_status').select('*');APPST=error?{err:error.message}:Object.fromEntries((data||[]).map(r=>[r.id,r]))}catch(e){APPST={err:String(e&&e.message||e)}}}
+function appsHTML(){
+  if(!APPST||APPST.err)return`<section class="panel"><h2>אפליקציות <span class="pill n">לא מותקן</span></h2><p>הטבלה של הנעילה לשיפוצים עוד לא קיימת ב־Supabase.</p>
+    <p class="mute small" style="margin-top:8px;line-height:1.7">ב־<a href="https://supabase.com/dashboard/project/${REF}/sql/new" target="_blank" rel="noopener">עורך ה־SQL</a> מריצים את <b dir="ltr">supabase/apps.sql</b> מהריפו, ואז רענון.</p><p class="err small">${esc(APPST&&APPST.err||'')}</p></section>`;
+  return`<section><h2>נעילה לשיפוצים</h2><div class="panel rows">${APPN.map(([id,name,url])=>{const r=APPST[id]||{};return`<div class="rowx">
+    <b style="min-width:150px">${esc(name)}</b><span class="pill ${r.locked?'w':'y'}">${r.locked?'🔧 בשיפוצים':'פתוחה ללקוחות'}</span>
+    <input class="grow" data-am="${id}" maxlength="300" placeholder="הודעה ללקוחות (לא חובה)" value="${esc(r.message||'')}" aria-label="הודעה ללקוחות של ${esc(name)}">
+    <button class="${r.locked?'go':'warnb'}" data-a="applock" data-id="${id}" data-on="${r.locked?0:1}">${r.locked?'פתיחה ללקוחות':'נעילה לשיפוצים'}</button>
+    <a class="btn ghost" href="${url}" target="_blank" rel="noopener">פתיחה</a>${r.locked&&r.updated_at?`<small>ננעלה ${d(r.updated_at)}</small>`:''}</div>`}).join('')}</div>
+    <p class="mute small" style="margin-top:8px;line-height:1.7">נעילה סוגרת את האפליקציה תוך דקה אצל כל מי שפתח אותה, ובאתר הראשי הכפתורים שלה מוחלפים ב"בשיפוצים". אתה עדיין נכנס כרגיל (עם פס צהוב למעלה), כדי לבדוק לפני שפותחים. קומפליצס ננעלת באתר הראשי; בתוך המשחק עצמו זה יעבוד אחרי שיתווסף אליו הקובץ המשותף.</p></section>
+  <section><h2>עדכונים</h2><div class="panel"><p style="line-height:1.7">כל פרסום חדש מגיע ללקוחות לבד: אפליקציה פתוחה בודקת אם יש גרסה חדשה כשחוזרים אליה ובכל 5 דקות, ומתעדכנת כשהלקוח לא באמצע הקלדה. אפליקציה שלא השתנתה לא מתרעננת סתם.</p></div></section>`;
+}
 async function loadSrv(){try{const{data}=await sb.rpc('travel_status');SRV=data||{online:false}}catch{SRV={online:false}}}
 async function loadTravel(){const{data,error}=await sb.from('travel_requests').select('*').order('created_at',{ascending:false}).limit(300);TRQ=error?null:(data||[])}
 async function loadReports(){try{const{data,error}=await sb.from('pk_reports').select('*').order('created_at',{ascending:false}).limit(100);REP=error?null:(data||[])}catch{REP=null}}
@@ -212,6 +225,7 @@ function homeHTML(){
   if(c.tr)todo.push([c.tr,'הזמנות נסיעה מחכות לאישור','travel']);
   if(c.pk)todo.push([c.pk,'דיווחים פתוחים בפלטפורמיקה','pk']);
   if(CG&&CG.missing)todo.push(['!','הקלאנים והפרסומות של קומפליצס עוד לא הותקנו ב־Supabase','cx']);else if(cgOpen())todo.push([cgOpen(),'דיווחים על הודעות בצ׳אט של קלאנים בקומפליצס','cx']);
+  const lk=APPST&&!APPST.err?APPN.filter(([id])=>APPST[id]&&APPST[id].locked):[];if(lk.length)todo.push(['🔧',lk.map(x=>x[1]).join(', ')+(lk.length>1?' נעולות':' נעולה')+' לשיפוצים','apps']);
   if(PAY&&PAY.err)todo.push(['!','טבלאות התשלום עוד לא הותקנו ב־Supabase','pay']);
   else if(p&&p.mode!=='live')todo.push(['₪',p.mode==='demo'?'התשלומים במצב הדגמה. כשהמסוף מוכן עוברים למצב חי':'התשלומים כבויים. לפתוח מסוף סליקה ולחבר אותו','pay']);
   return`${lampHTML()}
@@ -234,8 +248,8 @@ function homeHTML(){
 function travelHTML(){
   if(TRQ===null)return`${lampHTML()}<section class="panel"><p class="err">לא הצלחתי לטעון את ההזמנות.</p></section>`;
   const open=TRQ.filter(r=>r.status==='new'),list=TRF==='open'?open:TRQ;
-  const det=r=>{const x=r.details||{};const lines=(x.lines||[]).slice(0,14).map(esc).join(' · ');
-    return`${x.title?`<b>${esc(x.title)}</b><br>`:''}${x.search?`<span class="mute">${esc(x.search)}</span><br>`:''}${lines?`<span class="small">${lines}</span><br>`:''}${x.customer_price?`<b>מחיר ללקוח: ₪${n(x.customer_price)}</b> <span class="mute small">(מחיר סוכן בערך ₪${n(Math.round(x.customer_price/1.12))} · רווח בערך ₪${n(x.customer_price-Math.round(x.customer_price/1.12))})</span>`:''}${/^https:\/\/([a-z0-9-]+\.)*beagent\.online\//i.test(x.link||'')?`<br><a href="${esc(x.link)}" target="_blank" rel="noopener">פתיחת החיפוש ב־BeAgent ←</a>`:''}`};
+  const det=r=>{const x=r.details&&typeof r.details==='object'?r.details:{};const lines=(Array.isArray(x.lines)?x.lines:[]).slice(0,14).map(esc).join(' · ');const cp=Number(x.customer_price)||0;
+    return`${x.title?`<b>${esc(x.title)}</b><br>`:''}${x.search?`<span class="mute">${esc(x.search)}</span><br>`:''}${lines?`<span class="small">${lines}</span><br>`:''}${cp>0?`<b>מחיר שהלקוח ראה: ₪${n(cp)}</b> <span class="mute small">(לפי מה שהדפדפן שלו שלח; מחיר סוכן בערך ₪${n(Math.round(cp/1.12))} · רווח בערך ₪${n(cp-Math.round(cp/1.12))})</span>`:''}${/^https:\/\/([a-z0-9-]+\.)*beagent\.online\//i.test(x.link||'')?`<br><a href="${esc(x.link)}" target="_blank" rel="noopener">פתיחת החיפוש ב־BeAgent ←</a>`:''}`};
   return`${lampHTML()}
   <section><h2>הזמנות Bar Lvovski Travel ${open.length?`<span class="pill n">${open.length} ממתינות</span>`:''}<span class="sp"></span><span class="tabs">${[['open','ממתינות'],['all','הכל']].map(([k,l])=>`<button data-a="trf" data-k="${k}" aria-selected="${TRF===k}">${l}</button>`).join('')}</span></h2>
   <div class="panel rows">${list.map(r=>`<div class="rowx" style="align-items:flex-start">
@@ -503,7 +517,7 @@ async function cgSaveAd(form){
 }
 function draw(){
   const c=counts(),badge={penina:c.pn,travel:c.tr,pk:c.pk,cx:cgOpen()};
-  const body={home:homeHTML,travel:travelHTML,penina:peninaHTML,pay:payHTML,cx:cxHTML,users:usersHTML,pk:pkHTML,links:linksHTML}[VIEW]();
+  const body={home:homeHTML,apps:appsHTML,travel:travelHTML,penina:peninaHTML,pay:payHTML,cx:cxHTML,users:usersHTML,pk:pkHTML,links:linksHTML}[VIEW]();
   const title=(TABS.find(t=>t[0]===VIEW)||[])[1];
   const y=scrollY;
   app.innerHTML=`<div class="frame"><nav class="rail" aria-label="ניווט"><div class="logo">Barusik</div>
@@ -533,6 +547,9 @@ const ACT={
   olink:el=>copy(`https://barusik.com/pay/?o=${el.dataset.id}`),
   cpcopy:el=>copy(el.dataset.code),
   cptoggle:async el=>{el.disabled=true;if(await after(()=>sb.from('pay_coupons').update({active:el.dataset.on==='1'}).eq('code',el.dataset.code))){await loadPay();draw()}else el.disabled=false},
+  applock:async el=>{const on=el.dataset.on==='1';if(on&&!confirm('לנעול את האפליקציה? לקוחות יראו מסך "בשיפוצים" עד שתפתח אותה.'))return;el.disabled=true;
+    const msg=(document.querySelector(`[data-am="${el.dataset.id}"]`)?.value||'').trim()||null;
+    if(await after(()=>sb.from('app_status').update({locked:on,message:msg,updated_at:new Date().toISOString()}).eq('id',el.dataset.id),on?'ננעלה לשיפוצים':'פתוחה שוב ללקוחות')){await loadApps();draw()}else el.disabled=false},
   cgt:el=>{CGT=el.dataset.k;draw()},
   adnew:()=>{CG.edit=null;draw()},
   adedit:el=>{CG.edit=(CG.ads||[]).find(a=>a.id===el.dataset.id)||null;draw();const f=document.getElementById('adf');if(f)f.scrollIntoView({behavior:'smooth'})},
@@ -570,6 +587,7 @@ function wire(){
   document.querySelectorAll('[data-cg]').forEach(el=>el.onchange=async()=>{const k=el.dataset.cg;let v=el.type==='checkbox'?el.checked:parseInt(el.value,10);
     if(el.type!=='checkbox'){const[,,,mi,ma]=CG_SET.find(x=>x[0]===k);if(!(v>=mi&&v<=ma)){toast('מספר בין '+mi+' ל־'+ma,4000);el.value=CG.config[k];return}}
     if(await after(()=>sb.from('cg_config').update({[k]:v,updated_at:new Date().toISOString()}).eq('id',1),'נשמר'))CG.config[k]=v;else{await loadCg();draw()}});
+  document.querySelectorAll('[data-am]').forEach(el=>el.onchange=async()=>{const id=el.dataset.am,v=el.value.trim()||null;if(await after(()=>sb.from('app_status').update({message:v,updated_at:new Date().toISOString()}).eq('id',id),'ההודעה נשמרה')&&APPST[id])APPST[id].message=v});
   const cgq=document.getElementById('cgq');if(cgq)cgq.oninput=()=>{CGQ=cgq.value;const p=cgq.selectionStart;draw();const e=document.getElementById('cgq');e.focus();e.setSelectionRange(p,p)};
   const nl=document.getElementById('newl');if(nl)nl.onsubmit=async e=>{e.preventDefault();const f=new FormData(nl);
     const{data,error}=await sb.rpc('pay_admin_link',{p_title:String(f.get('title')).trim(),p_amount:Number(f.get('amount')),p_platform:f.get('platform')});

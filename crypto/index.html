@@ -36,6 +36,7 @@ input{background:#0B1230;color:var(--ink);border:1px solid var(--line);border-ra
 .sheet{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;width:min(420px,100%);display:flex;flex-direction:column;gap:12px}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 </style>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Crypto">
 </head>
 <body>
 <header>
@@ -180,5 +181,7 @@ if(sb){
   setInterval(()=>{if(!document.hidden&&USER&&!document.querySelector('.scrim')&&!document.activeElement.closest('form'))refresh()},20000);
 }
 </script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.0.0').catch(()=>{}));</script>
+<script src="/lib/app.js?v=1" data-app="cr" defer></script>
 </body>
 </html>

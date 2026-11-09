@@ -69,6 +69,7 @@ footer{text-align:center;color:var(--mute);font-size:13px;line-height:1.7;paddin
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media(prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
 </style>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Travel">
 </head>
 <body>
 <a class="skip" href="#main">דילוג לתוכן</a>
@@ -612,5 +613,7 @@ async function health(){
 tabs();panel();health();
 })();
 </script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.0.0').catch(()=>{}));</script>
+<script src="/lib/app.js?v=1" data-app="tr" defer></script>
 </body>
 </html>
