@@ -430,30 +430,51 @@
     } catch { btn.textContent = t('busy').slice(0, 30); }
     btn.disabled = false;
   }
-  // the list has its own place under everything else, so it shows whether the page is on the upload, the stats or a report
-  function myNav(on) {
-    let a = $('#myNav');
-    if (!on) { a?.remove(); return; }
-    if (!a) { a = document.createElement('a'); a.id = 'myNav'; a.href = '#myReports'; a.style.cssText = 'color:var(--amber);font-weight:800;margin-inline-start:auto;margin-inline-end:14px;text-decoration:none'; $('#lang').before(a); a.onclick = (e) => { e.preventDefault(); $('#myReports')?.scrollIntoView({ behavior: 'smooth' }); }; }
-    a.textContent = t('myNav');
-  }
+  // "my chats": the chat on this device, every request and every finished report, on its own tab
+  const chatName = (st) => { const p = arr(st && st.people); return p.slice(0, 3).map((x) => x.name).join(', ') + (p.length > 3 ? ' \u2066+' + (p.length - 3) + '\u2069' : ''); };
+  const day = (d) => d ? new Date(d).toLocaleDateString(L, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const tag = (txt, c) => `<span class="mtag" style="color:var(--${c})">${E(txt)}</span>`;
+  const here = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); return v && v.stats && v.excerpt && !v.report && Date.now() - v.at < 14 * 864e5 ? v : null; } catch { return null; } };
   window.PList = {
+    cur(v) { CUR = v || null; },
     async load() {
-      const main = $('main.wrap'); if (!main || !sb || !USER) { $('#myReports')?.remove(); myNav(false); return; }
-      let rows = [];
+      const box = $('#mine'); if (!box) return;
+      if (!sb || !USER) { box.innerHTML = ''; return; }
+      let rows = [], ok = true;
       try {
-        const q = await sb.from('pn_requests').select('id,done_at,headline:report->>headline').eq('uid', USER.id).not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(30);
-        rows = q.data || [];
-      } catch { /* no list */ }
-      $('#myReports')?.remove(); myNav(true);
-      const box = document.createElement('section'); box.id = 'myReports'; box.className = 'sec'; box.style.scrollMarginTop = '20px';
-      box.innerHTML = `<h2>${E(t('myT'))}</h2>` + (rows.length ? rows.map((r) => `<div class="pairrow" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.headline || '—')}</b><br><span style="color:var(--muted);font-size:14px">${r.done_at ? new Date(r.done_at).toLocaleDateString(L) : ''}</span></div><button class="btn2" type="button" data-open="${E(r.id)}" style="height:42px;padding:0 18px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${E(r.id)}" style="height:42px;padding:0 18px">${E(t('mySend'))}</button></div>`).join('') : `<p style="color:var(--muted);margin:0">${E(t('myNone'))}</p>`);
-      main.appendChild(box);
+        const q = await sb.from('pn_requests').select('id,status,created_at,done_at,headline:report->>headline').eq('uid', USER.id).order('created_at', { ascending: false }).limit(40);
+        if (q.error) ok = false; rows = q.data || [];
+      } catch { ok = false; }
+      const done = rows.filter((r) => r.headline), open = rows.filter((r) => !r.headline);
+      let html = `<div class="mhead"><h2>${E(t('tabMine'))}</h2><button class="go" type="button" data-new style="padding:0 22px;height:48px;font-size:16px">＋ ${E(t('tabNew'))}</button></div>`;
+      // the chat that is waiting on this device
+      const hv = here();
+      if (hv) {
+        const st = REQ && REQ.status;
+        const s = localStorage.getItem('penina.job') ? tag(t('stWriting'), 'amber') : st === 'approved' ? tag(t('stApproved'), 'mint') : st === 'pending' ? tag(t('stPending'), 'amber') : st === 'declined' ? tag(t('stDeclined'), 'muted') : tag(t('stLocal'), 'muted');
+        html += `<div class="mrow here"><span class="dot" style="background:hsl(${hue(chatName(hv.stats))} 70% 72%)">${E(initial(chatName(hv.stats)))}</span><div class="mtx"><b>${E(chatName(hv.stats))}</b><span>${E(t('onDevice'))} · ${Number(hv.stats.total || 0).toLocaleString()} ${E(t('msgs'))}</span>${s}</div><button class="go" type="button" data-here style="height:46px;padding:0 20px;font-size:16px">${E(t('cont'))}</button></div>`;
+      }
+      // a request with no chat left on this device: the customer uploads it again
+      const mine = hv && REQ ? REQ.id : null;
+      for (const r of open) {
+        if (r.id === mine) continue;
+        const s = r.status === 'approved' ? tag(t('stApprovedUp'), 'mint') : r.status === 'pending' ? tag(t('stPending'), 'amber') : r.status === 'declined' ? tag(t('stDeclined'), 'muted') : tag(r.status, 'muted');
+        html += `<div class="mrow"><span class="dot" style="background:var(--plum-2)">?</span><div class="mtx"><b>${E(t('reqFrom', { d: day(r.created_at) }))}</b>${s}</div>${r.status === 'approved' ? `<button class="btn2" type="button" data-new>${E(t('upload'))}</button>` : ''}</div>`;
+      }
+      for (const r of done) {
+        html += `<div class="mrow"><span class="dot" style="background:hsl(${hue(r.headline)} 70% 72%)">${E(initial(r.headline))}</span><div class="mtx"><b>${E(r.headline)}</b><span>${E(day(r.done_at || r.created_at))}</span></div><div class="mbt"><button class="go" type="button" data-open="${E(r.id)}" style="height:46px;padding:0 20px;font-size:16px">${E(t('myOpen'))}</button><button class="btn2" type="button" data-send="${E(r.id)}" style="height:46px">${E(t('mySend'))}</button></div></div>`;
+      }
+      if (!hv && !rows.length) html += `<div class="mempty"><div class="pearl" aria-hidden="true"></div><p>${E(ok ? t('mineEmpty') : t('busy'))}</p><button class="go" type="button" data-new style="padding:0 26px">${E(t('tabNew'))}</button></div>`;
+      box.innerHTML = html;
+      box.querySelectorAll('[data-new]').forEach((b) => b.onclick = () => window.PHome && PHome.newChat());
+      box.querySelector('[data-here]')?.addEventListener('click', () => window.PHome && PHome.flow());
       box.querySelectorAll('[data-open]').forEach((b) => b.onclick = async () => {
         b.disabled = true;
         const q = await sb.from('pn_requests').select('report').eq('id', b.dataset.open).maybeSingle();
         b.disabled = false; if (!q.data || !q.data.report) return;
-        CUR = b.dataset.open; SHARED = false; REPORT = q.data.report; $('#start').classList.add('hide'); $('#local').classList.add('hide'); $('#wait').classList.add('hide'); renderReport(REPORT);
+        // a saved report opens on its own; the chat waiting on this device stays where it is
+        CUR = b.dataset.open; SHARED = false; REPORT = q.data.report;
+        $('#start').classList.add('hide'); $('#local').classList.add('hide'); $('#wait').classList.add('hide'); renderReport(REPORT);
       });
       box.querySelectorAll('[data-send]').forEach((b) => b.onclick = () => sendLink(b.dataset.send, b));
     },

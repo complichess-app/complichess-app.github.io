@@ -19,9 +19,7 @@
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap"></noscript>
+<link rel="stylesheet" href="/fonts/secular-one.css"><link rel="stylesheet" href="/fonts/assistant.css">
 <style>
 /* Penina. The pearl is the one loud thing: it sits on the first screen, it holds the score in the report.
    Everything else is plain text on aubergine, set like a letter from your aunt. */
@@ -157,9 +155,13 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px cal
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Penina">
 </head>
 <body>
-<header><a class="home" href="/" data-t="home"></a><select id="lang" aria-label="Language"></select></header>
+<header><a class="home" href="/" data-t="home"></a><div id="acct" class="acct"></div><select id="lang" aria-label="Language"></select></header>
+<div id="loginTop" class="wrap hide"></div>
+<nav id="tabs" class="wrap tabs hide"><button type="button" data-v="mine" data-t="tabMine"></button><button type="button" data-v="new" data-t="tabNew"></button></nav>
 
 <main class="wrap">
+  <section id="mine" class="hide"></section>
+  <div id="flow">
   <!-- 1. upload -->
   <section id="start">
     <div class="hero"><div class="pearl rolls" aria-hidden="true"></div><div><h1 data-t="title"></h1><p data-t="lead"></p></div></div>
@@ -181,11 +183,6 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px cal
     <div class="sec"><h2 data-t="when"></h2><div class="clock" id="clock" aria-hidden="true"></div><div class="clock-l"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div><p class="sub" id="clockLine" style="margin-top:12px"></p></div>
     <div class="ask" id="ask">
       <h3 data-t="askTitle"></h3><p data-t="askSub"></p>
-      <div id="loginBox" class="hide">
-        <div class="fld"><label for="em" data-t="email"></label><input id="em" type="email" autocomplete="email"></div>
-        <div class="fld" style="margin-top:10px"><label for="pw" data-t="password"></label><input id="pw" type="password" autocomplete="current-password"></div>
-        <p style="margin-top:10px"><a href="/he/" data-t="noAcc" style="display:inline-block;padding:10px 0"></a></p>
-      </div>
       <p class="msg" id="askMsg" role="status" aria-live="polite"></p>
       <button class="go" id="goBtn" type="button"></button>
       <button type="button" id="forgetBtn" data-t="forget" style="color:var(--muted);font-size:15px;text-decoration:underline;text-underline-offset:4px;align-self:center"></button>
@@ -197,6 +194,7 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:30px 20px cal
 
   <!-- 4. the report -->
   <section id="report" class="report hide"></section>
+  </div>
 </main>
 <footer data-t="foot"></footer>
 
@@ -231,7 +229,6 @@ function paint(){
   document.querySelectorAll('[data-list]').forEach(e=>e.innerHTML=t(e.dataset.list).map(x=>`<li>${esc(x)}</li>`).join(''));
   $('#lang').innerHTML=Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===L?' selected':''}>${v}</option>`).join('');
   document.title=t('title');document.querySelector('meta[name=description]')?.setAttribute('content',t('lead'));
-  const na=document.querySelector('#loginBox a');if(na)na.href='/'+L+'/';
   if(STATS)renderLocal();if(REPORT)renderReport(REPORT);goBtn();
 }
 $('#forgetBtn').onclick=()=>{forgetLocal();STATS=null;EXCERPT=null;REPORT=null;$('#local').classList.add('hide');$('#start').classList.remove('hide');$('#file').value='';scrollTo(0,0)};
@@ -324,7 +321,7 @@ async function loadReq(){
   REQ=rows.find(x=>x.status==='approved')||rows.find(x=>x.status==='pending')||rows[0]||null;
 }
 function goBtn(){
-  const b=$('#goBtn'),m=$('#askMsg');$('#loginBox').classList.toggle('hide',!!USER);b.classList.remove('hide');
+  const b=$('#goBtn'),m=$('#askMsg');b.classList.remove('hide');
   clearInterval(pollReq);
   if(!USER){b.textContent=t('login');return}
   if(!BACKEND){b.classList.add('hide');m.textContent=t('soon');return}
@@ -344,14 +341,10 @@ $('#goBtn').onclick=async()=>{
   try{await go()}catch{$('#askMsg').textContent=navigator.onLine===false?t('offline'):t('busy')}
   finally{GOING=false;b.disabled=false}
 };
-['#em','#pw'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#goBtn').click()}}));
 async function go(){
   const m=$('#askMsg');m.textContent='';
   if(!sb)return m.textContent=t('busy');
-  if(!USER){const em=$('#em').value.trim(),pw=$('#pw').value;if(!em||!pw){m.textContent=t('badLogin');$(em?'#pw':'#em').focus();return}
-    const r=await sb.auth.signInWithPassword({email:em,password:pw});
-    if(r.error){const s=String(r.error.message||'');m.textContent=/confirm/i.test(s)?t('unconfirmed'):(r.error.status===400||/invalid|credentials/i.test(s))?t('badLogin'):navigator.onLine===false||!r.error.status?t('offline'):t('busy');return}
-    USER=r.data.user;await refreshAsk();if(REQ?.status==='approved'||REQ?.status==='pending')return;}
+  if(!USER){if(window.PAcct)PAcct.ask();return}
   if(getJob())return runJob(getJob());
   if(REQ?.status!=='approved'&&payPrice()!==null){
     let id=REQ?.status==='pending'?REQ.id:null;
@@ -459,6 +452,7 @@ async function share(){
 
 </script>
 <script src="extra.js?v=7"></script>
+<script src="home.js?v=1"></script>
 <script>
 try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stats&&sv.excerpt&&Date.now()-sv.at<14*864e5){STATS=sv.stats;EXCERPT=sv.excerpt;REPORT=sv.report||null;$('#start').classList.add('hide');if(REPORT){renderReport(REPORT)}else $('#local').classList.remove('hide')}}catch{}
 const SHARED_VIEW=()=>/[?&](r|a)=/.test(location.search);
@@ -469,7 +463,7 @@ if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;refreshAsk()});
 // a report that was half written when the page closed carries on by itself
 if(sb&&getJob())sb.auth.getSession().then(({data})=>{if(data.session&&getJob()&&!SHARED_VIEW()){USER=data.session.user;runJob(getJob())}});
 </script>
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.0.0').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.1.0').catch(()=>{}));</script>
 <script src="/lib/app.js?v=1" data-app="pn" defer></script>
 </body>
 </html>
