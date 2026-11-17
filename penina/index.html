@@ -404,7 +404,7 @@ async function runJob(job){
     await Promise.all(Array.from({length:Math.min(5,rest.length)},async()=>{while(q<rest.length){const p=rest[q++];await one(p).catch(()=>{})}}));
     let fin;
     for(let k=0;;k++){try{fin=await callFn({...base,mode:'finish',id:job.id,photos:job.photos||[]});break}catch(e){if(e.status===409||k>=2)throw e;await visible();await new Promise(r=>setTimeout(r,3000))}}
-    REPORT=fin.report;setJob(null);saveLocal();$('#wait').classList.add('hide');renderReport(REPORT);refreshAsk();
+    REPORT=fin.report;setJob(null);saveLocal();$('#wait').classList.add('hide');if(window.PList&&PList.cur)PList.cur(job.id);renderReport(REPORT);refreshAsk();
     const h=$('#report h1');if(h){h.tabIndex=-1;h.focus({preventScroll:true})}
   }catch(e){
     const msg=String(e.message);
@@ -451,10 +451,11 @@ async function share(){
 }
 
 </script>
-<script src="extra.js?v=7"></script>
-<script src="home.js?v=1"></script>
+<script src="extra.js?v=8"></script>
+<script src="home.js?v=2"></script>
 <script>
-try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stats&&sv.excerpt&&Date.now()-sv.at<14*864e5){STATS=sv.stats;EXCERPT=sv.excerpt;REPORT=sv.report||null;$('#start').classList.add('hide');if(REPORT){renderReport(REPORT)}else $('#local').classList.remove('hide')}}catch{}
+// Opening Penina never opens a report by itself: the chat in progress and the last report wait on the home page
+try{const sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.stats&&sv.excerpt&&!sv.report&&Date.now()-sv.at<14*864e5){STATS=sv.stats;EXCERPT=sv.excerpt}}catch{}
 const SHARED_VIEW=()=>/[?&](r|a)=/.test(location.search);
 if(SHARED_VIEW()){const m=document.createElement('meta');m.name='robots';m.content='noindex';document.head.appendChild(m)}
 paint();
@@ -463,7 +464,7 @@ if(sb)sb.auth.onAuthStateChange((_e,s)=>{USER=s?.user||null;refreshAsk()});
 // a report that was half written when the page closed carries on by itself
 if(sb&&getJob())sb.auth.getSession().then(({data})=>{if(data.session&&getJob()&&!SHARED_VIEW()){USER=data.session.user;runJob(getJob())}});
 </script>
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.1.0').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.1.1').catch(()=>{}));</script>
 <script src="/lib/app.js?v=1" data-app="pn" defer></script>
 </body>
 </html>

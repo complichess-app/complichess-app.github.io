@@ -170,11 +170,164 @@
     } else NAME = '';
     drawAcct();
     await ra.apply(this, arguments);
-    if (!USER) { show('flow'); FIRST = true; if (!shared()) { $('#loginTop').classList.remove('hide'); drawLogin(); } return; }
+    if (!USER) { show('flow'); FIRST = true; if (!shared()) { $('#loginTop').classList.remove('hide'); drawLogin(); } drawSaved(); return; }
     if (shared()) { show('flow'); return; }
     // the first time we know who this is: open on their chats, unless a chat or report is already on the screen
     if (FIRST) { FIRST = false; const busy = RUNNING || !$('#local').classList.contains('hide') || !$('#report').classList.contains('hide'); if (busy) show('flow'); else show('mine'); }
     else show(VIEW || 'flow');
+    drawSaved();
   };
+
+  /* ---------- reports friends sent, a way back from every report ---------- */
+  const S = {
+    he: { hmShared: 'שותפו איתי', hmRemove: 'הסרה', hmGone: 'הקישור הזה כבר לא פעיל. מי ששלח אותו ביטל את השיתוף.', hmBack: 'לכל הדוחות', hmTag: 'דוח ששותף איתכם', hmLoading: 'פותחת את הדוח…', hmLast: 'הדוח האחרון שלכם' },
+    en: { hmShared: 'Shared with me', hmRemove: 'Remove', hmGone: 'This link is no longer active. The person who sent it turned sharing off.', hmBack: 'All reports', hmTag: 'Shared with you', hmLoading: 'Opening the report…', hmLast: 'Your last report' },
+    ar: { hmShared: 'تمت مشاركتها معي', hmRemove: 'إزالة', hmGone: 'هذا الرابط لم يعد فعّالًا. من أرسله أوقف المشاركة.', hmBack: 'كل التقارير', hmTag: 'تمت مشاركته معكم', hmLoading: 'جارٍ فتح التقرير…', hmLast: 'تقريركم الأخير' },
+    ru: { hmShared: 'Со мной поделились', hmRemove: 'Убрать', hmGone: 'Эта ссылка больше не работает. Отправитель отключил доступ.', hmBack: 'Все отчёты', hmTag: 'С вами поделились', hmLoading: 'Открываю отчёт…', hmLast: 'Ваш последний отчёт' },
+    es: { hmShared: 'Compartidos conmigo', hmRemove: 'Quitar', hmGone: 'Este enlace ya no está activo. Quien lo envió desactivó el uso compartido.', hmBack: 'Todos los informes', hmTag: 'Compartido contigo', hmLoading: 'Abriendo el informe…', hmLast: 'Tu último informe' },
+    fr: { hmShared: 'Partagés avec moi', hmRemove: 'Retirer', hmGone: 'Ce lien n’est plus actif. La personne qui l’a envoyé a arrêté le partage.', hmBack: 'Tous les rapports', hmTag: 'Partagé avec vous', hmLoading: 'Ouverture du rapport…', hmLast: 'Votre dernier rapport' },
+  };
+  for (const l in S) Object.assign(T[l], S[l]);
+  const css2 = document.createElement('style');
+  css2.textContent = `
+  #pnSaved{margin:26px 0 8px}
+  #pnSaved:empty{display:none}
+  #shSec{margin-top:18px}
+  #shSec h2{font-family:var(--fd);font-weight:400;font-size:24px;margin:0 0 4px}
+  #shSec .msg{margin:6px 0 0}
+  #shSec .msg:empty{display:none}
+  .hm-back{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+  .hm-back a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--pearl-2);font-weight:800;text-decoration:none}
+  .hm-back a:hover{color:var(--pearl)}
+  .hm-back .tag{border-radius:999px;padding:4px 12px;background:rgba(255,196,107,.14);color:var(--amber);font-size:14.5px;font-weight:600}
+  #hmLoad{text-align:center;padding:90px 0;color:var(--pearl-2);font-size:18px}
+  `;
+  document.head.appendChild(css2);
+
+  // the links someone sent you and you opened, kept on this device only
+  const SKEY = 'penina.shared', TOK = /^[0-9a-f-]{36}$/i;
+  const sharedList = () => { try { const a = JSON.parse(localStorage.getItem(SKEY) || '[]'); return Array.isArray(a) ? a.filter((x) => x && TOK.test(x.token || '')) : []; } catch { return []; } };
+  const sharedSave = (a) => { try { localStorage.setItem(SKEY, JSON.stringify(a.slice(0, 40))); } catch { /* private mode: the list just isn't kept */ } };
+  const sharedAdd = (token, r) => sharedSave([{ token, headline: String((r && r.headline) || '').slice(0, 160), at: Date.now() }, ...sharedList().filter((x) => x.token !== token)]);
+  const sharedDrop = (token) => sharedSave(sharedList().filter((x) => x.token !== token));
+  const day = (d) => { try { return d ? new Date(d).toLocaleDateString(L, { day: 'numeric', month: 'short', year: 'numeric' }) : ''; } catch { return ''; } };
+  const names = (st) => { const p = Array.isArray(st && st.people) ? st.people : []; return p.slice(0, 3).map((x) => x.name).join(', ') + (p.length > 3 ? ' ⁦+' + (p.length - 3) + '⁩' : ''); };
+  const dot = (s) => `<span class="dot" style="background:hsl(${hue(s)} 70% 72%)">${E(initial(s))}</span>`;
+  const btn = (cls, attr, txt) => `<button class="${cls}" type="button" ${attr} style="height:46px;padding:0 20px;font-size:16px">${E(txt)}</button>`;
+  const cleanUrl = () => { try { const u = new URL(location.href); u.searchParams.delete('r'); u.searchParams.delete('a'); history.replaceState(history.state, '', u.pathname + (u.searchParams.toString() ? '?' + u.searchParams : '')); } catch { /* keep the address */ } };
+
+  function sharedSec(msg) {
+    const sh = sharedList(); if (!sh.length && !msg) return '';
+    return `<section id="shSec"><h2>${E(t('hmShared'))}</h2><p class="msg" role="status" aria-live="polite">${E(msg || '')}</p>${sh.map((x) =>
+      `<div class="mrow">${dot(x.headline)}<div class="mtx"><b>${E(x.headline || '—')}</b><span>${E(t('hmTag'))} · ${E(day(x.at))}</span></div><div class="mbt">${btn('go', `data-shopen="${E(x.token)}"`, t('myOpen'))}${btn('btn2', `data-shdrop="${E(x.token)}"`, t('hmRemove'))}</div></div>`).join('')}</section>`;
+  }
+  function bindShared(root, redraw) {
+    root.querySelectorAll('[data-shopen]').forEach((b) => b.onclick = () => openShared(b.dataset.shopen, false, b));
+    root.querySelectorAll('[data-shdrop]').forEach((b) => b.onclick = () => { sharedDrop(b.dataset.shdrop); redraw(); });
+  }
+  // signed in: under "my chats"
+  function addShared(msg) {
+    const box = $('#mine'); if (!box || !USER) return;
+    $('#shSec')?.remove(); box.insertAdjacentHTML('beforeend', sharedSec(msg)); bindShared(box, () => addShared());
+  }
+  const pl = PList.load;
+  PList.load = async function () { await pl.apply(this, arguments); addShared(); };
+  // signed out: the chat in progress, the last report on this device and what was shared, under the upload
+  function drawSaved(msg) {
+    const start = $('#start'); if (!start) return;
+    let box = $('#pnSaved'); if (!box) { box = document.createElement('div'); box.id = 'pnSaved'; (start.querySelector('details.how') || start.lastElementChild).before(box); }
+    if (USER) { box.innerHTML = ''; return; }
+    const v = local(); let h = '';
+    if (v && !v.report) h += `<div class="mrow here">${dot(names(v.stats))}<div class="mtx"><b>${E(names(v.stats))}</b><span>${E(t('onDevice'))} · ${Number(v.stats.total || 0).toLocaleString()} ${E(t('msgs'))}</span></div>${btn('go', 'data-here', t('cont'))}</div>`;
+    if (v && v.report) h += `<div class="mrow here">${dot(v.report.headline)}<div class="mtx"><b>${E(v.report.headline || '—')}</b><span>${E(t('hmLast'))} · ${E(t('onDevice'))}</span></div>${btn('go', 'data-last', t('myOpen'))}</div>`;
+    box.innerHTML = h + sharedSec(msg);
+    box.querySelector('[data-here]')?.addEventListener('click', () => PHome.flow());
+    box.querySelector('[data-last]')?.addEventListener('click', () => { const w = local(); if (w && w.report) showReport(w.report, { kind: 'local' }); });
+    bindShared(box, () => drawSaved());
+  }
+  const pt2 = window.paint;
+  window.paint = function () { pt2.apply(this, arguments); if (!USER) drawSaved(); };
+
+  // the report on screen: how it was opened decides where "back" goes and whether it can be shared on
+  let OPEN = null, LAST = null;
+  const shown = () => !$('#report').classList.contains('hide');
+  function showReport(report, cur, how) {
+    OPEN = cur;
+    if (window.PShare && PShare.set) PShare.set(cur.kind === 'shared' || cur.kind === 'admin');
+    PList.cur(cur.kind === 'mine' ? cur.id : null);
+    REPORT = report;
+    $('#start').classList.add('hide'); $('#local').classList.add('hide'); $('#wait').classList.add('hide'); $('#loginTop').classList.add('hide');
+    show('flow'); renderReport(report);
+    // opened from a list: Back returns to the list instead of leaving the site
+    let n = 0;
+    if (!how) { n = Date.now(); try { history.pushState({ pn: 'report', n }, '', location.pathname + location.search + '#report'); } catch { n = 0; } }
+    if (how !== 'again') LAST = { report, cur, n };
+    scrollTo(0, 0);
+  }
+  function goHome() {
+    const was = OPEN; OPEN = null; REPORT = null;
+    if (window.PShare && PShare.set) PShare.set(false);
+    PList.cur(null); cleanUrl();
+    $('#report').classList.add('hide'); $('#wait').classList.toggle('hide', !RUNNING);
+    if (USER) { PHome.mine(); if (was && was.kind === 'shared') setTimeout(() => $('#shSec')?.scrollIntoView({ block: 'start' }), 600); return; }
+    $('#local').classList.add('hide'); $('#start').classList.toggle('hide', RUNNING); show('flow');
+    $('#loginTop').classList.remove('hide'); drawLogin(); drawSaved(); scrollTo(0, 0);
+  }
+  const leave = () => { if (shown() && history.state && history.state.pn === 'report') history.back(); else goHome(); };
+  addEventListener('popstate', () => {
+    const st = history.state;
+    if (st && st.pn === 'report') {
+      if (LAST && LAST.n && LAST.n === st.n) { if (!shown()) showReport(LAST.report, LAST.cur, 'again'); return; }
+      try { history.replaceState(null, '', location.pathname + location.search); } catch { /* keep the address */ }
+    }
+    if (shown() && OPEN) goHome();
+  });
+  // a reload on a report starts on the home page, so the address should not keep "#report"
+  if (history.state && history.state.pn === 'report') { try { history.replaceState(null, '', location.pathname + location.search); } catch { /* keep the address */ } }
+
+  // every time a report is drawn (opening it, or a change of language) it gets the way back
+  const rr2 = window.renderReport;
+  window.renderReport = function () {
+    const out = rr2.apply(this, arguments);
+    const el = $('#report');
+    if (OPEN && el && !el.querySelector('.hm-back')) {
+      const bar = document.createElement('div'); bar.className = 'hm-back';
+      bar.innerHTML = `<a href="/penina/"><span aria-hidden="true">${RTL[L] ? '→' : '←'}</span>${E(t('hmBack'))}</a>${OPEN.kind === 'shared' ? `<span class="tag">${E(t('hmTag'))}</span>` : ''}`;
+      bar.querySelector('a').onclick = (e) => { e.preventDefault(); leave(); };
+      el.prepend(bar);
+      // someone else's report: "another chat" must not wipe the chat saved on this device
+      const ag = el.querySelector('#againBtn'); if (ag && OPEN.kind === 'shared') { ag.textContent = t('hmBack'); ag.onclick = leave; }
+    }
+    return out;
+  };
+
+  async function openShared(token, deep, b) {
+    if (!sb || !TOK.test(token)) return false;
+    if (b) b.disabled = true;
+    let load = null, ok = false, said = '';
+    // straight from a link: nothing else shows while the report is on its way
+    if (deep) { $('#start').classList.add('hide'); $('#local').classList.add('hide'); load = document.createElement('p'); load.id = 'hmLoad'; load.setAttribute('role', 'status'); load.textContent = t('hmLoading'); $('main.wrap').prepend(load); }
+    try {
+      const r = await sb.rpc('pn_shared_report', { p_token: token });
+      if (!r.error && r.data) { load?.remove(); sharedAdd(token, r.data); showReport(r.data, { kind: 'shared', token }, deep ? 'deep' : ''); ok = true; }
+      // nothing behind the token: the owner turned the link off, so it leaves the list
+      else if (!r.error || r.error.code === '22P02') { sharedDrop(token); said = t('hmGone'); }
+      else said = t('offline');
+    } catch { said = t('offline'); }
+    load?.remove(); if (b) b.disabled = false;
+    if (!ok) {
+      if (deep) { cleanUrl(); goHome(); }
+      if (USER) { if (!deep) addShared(said); else setTimeout(() => addShared(said), 700); } else drawSaved(said);
+      setTimeout(() => $('#shSec')?.scrollIntoView({ block: 'center' }), deep ? 800 : 0);
+    }
+    return ok;
+  }
+  async function openMine(id, b) {
+    if (b) b.disabled = true;
+    try { const q = await sb.from('pn_requests').select('report').eq('id', id).maybeSingle(); if (q.data && q.data.report) showReport(q.data.report, { kind: 'mine', id }); } catch { /* stays on the list */ }
+    if (b) b.disabled = false;
+  }
+  Object.assign(window.PHome, { showReport, openShared, openMine, home: goHome, saved: drawSaved });
   drawAcct();
+  drawSaved();
 })();

@@ -332,8 +332,9 @@
   let SHARED = false, CUR = null;
   async function savedId() {
     if (CUR) return CUR;
-    const q = await sb.from('pn_requests').select('id').eq('uid', USER.id).not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(1);
-    return q.data && q.data[0] && q.data[0].id;
+    const q = await sb.from('pn_requests').select('id,headline:report->>headline').eq('uid', USER.id).not('report', 'is', null).order('done_at', { ascending: false, nullsFirst: false }).limit(30);
+    const rows = q.data || [], h = REPORT && REPORT.headline, hit = h ? rows.find((r) => r.headline === h) : rows[0];
+    return hit && hit.id;
   }
   function linkBox(el) {
     const main = el.querySelector('#shareBtn'), row = el.querySelector('.actions'); if (!main || !row || row.querySelector('[data-img]')) return;
@@ -359,13 +360,14 @@
     };
   }
   window.PShare = {
+    set(on) { SHARED = !!on; },
     async boot() {
       const adm = new URLSearchParams(location.search).get('a');
       if (adm && /^[0-9a-f-]{36}$/i.test(adm)) {
         try {
           const { data: { session } } = await sb.auth.getSession(); if (!session) return;
           const r = await sb.rpc('pn_admin_get_report', { p_id: adm }); if (r.error || !r.data || !r.data.report) return;
-          SHARED = true; REPORT = r.data.report; $('#start').classList.add('hide'); $('#local').classList.add('hide'); renderReport(REPORT);
+          PHome.showReport(r.data.report, { kind: 'admin' }, 'deep');
           const d = r.data, bar = document.createElement('div');
           bar.style.cssText = 'background:var(--plum);border-radius:16px;padding:12px 16px;margin:0 0 18px;font-size:14px;color:var(--pearl-2)';
           bar.innerHTML = '<b>Admin</b> · <span dir="ltr">' + E(d.email) + '</span> · ' + E(d.model) + (d.cost_usd != null ? ' · $' + Number(d.cost_usd).toFixed(2) : '') +
@@ -375,11 +377,8 @@
         return;
       }
       const tok = new URLSearchParams(location.search).get('r'); if (!tok || !/^[0-9a-f-]{36}$/i.test(tok)) return;
-      try {
-        const r = await sb.rpc('pn_shared_report', { p_token: tok });
-        if (r.error || !r.data) return;
-        SHARED = true; REPORT = r.data; $('#start').classList.add('hide'); $('#local').classList.add('hide'); renderReport(REPORT);
-      } catch { /* not a valid link: show the normal page */ }
+      // a link someone sent: it opens, and stays under "shared with me"; a dead one says so
+      await PHome.openShared(tok, true);
     },
   };
 
@@ -427,7 +426,7 @@
       const url = location.origin + '/penina/?r=' + r.data;
       if (navigator.share) { try { await navigator.share({ url, title: t('title') }); } catch { /* cancelled */ } }
       else { try { await navigator.clipboard.writeText(url); } catch { /* ignore */ } btn.textContent = t('lnkOk').split('.')[0]; setTimeout(() => { btn.textContent = t('mySend'); }, 2500); }
-    } catch { btn.textContent = t('busy').slice(0, 30); }
+    } catch { btn.textContent = t('offline').split('.')[0]; setTimeout(() => { btn.textContent = t('mySend'); }, 3000); }
     btn.disabled = false;
   }
   // "my chats": the chat on this device, every request and every finished report, on its own tab
@@ -468,14 +467,8 @@
       box.innerHTML = html;
       box.querySelectorAll('[data-new]').forEach((b) => b.onclick = () => window.PHome && PHome.newChat());
       box.querySelector('[data-here]')?.addEventListener('click', () => window.PHome && PHome.flow());
-      box.querySelectorAll('[data-open]').forEach((b) => b.onclick = async () => {
-        b.disabled = true;
-        const q = await sb.from('pn_requests').select('report').eq('id', b.dataset.open).maybeSingle();
-        b.disabled = false; if (!q.data || !q.data.report) return;
-        // a saved report opens on its own; the chat waiting on this device stays where it is
-        CUR = b.dataset.open; SHARED = false; REPORT = q.data.report;
-        $('#start').classList.add('hide'); $('#local').classList.add('hide'); $('#wait').classList.add('hide'); renderReport(REPORT);
-      });
+      // a saved report opens on its own; the chat waiting on this device stays where it is, and Back returns here
+      box.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => PHome.openMine(b.dataset.open, b));
       box.querySelectorAll('[data-send]').forEach((b) => b.onclick = () => sendLink(b.dataset.send, b));
     },
   };
