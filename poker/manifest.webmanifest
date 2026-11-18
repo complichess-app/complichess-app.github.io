@@ -1,0 +1,20 @@
+{
+  "name": "ברוסיק פוקר · Barusik Poker",
+  "short_name": "Poker",
+  "description": "טקסס הולדם עם החברים. צ׳יפים בלבד.",
+  "lang": "he",
+  "dir": "rtl",
+  "id": "/poker/",
+  "start_url": "/poker/",
+  "scope": "/poker/",
+  "display": "standalone",
+  "background_color": "#0E1A17",
+  "theme_color": "#0E1A17",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "related_applications": [{ "platform": "webapp", "url": "https://barusik.com/poker/manifest.webmanifest" }],
+  "prefer_related_applications": false
+}

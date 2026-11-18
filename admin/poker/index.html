@@ -1,0 +1,71 @@
+<!doctype html>
+<!-- Barusik admin · poker rooms. © 2026 Bar Lvovski. All rights reserved. -->
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co wss://iktmyrfbejtjsiehcrar.supabase.co https://cloudflareinsights.com; worker-src 'self' blob:; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>פוקר · ניהול ברוסיק</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/fonts/rubik.css">
+<style>
+:root{--bg:#090B1F;--panel:#10143A;--raise:#171C49;--line:rgba(255,255,255,.1);--ink:#EEEAF8;--mute:#A3A5CB;--gold:#D8AE57;--ok:#3DDC97;--bad:#FF7A7A;--warn:#F5B45B;--red:#E0505A}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Rubik,system-ui,sans-serif}
+a{color:var(--gold)}h1,h2,h3,p{margin:0}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:0 16px;min-height:38px;background:var(--gold);color:#1A1208;font-weight:700}
+button.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+button.red{background:var(--red);color:#fff}
+button.small{min-height:32px;padding:0 12px;font-size:13.5px}
+button[disabled]{opacity:.45;pointer-events:none}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;height:38px;padding:0 10px}
+.n{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)}.small{font-size:13px}
+.wrap{max-width:1200px;margin:0 auto;padding:18px 16px 60px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top h1{font-size:22px}.sp{flex:1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,.07);color:var(--mute)}
+.pill.w{background:rgba(245,180,91,.18);color:var(--warn)}.pill.y{background:rgba(61,220,151,.15);color:var(--ok)}.pill.g{background:rgba(216,174,87,.18);color:var(--gold)}
+.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.room{display:flex;flex-direction:column;gap:6px;background:var(--raise);border:1px solid var(--line);border-radius:16px;padding:12px;text-align:start;color:var(--ink);font-weight:400;min-height:0}
+.room.wait{border-color:var(--warn);box-shadow:0 0 0 3px rgba(245,180,91,.2)}
+.room.on{border-color:var(--gold)}
+.room b{font-size:16px}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.board{display:flex;gap:6px;direction:ltr;align-items:center;flex-wrap:wrap}
+.card{--w:44px;width:var(--w);height:calc(var(--w)*1.4);border-radius:7px;background:#F6F0E2;color:#14110C;position:relative;display:inline-block;font-weight:800;flex:none}
+.card .r{position:absolute;top:3px;left:5px;font-size:17px;line-height:1;display:flex;flex-direction:column;align-items:center}.card .r i{font-style:normal;font-size:14px}
+.card .s{position:absolute;bottom:3px;right:5px;font-size:22px;line-height:1}
+.card.red{color:#C8313A}.card.ghost{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--line)}
+.card.up{outline:2px dashed var(--warn);outline-offset:2px;opacity:.85}
+.pl{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px;border-radius:14px;background:var(--raise);border:1px solid var(--line)}
+.pl.turn{border-color:var(--gold)}.pl.fold{opacity:.5}
+.pl .cards{display:flex;gap:4px;direction:ltr}
+.pl .nm{font-weight:700}.pl .sub{font-size:13px;color:var(--mute)}
+.bar{height:8px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#9BF0C6)}
+[dir=rtl] .bar i{margin-inline-start:auto}
+.odds{font-size:20px;font-weight:800;color:var(--ok);min-width:64px;text-align:center}
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tools input{width:110px}
+.log{max-height:340px;overflow:auto;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.log .hd{color:var(--gold);font-weight:700;margin-top:6px}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-items:end}
+.form label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--mute)}
+.req{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:rgba(245,180,91,.1);border:1px solid rgba(245,180,91,.3);border-radius:12px}
+.req input{width:100px}
+.box{max-width:460px;margin:12vh auto;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.toast{position:fixed;inset-inline:0;bottom:20px;margin:auto;width:max-content;max-width:90vw;background:#0B0E28;border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-weight:600;z-index:9}
+table{border-collapse:collapse;width:100%;font-size:13.5px}td,th{padding:4px 6px;text-align:start}th{color:var(--mute);font-weight:600}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.pl{grid-template-columns:auto 1fr}.pl .odds{grid-column:span 2;text-align:start}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="mute">טוען…</p></div>
+<script src="/lib/supabase.js"></script>
+<script src="/poker/engine.js?v=1"></script>
+<script src="/poker/i18n.js?v=1"></script>
+<script src="admin.js?v=1"></script>
+</body>
+</html>

@@ -90,7 +90,7 @@ const wa=p=>{let x=String(p||'').replace(/\D/g,'');if(x.startsWith('0'))x='972'+
 function toast(t,ms=2600){const e=document.getElementById('toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,ms)}
 const copy=async t=>{try{await navigator.clipboard.writeText(t);toast('הועתק');return true}catch{toast('לא הצלחתי להעתיק: '+t,6000);return false}};
 
-const TABS=[['home','בית'],['apps','אפליקציות'],['travel','נסיעות'],['penina','פנינה'],['pay','תשלומים ושוברים'],['cx','קומפליצס'],['users','משתמשים'],['pk','פלטפורמיקה'],['links','קישורים']];
+const TABS=[['home','בית'],['apps','אפליקציות'],['travel','נסיעות'],['penina','פנינה'],['pay','תשלומים ושוברים'],['cx','קומפליצס'],['poker','פוקר'],['users','משתמשים'],['pk','פלטפורמיקה'],['links','קישורים']];
 let VIEW=TABS.some(t=>t[0]===location.hash.slice(1))?location.hash.slice(1):'home';
 let CG=null,CGT='ads',CGQ='';
 let APPST=null,EMAIL='',DATA=null,TRQ=[],TRF='open',REP=null,PNR=null,PNERR='',PNS=null,BILL=null,SRV=null,PAY=null,LIVE=[];
@@ -167,7 +167,7 @@ async function load(){
   if(error){if(/not allowed|42501|permission/i.test(error.message+error.code))denied(session.user.email);else{app.innerHTML=`<div class="box"><h1>שגיאה</h1><p class="err">${esc(error.message)}</p><button id="r">נסו שוב</button></div>`;document.getElementById('r').onclick=load}return}
   if(!data||!data.totals){app.innerHTML=`<div class="box"><h1>אין נתונים</h1><p class="mute">השרת לא החזיר נתונים. נסו לרענן.</p><button id="r">רענון</button></div>`;document.getElementById('r').onclick=load;return}
   DATA=data;EMAIL=session.user.email;
-  await Promise.all([loadApps(),loadTravel(),loadReports(),loadPenina(),loadPay(),loadSrv(),loadCg()]);
+  await Promise.all([loadApps(),loadTravel(),loadReports(),loadPenina(),loadPay(),loadSrv(),loadCg(),loadPoker()]);
   loadBill();
   draw();listen();
 }
@@ -177,10 +177,11 @@ function listen(){
   if(PNR!==null)on('pnr','pn_requests',loadPenina);
   if(TRQ!==null)on('trq','travel_requests',loadTravel);
   if(PAY&&!PAY.err)on('ord','pay_orders',loadPay);
+  if(PQ!==null){LIVE.push(sb.channel('pq').on('postgres_changes',{event:'*',schema:'public',table:'po_rooms'},async()=>{await loadPoker();if(VIEW==='poker'||VIEW==='home')draw()}).subscribe());setInterval(()=>{if(PQ&&PQ.some(r=>r.host_kind==='waiting'))pqAlert()},1000)}
   setInterval(async()=>{if(document.hidden)return;const was=SRV&&SRV.online;await loadSrv();if((SRV&&SRV.online)!==was)draw()},10000);
 }
 // ---------- data ----------
-const APPN=[['tr','Bar Lvovski Travel','/travel/'],['pk','פלטפורמיקה','/platformika/'],['cx','קומפליצס','/complichess/'],['cr','Barusik Crypto','/crypto/'],['lr','LearnLume','/#ch-lr'],['pn','מה פנינה חושבת','/penina/']];
+const APPN=[['tr','Bar Lvovski Travel','/travel/'],['pk','פלטפורמיקה','/platformika/'],['cx','קומפליצס','/complichess/'],['cr','Barusik Crypto','/crypto/'],['lr','LearnLume','/#ch-lr'],['pn','מה פנינה חושבת','/penina/'],['po','ברוסיק פוקר','/poker/']];
 async function loadApps(){try{const{data,error}=await sb.from('app_status').select('*');APPST=error?{err:error.message}:Object.fromEntries((data||[]).map(r=>[r.id,r]))}catch(e){APPST={err:String(e&&e.message||e)}}}
 function appsHTML(){
   if(!APPST||APPST.err)return`<section class="panel"><h2>אפליקציות <span class="pill n">לא מותקן</span></h2><p>הטבלה של הנעילה לשיפוצים עוד לא קיימת ב־Supabase.</p>
@@ -388,7 +389,7 @@ function linksHTML(){
     ['Cloudflare',[['DNS',CF+'/dns/records',''],['כותרות אבטחה וכללים',CF+'/rules',''],['ניתוב מייל',CF+'/email/routing/overview','']]],
     ['נסיעות',[['BeAgent לסוכן','https://travel.beagent.online/he','חיפוש והזמנה'],['לוח הבקרה של BeAgent','https://dashboard.beagent.online/','עמלות והגדרות'],['האתר ללקוחות שלך','/travel/','']]],
     ['סליקה ועסק',[['פתיחת חשבון ב־Allpay','https://www.allpay.co.il/en/signup',''],['מחירון Allpay','https://www.allpay.co.il/en/pricing',''],['Grow','https://grow.business/price-offer/',''],['Hyp','https://hyp.co.il/online-payments/',''],['מייל העסק','https://mail.google.com/mail/u/?authuser=barusik.official@gmail.com','']]],
-    ['האתרים שלך',[['barusik.com','/he/',''],['פנינה','/penina/',''],['פלטפורמיקה','/platformika/',''],['קומפליצס','/complichess/',''],['קריפטו','/crypto/',''],['תנאי שימוש','/he/terms/','']]],
+    ['האתרים שלך',[['barusik.com','/he/',''],['פנינה','/penina/',''],['פוקר','/poker/',''],['ניהול הפוקר','/admin/poker/','קלפים, סיכויים, צ׳יפים'],['פלטפורמיקה','/platformika/',''],['קומפליצס','/complichess/',''],['קריפטו','/crypto/',''],['תנאי שימוש','/he/terms/','']]],
   ];
   return`<section class="links">${groups.map(([h,l])=>`<div class="panel"><h3>${esc(h)}</h3>${l.map(([t,u,sub])=>`<a href="${esc(u)}" ${u.startsWith('http')?'target="_blank" rel="noopener"':''}><span>${esc(t)}</span><small>${esc(sub)}</small></a>`).join('')}</div>`).join('')}</section>`;
 }
@@ -517,9 +518,26 @@ async function cgSaveAd(form){
     toast(id?'נשמר':'הפרסומת נוצרה');CG.edit=null;await loadCg();draw();
   }catch(e){toast('שגיאה: '+(e.message||e),5000);btn.disabled=false}
 }
+// ---------- poker: Barusik's admin gets the first 30 seconds of every new room ----------
+let PQ=null;const PQSEEN=new Set();let PQFIRST=true;
+async function loadPoker(){try{const r=await callFn('poker',{a:'rooms'});if(r.error){PQ=null;return}PQ=r.rooms||[];
+  for(const x of PQ){if(x.host_kind==='waiting'&&!PQSEEN.has(x.id)&&!PQFIRST){pqBeep();if('Notification' in window&&Notification.permission==='granted')new Notification('חדר פוקר חדש',{body:`${x.creator||''} פתח חדר. 30 שניות לקחת את הניהול.`,tag:x.id})}PQSEEN.add(x.id)}
+  PQFIRST=false;pqAlert()}catch{PQ=null}}
+function pqBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();[0,.18].forEach(d=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=988;g.gain.setValueAtTime(.0001,a.currentTime+d);g.gain.exponentialRampToValueAtTime(.2,a.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d+.15);o.connect(g).connect(a.destination);o.start(a.currentTime+d);o.stop(a.currentTime+d+.2)})}catch{}}
+// a strip above everything while a room is waiting for you, on every tab of this page
+function pqAlert(){let el=document.getElementById('pqa');const w=(PQ||[]).filter(r=>r.host_kind==='waiting'&&Date.parse(r.offer_until)>Date.now());
+  if(!w.length){el&&el.remove();return}
+  if(!el){el=document.createElement('div');el.id='pqa';el.setAttribute('role','alert');el.style.cssText='position:fixed;top:0;inset-inline:0;z-index:50;background:#F5B45B;color:#2B1B00;font-weight:700;padding:8px 12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center';document.body.appendChild(el)}
+  el.innerHTML=w.map(r=>`<span>♠ ${esc(r.creator||'')} פתח חדר פוקר "${esc(r.name||r.id)}" · נשארו <b dir="ltr">${Math.max(0,Math.ceil((Date.parse(r.offer_until)-Date.now())/1000))}</b> שנ׳</span><button data-pqt="${esc(r.id)}" style="background:#2B1B00;color:#F5B45B">לקחת ניהול</button><a href="/admin/poker/?r=${esc(r.id)}" style="color:#2B1B00">ניהול מלא</a>`).join('<span style="width:100%"></span>');
+  el.querySelectorAll('[data-pqt]').forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await callFn('poker',{a:'take',room:b.dataset.pqt}).catch(()=>({error:'server'}));toast(r.error?'שגיאה: '+r.error:'החדר שלך');await loadPoker();draw()})}
+function pokerHTML(){
+  if(PQ===null)return`<section class="panel"><h2>פוקר <span class="pill n">לא מותקן</span></h2><p>כדי שהפוקר עם חברים יעבוד: ב־<a href="https://supabase.com/dashboard/project/${REF}/sql/new" target="_blank" rel="noopener">עורך ה־SQL</a> מריצים את <b dir="ltr">supabase/poker.sql</b>, ומעלים את הפונקציה <b dir="ltr">poker</b> (Actions → Deploy Supabase functions → poker).</p></section>`;
+  return`<section><h2>חדרים פתוחים <span class="pill ${PQ.length?'n':'y'}">${PQ.length}</span><span class="sp"></span><a class="btn" href="/admin/poker/">ניהול מלא: קלפים, סיכויים וצ׳יפים</a></h2>
+  <div class="panel rows">${PQ.map(r=>`<div class="rowx"><b>${esc(r.name||r.id)}</b><span class="pill" dir="ltr">${esc(r.id)}</span><span class="grow">${esc(r.creator||'')} · ${r.seated} יושבים · יד ${r.hand}${r.requests?` · ${r.requests} בקשות`:''}</span>${r.host_kind==='waiting'?`<span class="pill w">מחכה לך</span><button data-a="pqtake" data-id="${esc(r.id)}">לקחת ניהול</button>`:`<span class="pill ${r.host_kind==='admin'?'y':''}">${r.host_kind==='admin'?'אתה מנהל':'שחקן מנהל'}</span>`}<a class="btn ghost" href="/admin/poker/?r=${esc(r.id)}">ניהול מלא</a></div>`).join('')||'<p class="mute">אין חדרים פתוחים כרגע.</p>'}</div>
+  <p class="mute small" style="margin-top:8px;line-height:1.7">כשמישהו פותח חדר יש לך 30 שניות לקחת את הניהול (פס צהוב למעלה וצפצוף, בכל לשונית של הדף הזה). אם לא לקחת, מי שפתח מנהל את החדר. בדף הניהול המלא אתה תמיד רואה את כל הקלפים, הסיכויים והקלפים הבאים, ויכול לקבוע צ׳יפים, להוציא, להשהות ולשנות כל הגדרה.</p></section>`}
 function draw(){
-  const c=counts(),badge={penina:c.pn,travel:c.tr,pk:c.pk,cx:cgOpen()};
-  const body={home:homeHTML,apps:appsHTML,travel:travelHTML,penina:peninaHTML,pay:payHTML,cx:cxHTML,users:usersHTML,pk:pkHTML,links:linksHTML}[VIEW]();
+  const c=counts(),badge={penina:c.pn,travel:c.tr,pk:c.pk,cx:cgOpen(),poker:(PQ||[]).filter(r=>r.host_kind==='waiting'||r.requests).length};
+  const body={home:homeHTML,apps:appsHTML,travel:travelHTML,penina:peninaHTML,pay:payHTML,cx:cxHTML,users:usersHTML,pk:pkHTML,links:linksHTML,poker:pokerHTML}[VIEW]();
   const title=(TABS.find(t=>t[0]===VIEW)||[])[1];
   const y=scrollY;
   app.innerHTML=`<div class="frame"><nav class="rail" aria-label="ניווט"><div class="logo">Barusik</div>
@@ -553,6 +571,7 @@ const ACT={
     const msg=(document.querySelector(`[data-am="${el.dataset.id}"]`)?.value||'').trim()||null;
     if(await after(()=>sb.from('app_status').update({locked:on,message:msg,updated_at:new Date().toISOString()}).eq('id',el.dataset.id),on?'ננעלה לשיפוצים':'פתוחה שוב ללקוחות')){await loadApps();draw()}else el.disabled=false},
   cgt:el=>{CGT=el.dataset.k;draw()},
+  pqtake:async el=>{el.disabled=true;const r=await callFn('poker',{a:'take',room:el.dataset.id}).catch(()=>({error:'server'}));toast(r.error?'שגיאה: '+r.error:'החדר שלך');await loadPoker();draw()},
   adnew:()=>{CG.edit=null;draw()},
   adedit:el=>{CG.edit=(CG.ads||[]).find(a=>a.id===el.dataset.id)||null;draw();const f=document.getElementById('adf');if(f)f.scrollIntoView({behavior:'smooth'})},
   addel:async el=>{if(!confirm('למחוק את הפרסומת? המספרים שלה יימחקו איתה.'))return;if(await after(()=>sb.from('cg_ads').delete().eq('id',el.dataset.id),'נמחקה')){await loadCg();draw()}},
