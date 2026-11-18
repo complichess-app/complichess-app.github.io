@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co wss://iktmyrfbejtjsiehcrar.supabase.co https://cloudflareinsights.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>🔴 שרת ברוסיק</title>
@@ -37,6 +38,8 @@ code{background:#0B0E28;padding:2px 6px;border-radius:6px;direction:ltr;display:
 <script src="/lib/supabase.js"></script>
 <script>
 (()=>{
+// never inside another site's frame: a page on top could trick a click onto "send"
+if(window.top!==window.self){document.getElementById('app').textContent='';return}
 const sb=window.supabase.createClient('https://iktmyrfbejtjsiehcrar.supabase.co','sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a',{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}});
 const BEAGENT='https://travel.beagent.online';
 const BOOKMARK="javascript:(function(){if(!/beagent\\.online$/.test(location.hostname)){location.href='https://travel.beagent.online/he';return}var s=document.createElement('script');s.src='https://barusik.com/admin/server/hands.js?v='+Date.now();document.head.appendChild(s)})()";
