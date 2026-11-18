@@ -87,8 +87,32 @@
   }
   const category = (score) => Math.floor(score / B[0]);
 
-  /* the five cards that make the hand, for highlighting on the table */
-  function bestFive(cards) {
+  /* a player's hand: Hold'em takes the best five of all seven, Omaha exactly two from the hand and three from the board */
+  function value(hole, board) {
+    if (hole.length < 4) return evaluate(hole.concat(board));
+    if (board.length < 3) return evaluate(hole.slice(0, 2).concat(board));
+    let best = -1;
+    for (let a = 0; a < hole.length; a++) for (let b = a + 1; b < hole.length; b++)
+      for (let i = 0; i < board.length; i++) for (let j = i + 1; j < board.length; j++) for (let k = j + 1; k < board.length; k++) {
+        const v = evaluate([hole[a], hole[b], board[i], board[j], board[k]]);
+        if (v > best) best = v;
+      }
+    return best;
+  }
+
+  /* the five cards that make the hand, for highlighting on the table: bestFive(hole, board) */
+  function bestFive(hole, board) {
+    if (board === undefined) return bestOf(hole);
+    if (hole.length < 4) return bestOf(hole.concat(board));
+    let best = -1, pick = null;
+    for (let a = 0; a < hole.length; a++) for (let b = a + 1; b < hole.length; b++)
+      for (let i = 0; i < board.length; i++) for (let j = i + 1; j < board.length; j++) for (let k = j + 1; k < board.length; k++) {
+        const five = [hole[a], hole[b], board[i], board[j], board[k]]; const v = evaluate(five);
+        if (v > best) { best = v; pick = five; }
+      }
+    return pick;
+  }
+  function bestOf(cards) {
     let best = -1, pick = null;
     const n = cards.length;
     for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) {
@@ -112,13 +136,13 @@
     const need = 5 - board.length;
     for (let it = 0; it < iters; it++) {
       // partial shuffle: only the cards we draw
-      const draw = need + opponents * 2;
+      const hc = hole.length, draw = need + opponents * hc;
       for (let i = 0; i < draw; i++) { const j = i + Math.floor(rand() * (deck.length - i)); const t = deck[i]; deck[i] = deck[j]; deck[j] = t; }
       const full = board.concat(deck.slice(0, need));
-      const mine = evaluate(hole.concat(full));
+      const mine = value(hole, full);
       let best = 0, ties = 0, lost = false;
       for (let o = 0; o < opponents; o++) {
-        const v = evaluate([deck[need + o * 2], deck[need + o * 2 + 1]].concat(full));
+        const v = value(deck.slice(need + o * hc, need + o * hc + hc), full);
         if (v > mine) { lost = true; break; }
         if (v === mine) ties++;
         if (v > best) best = v;
@@ -140,7 +164,7 @@
     for (let it = 0; it < runs; it++) {
       for (let i = 0; i < need; i++) { const j = i + Math.floor(rand() * (deck.length - i)); const t = deck[i]; deck[i] = deck[j]; deck[j] = t; }
       const full = board.concat(deck.slice(0, need));
-      const v = holes.map((h) => evaluate(h.concat(full)));
+      const v = holes.map((h) => value(h, full));
       const best = Math.max(...v);
       const w = v.filter((x) => x === best).length;
       v.forEach((x, i) => { if (x === best) { if (w === 1) win[i]++; else tie[i] += 1 / w; } });
@@ -152,6 +176,8 @@
   // events go out through table.on(type, data) so the page can animate and the log can speak
   function Table(opts) {
     this.sb = opts.sb; this.bb = opts.bb;
+    this.game = opts.game || 'nlh';                       // nlh no-limit hold'em, plh pot-limit hold'em, plo pot-limit omaha
+    this.minOpen = Math.max(1, opts.minRaise || opts.bb);  // the smallest bet, and the smallest raise until someone raises more
     this.seats = opts.players.map((p, i) => ({
       seat: i, id: p.id, name: p.name, human: !!p.human, style: p.style || null,
       chips: p.chips, cards: [], bet: 0, total: 0, folded: false, allIn: false, acted: false, canRaise: true, out: p.chips <= 0,
@@ -188,7 +214,7 @@
     this.post(bbSeat, this.bb, 'bb');
     // two cards each, one at a time starting left of the button
     let s = this.button;
-    for (let round = 0; round < 2; round++) {
+    for (let round = 0; round < (this.game === 'plo' ? 4 : 2); round++) {
       for (let k = 0; k < this.live().length; k++) {
         s = this.next(s, (p) => !p.out);
         this.seats[s].cards.push(this.deck.pop());
@@ -197,7 +223,7 @@
     this.on('deal', {});
     this.stage = 'preflop';
     this.currentBet = this.bb;
-    this.minRaise = this.bb;
+    this.minRaise = Math.max(this.bb, this.minOpen);
     this.toAct = this.next(bbSeat, this.canAct);
     this.settleOrContinue(true);
     return true;
@@ -216,10 +242,12 @@
     const p = this.seats[seat];
     const toCall = Math.max(0, this.currentBet - p.bet);
     const callAmt = Math.min(toCall, p.chips);
-    const maxTo = p.bet + p.chips;
+    let maxTo = p.bet + p.chips;
+    // pot limit: call, then raise by the size of the pot after the call
+    if (this.game !== 'nlh') maxTo = Math.min(maxTo, this.currentBet + this.pot() + toCall);
     const o = { toCall, call: callAmt, check: toCall === 0, fold: toCall > 0, raise: false, minTo: 0, maxTo, bet: this.currentBet === 0 };
-    if (p.canRaise && p.chips > toCall) {
-      const minTo = this.currentBet === 0 ? Math.min(this.bb, maxTo) : this.currentBet + this.minRaise;
+    if (p.canRaise && p.chips > toCall && maxTo > this.currentBet) {
+      const minTo = this.currentBet === 0 ? Math.min(this.minOpen, maxTo) : this.currentBet + this.minRaise;
       o.raise = true; o.minTo = Math.min(minTo, maxTo);
     }
     return o;
@@ -300,7 +328,7 @@
     this.returnUncalled();
     this.on('collect', { pot: this.pot() });
     for (const p of this.seats) { p.bet = 0; p.acted = false; p.canRaise = true; }
-    this.currentBet = 0; this.minRaise = this.bb;
+    this.currentBet = 0; this.minRaise = this.minOpen;
     const order = ['preflop', 'flop', 'turn', 'river'];
     const i = order.indexOf(this.stage);
     if (i === 3) return this.finish();
@@ -353,7 +381,7 @@
         this.on('board', { stage: this.board.length === 3 ? 'flop' : this.board.length === 4 ? 'turn' : 'river', board: this.board.slice(), runout: true });
       }
       const scores = {};
-      for (const p of left) { scores[p.seat] = evaluate(p.cards.concat(this.board)); p.shown = true; }
+      for (const p of left) { scores[p.seat] = value(p.cards, this.board); p.shown = true; }
       this.on('showdown', { scores });
       for (const pot of this.pots()) {
         const elig = pot.eligible.filter((s) => scores[s] != null);
@@ -391,7 +419,7 @@
     const o = t.options(seat);
     const opp = t.inHand().length - 1;
     const pot = t.pot();
-    const iters = t.board.length ? 420 : 300;
+    const iters = p.cards.length > 2 ? (t.board.length ? 140 : 90) : t.board.length ? 420 : 300;
     let eq = equity(p.cards, t.board, opp, iters);
     // equity against random hands flatters us when someone has shown strength
     const pressure = o.toCall / Math.max(1, pot);
@@ -421,7 +449,7 @@
   }
   const roundChips = (v, bb) => { const u = bb >= 100 ? bb / 4 : bb / 2; return Math.max(u, Math.round(v / u) * u); };
 
-  const api = { Table, evaluate, category, bestFive, equity, odds, decide, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
+  const api = { Table, evaluate, value, category, bestFive, equity, odds, decide, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Poker = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

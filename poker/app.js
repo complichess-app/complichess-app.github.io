@@ -117,7 +117,9 @@
   let leaveRoom = null;
   function go(url) { history.pushState(null, '', url); qs.forEach((_, k) => qs.delete(k)); new URLSearchParams(location.search).forEach((v, k) => qs.set(k, v)); route(); }
   addEventListener('popstate', () => { qs.forEach((_, k) => qs.delete(k)); new URLSearchParams(location.search).forEach((v, k) => qs.set(k, v)); route(); });
+  let routed = false;
   function route() {
+    routed = true;
     if (leaveRoom) { leaveRoom(); leaveRoom = null; }
     document.body.classList.remove('in-room');
     const r = roomId();
@@ -148,6 +150,7 @@
         <label>${esc(T.yourName)}<input name="name" maxlength="20" required value="${esc(myName())}"></label>
         <div class="row"><label>${esc(T.blinds)}<select name="bl">${[[5, 10], [10, 20], [25, 50], [50, 100], [100, 200], [500, 1000]].map(([s, b], i) => `<option value="${s}/${b}"${i === 1 ? ' selected' : ''}>${s}/${b}</option>`).join('')}</select></label>
         <label>${esc(T.seats)}<select name="seats">${[2, 4, 6, 8, 9].map((n) => `<option${n === 9 ? ' selected' : ''}>${n}</option>`).join('')}</select></label></div>
+        <label>${esc(T.game)}<select name="game">${['nlh', 'plh', 'plo'].map((g) => `<option value="${g}">${esc(T[g])}</option>`).join('')}</select></label>
         <label class="check"><input type="checkbox" name="approve" checked>${esc(T.approveOn)}</label>
         <button class="btn">${esc(T.createGo)}</button>`;
       c.onsubmit = async (e) => {
@@ -155,7 +158,7 @@
         const f = new FormData(c); const [s, b] = String(f.get('bl')).split('/').map(Number);
         const btn = $('button', c); btn.disabled = true;
         try {
-          const r = await call('create', { title: f.get('title'), name: f.get('name'), settings: { sb: s, bb: b, seats: +f.get('seats'), approve: !!f.get('approve'), minBuy: b * 50, maxBuy: b * 200 } });
+          const r = await call('create', { title: f.get('title'), name: f.get('name'), settings: { sb: s, bb: b, seats: +f.get('seats'), approve: !!f.get('approve'), minBuy: b * 50, maxBuy: b * 200, game: f.get('game'), minRaise: b } });
           try { localStorage.setItem('barusik.poker.name', String(f.get('name'))); } catch {}
           go('?r=' + r.room);
         } catch (x) { fail(x); btn.disabled = false; }
@@ -198,14 +201,14 @@
         continue;
       }
       const me = i === v.me;
-      const cards = s.cards === 'back' ? ['back', 'back'] : Array.isArray(s.cards) ? s.cards : [];
+      const cards = s.cards === 'back' ? Array(v.holes || 2).fill('back') : Array.isArray(s.cards) ? s.cards : [];
       const hk = me ? cards.join(',') + v.hand : '';
       const fresh = me && hk !== lastHole; if (me) lastHole = hk;
       const turn = v.toAct === i;
       const left = turn && v.until ? Math.max(0, v.until - Date.now()) : 0;
       html += `<div class="seat ${me ? 'me' : ''} ${turn ? 'turn' : ''} ${s.folded ? 'folded' : ''} ${s.win ? 'win' : ''}" style="left:${p.x}%;top:${p.y}%">
-        <div class="hole">${cards.map((c) => cardHTML(c, (fresh ? 'in ' : '') + (win.size && c !== 'back' ? (win.has(c) ? 'hl' : 'dim') : ''))).join('')}</div>
-        <div class="plate">${s.allIn ? `<span class="tag">${esc(T.allin)}</span>` : s.away ? `<span class="tag" style="background:#555;color:#eee">${esc(T.isAway)}</span>` : ''}
+        <div class="hole ${cards.length > 2 ? 'four' : ''}">${cards.map((c) => cardHTML(c, (fresh ? 'in ' : '') + (win.size && c !== 'back' ? (win.has(c) ? 'hl' : 'dim') : ''))).join('')}</div>
+        <div class="plate" data-plate="${i}">${v.canThrow && !me ? `<button class="tom" data-throw="${i}" aria-label="${esc(fill(T.throwAt, { n: s.name }))}" title="${esc(fill(T.throwAt, { n: s.name }))}">🍅</button>` : ''}${s.allIn ? `<span class="tag">${esc(T.allin)}</span>` : s.away ? `<span class="tag" style="background:#555;color:#eee">${esc(T.isAway)}</span>` : ''}
           <div class="nm">${esc(s.name)}${me && s.name !== T.you ? ` <span class="mute small">(${esc(T.you)})</span>` : ''}</div>
           <div class="ch">${num(s.chips)}</div>
           ${s.hand ? `<div class="hand">${esc(s.hand)}</div>` : ''}
@@ -217,6 +220,7 @@
     if (v.button != null && v.seats[v.button]) { const p = seatPos(v.button, v.n, v.me); html += `<div class="dbtn" style="left:${p.dx}%;top:${p.dy}%" title="${esc(T.dealer)}" aria-label="${esc(T.dealer)}">D</div>`; }
     felt.innerHTML = html;
     felt.querySelectorAll('[data-sit]').forEach((b) => (b.onclick = () => onSit(+b.dataset.sit)));
+    felt.querySelectorAll('[data-throw]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); v.onThrow && v.onThrow(+b.dataset.throw); }));
   }
 
   function drawActions(el, v, o, send) {
@@ -255,7 +259,10 @@
       case 'kick': return fill(esc(T.lkick), { n }); case 'host': return fill(esc(T.lhost), { n }); case 'admin': return esc(T.ladmin);
       case 'pause': return esc(T.lpause); case 'resume': return esc(T.lresume); case 'closed': return esc(T.lclosed);
       case 'away': return fill(esc(T.laway), { n }); case 'ask': return fill(esc(T.lask), { n }); case 'denied': return fill(esc(T.ldenied), { n });
-      case 'chips': return fill(esc(T.lchips), { n, a }); case 'settings': return fill(esc(T.lsettings), { a: `<bdi class="n">${e.sb}/${e.bb}</bdi>` });
+      case 'chips': return fill(esc(T.lchips), { n, a });
+      case 'throw': return fill(esc(T.lthrow), { n, t: esc(e.to || '') });
+      case 'buy': return fill(esc(T.lbuy), { n, a });
+      case 'show': return fill(esc(T.lshow), { n }) + (e.b ? ` <bdi dir="ltr">${e.b.map(cardLabel).join(' ')}</bdi>` : ''); case 'settings': return fill(esc(T.lsettings), { a: `<bdi class="n">${e.sb}/${e.bb}</bdi>` });
       default: return '';
     }
   }
@@ -266,7 +273,7 @@
     app.innerHTML = `<div class="roomwrap"><div class="stage">
         <div class="bar" id="bar"><h1>${esc(title)}</h1></div>
         <div id="banner"></div>
-        <div class="felt" id="felt"></div>
+        <div class="feltwrap"><div class="felt" id="felt"></div><div id="fx" aria-hidden="true"></div></div>
         <div class="actions" id="acts"></div>
       </div>
       <aside class="side" id="side"><div class="tabs" role="tablist" id="tabs">${extraTabs.map(([k, l], i) => `<button role="tab" data-t="${k}" aria-selected="${i === 0}">${esc(l)}</button>`).join('')}<span style="flex:1"></span><button class="sidebtn btn ghost small" id="sideX" aria-label="×">×</button></div>
@@ -284,6 +291,48 @@
     }
     roomShell(id, [['log', T.log], ['chat', T.chat], ['ledger', T.ledger]]);
     let room = null, my = { hand: -1, cards: null }, tab = 'log', unread = 0, admin = false, timers = [], alive = true, chan = null, lastTurnMine = false;
+    let basket = null, seenThrows = null, wonHand = 0, bchan = null;
+    const loadBasket = async () => { const r = await sb.from('po_baskets').select('tomatoes').eq('uid', USER.id).maybeSingle(); if (!r.error) { basket = r.data ? r.data.tomatoes : 0; if (room && $('#bar')) drawBar(); } };
+    loadBasket();
+    bchan = sb.channel('po-basket-' + USER.id).on('postgres_changes', { event: '*', schema: 'public', table: 'po_baskets', filter: `uid=eq.${USER.id}` }, () => loadBasket()).subscribe();
+    async function throwAt(seat) {
+      if (!basket) { toast(T.err.no_tomatoes); return buyTomatoes(); }
+      basket = Math.max(0, basket - 1); drawBar();
+      try { await call('throw', { room: id, seat }); } catch (x) { fail(x); loadBasket(); }
+    }
+    function buyTomatoes() {
+      const d = document.createElement('dialog');
+      d.innerHTML = `<h2>🍅 ${esc(T.buyT)}</h2><form method="dialog"><p class="mute small" style="margin:0">${esc(T.basketT)}</p>
+        <label>${esc(T.howMany)} <span class="mute small">(${esc(T.buyEach)})</span><input name="n" type="number" inputmode="numeric" min="1" value="5" required></label>
+        <div class="row"><button value="x" class="btn ghost" formnovalidate>${esc(T.cancel)}</button><button value="ok" class="btn">${esc(T.buyGo)}</button></div></form>`;
+      document.body.appendChild(d); d.showModal();
+      d.addEventListener('close', async () => {
+        const n = +new FormData($('form', d)).get('n'); d.remove();
+        if (d.returnValue !== 'ok' || !(n > 0)) return;
+        try { await call('buy', { room: id, n }); basket = (basket || 0) + n; drawBar(); toast(`🍅 +${n}`); } catch (x) { fail(x); }
+      });
+    }
+    // tomatoes in flight: from the thrower's seat (or the top edge for someone standing) to the target
+    function animateThrows() {
+      const list = st().throws || [];
+      if (seenThrows === null) { seenThrows = new Set(list.map((t) => t.id)); return; }
+      const felt = $('#fx'); if (!felt) return;
+      const n = st().settings.seats, me = mySeat();
+      for (const t of list) {
+        if (seenThrows.has(t.id)) continue; seenThrows.add(t.id);
+        if (Date.now() - t.at > 8000) continue;
+        const to = seatPos(t.to, n, me), from = t.fs >= 0 ? seatPos(t.fs, n, me) : { x: 50, y: -4 };
+        const el = document.createElement('div'); el.className = 'flyt'; el.textContent = '🍅';
+        el.style.left = from.x + '%'; el.style.top = from.y + '%';
+        felt.appendChild(el);
+        requestAnimationFrame(() => requestAnimationFrame(() => { el.style.left = to.x + '%'; el.style.top = to.y + '%'; el.classList.add('go'); }));
+        setTimeout(() => {
+          el.remove();
+          const sp = document.createElement('div'); sp.className = 'splat'; sp.style.left = to.x + '%'; sp.style.top = to.y + '%'; felt.appendChild(sp); setTimeout(() => sp.remove(), 2600);
+          if (t.to === me) { if (navigator.vibrate) navigator.vibrate([30, 40, 60]); say(fill(T.lthrow, { n: t.from, t: t.name })); }
+        }, 620);
+      }
+    }
     const st = () => room.state;
     const isHost = () => room && (room.host === USER.id || admin);
     const mySeat = () => (st().seats || []).findIndex((s) => s && s.uid === USER.id);
@@ -309,6 +358,10 @@
       if (!live || !live.players[ms]) my.cards = null;
       schedule();
       draw();
+      animateThrows();
+      // a hand I won: a tomato landed in my basket
+      const res = st().hand && st().hand.results;
+      if (res && live && live.stage === 'done' && st().handNo !== wonHand && res.some((r) => r.seats.includes(ms))) { wonHand = st().handNo; toast(T.gotT); setTimeout(loadBasket, 1200); }
     }
     // the clock lives on the server; any open page may nudge it when a deadline passes
     function schedule() {
@@ -337,8 +390,8 @@
           else if (p.has) cards = 'back';
         }
         let hand = '', best = null;
-        if (showdown && Array.isArray(cards) && cards.length === 2 && live.stage === 'done' && s.hand.board.length === 5 && !p.folded) { const sc = P.evaluate(cards.concat(s.hand.board)); hand = handName(P.category(sc)); if (winners[i]) best = P.bestFive(cards.concat(s.hand.board)); }
-        else if (i === ms && Array.isArray(cards) && s.hand && s.hand.board.length >= 3 && live.stage !== 'done') hand = handName(P.category(P.evaluate(cards.concat(s.hand.board))));
+        if (showdown && Array.isArray(cards) && cards.length >= 2 && live.stage === 'done' && s.hand.board.length === 5 && !p.folded) { hand = handName(P.category(P.value(cards, s.hand.board))); if (winners[i]) best = P.bestFive(cards, s.hand.board); }
+        else if (i === ms && Array.isArray(cards) && s.hand && s.hand.board.length >= 3 && live.stage !== 'done') hand = handName(P.category(P.value(cards, s.hand.board)));
         return { name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
       });
       const pot = live ? (live.stage === 'done' ? 0 : live.pot - seats.reduce((t, x) => t + (x ? x.bet : 0), 0)) : 0;
@@ -348,7 +401,7 @@
       else if (!s.playing) msg = esc(isHost() ? T.needTwo : T.waitStart);
       else if (!live || live.stage === 'done' || live.stage === 'idle') { const el = (s.seats || []).filter((x) => x && x.chips > 0 && !x.away).length; if (el < 2) msg = esc(T.needTwo); }
       if (myReq) msg = esc(T.pending);
-      return { n, me: ms, seats, button: s.hand ? s.hand.button : null, sb: s.hand?.sb, bb: s.settings.bb, board: s.hand ? s.hand.board : [], pot: Math.max(0, pot), toAct: s.turn ? s.turn.s : -1, until: s.turn ? s.turn.until : 0, turnSec: s.settings.turn, msg, canSit: ms < 0 && !myReq, hand: s.handNo || 0 };
+      return { holes: (s.hand && s.hand.holes) || (s.settings.game === 'plo' ? 4 : 2), canThrow: true, onThrow: throwAt, n, me: ms, seats, button: s.hand ? s.hand.button : null, sb: s.hand?.sb, bb: s.settings.bb, board: s.hand ? s.hand.board : [], pot: Math.max(0, pot), toAct: s.turn ? s.turn.s : -1, until: s.turn ? s.turn.until : 0, turnSec: s.settings.turn, msg, canSit: ms < 0 && !myReq, hand: s.handNo || 0 };
     }
     function drawBanner() {
       const el = $('#banner'); if (!el || !room) return;
@@ -364,8 +417,9 @@
     function drawBar() {
       const s = st(), ms = mySeat();
       const hostName = room.host_kind === 'admin' ? T.adminHost : room.host === USER.id ? T.youHost : room.host_kind === 'player' ? fill(T.hostIs, { n: (s.seats.find((x) => x && x.uid === room.host) || {}).name || s.creator }) : '';
-      $('#bar').innerHTML = `<h1>${esc(s.title || room.name || id)}</h1><span class="pill b n">${esc(id)}</span><span class="pill">${num(s.settings.sb)}/${num(s.settings.bb)}</span>${hostName ? `<span class="pill ${room.host_kind === 'admin' ? 'g' : ''}">${esc(hostName)}</span>` : ''}
+      $('#bar').innerHTML = `<h1>${esc(s.title || room.name || id)}</h1><span class="pill b n">${esc(id)}</span><span class="pill">${esc(T[s.settings.game || 'nlh'])} · ${num(s.settings.sb)}/${num(s.settings.bb)}</span>${hostName ? `<span class="pill ${room.host_kind === 'admin' ? 'g' : ''}">${esc(hostName)}</span>` : ''}
         <span style="flex:1"></span>
+        <button class="btn ghost small" id="bask" title="${esc(T.basket)}" aria-label="${esc(T.basket)}: ${basket ?? 0} ${esc(T.tomatoes)}">🍅 <bdi class="n">${basket ?? '…'}</bdi></button>
         <button class="btn small" id="share">${esc(T.share)}</button>
         ${isHost() && (!s.playing || s.paused) ? `<button class="btn small" id="go">${esc(s.paused ? T.resume : T.start)}</button>` : ''}
         ${isHost() && s.playing && !s.paused ? `<button class="btn ghost small" id="pz">${esc(T.pause)}</button>` : ''}
@@ -379,6 +433,7 @@
       $('#aw')?.addEventListener('click', () => call('away', { room: id }).catch(fail));
       $('#lv')?.addEventListener('click', () => call('leave', { room: id }).catch(fail));
       $('#rb')?.addEventListener('click', () => askChips('rebuy'));
+      $('#bask').onclick = () => { if (mySeat() >= 0) buyTomatoes(); else toast(T.basketT); };
       $('#sideO')?.addEventListener('click', () => { $('#side').classList.add('open'); });
     }
     function askChips(kind, seat) {
@@ -419,7 +474,9 @@
         const g = s.settings;
         pane.innerHTML = `<form id="setf" style="display:flex;flex-direction:column;gap:8px">
           <label>${esc(T.roomName)}<input name="title" maxlength="20" value="${esc(s.title || '')}"></label>
+          <label>${esc(T.game)}<select name="game" style="width:170px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--room);padding:0 8px">${['nlh', 'plh', 'plo'].map((x) => `<option value="${x}"${g.game === x ? ' selected' : ''}>${esc(T[x])}</option>`).join('')}</select></label>
           <label>${esc(T.sb)}<input name="sb" type="number" min="1" value="${g.sb}"></label><label>${esc(T.bb)}<input name="bb" type="number" min="2" value="${g.bb}"></label>
+          <label>${esc(T.minRaise)}<input name="minRaise" type="number" min="${g.bb}" value="${g.minRaise || g.bb}"></label>
           <label>${esc(T.minBuy)}<input name="minBuy" type="number" value="${g.minBuy}"></label><label>${esc(T.maxBuy)}<input name="maxBuy" type="number" value="${g.maxBuy}"></label>
           <label>${esc(T.turnTime)}<input name="turn" type="number" min="10" max="300" value="${g.turn}"></label>
           <label>${esc(T.seats)}<input name="seats" type="number" min="2" max="9" value="${g.seats}"></label>
@@ -428,7 +485,7 @@
           <div class="hd">${esc(T.seats)}</div>
           ${s.seats.map((x, i) => x ? `<div class="pl"><b>${esc(x.name)}</b>${num(x.chips)}${x.uid !== USER.id ? `<button class="btn ghost small" data-kick="${i}">${esc(T.kick)}</button>` : ''}${x.uid !== room.host ? `<button class="btn ghost small" data-host="${i}">${esc(T.makeHost)}</button>` : ''}</div>` : '').join('')}
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${s.playing ? `<button class="btn ghost small" id="nx">${esc(T.nextHand)}</button>` : ''}<button class="btn red small" id="cl">${esc(T.close)}</button></div>`;
-        $('#setf').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats']) o[k] = +f.get(k); o.approve = !!f.get('approve'); call('settings', { room: id, settings: o, title: f.get('title') }).then(() => toast('✓')).catch(fail); };
+        $('#setf').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise']) o[k] = +f.get(k); o.approve = !!f.get('approve'); o.game = f.get('game'); call('settings', { room: id, settings: o, title: f.get('title') }).then(() => toast('✓')).catch(fail); };
         pane.querySelectorAll('[data-kick]').forEach((b) => (b.onclick = () => call('kick', { room: id, seat: +b.dataset.kick }).catch(fail)));
         pane.querySelectorAll('[data-host]').forEach((b) => (b.onclick = () => call('host', { room: id, seat: +b.dataset.host }).catch(fail)));
         $('#nx')?.addEventListener('click', () => call('next', { room: id }).catch(fail));
@@ -444,9 +501,11 @@
       if (mine && !lastTurnMine) { ding(); say(T.yourTurn); }
       lastTurnMine = mine;
       const myReq = (s.requests || []).find((r) => r.uid === USER.id);
-      v.under = myReq ? `<div class="row"><span class="mute">${esc(T.pending)}</span><button class="btn ghost small" id="cx">${esc(T.cancel)}</button></div>` : v.me >= 0 && s.live && !s.live.players[v.me] && s.live.stage !== 'done' ? `<div class="row mute">${esc(T.waitHand)}</div>` : '';
+      const canShow = v.me >= 0 && s.live && s.live.stage === 'done' && s.live.players[v.me] && !s.live.players[v.me].out && !s.live.players[v.me].cards && my.cards;
+      v.under = myReq ? `<div class="row"><span class="mute">${esc(T.pending)}</span><button class="btn ghost small" id="cx">${esc(T.cancel)}</button></div>` : v.me >= 0 && s.live && !s.live.players[v.me] && s.live.stage !== 'done' ? `<div class="row mute">${esc(T.waitHand)}</div>` : canShow ? `<div class="row"><button class="btn ghost small" id="shw">${esc(T.showCards)}</button></div>` : '';
       drawActions($('#acts'), v, mine ? s.turn.o : null, (type, to) => call('act', { room: id, type, to }).catch((x) => { fail(x); draw(); }));
       $('#cx')?.addEventListener('click', () => call('cancel', { room: id }).catch(fail));
+      $('#shw')?.addEventListener('click', () => call('show', { room: id }).catch(fail));
       if ($('#side').contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // don't wipe what they're typing
       drawSide();
     }
@@ -459,7 +518,7 @@
     document.addEventListener('visibilitychange', vis);
     let quick; const moved = () => { clearTimeout(quick); quick = setTimeout(load, 120); };
     addEventListener('poker:moved', moved);
-    leaveRoom = () => { alive = false; removeEventListener('poker:moved', moved); timers.forEach(clearTimeout); clearInterval(poll); document.removeEventListener('visibilitychange', vis); if (chan) sb.removeChannel(chan); };
+    leaveRoom = () => { alive = false; removeEventListener('poker:moved', moved); timers.forEach(clearTimeout); clearInterval(poll); document.removeEventListener('visibilitychange', vis); if (chan) sb.removeChannel(chan); if (bchan) sb.removeChannel(bchan); };
   }
 
   /* ================= practice against bots ================= */
@@ -498,7 +557,7 @@
         const show = i === 0 || (done && p.shown);
         const cards = p.cards.length ? (show ? p.cards : p.folded ? null : 'back') : null;
         let hand = '', best = null;
-        if (Array.isArray(cards) && t.board.length >= 3 && !p.folded) { hand = handName(P.category(P.evaluate(cards.concat(t.board)))); if (win[i] && done && t.board.length === 5) best = P.bestFive(cards.concat(t.board)); }
+        if (Array.isArray(cards) && t.board.length >= 3 && !p.folded) { hand = handName(P.category(P.value(cards, t.board))); if (win[i] && done && t.board.length === 5) best = P.bestFive(cards, t.board); }
         return { name: p.name, chips: p.chips, bet: p.bet, folded: p.folded, allIn: p.allIn, cards, win: win[i] || 0, hand, best };
       });
       const pot = done ? 0 : t.pot() - t.seats.reduce((a, p) => a + p.bet, 0);
@@ -543,6 +602,6 @@
 
   document.documentElement.lang = L; document.documentElement.dir = rtl() ? 'rtl' : 'ltr';
   $('#brandT').textContent = T.title; document.title = T.title + ' · Barusik';
-  if (sb) sb.auth.getSession().then(({ data }) => { session = data.session; USER = session?.user || null; drawAcct(); route(); });
+  if (sb) sb.auth.getSession().then(({ data }) => { session = data.session; USER = session?.user || null; drawAcct(); if (!routed) route(); });
   else route();
 })();

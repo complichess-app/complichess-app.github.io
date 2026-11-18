@@ -71,7 +71,7 @@
     const m = { hand: () => `<div class="hd">${fill(T.lhand, { a: e.n })}</div>`, sb: () => fill(T.lsb, { n, a }), bb: () => fill(T.lbb, { n, a }), fold: () => fill(T.lfold, { n }), check: () => fill(T.lcheck, { n }), call: () => fill(T.lcall, { n, a }) + all, bet: () => fill(T.lbet, { n, a }) + all, raise: () => fill(T.lraise, { n, a }) + all,
       board: () => fill(T.lboard, { a: `<span class="board" style="display:inline-flex;gap:3px">${e.b.map((c) => (RK[P.rankOf(c)] || P.rankOf(c)) + SU[P.suitOf(c)]).join(' ')}</span>` }), back: () => fill(T.lback, { n, a }),
       win: () => e.cat == null ? fill(T.lwin, { n: esc((e.names || []).join(', ')), a }) : fill(T.lwinH, { n: esc((e.names || []).join(', ')), a, h: T.hands[e.cat] }),
-      sit: () => fill(T.lsit, { n, a }), left: () => fill(T.lleft, { n, a }), rebuy: () => fill(T.lrebuy, { n, a }), kick: () => fill(T.lkick, { n }), host: () => fill(T.lhost, { n }), admin: () => T.ladmin, pause: () => T.lpause, resume: () => T.lresume, closed: () => T.lclosed, away: () => fill(T.laway, { n }), ask: () => fill(T.lask, { n }), denied: () => fill(T.ldenied, { n }), chips: () => fill(T.lchips, { n, a }), settings: () => fill(T.lsettings, { a: `${e.sb}/${e.bb}` }) }[e.k];
+      sit: () => fill(T.lsit, { n, a }), left: () => fill(T.lleft, { n, a }), rebuy: () => fill(T.lrebuy, { n, a }), kick: () => fill(T.lkick, { n }), host: () => fill(T.lhost, { n }), admin: () => T.ladmin, pause: () => T.lpause, resume: () => T.lresume, closed: () => T.lclosed, away: () => fill(T.laway, { n }), ask: () => fill(T.lask, { n }), denied: () => fill(T.ldenied, { n }), chips: () => fill(T.lchips, { n, a }), throw: () => fill(T.lthrow, { n, t: esc(e.to || '') }), buy: () => fill(T.lbuy, { n, a }), show: () => fill(T.lshow, { n }), settings: () => fill(T.lsettings, { a: `${e.sb}/${e.bb}` }) }[e.k];
     const s = m ? m() : '';
     return s.startsWith('<div') ? s : `<div>${s}</div>`;
   }
@@ -86,7 +86,7 @@
     const seats = s.seats.map((x, i) => x ? { ...x, i, p: byseat[i] } : null).filter(Boolean);
     const hostLabel = ROOM.host_kind === 'admin' ? 'אתה' : ROOM.host_kind === 'waiting' ? 'מחכה לך' : (s.seats.find((x) => x && x.uid === ROOM.host) || {}).name || s.creator;
     const pot = live ? live.pot : 0;
-    return `<section class="panel"><div class="top"><h2>${esc(s.title || ROOM.name)}</h2><span class="pill g n">${esc(ROOM.id)}</span><span class="pill">${num(g.sb)}/${num(g.bb)}</span><span class="pill">מנהל החדר: ${esc(hostLabel)}</span>${s.paused ? '<span class="pill w">מושהה</span>' : s.playing ? '<span class="pill y">משחקים</span>' : '<span class="pill">לא התחיל</span>'}
+    return `<section class="panel"><div class="top"><h2>${esc(s.title || ROOM.name)}</h2><span class="pill g n">${esc(ROOM.id)}</span><span class="pill">${T[g.game || 'nlh']} · ${num(g.sb)}/${num(g.bb)}</span><span class="pill">מנהל החדר: ${esc(hostLabel)}</span>${s.paused ? '<span class="pill w">מושהה</span>' : s.playing ? '<span class="pill y">משחקים</span>' : '<span class="pill">לא התחיל</span>'}
       <span class="sp"></span>${ROOM.host_kind !== 'admin' ? '<button class="small" data-a="take" data-id="' + esc(ROOM.id) + '">לקחת ניהול</button>' : ''}
       ${!s.playing || s.paused ? `<button class="small" data-a="${s.paused ? 'resume' : 'start'}">${s.paused ? 'להמשיך' : 'להתחיל'}</button>` : '<button class="ghost small" data-a="pause">השהיה</button>'}
       <button class="ghost small" data-a="next">יד הבאה</button><a href="/poker/?r=${esc(ROOM.id)}" target="_blank" rel="noopener">לשולחן ↗</a><button class="red small" data-a="close">סגירת החדר</button></div></section>
@@ -95,7 +95,7 @@
         <div class="top"><h3>השולחן</h3><span class="pill">יד ${s.handNo || 0}</span>${live ? `<span class="pill">${esc({ preflop: 'לפני הפלופ', flop: 'פלופ', turn: 'טרן', river: 'ריבר', done: 'היד נגמרה' }[live.stage] || live.stage)}</span>` : ''}<span class="sp"></span><span>קופה ${num(pot)}</span></div>
         <div class="board">${[0, 1, 2, 3, 4].map((i) => v.board[i] != null ? card(v.board[i]) : playing && v.upcoming[i - v.board.length] != null ? card(v.upcoming[i - v.board.length], 'up') : card(null)).join('')}${playing && v.upcoming.length ? '<span class="small mute" style="direction:rtl">&nbsp;מסומן = הקלפים הבאים בחפיסה</span>' : ''}</div>
         ${seats.map((x) => { const p = x.p; const o = v.odds && v.odds[x.i]; const pct = o ? Math.round((o.win + o.tie) * 1000) / 10 : null;
-          const cat = p && p.cards && p.cards.length === 2 && v.board.length >= 3 ? T.hands[P.category(P.evaluate(p.cards.concat(v.board)))] : '';
+          const cat = p && p.cards && p.cards.length >= 2 && v.board.length >= 3 ? T.hands[P.category(P.value(p.cards, v.board))] : '';
           return `<div class="pl ${turn === x.i && playing ? 'turn' : ''} ${p && p.folded ? 'fold' : ''}"><div class="cards">${p && p.cards ? p.cards.map((c) => card(c)).join('') : card(null) + card(null)}</div>
           <div><div class="nm">${esc(x.name)} ${x.uid === ROOM.host ? '<span class="pill">מנהל</span>' : ''} ${x.away ? '<span class="pill w">לא ליד השולחן</span>' : ''} ${p && p.folded ? '<span class="pill">ויתר</span>' : ''}</div>
             <div class="sub">צ׳יפים ${num(x.chips)}${p && p.bet ? ` · הימור ${num(p.bet)}` : ''}${p && p.total ? ` · ביד ${num(p.total)}` : ''}${cat ? ` · ${esc(cat)}` : ''}</div>
@@ -106,9 +106,10 @@
       <div style="display:flex;flex-direction:column;gap:16px">
         <section class="panel"><h3 style="margin-bottom:8px">הגדרות</h3><form class="form" id="setf">
           <label>שם החדר<input name="title" value="${esc(s.title || '')}" maxlength="20"></label>
+          <label>סוג משחק<select name="game" style="height:38px">${['nlh', 'plh', 'plo'].map((x) => `<option value="${x}"${(g.game || 'nlh') === x ? ' selected' : ''}>${T[x]}</option>`).join('')}</select></label>
           <label>סמול<input name="sb" type="number" value="${g.sb}"></label><label>ביג<input name="bb" type="number" value="${g.bb}"></label>
           <label>כניסה מינימלית<input name="minBuy" type="number" value="${g.minBuy}"></label><label>כניסה מקסימלית<input name="maxBuy" type="number" value="${g.maxBuy}"></label>
-          <label>שניות לתור<input name="turn" type="number" value="${g.turn}"></label><label>מקומות<input name="seats" type="number" min="2" max="9" value="${g.seats}"></label>
+          <label>מינ׳ רייז<input name="minRaise" type="number" value="${g.minRaise || g.bb}"></label><label>שניות לתור<input name="turn" type="number" value="${g.turn}"></label><label>מקומות<input name="seats" type="number" min="2" max="9" value="${g.seats}"></label>
           <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="approve" type="checkbox" ${g.approve ? 'checked' : ''} style="height:20px;width:20px">כניסה באישור</label>
           <button>שמירה</button></form></section>
         <section class="panel"><h3 style="margin-bottom:8px">צ׳יפים</h3><table><thead><tr><th></th><th>נכנס</th><th>יצא</th><th>סיכום</th></tr></thead><tbody>${Object.entries(s.ledger || {}).map(([uid, l]) => { const seat = s.seats.find((x) => x && x.uid === uid); const now = seat ? seat.chips : 0; const net = now + l.out - l.in; return `<tr><td>${esc(l.name)}</td><td>${num(l.in)}</td><td>${num(l.out + now)}</td><td class="${net > 0 ? 'pos' : net < 0 ? 'neg' : ''}">${num(net)}</td></tr>`; }).join('')}</tbody></table></section>
@@ -150,7 +151,7 @@
       });
     });
     const f = document.getElementById('setf');
-    if (f && !f.dataset.w) { f.dataset.w = 1; f.addEventListener('submit', (e) => { e.preventDefault(); const d = new FormData(f); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats']) o[k] = +d.get(k); o.approve = !!d.get('approve'); run('settings', { room: CODE, settings: o, title: d.get('title') }, 'נשמר'); }); }
+    if (f && !f.dataset.w) { f.dataset.w = 1; f.addEventListener('submit', (e) => { e.preventDefault(); const d = new FormData(f); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise']) o[k] = +d.get(k); o.approve = !!d.get('approve'); o.game = d.get('game'); run('settings', { room: CODE, settings: o, title: d.get('title') }, 'נשמר'); }); }
     const say = document.getElementById('say');
     if (say && !say.dataset.w) { say.dataset.w = 1; say.addEventListener('submit', (e) => { e.preventDefault(); const i = say.querySelector('input'); const text = i.value.trim(); if (!text) return; i.value = ''; i.blur(); run('say', { room: CODE, text }); }); }
   }
