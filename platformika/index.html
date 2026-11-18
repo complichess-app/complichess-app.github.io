@@ -1,6 +1,7 @@
-<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://iktmyrfbejtjsiehcrar.supabase.co; media-src 'self' blob: https://iktmyrfbejtjsiehcrar.supabase.co; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co wss://iktmyrfbejtjsiehcrar.supabase.co https://cloudflareinsights.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>פלטפורמיקה · Platformika</title>
-<meta name="description" content="פלטפורמיקה: פוסטים, סטוריז, קליפים וצ'אטים במקום אחד, ו־99% מהרווח הולך ליוצרים. משתמש אחד לכל הפלטפורמות של ברוסיק.">
+<meta name="description" content="פוסטים, סטוריז, קליפים וצ׳אטים, ו־99% מהרווח הנקי הולך ליוצרים. משתמש אחד לכל הפלטפורמות של ברוסיק.">
 <link rel="canonical" href="https://barusik.com/platformika/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Barusik Platforms"><meta property="og:locale" content="he_IL">
 <meta property="og:title" content="פלטפורמיקה · Platformika"><meta property="og:description" content="פלטפורמה אחת. כולם מחוברים. היוצרים קודם."><meta property="og:url" content="https://barusik.com/platformika/"><meta property="og:image" content="https://barusik.com/og.png"><meta name="twitter:card" content="summary_large_image">
@@ -10,7 +11,7 @@
 <link rel="stylesheet" href="/fonts/fredoka.css"><link rel="stylesheet" href="/fonts/plex-hebrew.css">
 <style>img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <style>
-/* Layout: social super-app. Desktop = nav column (start) · feed · rail (end). Phone = top bar + feed + bottom tab bar. RTL throughout. */
+/* Layout: social super-app. Desktop = nav column (start) · feed · rail (end). Phone = top bar + feed + bottom tab bar. RTL for he/ar, LTR for the rest. */
 :root{
   --canvas:#F1F1F7;        /* page ground, faint violet bias */
   --surface:#FFFFFF;       /* cards, bars */
@@ -69,11 +70,12 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-button,input,textarea{font:inherit;color:inherit}
+button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0;padding:0}
 a{color:var(--brand)}
 :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
 svg.i{width:22px;height:22px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+[dir="ltr"] svg.flip,[dir="rtl"] .send svg,[dir="rtl"] .send-c svg{transform:scaleX(-1)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .skip{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));inset-inline-start:8px;z-index:70;background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:12px;font-weight:600;text-decoration:none;transform:translateY(-200%)}
 .skip:focus{transform:none}
@@ -94,24 +96,44 @@ p{text-wrap:pretty;margin:0}
 .nav .spacer{flex:1}
 .nav .me-chip{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;text-decoration:none;color:var(--ink)}
 .nav .me-chip:hover{background:var(--surface-3)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:15px;transition:transform .1s,background .15s,opacity .15s;white-space:nowrap}
+.nav .me-chip .meta{min-width:0;line-height:1.2}
+.nav .me-chip b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav .me-chip small{display:block;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:15px;transition:transform .1s,background .15s,opacity .15s;white-space:nowrap;text-decoration:none}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--brand);color:var(--brand-ink)}
 .btn.primary:hover{opacity:.92}
 .btn.ghost{background:var(--surface-3);color:var(--ink)}
 .btn.ghost:hover{background:var(--line-2)}
-.btn.gold{background:var(--gold);color:#241900}
+.btn.danger{background:#DC2626;color:#fff}
 .btn.block{width:100%}
 .btn.sm{height:36px;padding:0 14px;font-size:14px}
+.btn.sm svg.i{width:18px;height:18px}
 .btn[disabled]{opacity:.45;pointer-events:none}
 .nav .btn.primary{margin-top:14px;height:50px;font-size:16px}
 .badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#D42A44;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.linkish{color:var(--muted);text-decoration:underline;text-underline-offset:2px;font-size:13px}
+.linkish:hover{color:var(--ink)}
+.langsel select{height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-size:13px;cursor:pointer}
 
-main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:18px;max-width:var(--feed-w);width:100%;justify-self:center}
+main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:16px;max-width:var(--feed-w);width:100%;justify-self:center}
 .rail{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;max-height:100dvh;overflow-y:auto;padding-block:22px;display:flex;flex-direction:column;gap:16px;scrollbar-width:none}
 
 /* top bar + tab bar (phone) */
 .topbar,.tabbar{display:none}
+
+/* signed out: only the logo and the page */
+body.out .nav,body.out .rail,body.out .tabbar,body.out .topbar .iconbtn{display:none}
+body.out .app{display:block}
+body.out main{margin:0 auto;max-width:460px;padding-top:min(12vh,96px)}
+.landing{padding:32px 24px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px}
+.landing .mark{width:56px;height:56px}
+.landing h1{font-family:var(--font-display);font-weight:700;font-size:32px}
+.landing .lead{color:var(--ink-2);font-size:16px;max-width:32ch}
+.landing .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.landing .small{color:var(--muted);font-size:13.5px;max-width:36ch;margin-top:4px}
+.links{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:center}
+.loading{color:var(--muted);text-align:center;padding:48px 0}
 
 .card{background:var(--surface);border-radius:var(--r-l);box-shadow:var(--shadow)}
 .search{display:flex;align-items:center;gap:10px;height:44px;padding:0 16px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow);color:var(--muted)}
@@ -121,9 +143,11 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .page-h h1{font-family:var(--font-display);font-weight:600;font-size:28px;letter-spacing:-.01em}
 
 /* avatar */
-.av{--s:44px;width:var(--s);height:var(--s);border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:calc(var(--s)*.42);color:#fff;background:hsl(var(--h,246) 70% 52%);overflow:hidden;position:relative}
+.av{--s:44px;width:var(--s);height:var(--s);border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:calc(var(--s)*.42);color:#fff;background:hsl(var(--h,246) 62% 46%);overflow:hidden;position:relative}
 .av img{width:100%;height:100%;object-fit:cover}
 .av.s32{--s:32px}.av.s36{--s:36px}.av.s56{--s:56px}.av.s96{--s:96px}.av.s120{--s:120px}
+.av.icon{background:var(--brand-soft);color:var(--brand)}
+.av.icon svg.i{width:20px;height:20px}
 
 /* ---------- stories ---------- */
 .stories{display:flex;gap:14px;overflow-x:auto;padding:16px;scrollbar-width:none}
@@ -139,32 +163,33 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 /* ---------- composer ---------- */
 .composer{padding:16px;display:flex;flex-direction:column;gap:12px}
 .composer .row{display:flex;gap:12px;align-items:center}
-.composer .fake{flex:1;text-align:start;height:46px;padding:0 18px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:15.5px}
+.composer .fake{flex:1;min-width:0;text-align:start;height:46px;padding:0 18px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .composer .fake:hover{background:var(--surface-3)}
 .composer .acts{display:flex;gap:4px;border-top:1px solid var(--line);padding-top:10px}
 .composer .acts button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:40px;border-radius:12px;color:var(--ink-2);font-weight:500;font-size:14px}
 .composer .acts button:hover{background:var(--surface-2)}
 
 /* ---------- post ---------- */
-.post{overflow:hidden}
+.post{overflow:hidden;position:relative}
 .post-h{display:flex;align-items:center;gap:12px;padding:14px 16px 10px}
 .post-h .who{min-width:0;flex:1;line-height:1.25}
 .post-h .who b{display:block;font-weight:600}
 .post-h .who small{color:var(--muted);font-size:13px}
-.post-h a{text-decoration:none}.post-h a:hover b{text-decoration:underline}
+.post-h a{text-decoration:none;color:inherit}.post-h a:hover b{text-decoration:underline}
 .iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);flex:none}
 .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
 .post-text{padding:0 16px 12px;font-size:16px;white-space:pre-wrap;overflow-wrap:anywhere}
 .post-text.big{font-family:var(--font-display);font-size:24px;font-weight:500;line-height:1.3}
 .post-img{display:block;width:100%;max-height:640px;object-fit:cover;background:var(--surface-2)}
-.post-stats{display:flex;gap:14px;padding:10px 16px 0;color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums}
+.post-stats{display:flex;gap:16px;padding:10px 16px 0;color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums}
+.post-stats span{display:inline-flex;align-items:center;gap:5px}
+.post-stats svg.i{width:16px;height:16px}
+.post-stats .h svg{fill:var(--like);stroke:var(--like)}
 .post-acts{display:flex;gap:2px;padding:6px 8px 8px}
-.post-acts button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:12px;color:var(--ink-2);font-weight:500;font-size:14px}
+.post-acts button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:12px;color:var(--ink-2);font-weight:500;font-size:14px;min-width:0}
 .post-acts button:hover{background:var(--surface-2)}
 .post-acts button.on{color:var(--like)}
 .post-acts button.on svg{fill:var(--like);stroke:var(--like)}
-.post-acts button.tip{color:var(--gold-ink)}
-.post-acts button.tip:hover{background:var(--gold-soft)}
 .pop{animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
 .comments{border-top:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
@@ -177,10 +202,12 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .cmt-in input:focus{box-shadow:0 0 0 2px var(--brand-soft)}
 
 /* menu */
-.menu{position:absolute;inset-inline-end:12px;top:52px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-pop);padding:6px;z-index:5;min-width:200px}
+.menu{position:absolute;inset-inline-end:12px;top:52px;background:var(--surface);border-radius:14px;box-shadow:var(--shadow-pop);padding:6px;z-index:5;min-width:200px;color:var(--ink)}
 .menu button{display:flex;gap:10px;align-items:center;width:100%;padding:10px 12px;border-radius:10px;text-align:start}
 .menu button:hover{background:var(--surface-2)}
+.menu svg.i{width:18px;height:18px}
 .menu .danger{color:var(--like)}
+.clip .menu{inset-inline:6px;min-width:0;font-size:14px}
 .flash{animation:flash 1.6s ease-out}
 @keyframes flash{0%,30%{box-shadow:0 0 0 3px var(--brand)}100%{box-shadow:var(--shadow)}}
 .promo{display:inline-flex;align-items:center;gap:4px;margin-inline-start:6px;padding:1px 8px;border-radius:999px;background:var(--gold-soft);color:var(--gold-ink);font-size:12px;font-weight:600;vertical-align:1px}
@@ -190,34 +217,33 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .boost:hover b{opacity:.9}
 
 /* ---------- empty state ---------- */
-.empty{padding:40px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
-.empty .art{width:84px;height:84px;border-radius:26px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);margin-bottom:6px}
-.empty .art svg{width:38px;height:38px}
-.empty h2{font-family:var(--font-display);font-weight:600;font-size:21px}
+.empty{padding:36px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.empty .art{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);margin-bottom:6px}
+.empty .art svg{width:26px;height:26px}
+.empty h2{font-family:var(--font-display);font-weight:600;font-size:20px}
 .empty p{color:var(--ink-2);max-width:40ch}
-.empty .btn{margin-top:10px}
+.empty .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
 
 /* ---------- rail ---------- */
-.wallet{padding:20px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
-.wallet .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.wallet{padding:18px;display:flex;flex-direction:column;gap:12px}
 .wallet .lbl{color:var(--ink-2);font-size:13.5px;font-weight:500}
-.wallet .amt{font-family:var(--font-display);font-weight:600;font-size:34px;line-height:1.1;font-variant-numeric:tabular-nums}
 .split{display:flex;align-items:center;gap:12px}
 .split .bar{flex:1;height:10px;border-radius:999px;background:var(--surface-3);overflow:hidden;display:flex}
 .split .bar i{display:block;height:100%}
 .split .bar i.c{width:99%;background:var(--gold)}
 .split .bar i.o{width:1%;background:var(--muted)}
-.legend{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2)}
+.legend{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--ink-2)}
 .legend b{color:var(--ink);font-variant-numeric:tabular-nums}
 .sec-h{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 6px}
 .sec-h h3{font-size:15px;font-weight:600}
-.sec-h a,.sec-h button{font-size:13.5px;color:var(--brand);font-weight:500;text-decoration:none}
+.sec-h a{font-size:13.5px;color:var(--brand);font-weight:500;text-decoration:none}
 .invite{padding:18px;display:flex;flex-direction:column;gap:12px}
-.invite h3{font-family:var(--font-display);font-weight:600;font-size:19px}
+.invite h3{font-size:15px;font-weight:600}
 .invite p{color:var(--ink-2);font-size:14px}
-.linkbox{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;padding-inline-start:12px;border-radius:12px;background:var(--surface-2);min-width:0}
+.linkbox{display:flex;align-items:center;gap:8px;padding:6px;padding-inline-start:12px;border-radius:12px;background:var(--surface-2);min-width:0}
 .linkbox code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--ink-2);direction:ltr;text-align:left;user-select:all}
-.foot{font-size:12.5px;color:var(--muted);padding:4px 6px;line-height:1.7}
+.foot{font-size:12.5px;color:var(--muted);padding:4px 6px;line-height:1.7;display:flex;flex-direction:column;gap:10px}
+.foot .links{justify-content:flex-start}
 
 /* chat list */
 .clist{display:flex;flex-direction:column;padding:6px}
@@ -225,16 +251,21 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .citem:hover{background:var(--surface-2)}
 .citem .meta{flex:1;min-width:0}
 .citem .meta b{display:flex;justify-content:space-between;gap:8px;font-weight:600}
-.citem .meta b small{color:var(--muted);font-weight:400;font-size:12.5px;font-variant-numeric:tabular-nums}
-.citem .meta span{display:block;color:var(--ink-2);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.citem .meta b small{color:var(--muted);font-weight:400;font-size:12.5px;font-variant-numeric:tabular-nums;flex:none}
+.citem .meta b span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.citem .meta>span{display:block;color:var(--ink-2);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.citem .meta>span.wrap{white-space:normal;color:var(--ink)}
+.citem .meta small.when{display:block;color:var(--muted);font-size:12.5px}
 .av.saved{background:var(--brand)}
 .av.saved svg{width:22px;height:22px}
 
 /* ---------- chat view ---------- */
-.chat{display:flex;flex-direction:column;height:calc(100dvh - 44px);min-height:420px;overflow:hidden}
+.chat{display:flex;flex-direction:column;height:calc(100dvh - 62px);min-height:420px;overflow:hidden}
 .chat-h{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
 .chat-h .who{flex:1;min-width:0;line-height:1.25}
+.chat-h .who b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chat-h .who small{color:var(--muted);font-size:13px}
+.chat-h a{color:inherit;text-decoration:none}
 .chat-body{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:6px;background-color:var(--chat-wall);background-image:radial-gradient(var(--line) 1px,transparent 1.2px);background-size:18px 18px}
 .msg{max-width:78%;padding:8px 12px 6px;border-radius:16px;background:var(--surface);box-shadow:0 1px 1px rgba(0,0,0,.04);align-self:flex-start;display:flex;flex-direction:column}
 .msg.me{background:var(--chat-me);align-self:flex-end;border-end-end-radius:6px}
@@ -244,13 +275,20 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .chat-in{display:flex;gap:8px;align-items:flex-end;padding:10px 12px;background:var(--surface);border-top:1px solid var(--line)}
 .chat-in textarea{flex:1;min-width:0;resize:none;border:0;outline:0;background:var(--surface-2);border-radius:22px;padding:11px 16px;max-height:120px;line-height:1.4}
 .send{width:44px;height:44px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;flex:none}
-.send svg{transform:scaleX(-1)}
 
 /* ---------- clips ---------- */
 .clips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .clip{aspect-ratio:9/16;max-width:100%;border-radius:16px;overflow:hidden;background:#000;position:relative}
 .clip video{width:100%;height:100%;object-fit:cover;display:block}
-.clip .cap{position:absolute;inset-inline:0;bottom:0;padding:24px 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:13px}
+.clip .cap{position:absolute;inset-inline:0;bottom:0;padding:28px 10px 10px;padding-inline-end:52px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:13px;overflow-wrap:anywhere}
+.clip .cap a{color:#fff;font-weight:700;text-decoration:none}
+.clip .ov{position:absolute;background:rgba(0,0,0,.45);color:#fff}
+.clip .ov:hover{background:rgba(0,0,0,.6);color:#fff}
+.clip .ov.snd{top:8px;inset-inline-end:8px}
+.clip .ov.opt{top:8px;inset-inline-start:8px}
+.clip .ov.lk{bottom:8px;inset-inline-end:8px}
+.clip .ov.lk.on{color:#FF5A72}
+.clip .ov.lk.on svg{fill:currentColor}
 .note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--brand-soft);color:var(--ink-2);font-size:14px}
 .note svg{color:var(--brand);width:20px;height:20px;margin-top:1px}
 
@@ -259,18 +297,20 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .cover img{width:100%;height:100%;object-fit:cover}
 .prof{padding:0 20px 20px;display:flex;flex-direction:column;gap:12px}
 .prof .head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:-52px}
+.prof .head .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:6px;min-width:0}
 .prof .av.s120{border:5px solid var(--surface)}
-.prof h1{font-family:var(--font-display);font-weight:600;font-size:28px}
-.prof .handle{color:var(--muted);direction:ltr;text-align:right}
-.prof .bio{color:var(--ink-2);white-space:pre-wrap}
+.prof h1{font-family:var(--font-display);font-weight:600;font-size:28px;overflow-wrap:anywhere}
+.prof .handle{color:var(--muted)}
+.prof .bio{color:var(--ink-2);white-space:pre-wrap;overflow-wrap:anywhere}
 .counts{display:flex;gap:22px;font-size:14.5px;color:var(--ink-2)}
-.counts b{color:var(--ink);font-size:17px;font-variant-numeric:tabular-nums;margin-inline-end:4px}
+.counts b{color:var(--ink);font-size:17px;font-variant-numeric:tabular-nums;margin-inline-end:6px}
+.prof .links{justify-content:flex-start;padding-top:4px}
 .tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
 .tabs button{flex:1;padding:14px 8px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
 .tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--brand)}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:3px}
-.cell{text-decoration:none;aspect-ratio:1;max-width:100%;background:var(--surface-2);overflow:hidden;display:grid;place-items:center;padding:10px;font-size:13px;color:var(--ink-2);text-align:center;border-radius:4px}
-.cell img{width:100%;height:100%;object-fit:cover}
+.cell{text-decoration:none;aspect-ratio:1;max-width:100%;background:var(--surface-2);overflow:hidden;display:grid;place-items:center;padding:10px;font-size:13px;color:var(--ink-2);text-align:center;border-radius:4px;overflow-wrap:anywhere}
+.cell img,.cell video{width:100%;height:100%;object-fit:cover}
 .cell.has-img{padding:0}
 
 /* ---------- creators ---------- */
@@ -278,36 +318,36 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .donut{width:150px;height:150px;position:relative}
 .donut .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center;line-height:1.05}
 .donut .c b{font-family:var(--font-display);font-size:40px;font-weight:600;color:var(--gold-ink)}
-.donut .c small{display:block;font-size:13px;color:var(--ink-2)}
-.hero-split h2{font-family:var(--font-display);font-size:26px;font-weight:600;line-height:1.2;margin-bottom:8px}
+.donut .c small{display:block;font-size:13px;color:var(--ink-2);margin-top:4px}
+.hero-split h2{font-family:var(--font-display);font-size:24px;font-weight:600;line-height:1.2;margin-bottom:8px}
 .hero-split p{color:var(--ink-2)}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .stat{padding:16px;display:flex;flex-direction:column;gap:4px}
 .stat small{color:var(--ink-2);font-size:13px}
 .stat b{font-family:var(--font-display);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
-.steps{padding:8px 20px 20px;display:flex;flex-direction:column}
-.step{display:grid;grid-template-columns:36px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
-.step:last-child{border:0}
-.step .n{width:32px;height:32px;border-radius:50%;background:var(--gold-soft);color:var(--gold-ink);display:grid;place-items:center;font-weight:700;font-family:var(--font-display)}
-.step b{display:block;margin-bottom:2px}
-.step p{color:var(--ink-2);font-size:14.5px}
+.plain{padding:18px;display:flex;flex-direction:column;gap:6px}
+.plain h3{font-size:15px;font-weight:600}
+.plain p{color:var(--ink-2);font-size:14.5px}
 
 /* ---------- sheets / modals ---------- */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;display:grid;place-items:center;padding:20px;animation:fade .18s ease-out}
 @keyframes fade{from{opacity:0}}
 .sheet{background:var(--surface);border-radius:24px;box-shadow:var(--shadow-pop);width:100%;max-width:540px;max-height:calc(100dvh - 40px);overflow:auto;animation:rise .28s cubic-bezier(.2,.9,.3,1)}
 @keyframes rise{from{transform:translateY(16px) scale(.98);opacity:0}}
-.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 10px 14px;border-bottom:1px solid var(--line)}
+.scrim.still,.scrim.still .sheet{animation:none}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
 .sheet-h h2{font-size:18px;font-weight:600;flex:1;text-align:center}
+.sheet-h .pad{width:40px;flex:none}
 .sheet-b{padding:18px;display:flex;flex-direction:column;gap:14px}
+.sheet-b>p{color:var(--ink-2)}
 .sheet textarea.big{width:100%;min-height:140px;border:0;outline:0;resize:vertical;background:none;font-size:20px;line-height:1.45}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-weight:600;font-size:14px}
-.field input,.field textarea{height:48px;border-radius:14px;border:1px solid var(--line-2);background:var(--surface-2);padding:0 14px;outline:0}
+.field input,.field textarea{height:48px;border-radius:14px;border:1px solid var(--line-2);background:var(--surface-2);padding:0 14px;outline:0;min-width:0}
 .field textarea{height:auto;min-height:90px;padding:12px 14px;resize:vertical}
 .field input:focus,.field textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
-.field .hint{color:var(--muted);font-size:13px}
-.field .err{color:var(--like);font-size:13px}
+.hint{color:var(--muted);font-size:13px}
+.err{color:var(--like);font-size:13.5px}
 .prev{position:relative;border-radius:16px;overflow:hidden}
 .prev img{display:block;width:100%;max-height:340px;object-fit:cover}
 .prev .iconbtn{position:absolute;top:8px;inset-inline-end:8px;background:rgba(0,0,0,.55);color:#fff}
@@ -317,13 +357,15 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .sw{width:38px;height:38px;border-radius:50%;border:3px solid transparent}
 .sw[aria-pressed="true"]{border-color:var(--ink)}
 .story-prev{aspect-ratio:9/14;max-width:100%;max-height:52dvh;margin:0 auto;border-radius:18px;display:grid;place-items:center;padding:24px;color:#fff;font-family:var(--font-display);font-size:26px;font-weight:600;text-align:center;line-height:1.3;width:100%;overflow-wrap:anywhere}
+.who-row{display:flex;gap:12px;align-items:center}
+.who-row small{display:block;color:var(--muted);font-size:13px}
 
 .onb{max-width:460px}
-.onb .hero{padding:30px 26px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
-.onb .hero .mark{width:64px;height:64px}
-.onb .hero h1{font-family:var(--font-display);font-weight:700;font-size:34px}
+.onb .hero{padding:26px 24px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.onb .hero .mark{width:52px;height:52px}
+.onb .hero h1{font-family:var(--font-display);font-weight:700;font-size:28px}
 .onb .hero p{color:var(--ink-2)}
-.onb .tag{font-family:var(--font-display);font-weight:500;color:var(--brand);direction:ltr}
+.onb .who{text-align:center;color:var(--muted);font-size:13.5px;border-top:1px solid var(--line);padding-top:14px}
 
 /* story viewer */
 .viewer{position:fixed;inset:0;z-index:50;background:#000;display:grid;place-items:center}
@@ -331,14 +373,15 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
 .viewer .bars{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));inset-inline:12px;display:flex;gap:4px}
 .viewer .bars i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden}
 .viewer .bars i b{display:block;height:100%;width:0;background:#fff}
-.viewer .vh{position:absolute;top:calc(24px + env(safe-area-inset-top,0px));inset-inline:12px;display:flex;align-items:center;gap:10px;font-family:var(--font-body);font-size:14px;font-weight:600}
+.viewer .vh{position:absolute;top:calc(24px + env(safe-area-inset-top,0px));inset-inline:12px;display:flex;align-items:center;gap:10px;font-family:var(--font-body);font-size:14px;font-weight:600;z-index:2}
 .viewer .vh small{opacity:.75;font-weight:400}
 .viewer .vh .x{margin-inline-start:auto;color:#fff}
+.viewer .vh .x:hover{background:rgba(255,255,255,.15)}
 .viewer .tapzone{position:absolute;top:80px;bottom:0;width:40%}
 .viewer .tapzone.next{inset-inline-end:0}
 .viewer .tapzone.prev{inset-inline-start:0}
 
-.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));inset-inline-start:50%;transform:translateX(50%);background:var(--ink);color:var(--canvas);padding:12px 18px;border-radius:14px;font-weight:500;z-index:60;box-shadow:var(--shadow-pop);max-width:calc(100% - 32px);animation:rise .25s ease-out}
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 32px);background:var(--ink);color:var(--canvas);padding:12px 18px;border-radius:14px;font-weight:500;z-index:60;box-shadow:var(--shadow-pop);text-align:center;animation:rise .25s ease-out}
 
 /* ---------- responsive ---------- */
 @media (min-width:1181px){.search.desk{display:none}}
@@ -356,34 +399,40 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
   .app{display:block;padding-left:0;padding-right:0}
   .nav{display:none}
   .topbar{display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:20;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));background:color-mix(in srgb,var(--canvas) 82%,transparent);backdrop-filter:blur(18px) saturate(170%);-webkit-backdrop-filter:blur(18px) saturate(170%)}
-  .topbar .logo{padding:0;font-size:23px;flex:1}
+  .topbar .logo{padding:0;font-size:23px;flex:1;min-width:0}
   .topbar .mark{width:30px;height:30px}
-  .topbar .iconbtn{position:relative;background:var(--surface);box-shadow:var(--shadow)}
+  .topbar .iconbtn{position:relative;background:var(--surface);box-shadow:var(--shadow);width:44px;height:44px}
   .topbar .badge{position:absolute;top:-3px;inset-inline-end:-3px;min-width:18px;height:18px;font-size:11px}
   main{padding:4px max(12px,env(safe-area-inset-right,0px)) calc(96px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:12px}
+  body.out main{padding-top:24px}
   .tabbar{display:flex;position:fixed;inset-inline:0;bottom:0;z-index:20;padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));background:color-mix(in srgb,var(--surface) 86%,transparent);backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);border-top:1px solid var(--line)}
-  .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--muted);text-decoration:none;font-size:11px;font-weight:500;position:relative}
+  .tabbar a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--muted);text-decoration:none;font-size:11px;font-weight:500;position:relative}
+  .tabbar a span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tabbar a[aria-current="page"]{color:var(--ink)}
   .tabbar a[aria-current="page"] svg{stroke:var(--brand)}
   .tabbar .plus{width:48px;height:36px;border-radius:12px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;margin-top:2px}
-  .tabbar .badge{position:absolute;top:0;inset-inline-start:calc(50% + 4px);min-width:17px;height:17px;font-size:10.5px}
   .page-h h1{font-size:24px}
   .card,.post{border-radius:18px}
+  .post-acts button{font-size:13px;gap:5px}
   .hero-split{grid-template-columns:1fr;justify-items:center;text-align:center;padding:20px}
-  .stats{gap:8px}.stat{padding:12px}.stat b{font-size:21px}
-  .chat{height:calc(100dvh - 160px - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px))}
+  .stats{gap:8px}.stat{padding:12px}.stat b{font-size:21px}.stat small{font-size:12px}
+  .prof{padding:0 16px 16px}
+  .prof .av.s120{--s:96px;border-width:4px}
+  .prof .head{margin-top:-44px}
+  .prof h1{font-size:24px}
+  .chat{height:calc(100dvh - 164px - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px));min-height:320px}
   .scrim{place-items:end center;padding:0}
   .sheet{border-radius:24px 24px 0 0;max-height:94dvh;padding-bottom:env(safe-area-inset-bottom,0px)}
   .clips{grid-template-columns:repeat(2,minmax(0,1fr))}
   .search.desk{display:none}
-  .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
   .search.desk.show{display:flex}
-  input,textarea{font-size:16px}
+  .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  input,textarea,select{font-size:16px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-</head><body>
-<a class="skip" href="#view">דילוג לתוכן</a>
+</head><body class="out">
+<a class="skip" href="#view" data-t="skip">דילוג לתוכן</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></symbol>
   <symbol id="i-clips" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10.5 11.5 4 2.5-4 2.5z"/></symbol>
@@ -396,7 +445,6 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.1a5 5 0 1 1 7.5 6.5z"/></symbol>
   <symbol id="i-comment" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/></symbol>
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M14 9V5l7 7-7 7v-4c-5 0-8 1.5-11 5 1-5 4-10 11-11z"/></symbol>
-  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
@@ -408,47 +456,51 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
   <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
   <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="3"/><path d="m22 8-6 4 6 4z"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-block" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 3.5a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></symbol>
   <symbol id="i-story" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><path d="M12 8v8M8 12h8"/></symbol>
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-3h6l2 3h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/></symbol>
   <symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="12" fill="var(--brand)" stroke="none"/><path d="M14 29V11h7.5a6 6 0 0 1 0 12H14" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="27.5" cy="28.5" r="3.2" fill="var(--gold)" stroke="none"/></symbol>
 </svg>
 
-<div class="app" dir="rtl" lang="he">
-  <nav class="nav" aria-label="ניווט ראשי">
-    <a class="logo" href="#home"><svg class="mark"><use href="#logo"/></svg><span>פלטפורמיקה</span></a>
-    <a class="item" href="#home" data-r="home"><svg class="i"><use href="#i-home"/></svg><span>בית</span></a>
-    <a class="item" href="#clips" data-r="clips"><svg class="i"><use href="#i-clips"/></svg><span>קליפים</span></a>
-    <a class="item" href="#chats" data-r="chats"><svg class="i"><use href="#i-chat"/></svg><span>צ'אטים</span></a>
-    <a class="item" href="#alerts" data-r="alerts"><svg class="i"><use href="#i-bell"/></svg><span>התראות</span><b class="badge" data-badge hidden></b></a>
-    <a class="item" href="#creators" data-r="creators"><svg class="i"><use href="#i-coins"/></svg><span>מרכז היוצרים</span></a>
-    <a class="item" href="#profile" data-r="profile"><svg class="i"><use href="#i-user"/></svg><span>הפרופיל שלי</span></a>
-    <button class="btn primary" data-act="compose"><svg class="i"><use href="#i-plus"/></svg><span>יצירת פוסט</span></button>
+<div class="app">
+  <nav class="nav" data-ta="navMain" aria-label="ניווט ראשי">
+    <a class="logo" href="#home"><svg class="mark"><use href="#logo"/></svg><span data-t="name">פלטפורמיקה</span></a>
+    <a class="item" href="#home" data-r="home"><svg class="i"><use href="#i-home"/></svg><span data-t="home">בית</span></a>
+    <a class="item" href="#clips" data-r="clips"><svg class="i"><use href="#i-clips"/></svg><span data-t="clips">קליפים</span></a>
+    <a class="item" href="#chats" data-r="chats"><svg class="i"><use href="#i-chat"/></svg><span data-t="chats">צ׳אטים</span></a>
+    <a class="item" href="#alerts" data-r="alerts"><svg class="i"><use href="#i-bell"/></svg><span data-t="alerts">התראות</span><b class="badge" data-badge hidden></b></a>
+    <a class="item" href="#creators" data-r="creators"><svg class="i"><use href="#i-coins"/></svg><span data-t="creators">מרכז היוצרים</span></a>
+    <a class="item" href="#profile" data-r="profile"><svg class="i"><use href="#i-user"/></svg><span data-t="profile">הפרופיל שלי</span></a>
+    <button class="btn primary" data-act="compose" data-ta="newPost"><svg class="i"><use href="#i-plus"/></svg><span data-t="newPost">פוסט חדש</span></button>
     <div class="spacer"></div>
     <a class="me-chip" href="#profile" id="navMe"></a>
   </nav>
 
   <header class="topbar">
-    <a class="logo" href="#home"><svg class="mark"><use href="#logo"/></svg><span>פלטפורמיקה</span></a>
-    <button class="iconbtn" data-act="search" aria-label="חיפוש"><svg class="i"><use href="#i-search"/></svg></button>
-    <a class="iconbtn" href="#alerts" aria-label="התראות"><svg class="i"><use href="#i-bell"/></svg><b class="badge" data-badge hidden></b></a>
-    <a class="iconbtn" href="#chats" aria-label="צ'אטים"><svg class="i"><use href="#i-chat"/></svg></a>
+    <a class="logo" href="#home"><svg class="mark"><use href="#logo"/></svg><span data-t="name">פלטפורמיקה</span></a>
+    <button class="iconbtn" data-act="search" data-ta="search" aria-label="חיפוש"><svg class="i"><use href="#i-search"/></svg></button>
+    <a class="iconbtn" href="#alerts" data-ta="alerts" aria-label="התראות"><svg class="i"><use href="#i-bell"/></svg><b class="badge" data-badge hidden></b></a>
+    <a class="iconbtn" href="#chats" data-ta="chats" aria-label="צ׳אטים"><svg class="i"><use href="#i-chat"/></svg></a>
   </header>
 
   <main id="view" tabindex="-1"></main>
 
-  <aside class="rail" id="rail" aria-label="מידע נוסף"></aside>
+  <aside class="rail" id="rail" data-ta="railLbl" aria-label="מידע נוסף"></aside>
 
-  <nav class="tabbar" aria-label="ניווט">
-    <a href="#home" data-r="home"><svg class="i"><use href="#i-home"/></svg>בית</a>
-    <a href="#clips" data-r="clips"><svg class="i"><use href="#i-clips"/></svg>קליפים</a>
-    <a href="#home" data-act="compose" aria-label="יצירת פוסט"><span class="plus"><svg class="i"><use href="#i-plus"/></svg></span></a>
-    <a href="#creators" data-r="creators"><svg class="i"><use href="#i-coins"/></svg>יוצרים</a>
-    <a href="#profile" data-r="profile"><svg class="i"><use href="#i-user"/></svg>אני</a>
+  <nav class="tabbar" data-ta="navTabs" aria-label="ניווט">
+    <a href="#home" data-r="home"><svg class="i"><use href="#i-home"/></svg><span data-t="home">בית</span></a>
+    <a href="#clips" data-r="clips"><svg class="i"><use href="#i-clips"/></svg><span data-t="clips">קליפים</span></a>
+    <a href="#home" data-act="compose" data-ta="newPost" aria-label="פוסט חדש"><span class="plus"><svg class="i"><use href="#i-plus"/></svg></span></a>
+    <a href="#creators" data-r="creators"><svg class="i"><use href="#i-coins"/></svg><span data-t="tabCreators">יוצרים</span></a>
+    <a href="#profile" data-r="profile"><svg class="i"><use href="#i-user"/></svg><span data-t="tabMe">אני</span></a>
   </nav>
 </div>
-<div id="layer" dir="rtl" lang="he"></div>
+<div id="layer"></div>
 
 <script src="/lib/supabase.js"></script>
 <script>
@@ -457,7 +509,7 @@ main{min-width:0;padding-block:22px 40px;display:flex;flex-direction:column;gap:
    so what you publish on one device shows up on every other device right away (live updates). */
 const SITE='https://barusik.com/platformika/';
 const SB_URL='https://iktmyrfbejtjsiehcrar.supabase.co',SB_KEY='sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
-const BUCKET='pk-media',MAX_VIDEO=50*1024*1024;
+const BUCKET='pk-media',MAX_VIDEO=50*1024*1024,CONTACT='barusik.official@gmail.com';
 const sb=window.supabase?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'complichess-auth'}}):null;
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -468,26 +520,200 @@ const MEDIA=SB_URL+'/storage/v1/object/public/'+BUCKET+'/';
 const media=u=>typeof u==='string'&&u.startsWith(MEDIA)&&!/["'<>\\\s]/.test(u)?u:'';
 const hue=h=>{const n=Math.round(+h);return n>=0&&n<=360?n:200};
 const bgOf=b=>BGS[Number.isInteger(+b)&&+b>=0?+b:0]||BGS[0];
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/* ---------- text: six languages, Hebrew first (same choice as the rest of barusik.com) ---------- */
+const LANGS={he:'עברית',en:'English',ar:'العربية',ru:'Русский',es:'Español',fr:'Français'},RTL={he:1,ar:1};
+const LOC={he:'he-IL',en:'en-GB',ar:'ar-u-nu-latn',ru:'ru-RU',es:'es-ES',fr:'fr-FR'};
+const T={
+he:{name:'פלטפורמיקה',skip:'דילוג לתוכן',navMain:'ניווט ראשי',navTabs:'ניווט',home:'בית',clips:'קליפים',chats:'צ׳אטים',alerts:'התראות',creators:'מרכז היוצרים',profile:'הפרופיל שלי',newPost:'פוסט חדש',search:'חיפוש',tabCreators:'יוצרים',tabMe:'אני',railLbl:'מידע נוסף',
+close:'סגירה',wait:'רגע…',user:'משתמש',now:'עכשיו',linkCopied:'הקישור הועתק',copyManual:'סמנו את הקישור והעתיקו אותו',copy:'העתקה',loading:'טוען…',language:'שפה',
+eLogin:'מייל או סיסמה לא נכונים',eExists:'המייל הזה כבר רשום. התחברו במקום להירשם.',eRate:'יותר מדי ניסיונות. חכו דקה ונסו שוב.',eTaken:'שם המשתמש תפוס, בחרו אחר',eBig:'הקובץ גדול מדי (עד 50MB)',eType:'סוג הקובץ לא נתמך',eNet:'אין חיבור לשרת. בדקו את האינטרנט.',eConfirm:'המייל עוד לא אושר. פתחו את הקישור ששלחנו אליו.',eWeak:'הסיסמה חלשה מדי. בחרו סיסמה ארוכה יותר.',eOther:'משהו השתבש: {m}',eRetry:'נסו שוב',
+outLead:'פוסטים, סטוריז, קליפים וצ׳אטים, ו־99% מהרווח הנקי הולך ליוצרים.',outShared:'משתמש אחד לכל הפלטפורמות של ברוסיק. יש לכם משתמש בקומפליצס? הוא עובד גם כאן.',login:'התחברות',signup:'הרשמה',mainSite:'לאתר הראשי',
+uname:'שם משתמש',mail:'מייל',pass:'סיסמה',createAcc:'יצירת משתמש',forgot:'שכחתי סיסמה',mailFirst:'כתבו קודם את המייל',resetSent:'אם המייל רשום, שלחנו אליו קישור לאיפוס',badMail:'כתובת מייל לא תקינה',passShort:'הסיסמה צריכה לפחות 6 תווים',unameLen:'שם המשתמש צריך 2–20 תווים',unameTaken:'שם המשתמש תפוס, נסו אחר',checkMail:'בדקו את המייל',checkMailB:'שלחנו קישור אימות אל:',checkMailB2:'אחרי האישור חזרו לכאן והתחברו.',toLogin:'להתחברות',linkBad:'הקישור מהמייל פג או כבר נוצל. התחברו, או בקשו קישור חדש.',newPass:'סיסמה חדשה',newPassSave:'שמירת הסיסמה',passSaved:'הסיסמה עודכנה',
+onbT:'ברוכים הבאים לפלטפורמיקה',onbLead:'עוד צעד אחד: השם שיופיע בפרופיל.',onbName:'שם',onbNamePh:'השם שחברים מכירים',onbHandle:'שם משתמש',onbHint:'אותיות באנגלית, מספרים, נקודה וקו תחתון',onbGo:'יצירת פרופיל',onbAs:'מחוברים כ־',onbOther:'התחברות עם משתמש אחר',onbNeedName:'כתבו שם',onbHandleShort:'שם המשתמש צריך לפחות 3 תווים',profCreated:'הפרופיל נוצר',
+public:'ציבורי',postBody:'תוכן הפוסט',whatsNew:'מה חדש, {n}?',photo:'תמונה',publish:'פרסום',publishing:'מפרסם…',preview:'תצוגה מקדימה',rmPhoto:'הסרת התמונה',badImg:'לא הצלחנו לפתוח את הקובץ. בחרו תמונה מסוג JPG או PNG.',posted:'הפוסט פורסם',
+story:'סטורי',newStory:'סטורי חדש',storyText:'טקסט הסטורי',storyPh:'מה לשתף ל־24 שעות?',storyEmpty:'כתבו משהו…',bg:'רקע',bgN:'רקע {n}',shareStory:'שיתוף לסטורי',storyUp:'הסטורי עלה ל־24 שעות',prev:'הקודם',next:'הבא',stories:'סטוריז',addStory:'סטורי חדש',myStory:'הסטורי שלי',storyOf:'הסטורי של {n}',clip:'קליפ',
+promoted:'מקודם',options:'אפשרויות',like:'אהבתי',comment:'תגובה',share:'שיתוף',postImg:'תמונה מהפוסט',nLikes:'לייקים: {n}',nCmts:'תגובות: {n}',writeCmt:'כתבו תגובה…',sendCmt:'שליחת תגובה',boostOn:'מקודם עד {d}. הארכה מוסיפה 7 ימים.',boostOff:'הפוסט יוצג ראשון בפיד למשך 7 ימים.',boost:'קידום',extend:'הארכה',
+searchPh:'חיפוש בפלטפורמיקה',offline:'אין חיבור לשרת. הפיד יתעדכן כשהחיבור יחזור.',people:'אנשים',noResults:'אין תוצאות ל־"{q}"',noResultsB:'נסו מילה אחרת, שם או שם משתמש.',feedEmpty:'עוד אין פוסטים',feedEmptyB:'מה שתפרסמו יופיע כאן, בכל מכשיר שבו אתם מחוברים.',writePost:'כתיבת פוסט',invite:'הזמנת חברים',
+uploadClip:'העלאת קליפ',soundOn:'הפעלת סאונד',soundOff:'השתקה',clipsEmpty:'עוד אין קליפים',clipsEmptyB:'סרטונים אנכיים קצרים, עד 50MB.',
+youPrefix:'אני: ',notes:'הודעות לעצמי',notesB:'רשימות, קישורים ותזכורות',newChat:'צ׳אט חדש',newChatB:'חיפוש לפי שם',chatsEmpty:'עוד אין שיחות',chatsEmptyB:'התחילו צ׳אט עם מישהו בפלטפורמיקה, או שלחו לחברים קישור.',backChats:'חזרה לצ׳אטים',notesOnly:'רק אתם רואים את השיחה הזו',notesHint:'רעיון, קישור או משימה',firstMsg:'שלחו הודעה ראשונה',msg:'הודעה',send:'שליחה',chat:'צ׳אט',findBy:'חיפוש לפי שם או שם משתמש',nobody:'לא נמצא אף אחד.',all:'הכול',
+aLike:'לייק מ־{n}',aCmt:'תגובה מ־{n}: {t}',aMsg:'הודעה מ־{n}: {t}',alertsEmpty:'אין התראות',alertsEmptyB:'לייקים, תגובות והודעות יופיעו כאן.',
+splitAria:'99% מהרווח הנקי ליוצרים, 1% לפלטפורמה',toCreators:'ליוצרים',toPlatform:'לפלטפורמה',crH:'99% מהרווח הנקי ליוצרים',crP:'הרווח הנקי של פלטפורמיקה מתחלק בין היוצרים, ו־1% נשאר להפעלה.',stPosts:'פרסומים',stLikes:'לייקים שקיבלתם',stCmts:'תגובות שקיבלתם',payH:'תשלומים',payP:'התשלומים ליוצרים עוד לא נפתחו. כשייפתחו, היתרה שלכם תופיע כאן.',inviteP:'שלחו את הקישור למי שתרצו שיצטרף.',splitLbl:'חלוקת הרווח',toHub:'למרכז היוצרים',footBy:'מבית',privacy:'מדיניות פרטיות',terms:'תנאי שימוש',
+notFound:'המשתמש לא נמצא',notFoundB:'ייתכן ששם המשתמש השתנה.',backHome:'חזרה לבית',editProf:'עריכת פרופיל',logout:'התנתקות',message:'הודעה',block:'חסימה',unblock:'ביטול חסימה',report:'דיווח',addBio:'הוספת ביו',posts:'פוסטים',media:'תמונות וסרטונים',likes:'לייקים',deleteAcc:'מחיקת החשבון',noPhotos:'עוד אין תמונות',noPosts:'עוד אין פוסטים',createPost:'יצירת פוסט',
+blockSoon:'החסימה עוד לא זמינה',blocked:'החשבון נחסם. הפוסטים וההודעות שלו לא יוצגו לכם.',unblocked:'החסימה בוטלה',
+reportPost:'דיווח על פוסט',reportUser:'דיווח על חשבון',reportWhy:'מה הבעיה?',reportPh:'הטרדה, ספאם, תוכן פוגעני, התחזות…',reportHint:'הדיווח מגיע רק לצוות ברוסיק. לא נגלה מי דיווח.',reportSend:'שליחת דיווח',sending:'שולח…',reportNeed:'כתבו בקצרה מה הבעיה',reportSoon:'הדיווח עוד לא זמין. אפשר לכתוב ל־{m}',reportThanks:'תודה, הדיווח נשלח',
+delWarn:'המחיקה סופית. החשבון המשותף לכל הפלטפורמות של ברוסיק יימחק, יחד עם הפוסטים, הקליפים, הסטוריז, התגובות, הלייקים, ההודעות והתמונות שלכם.',delType:'לאישור, כתבו: {w}',delWord:'מחיקה',delGo:'מחיקת החשבון לצמיתות',deleting:'מוחק…',delNeed:'כתבו "{w}" כדי לאשר',deleted:'החשבון נמחק',delSoon:'מחיקה עצמית עוד לא זמינה. כתבו ל־{m} ונמחק תוך 7 ימים.',
+fName:'שם',fBio:'ביו',bioPh:'כמה מילים עליכם',bioHint:'עד 160 תווים',avatar:'תמונת פרופיל',cover:'תמונת נושא',coverPicked:'תמונת הנושא נבחרה',save:'שמירה',saving:'שומר…',nameEmpty:'השם לא יכול להיות ריק',saved:'הפרופיל נשמר',pickImg:'בחרו תמונה מסוג JPG או PNG',
+inviteB:'שלחו את הקישור בוואטסאפ, בהודעה או במייל.',
+newClip:'קליפ חדש',pickVideo:'בחירת סרטון',videoHint:'MP4, MOV או WebM, עד 50MB',caption:'כיתוב',captionPh:'על מה הקליפ?',uploading:'מעלה…',notVideo:'בחרו קובץ וידאו',videoBig:'הסרטון גדול מ־50MB. קצרו אותו או צלמו באיכות נמוכה יותר.',clipPosted:'הקליפ פורסם',
+copyLink:'העתקת קישור',del:'מחיקה',delSure:'לחצו שוב למחיקה',reportPostM:'דיווח על הפוסט',blockM:'חסימת החשבון',removed:'נמחק',
+noNet:'אין חיבור',noNetB:'פלטפורמיקה צריכה חיבור לאינטרנט כדי לטעון.'},
+en:{name:'Platformika',skip:'Skip to content',navMain:'Main navigation',navTabs:'Navigation',home:'Home',clips:'Clips',chats:'Chats',alerts:'Notifications',creators:'Creator hub',profile:'My profile',newPost:'New post',search:'Search',tabCreators:'Creators',tabMe:'Me',railLbl:'More',
+close:'Close',wait:'One moment…',user:'User',now:'now',linkCopied:'Link copied',copyManual:'Select the link and copy it',copy:'Copy',loading:'Loading…',language:'Language',
+eLogin:'Wrong email or password',eExists:'This email is already registered. Log in instead.',eRate:'Too many attempts. Wait a minute and try again.',eTaken:'That username is taken, pick another',eBig:'The file is too large (50 MB max)',eType:'This file type is not supported',eNet:'Can’t reach the server. Check your connection.',eConfirm:'Your email isn’t confirmed yet. Open the link we sent you.',eWeak:'That password is too weak. Choose a longer one.',eOther:'Something went wrong: {m}',eRetry:'try again',
+outLead:'Posts, stories, clips and chats, and 99% of net profit goes to creators.',outShared:'One account for every Barusik platform. Have a Complichess account? It works here too.',login:'Log in',signup:'Sign up',mainSite:'Main site',
+uname:'Username',mail:'Email',pass:'Password',createAcc:'Create account',forgot:'Forgot password',mailFirst:'Type your email first',resetSent:'If this email is registered, we sent it a reset link',badMail:'That email address isn’t valid',passShort:'The password needs at least 6 characters',unameLen:'The username needs 2–20 characters',unameTaken:'That username is taken, try another',checkMail:'Check your email',checkMailB:'We sent a confirmation link to:',checkMailB2:'Once you confirm, come back here and log in.',toLogin:'Go to log in',linkBad:'The email link has expired or was already used. Log in, or ask for a new link.',newPass:'New password',newPassSave:'Save password',passSaved:'Password updated',
+onbT:'Welcome to Platformika',onbLead:'One more step: the name on your profile.',onbName:'Name',onbNamePh:'The name friends know you by',onbHandle:'Username',onbHint:'English letters, numbers, dot and underscore',onbGo:'Create profile',onbAs:'Logged in as ',onbOther:'Log in with another account',onbNeedName:'Type a name',onbHandleShort:'The username needs at least 3 characters',profCreated:'Profile created',
+public:'Public',postBody:'Post text',whatsNew:'What’s new, {n}?',photo:'Photo',publish:'Post',publishing:'Posting…',preview:'Preview',rmPhoto:'Remove photo',badImg:'Couldn’t open the file. Choose a JPG or PNG image.',posted:'Posted',
+story:'Story',newStory:'New story',storyText:'Story text',storyPh:'What to share for 24 hours?',storyEmpty:'Write something…',bg:'Background',bgN:'Background {n}',shareStory:'Share to story',storyUp:'Your story is up for 24 hours',prev:'Previous',next:'Next',stories:'Stories',addStory:'New story',myStory:'My story',storyOf:'{n}’s story',clip:'Clip',
+promoted:'Promoted',options:'Options',like:'Like',comment:'Comment',share:'Share',postImg:'Photo from the post',nLikes:'Likes: {n}',nCmts:'Comments: {n}',writeCmt:'Write a comment…',sendCmt:'Send comment',boostOn:'Promoted until {d}. Extending adds 7 days.',boostOff:'Show this post first in the feed for 7 days.',boost:'Promote',extend:'Extend',
+searchPh:'Search Platformika',offline:'Can’t reach the server. The feed will update when the connection is back.',people:'People',noResults:'No results for “{q}”',noResultsB:'Try another word, name or username.',feedEmpty:'No posts yet',feedEmptyB:'What you post shows up here, on every device you’re logged in on.',writePost:'Write a post',invite:'Invite friends',
+uploadClip:'Upload clip',soundOn:'Turn sound on',soundOff:'Mute',clipsEmpty:'No clips yet',clipsEmptyB:'Short vertical videos, up to 50 MB.',
+youPrefix:'You: ',notes:'Notes to self',notesB:'Lists, links and reminders',newChat:'New chat',newChatB:'Search by name',chatsEmpty:'No conversations yet',chatsEmptyB:'Start a chat with someone on Platformika, or send friends a link.',backChats:'Back to chats',notesOnly:'Only you can see this conversation',notesHint:'An idea, a link or a task',firstMsg:'Send the first message',msg:'Message',send:'Send',chat:'Chat',findBy:'Search by name or username',nobody:'Nobody found.',all:'All',
+aLike:'Like from {n}',aCmt:'Comment from {n}: {t}',aMsg:'Message from {n}: {t}',alertsEmpty:'No notifications',alertsEmptyB:'Likes, comments and messages show up here.',
+splitAria:'99% of net profit to creators, 1% to the platform',toCreators:'to creators',toPlatform:'to the platform',crH:'99% of net profit goes to creators',crP:'Platformika’s net profit is shared among creators, and 1% stays to run it.',stPosts:'Posts',stLikes:'Likes received',stCmts:'Comments received',payH:'Payouts',payP:'Creator payouts haven’t opened yet. When they do, your balance will show here.',inviteP:'Send the link to anyone you’d like to join.',splitLbl:'Profit split',toHub:'Creator hub',footBy:'by',privacy:'Privacy policy',terms:'Terms of use',
+notFound:'User not found',notFoundB:'The username may have changed.',backHome:'Back home',editProf:'Edit profile',logout:'Log out',message:'Message',block:'Block',unblock:'Unblock',report:'Report',addBio:'Add a bio',posts:'Posts',media:'Photos and videos',likes:'Likes',deleteAcc:'Delete account',noPhotos:'No photos yet',noPosts:'No posts yet',createPost:'Create a post',
+blockSoon:'Blocking isn’t available yet',blocked:'Account blocked. You won’t see its posts or messages.',unblocked:'Unblocked',
+reportPost:'Report post',reportUser:'Report account',reportWhy:'What’s the problem?',reportPh:'Harassment, spam, offensive content, impersonation…',reportHint:'Only the Barusik team sees reports. We never say who reported.',reportSend:'Send report',sending:'Sending…',reportNeed:'Say briefly what the problem is',reportSoon:'Reporting isn’t available yet. You can write to {m}',reportThanks:'Thanks, report sent',
+delWarn:'This is permanent. Your shared account for every Barusik platform will be deleted, along with your posts, clips, stories, comments, likes, messages and photos.',delType:'To confirm, type: {w}',delWord:'DELETE',delGo:'Delete my account for good',deleting:'Deleting…',delNeed:'Type “{w}” to confirm',deleted:'Account deleted',delSoon:'Self-deletion isn’t available yet. Write to {m} and we’ll delete it within 7 days.',
+fName:'Name',fBio:'Bio',bioPh:'A few words about you',bioHint:'Up to 160 characters',avatar:'Profile photo',cover:'Cover photo',coverPicked:'Cover photo selected',save:'Save',saving:'Saving…',nameEmpty:'The name can’t be empty',saved:'Profile saved',pickImg:'Choose a JPG or PNG image',
+inviteB:'Send the link on WhatsApp, by text or by email.',
+newClip:'New clip',pickVideo:'Choose a video',videoHint:'MP4, MOV or WebM, up to 50 MB',caption:'Caption',captionPh:'What’s the clip about?',uploading:'Uploading…',notVideo:'Choose a video file',videoBig:'The video is over 50 MB. Trim it or record at a lower quality.',clipPosted:'Clip posted',
+copyLink:'Copy link',del:'Delete',delSure:'Tap again to delete',reportPostM:'Report post',blockM:'Block account',removed:'Deleted',
+noNet:'No connection',noNetB:'Platformika needs an internet connection to load.'},
+ar:{name:'بلاتفورميكا',skip:'تخطٍّ إلى المحتوى',navMain:'التنقل الرئيسي',navTabs:'التنقل',home:'الرئيسية',clips:'مقاطع',chats:'محادثات',alerts:'إشعارات',creators:'مركز المبدعين',profile:'ملفي الشخصي',newPost:'منشور جديد',search:'بحث',tabCreators:'المبدعون',tabMe:'أنا',railLbl:'المزيد',
+close:'إغلاق',wait:'لحظة…',user:'مستخدم',now:'الآن',linkCopied:'تم نسخ الرابط',copyManual:'حدّدوا الرابط وانسخوه',copy:'نسخ',loading:'جارٍ التحميل…',language:'اللغة',
+eLogin:'البريد أو كلمة المرور غير صحيحة',eExists:'هذا البريد مسجّل. سجّلوا الدخول بدل إنشاء حساب.',eRate:'محاولات كثيرة. انتظروا دقيقة وحاولوا مجددًا.',eTaken:'اسم المستخدم محجوز، اختاروا غيره',eBig:'الملف كبير جدًا (حتى 50MB)',eType:'نوع الملف غير مدعوم',eNet:'لا اتصال بالخادم. تحقّقوا من الإنترنت.',eConfirm:'لم يتم تأكيد البريد بعد. افتحوا الرابط الذي أرسلناه.',eWeak:'كلمة المرور ضعيفة. اختاروا كلمة أطول.',eOther:'حدث خطأ: {m}',eRetry:'حاولوا مجددًا',
+outLead:'منشورات وقصص ومقاطع ومحادثات، و99% من صافي الربح يذهب إلى المبدعين.',outShared:'حساب واحد لكل منصات Barusik. لديكم حساب في Complichess؟ يعمل هنا أيضًا.',login:'تسجيل الدخول',signup:'إنشاء حساب',mainSite:'الموقع الرئيسي',
+uname:'اسم المستخدم',mail:'البريد الإلكتروني',pass:'كلمة المرور',createAcc:'إنشاء حساب',forgot:'نسيت كلمة المرور',mailFirst:'اكتبوا بريدكم أولًا',resetSent:'إن كان البريد مسجّلًا، أرسلنا إليه رابط إعادة التعيين',badMail:'عنوان البريد غير صالح',passShort:'كلمة المرور تحتاج 6 أحرف على الأقل',unameLen:'اسم المستخدم يحتاج 2–20 حرفًا',unameTaken:'اسم المستخدم محجوز، جرّبوا غيره',checkMail:'تحقّقوا من بريدكم',checkMailB:'أرسلنا رابط تأكيد إلى:',checkMailB2:'بعد التأكيد عودوا إلى هنا وسجّلوا الدخول.',toLogin:'إلى تسجيل الدخول',linkBad:'انتهت صلاحية الرابط أو استُخدم من قبل. سجّلوا الدخول أو اطلبوا رابطًا جديدًا.',newPass:'كلمة مرور جديدة',newPassSave:'حفظ كلمة المرور',passSaved:'تم تحديث كلمة المرور',
+onbT:'أهلًا بكم في بلاتفورميكا',onbLead:'خطوة أخيرة: الاسم الذي يظهر في ملفكم.',onbName:'الاسم',onbNamePh:'الاسم الذي يعرفكم به الأصدقاء',onbHandle:'اسم المستخدم',onbHint:'أحرف إنجليزية وأرقام ونقطة وشرطة سفلية',onbGo:'إنشاء الملف الشخصي',onbAs:'متصلون باسم ',onbOther:'الدخول بحساب آخر',onbNeedName:'اكتبوا اسمًا',onbHandleShort:'اسم المستخدم يحتاج 3 أحرف على الأقل',profCreated:'تم إنشاء الملف الشخصي',
+public:'عام',postBody:'نص المنشور',whatsNew:'ما الجديد يا {n}؟',photo:'صورة',publish:'نشر',publishing:'جارٍ النشر…',preview:'معاينة',rmPhoto:'إزالة الصورة',badImg:'تعذّر فتح الملف. اختاروا صورة JPG أو PNG.',posted:'تم النشر',
+story:'قصة',newStory:'قصة جديدة',storyText:'نص القصة',storyPh:'ماذا تشاركون لمدة 24 ساعة؟',storyEmpty:'اكتبوا شيئًا…',bg:'الخلفية',bgN:'خلفية {n}',shareStory:'مشاركة في القصة',storyUp:'قصتكم منشورة لمدة 24 ساعة',prev:'السابق',next:'التالي',stories:'القصص',addStory:'قصة جديدة',myStory:'قصتي',storyOf:'قصة {n}',clip:'مقطع',
+promoted:'مُروَّج',options:'خيارات',like:'إعجاب',comment:'تعليق',share:'مشاركة',postImg:'صورة من المنشور',nLikes:'الإعجابات: {n}',nCmts:'التعليقات: {n}',writeCmt:'اكتبوا تعليقًا…',sendCmt:'إرسال التعليق',boostOn:'مُروَّج حتى {d}. التمديد يضيف 7 أيام.',boostOff:'اعرضوا المنشور أولًا في الخلاصة لمدة 7 أيام.',boost:'ترويج',extend:'تمديد',
+searchPh:'ابحثوا في بلاتفورميكا',offline:'لا اتصال بالخادم. ستتحدّث الخلاصة عند عودة الاتصال.',people:'أشخاص',noResults:'لا نتائج لـ«{q}»',noResultsB:'جرّبوا كلمة أخرى أو اسمًا أو اسم مستخدم.',feedEmpty:'لا منشورات بعد',feedEmptyB:'ما تنشرونه يظهر هنا وعلى كل جهاز متصل بحسابكم.',writePost:'كتابة منشور',invite:'دعوة الأصدقاء',
+uploadClip:'رفع مقطع',soundOn:'تشغيل الصوت',soundOff:'كتم الصوت',clipsEmpty:'لا مقاطع بعد',clipsEmptyB:'فيديوهات عمودية قصيرة، حتى 50MB.',
+youPrefix:'أنا: ',notes:'ملاحظات لنفسي',notesB:'قوائم وروابط وتذكيرات',newChat:'محادثة جديدة',newChatB:'البحث بالاسم',chatsEmpty:'لا محادثات بعد',chatsEmptyB:'ابدؤوا محادثة مع أحد في بلاتفورميكا، أو أرسلوا رابطًا للأصدقاء.',backChats:'العودة إلى المحادثات',notesOnly:'أنتم فقط ترون هذه المحادثة',notesHint:'فكرة أو رابط أو مهمة',firstMsg:'أرسلوا أول رسالة',msg:'رسالة',send:'إرسال',chat:'محادثة',findBy:'البحث بالاسم أو اسم المستخدم',nobody:'لم يُعثر على أحد.',all:'الكل',
+aLike:'إعجاب من {n}',aCmt:'تعليق من {n}: {t}',aMsg:'رسالة من {n}: {t}',alertsEmpty:'لا إشعارات',alertsEmptyB:'الإعجابات والتعليقات والرسائل تظهر هنا.',
+splitAria:'99% من صافي الربح للمبدعين، 1% للمنصة',toCreators:'للمبدعين',toPlatform:'للمنصة',crH:'99% من صافي الربح للمبدعين',crP:'صافي ربح بلاتفورميكا يُقسَّم بين المبدعين، و1% يبقى لتشغيلها.',stPosts:'المنشورات',stLikes:'إعجابات وصلتكم',stCmts:'تعليقات وصلتكم',payH:'المدفوعات',payP:'مدفوعات المبدعين لم تُفتح بعد. عندما تُفتح، سيظهر رصيدكم هنا.',inviteP:'أرسلوا الرابط لمن تريدون أن ينضم.',splitLbl:'تقسيم الربح',toHub:'مركز المبدعين',footBy:'من',privacy:'سياسة الخصوصية',terms:'شروط الاستخدام',
+notFound:'المستخدم غير موجود',notFoundB:'ربما تغيّر اسم المستخدم.',backHome:'العودة إلى الرئيسية',editProf:'تعديل الملف',logout:'تسجيل الخروج',message:'رسالة',block:'حظر',unblock:'إلغاء الحظر',report:'إبلاغ',addBio:'إضافة نبذة',posts:'المنشورات',media:'صور وفيديوهات',likes:'الإعجابات',deleteAcc:'حذف الحساب',noPhotos:'لا صور بعد',noPosts:'لا منشورات بعد',createPost:'إنشاء منشور',
+blockSoon:'الحظر غير متاح بعد',blocked:'تم حظر الحساب. لن تروا منشوراته ولا رسائله.',unblocked:'تم إلغاء الحظر',
+reportPost:'الإبلاغ عن منشور',reportUser:'الإبلاغ عن حساب',reportWhy:'ما المشكلة؟',reportPh:'تحرّش، رسائل مزعجة، محتوى مسيء، انتحال…',reportHint:'البلاغ يصل إلى فريق Barusik فقط. لا نكشف من أبلغ.',reportSend:'إرسال البلاغ',sending:'جارٍ الإرسال…',reportNeed:'اكتبوا باختصار ما المشكلة',reportSoon:'الإبلاغ غير متاح بعد. يمكنكم الكتابة إلى {m}',reportThanks:'شكرًا، تم إرسال البلاغ',
+delWarn:'الحذف نهائي. سيُحذف حسابكم المشترك لكل منصات Barusik مع منشوراتكم ومقاطعكم وقصصكم وتعليقاتكم وإعجاباتكم ورسائلكم وصوركم.',delType:'للتأكيد اكتبوا: {w}',delWord:'حذف',delGo:'حذف الحساب نهائيًا',deleting:'جارٍ الحذف…',delNeed:'اكتبوا «{w}» للتأكيد',deleted:'تم حذف الحساب',delSoon:'الحذف الذاتي غير متاح بعد. اكتبوا إلى {m} وسنحذفه خلال 7 أيام.',
+fName:'الاسم',fBio:'نبذة',bioPh:'كلمات قليلة عنكم',bioHint:'حتى 160 حرفًا',avatar:'صورة الملف',cover:'صورة الغلاف',coverPicked:'تم اختيار صورة الغلاف',save:'حفظ',saving:'جارٍ الحفظ…',nameEmpty:'لا يمكن ترك الاسم فارغًا',saved:'تم حفظ الملف',pickImg:'اختاروا صورة JPG أو PNG',
+inviteB:'أرسلوا الرابط عبر واتساب أو رسالة أو بريد.',
+newClip:'مقطع جديد',pickVideo:'اختيار فيديو',videoHint:'MP4 أو MOV أو WebM، حتى 50MB',caption:'وصف',captionPh:'عمّ يتحدث المقطع؟',uploading:'جارٍ الرفع…',notVideo:'اختاروا ملف فيديو',videoBig:'الفيديو أكبر من 50MB. قصّروه أو صوّروا بجودة أقل.',clipPosted:'تم نشر المقطع',
+copyLink:'نسخ الرابط',del:'حذف',delSure:'اضغطوا مرة أخرى للحذف',reportPostM:'الإبلاغ عن المنشور',blockM:'حظر الحساب',removed:'تم الحذف',
+noNet:'لا اتصال',noNetB:'تحتاج بلاتفورميكا إلى الإنترنت لتعمل.'},
+ru:{name:'Platformika',skip:'Перейти к содержимому',navMain:'Главное меню',navTabs:'Навигация',home:'Главная',clips:'Клипы',chats:'Чаты',alerts:'Уведомления',creators:'Центр авторов',profile:'Мой профиль',newPost:'Новый пост',search:'Поиск',tabCreators:'Авторы',tabMe:'Я',railLbl:'Ещё',
+close:'Закрыть',wait:'Секунду…',user:'Пользователь',now:'сейчас',linkCopied:'Ссылка скопирована',copyManual:'Выделите ссылку и скопируйте её',copy:'Копировать',loading:'Загрузка…',language:'Язык',
+eLogin:'Неверная почта или пароль',eExists:'Эта почта уже зарегистрирована. Войдите.',eRate:'Слишком много попыток. Подождите минуту.',eTaken:'Это имя пользователя занято, выберите другое',eBig:'Файл слишком большой (до 50 МБ)',eType:'Этот тип файла не поддерживается',eNet:'Нет связи с сервером. Проверьте интернет.',eConfirm:'Почта ещё не подтверждена. Откройте ссылку из письма.',eWeak:'Слишком простой пароль. Выберите подлиннее.',eOther:'Что-то пошло не так: {m}',eRetry:'попробуйте ещё раз',
+outLead:'Посты, истории, клипы и чаты, и 99% чистой прибыли получают авторы.',outShared:'Один аккаунт для всех платформ Barusik. Есть аккаунт в Complichess? Он работает и здесь.',login:'Войти',signup:'Регистрация',mainSite:'Главный сайт',
+uname:'Имя пользователя',mail:'Почта',pass:'Пароль',createAcc:'Создать аккаунт',forgot:'Забыли пароль?',mailFirst:'Сначала введите почту',resetSent:'Если почта зарегистрирована, мы отправили на неё ссылку для сброса',badMail:'Неверный адрес почты',passShort:'Пароль должен быть не короче 6 символов',unameLen:'Имя пользователя: от 2 до 20 символов',unameTaken:'Это имя занято, попробуйте другое',checkMail:'Проверьте почту',checkMailB:'Мы отправили ссылку для подтверждения на:',checkMailB2:'После подтверждения вернитесь сюда и войдите.',toLogin:'Ко входу',linkBad:'Ссылка из письма устарела или уже использована. Войдите или запросите новую.',newPass:'Новый пароль',newPassSave:'Сохранить пароль',passSaved:'Пароль обновлён',
+onbT:'Добро пожаловать в Platformika',onbLead:'Последний шаг: имя для вашего профиля.',onbName:'Имя',onbNamePh:'Имя, по которому вас знают друзья',onbHandle:'Имя пользователя',onbHint:'Латинские буквы, цифры, точка и подчёркивание',onbGo:'Создать профиль',onbAs:'Вы вошли как ',onbOther:'Войти в другой аккаунт',onbNeedName:'Введите имя',onbHandleShort:'Имя пользователя: не короче 3 символов',profCreated:'Профиль создан',
+public:'Для всех',postBody:'Текст поста',whatsNew:'Что нового, {n}?',photo:'Фото',publish:'Опубликовать',publishing:'Публикуем…',preview:'Предпросмотр',rmPhoto:'Убрать фото',badImg:'Не удалось открыть файл. Выберите JPG или PNG.',posted:'Пост опубликован',
+story:'История',newStory:'Новая история',storyText:'Текст истории',storyPh:'Чем поделиться на 24 часа?',storyEmpty:'Напишите что-нибудь…',bg:'Фон',bgN:'Фон {n}',shareStory:'Опубликовать историю',storyUp:'История видна 24 часа',prev:'Назад',next:'Дальше',stories:'Истории',addStory:'Новая история',myStory:'Моя история',storyOf:'История: {n}',clip:'Клип',
+promoted:'Продвигается',options:'Действия',like:'Нравится',comment:'Комментарий',share:'Поделиться',postImg:'Фото из поста',nLikes:'Отметки «нравится»: {n}',nCmts:'Комментарии: {n}',writeCmt:'Напишите комментарий…',sendCmt:'Отправить комментарий',boostOn:'Продвигается до {d}. Продление добавляет 7 дней.',boostOff:'Пост будет первым в ленте 7 дней.',boost:'Продвинуть',extend:'Продлить',
+searchPh:'Поиск в Platformika',offline:'Нет связи с сервером. Лента обновится, когда связь вернётся.',people:'Люди',noResults:'Ничего не найдено по запросу «{q}»',noResultsB:'Попробуйте другое слово, имя или имя пользователя.',feedEmpty:'Постов пока нет',feedEmptyB:'Ваши публикации появятся здесь, на всех устройствах, где вы вошли.',writePost:'Написать пост',invite:'Пригласить друзей',
+uploadClip:'Загрузить клип',soundOn:'Включить звук',soundOff:'Выключить звук',clipsEmpty:'Клипов пока нет',clipsEmptyB:'Короткие вертикальные видео, до 50 МБ.',
+youPrefix:'Вы: ',notes:'Заметки для себя',notesB:'Списки, ссылки и напоминания',newChat:'Новый чат',newChatB:'Поиск по имени',chatsEmpty:'Чатов пока нет',chatsEmptyB:'Начните чат с кем-нибудь в Platformika или отправьте друзьям ссылку.',backChats:'Назад к чатам',notesOnly:'Этот чат видите только вы',notesHint:'Идея, ссылка или задача',firstMsg:'Напишите первое сообщение',msg:'Сообщение',send:'Отправить',chat:'Чат',findBy:'Поиск по имени или имени пользователя',nobody:'Никого не нашли.',all:'Все',
+aLike:'Отметка «нравится» от {n}',aCmt:'Комментарий от {n}: {t}',aMsg:'Сообщение от {n}: {t}',alertsEmpty:'Уведомлений нет',alertsEmptyB:'Здесь появятся отметки, комментарии и сообщения.',
+splitAria:'99% чистой прибыли авторам, 1% платформе',toCreators:'авторам',toPlatform:'платформе',crH:'99% чистой прибыли получают авторы',crP:'Чистая прибыль Platformika делится между авторами, 1% остаётся на работу платформы.',stPosts:'Публикации',stLikes:'Получено отметок',stCmts:'Получено комментариев',payH:'Выплаты',payP:'Выплаты авторам ещё не открыты. Когда откроются, баланс появится здесь.',inviteP:'Отправьте ссылку тем, кого хотите позвать.',splitLbl:'Раздел прибыли',toHub:'Центр авторов',footBy:'от',privacy:'Политика конфиденциальности',terms:'Условия использования',
+notFound:'Пользователь не найден',notFoundB:'Возможно, имя пользователя изменилось.',backHome:'На главную',editProf:'Редактировать',logout:'Выйти',message:'Написать',block:'Заблокировать',unblock:'Разблокировать',report:'Пожаловаться',addBio:'Добавить описание',posts:'Посты',media:'Фото и видео',likes:'Отметки',deleteAcc:'Удалить аккаунт',noPhotos:'Фото пока нет',noPosts:'Постов пока нет',createPost:'Создать пост',
+blockSoon:'Блокировка пока недоступна',blocked:'Аккаунт заблокирован. Его посты и сообщения скрыты.',unblocked:'Блокировка снята',
+reportPost:'Жалоба на пост',reportUser:'Жалоба на аккаунт',reportWhy:'В чём проблема?',reportPh:'Травля, спам, оскорбления, выдача себя за другого…',reportHint:'Жалобу видит только команда Barusik. Мы не сообщаем, кто пожаловался.',reportSend:'Отправить жалобу',sending:'Отправляем…',reportNeed:'Коротко опишите проблему',reportSoon:'Жалобы пока недоступны. Можно написать на {m}',reportThanks:'Спасибо, жалоба отправлена',
+delWarn:'Удаление необратимо. Будет удалён ваш общий аккаунт для всех платформ Barusik, а с ним посты, клипы, истории, комментарии, отметки, сообщения и фото.',delType:'Для подтверждения введите: {w}',delWord:'УДАЛИТЬ',delGo:'Удалить аккаунт навсегда',deleting:'Удаляем…',delNeed:'Введите «{w}» для подтверждения',deleted:'Аккаунт удалён',delSoon:'Самостоятельное удаление пока недоступно. Напишите на {m}, и мы удалим аккаунт в течение 7 дней.',
+fName:'Имя',fBio:'О себе',bioPh:'Пара слов о вас',bioHint:'До 160 символов',avatar:'Фото профиля',cover:'Обложка',coverPicked:'Обложка выбрана',save:'Сохранить',saving:'Сохраняем…',nameEmpty:'Имя не может быть пустым',saved:'Профиль сохранён',pickImg:'Выберите JPG или PNG',
+inviteB:'Отправьте ссылку в WhatsApp, сообщением или по почте.',
+newClip:'Новый клип',pickVideo:'Выбрать видео',videoHint:'MP4, MOV или WebM, до 50 МБ',caption:'Подпись',captionPh:'О чём клип?',uploading:'Загружаем…',notVideo:'Выберите видеофайл',videoBig:'Видео больше 50 МБ. Обрежьте его или снимите в меньшем качестве.',clipPosted:'Клип опубликован',
+copyLink:'Копировать ссылку',del:'Удалить',delSure:'Нажмите ещё раз, чтобы удалить',reportPostM:'Пожаловаться на пост',blockM:'Заблокировать аккаунт',removed:'Удалено',
+noNet:'Нет связи',noNetB:'Для работы Platformika нужен интернет.'},
+es:{name:'Platformika',skip:'Ir al contenido',navMain:'Navegación principal',navTabs:'Navegación',home:'Inicio',clips:'Clips',chats:'Chats',alerts:'Notificaciones',creators:'Centro de creadores',profile:'Mi perfil',newPost:'Nueva publicación',search:'Buscar',tabCreators:'Creadores',tabMe:'Yo',railLbl:'Más',
+close:'Cerrar',wait:'Un momento…',user:'Usuario',now:'ahora',linkCopied:'Enlace copiado',copyManual:'Selecciona el enlace y cópialo',copy:'Copiar',loading:'Cargando…',language:'Idioma',
+eLogin:'Correo o contraseña incorrectos',eExists:'Este correo ya está registrado. Inicia sesión.',eRate:'Demasiados intentos. Espera un minuto y vuelve a intentarlo.',eTaken:'Ese nombre de usuario está ocupado, elige otro',eBig:'El archivo es demasiado grande (máx. 50 MB)',eType:'Este tipo de archivo no es compatible',eNet:'No hay conexión con el servidor. Revisa tu internet.',eConfirm:'Tu correo aún no está confirmado. Abre el enlace que te enviamos.',eWeak:'La contraseña es demasiado débil. Elige una más larga.',eOther:'Algo salió mal: {m}',eRetry:'inténtalo de nuevo',
+outLead:'Publicaciones, historias, clips y chats, y el 99% del beneficio neto va a los creadores.',outShared:'Una cuenta para todas las plataformas de Barusik. ¿Tienes cuenta en Complichess? También sirve aquí.',login:'Iniciar sesión',signup:'Registrarse',mainSite:'Sitio principal',
+uname:'Nombre de usuario',mail:'Correo',pass:'Contraseña',createAcc:'Crear cuenta',forgot:'Olvidé mi contraseña',mailFirst:'Escribe primero tu correo',resetSent:'Si el correo está registrado, le enviamos un enlace para restablecerla',badMail:'El correo no es válido',passShort:'La contraseña necesita al menos 6 caracteres',unameLen:'El nombre de usuario necesita 2–20 caracteres',unameTaken:'Ese nombre está ocupado, prueba otro',checkMail:'Revisa tu correo',checkMailB:'Enviamos un enlace de confirmación a:',checkMailB2:'Cuando confirmes, vuelve aquí e inicia sesión.',toLogin:'Ir a iniciar sesión',linkBad:'El enlace del correo caducó o ya se usó. Inicia sesión o pide uno nuevo.',newPass:'Nueva contraseña',newPassSave:'Guardar contraseña',passSaved:'Contraseña actualizada',
+onbT:'Te damos la bienvenida a Platformika',onbLead:'Un paso más: el nombre de tu perfil.',onbName:'Nombre',onbNamePh:'El nombre con el que te conocen',onbHandle:'Nombre de usuario',onbHint:'Letras en inglés, números, punto y guion bajo',onbGo:'Crear perfil',onbAs:'Sesión iniciada como ',onbOther:'Entrar con otra cuenta',onbNeedName:'Escribe un nombre',onbHandleShort:'El nombre de usuario necesita al menos 3 caracteres',profCreated:'Perfil creado',
+public:'Público',postBody:'Texto de la publicación',whatsNew:'¿Qué hay de nuevo, {n}?',photo:'Foto',publish:'Publicar',publishing:'Publicando…',preview:'Vista previa',rmPhoto:'Quitar foto',badImg:'No pudimos abrir el archivo. Elige una imagen JPG o PNG.',posted:'Publicado',
+story:'Historia',newStory:'Nueva historia',storyText:'Texto de la historia',storyPh:'¿Qué compartes durante 24 horas?',storyEmpty:'Escribe algo…',bg:'Fondo',bgN:'Fondo {n}',shareStory:'Compartir en historia',storyUp:'Tu historia estará 24 horas',prev:'Anterior',next:'Siguiente',stories:'Historias',addStory:'Nueva historia',myStory:'Mi historia',storyOf:'Historia de {n}',clip:'Clip',
+promoted:'Destacado',options:'Opciones',like:'Me gusta',comment:'Comentar',share:'Compartir',postImg:'Foto de la publicación',nLikes:'Me gusta: {n}',nCmts:'Comentarios: {n}',writeCmt:'Escribe un comentario…',sendCmt:'Enviar comentario',boostOn:'Destacado hasta el {d}. Extender suma 7 días.',boostOff:'Muestra esta publicación primero en el feed durante 7 días.',boost:'Destacar',extend:'Extender',
+searchPh:'Buscar en Platformika',offline:'No hay conexión con el servidor. El feed se actualizará cuando vuelva.',people:'Personas',noResults:'Sin resultados para «{q}»',noResultsB:'Prueba otra palabra, nombre o usuario.',feedEmpty:'Aún no hay publicaciones',feedEmptyB:'Lo que publiques aparece aquí, en todos los dispositivos donde hayas iniciado sesión.',writePost:'Escribir una publicación',invite:'Invitar amigos',
+uploadClip:'Subir clip',soundOn:'Activar sonido',soundOff:'Silenciar',clipsEmpty:'Aún no hay clips',clipsEmptyB:'Videos verticales cortos, hasta 50 MB.',
+youPrefix:'Tú: ',notes:'Notas para mí',notesB:'Listas, enlaces y recordatorios',newChat:'Nuevo chat',newChatB:'Buscar por nombre',chatsEmpty:'Aún no hay conversaciones',chatsEmptyB:'Empieza un chat con alguien de Platformika o envía un enlace a tus amigos.',backChats:'Volver a los chats',notesOnly:'Solo tú ves esta conversación',notesHint:'Una idea, un enlace o una tarea',firstMsg:'Envía el primer mensaje',msg:'Mensaje',send:'Enviar',chat:'Chat',findBy:'Buscar por nombre o usuario',nobody:'No encontramos a nadie.',all:'Todo',
+aLike:'Me gusta de {n}',aCmt:'Comentario de {n}: {t}',aMsg:'Mensaje de {n}: {t}',alertsEmpty:'Sin notificaciones',alertsEmptyB:'Aquí aparecen los me gusta, comentarios y mensajes.',
+splitAria:'99% del beneficio neto para los creadores, 1% para la plataforma',toCreators:'creadores',toPlatform:'plataforma',crH:'El 99% del beneficio neto va a los creadores',crP:'El beneficio neto de Platformika se reparte entre los creadores, y el 1% se queda para mantenerla.',stPosts:'Publicaciones',stLikes:'Me gusta recibidos',stCmts:'Comentarios recibidos',payH:'Pagos',payP:'Los pagos a creadores aún no están abiertos. Cuando lo estén, tu saldo aparecerá aquí.',inviteP:'Envía el enlace a quien quieras que se una.',splitLbl:'Reparto del beneficio',toHub:'Centro de creadores',footBy:'de',privacy:'Política de privacidad',terms:'Términos de uso',
+notFound:'Usuario no encontrado',notFoundB:'Puede que el nombre de usuario haya cambiado.',backHome:'Volver al inicio',editProf:'Editar perfil',logout:'Cerrar sesión',message:'Mensaje',block:'Bloquear',unblock:'Desbloquear',report:'Denunciar',addBio:'Añadir biografía',posts:'Publicaciones',media:'Fotos y videos',likes:'Me gusta',deleteAcc:'Eliminar cuenta',noPhotos:'Aún no hay fotos',noPosts:'Aún no hay publicaciones',createPost:'Crear publicación',
+blockSoon:'El bloqueo aún no está disponible',blocked:'Cuenta bloqueada. No verás sus publicaciones ni mensajes.',unblocked:'Desbloqueada',
+reportPost:'Denunciar publicación',reportUser:'Denunciar cuenta',reportWhy:'¿Cuál es el problema?',reportPh:'Acoso, spam, contenido ofensivo, suplantación…',reportHint:'Solo el equipo de Barusik ve las denuncias. Nunca decimos quién denunció.',reportSend:'Enviar denuncia',sending:'Enviando…',reportNeed:'Cuenta brevemente el problema',reportSoon:'Las denuncias aún no están disponibles. Puedes escribir a {m}',reportThanks:'Gracias, denuncia enviada',
+delWarn:'Es definitivo. Se eliminará tu cuenta compartida de todas las plataformas de Barusik, junto con tus publicaciones, clips, historias, comentarios, me gusta, mensajes y fotos.',delType:'Para confirmar, escribe: {w}',delWord:'ELIMINAR',delGo:'Eliminar mi cuenta para siempre',deleting:'Eliminando…',delNeed:'Escribe «{w}» para confirmar',deleted:'Cuenta eliminada',delSoon:'La eliminación propia aún no está disponible. Escribe a {m} y la borraremos en 7 días.',
+fName:'Nombre',fBio:'Biografía',bioPh:'Unas palabras sobre ti',bioHint:'Hasta 160 caracteres',avatar:'Foto de perfil',cover:'Foto de portada',coverPicked:'Portada elegida',save:'Guardar',saving:'Guardando…',nameEmpty:'El nombre no puede quedar vacío',saved:'Perfil guardado',pickImg:'Elige una imagen JPG o PNG',
+inviteB:'Envía el enlace por WhatsApp, mensaje o correo.',
+newClip:'Nuevo clip',pickVideo:'Elegir video',videoHint:'MP4, MOV o WebM, hasta 50 MB',caption:'Descripción',captionPh:'¿De qué trata el clip?',uploading:'Subiendo…',notVideo:'Elige un archivo de video',videoBig:'El video supera los 50 MB. Recórtalo o grábalo con menos calidad.',clipPosted:'Clip publicado',
+copyLink:'Copiar enlace',del:'Eliminar',delSure:'Toca otra vez para eliminar',reportPostM:'Denunciar publicación',blockM:'Bloquear cuenta',removed:'Eliminado',
+noNet:'Sin conexión',noNetB:'Platformika necesita internet para cargar.'},
+fr:{name:'Platformika',skip:'Aller au contenu',navMain:'Navigation principale',navTabs:'Navigation',home:'Accueil',clips:'Clips',chats:'Messages',alerts:'Notifications',creators:'Espace créateurs',profile:'Mon profil',newPost:'Nouvelle publication',search:'Rechercher',tabCreators:'Créateurs',tabMe:'Moi',railLbl:'Plus',
+close:'Fermer',wait:'Un instant…',user:'Utilisateur',now:'à l’instant',linkCopied:'Lien copié',copyManual:'Sélectionnez le lien et copiez-le',copy:'Copier',loading:'Chargement…',language:'Langue',
+eLogin:'E-mail ou mot de passe incorrect',eExists:'Cet e-mail est déjà inscrit. Connectez-vous.',eRate:'Trop de tentatives. Attendez une minute et réessayez.',eTaken:'Ce nom d’utilisateur est pris, choisissez-en un autre',eBig:'Fichier trop lourd (50 Mo max.)',eType:'Ce type de fichier n’est pas accepté',eNet:'Impossible de joindre le serveur. Vérifiez votre connexion.',eConfirm:'Votre e-mail n’est pas encore confirmé. Ouvrez le lien que nous avons envoyé.',eWeak:'Mot de passe trop faible. Choisissez-en un plus long.',eOther:'Un problème est survenu : {m}',eRetry:'réessayez',
+outLead:'Publications, stories, clips et messages, et 99 % du bénéfice net revient aux créateurs.',outShared:'Un seul compte pour toutes les plateformes Barusik. Vous avez un compte Complichess ? Il marche aussi ici.',login:'Connexion',signup:'Inscription',mainSite:'Site principal',
+uname:'Nom d’utilisateur',mail:'E-mail',pass:'Mot de passe',createAcc:'Créer le compte',forgot:'Mot de passe oublié',mailFirst:'Indiquez d’abord votre e-mail',resetSent:'Si cet e-mail est inscrit, nous y avons envoyé un lien de réinitialisation',badMail:'Adresse e-mail invalide',passShort:'Le mot de passe doit faire au moins 6 caractères',unameLen:'Le nom d’utilisateur doit faire 2 à 20 caractères',unameTaken:'Ce nom est pris, essayez-en un autre',checkMail:'Vérifiez vos e-mails',checkMailB:'Nous avons envoyé un lien de confirmation à :',checkMailB2:'Après confirmation, revenez ici et connectez-vous.',toLogin:'Aller à la connexion',linkBad:'Le lien de l’e-mail a expiré ou a déjà servi. Connectez-vous ou demandez un nouveau lien.',newPass:'Nouveau mot de passe',newPassSave:'Enregistrer le mot de passe',passSaved:'Mot de passe mis à jour',
+onbT:'Bienvenue sur Platformika',onbLead:'Dernière étape : le nom affiché sur votre profil.',onbName:'Nom',onbNamePh:'Le nom que vos amis connaissent',onbHandle:'Nom d’utilisateur',onbHint:'Lettres latines, chiffres, point et tiret bas',onbGo:'Créer le profil',onbAs:'Connecté en tant que ',onbOther:'Se connecter avec un autre compte',onbNeedName:'Indiquez un nom',onbHandleShort:'Le nom d’utilisateur doit faire au moins 3 caractères',profCreated:'Profil créé',
+public:'Public',postBody:'Texte de la publication',whatsNew:'Quoi de neuf, {n} ?',photo:'Photo',publish:'Publier',publishing:'Publication…',preview:'Aperçu',rmPhoto:'Retirer la photo',badImg:'Impossible d’ouvrir le fichier. Choisissez une image JPG ou PNG.',posted:'Publié',
+story:'Story',newStory:'Nouvelle story',storyText:'Texte de la story',storyPh:'Quoi partager pendant 24 heures ?',storyEmpty:'Écrivez quelque chose…',bg:'Fond',bgN:'Fond {n}',shareStory:'Partager en story',storyUp:'Votre story est en ligne pour 24 heures',prev:'Précédent',next:'Suivant',stories:'Stories',addStory:'Nouvelle story',myStory:'Ma story',storyOf:'Story de {n}',clip:'Clip',
+promoted:'Mis en avant',options:'Options',like:'J’aime',comment:'Commenter',share:'Partager',postImg:'Photo de la publication',nLikes:'J’aime : {n}',nCmts:'Commentaires : {n}',writeCmt:'Écrire un commentaire…',sendCmt:'Envoyer le commentaire',boostOn:'Mis en avant jusqu’au {d}. Prolonger ajoute 7 jours.',boostOff:'Affichez cette publication en premier dans le fil pendant 7 jours.',boost:'Mettre en avant',extend:'Prolonger',
+searchPh:'Rechercher sur Platformika',offline:'Impossible de joindre le serveur. Le fil se mettra à jour au retour de la connexion.',people:'Personnes',noResults:'Aucun résultat pour « {q} »',noResultsB:'Essayez un autre mot, un nom ou un nom d’utilisateur.',feedEmpty:'Pas encore de publications',feedEmptyB:'Ce que vous publiez apparaît ici, sur tous vos appareils connectés.',writePost:'Écrire une publication',invite:'Inviter des amis',
+uploadClip:'Ajouter un clip',soundOn:'Activer le son',soundOff:'Couper le son',clipsEmpty:'Pas encore de clips',clipsEmptyB:'Courtes vidéos verticales, jusqu’à 50 Mo.',
+youPrefix:'Vous : ',notes:'Notes perso',notesB:'Listes, liens et rappels',newChat:'Nouvelle discussion',newChatB:'Chercher par nom',chatsEmpty:'Pas encore de discussions',chatsEmptyB:'Lancez une discussion avec quelqu’un sur Platformika, ou envoyez un lien à vos amis.',backChats:'Retour aux messages',notesOnly:'Vous seul voyez cette discussion',notesHint:'Une idée, un lien ou une tâche',firstMsg:'Envoyez le premier message',msg:'Message',send:'Envoyer',chat:'Discussion',findBy:'Chercher par nom ou nom d’utilisateur',nobody:'Personne trouvé.',all:'Tout',
+aLike:'J’aime de {n}',aCmt:'Commentaire de {n} : {t}',aMsg:'Message de {n} : {t}',alertsEmpty:'Aucune notification',alertsEmptyB:'Les j’aime, commentaires et messages arrivent ici.',
+splitAria:'99 % du bénéfice net aux créateurs, 1 % à la plateforme',toCreators:'aux créateurs',toPlatform:'à la plateforme',crH:'99 % du bénéfice net revient aux créateurs',crP:'Le bénéfice net de Platformika est partagé entre les créateurs, et 1 % reste pour la faire tourner.',stPosts:'Publications',stLikes:'J’aime reçus',stCmts:'Commentaires reçus',payH:'Paiements',payP:'Les paiements aux créateurs ne sont pas encore ouverts. Votre solde apparaîtra ici quand ils le seront.',inviteP:'Envoyez le lien à qui vous voulez voir arriver.',splitLbl:'Partage du bénéfice',toHub:'Espace créateurs',footBy:'par',privacy:'Politique de confidentialité',terms:'Conditions d’utilisation',
+notFound:'Utilisateur introuvable',notFoundB:'Le nom d’utilisateur a peut-être changé.',backHome:'Retour à l’accueil',editProf:'Modifier le profil',logout:'Déconnexion',message:'Message',block:'Bloquer',unblock:'Débloquer',report:'Signaler',addBio:'Ajouter une bio',posts:'Publications',media:'Photos et vidéos',likes:'J’aime',deleteAcc:'Supprimer le compte',noPhotos:'Pas encore de photos',noPosts:'Pas encore de publications',createPost:'Créer une publication',
+blockSoon:'Le blocage n’est pas encore disponible',blocked:'Compte bloqué. Vous ne verrez plus ses publications ni ses messages.',unblocked:'Débloqué',
+reportPost:'Signaler la publication',reportUser:'Signaler le compte',reportWhy:'Quel est le problème ?',reportPh:'Harcèlement, spam, contenu offensant, usurpation…',reportHint:'Seule l’équipe Barusik voit les signalements. Nous ne disons jamais qui a signalé.',reportSend:'Envoyer le signalement',sending:'Envoi…',reportNeed:'Décrivez brièvement le problème',reportSoon:'Le signalement n’est pas encore disponible. Vous pouvez écrire à {m}',reportThanks:'Merci, signalement envoyé',
+delWarn:'C’est définitif. Votre compte commun à toutes les plateformes Barusik sera supprimé, avec vos publications, clips, stories, commentaires, j’aime, messages et photos.',delType:'Pour confirmer, tapez : {w}',delWord:'SUPPRIMER',delGo:'Supprimer mon compte définitivement',deleting:'Suppression…',delNeed:'Tapez « {w} » pour confirmer',deleted:'Compte supprimé',delSoon:'La suppression en libre-service n’est pas encore disponible. Écrivez à {m} et nous le supprimerons sous 7 jours.',
+fName:'Nom',fBio:'Bio',bioPh:'Quelques mots sur vous',bioHint:'160 caractères max.',avatar:'Photo de profil',cover:'Photo de couverture',coverPicked:'Couverture choisie',save:'Enregistrer',saving:'Enregistrement…',nameEmpty:'Le nom ne peut pas être vide',saved:'Profil enregistré',pickImg:'Choisissez une image JPG ou PNG',
+inviteB:'Envoyez le lien par WhatsApp, SMS ou e-mail.',
+newClip:'Nouveau clip',pickVideo:'Choisir une vidéo',videoHint:'MP4, MOV ou WebM, jusqu’à 50 Mo',caption:'Légende',captionPh:'De quoi parle le clip ?',uploading:'Envoi…',notVideo:'Choisissez un fichier vidéo',videoBig:'La vidéo dépasse 50 Mo. Raccourcissez-la ou filmez en qualité plus basse.',clipPosted:'Clip publié',
+copyLink:'Copier le lien',del:'Supprimer',delSure:'Touchez encore pour supprimer',reportPostM:'Signaler la publication',blockM:'Bloquer le compte',removed:'Supprimé',
+noNet:'Pas de connexion',noNetB:'Platformika a besoin d’internet pour se charger.'}
+};
+let L=(()=>{const q=new URLSearchParams(location.search).get('lang');let s=null;try{s=localStorage.getItem('barusik.lang')}catch(e){}return T[q]?q:T[s]?s:'he'})();
+const t=(k,v)=>{let s=T[L][k]??T.he[k]??k;if(v)for(const x in v)s=s.split('{'+x+'}').join(v[x]);return s};
+const tx=(k,v)=>esc(t(k,v));
+const fmt=n=>new Intl.NumberFormat(LOC[L]).format(n);
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+// Hebrew dual forms come back as "לפני שעתיים (2)" in Chrome; the number in brackets is noise
+const rtf=()=>{const f=new Intl.RelativeTimeFormat(LOC[L],{numeric:'auto'});return{format:(n,u)=>f.format(n,u).replace(/\s*\(\d+\)$/,'')}};
+const sameDay=(a,b)=>a.toDateString()===b.toDateString();
+const shortDate=x=>new Date(x).toLocaleDateString(LOC[L],{day:'numeric',month:'short'});
+const hm=x=>new Date(x).toLocaleTimeString(LOC[L],{hour:'2-digit',minute:'2-digit'});
+function rel(x){const d=(Date.now()-ts(x))/1000;if(d<60)return t('now');if(d<3600)return rtf().format(-Math.floor(d/60),'minute');if(d<86400)return rtf().format(-Math.floor(d/3600),'hour');if(d<172800)return cap(rtf().format(-1,'day'));return shortDate(x)}
+const listTime=x=>sameDay(new Date(x),new Date())?hm(x):shortDate(x);
+function dayLabel(x){const d=new Date(x),n=new Date(),y=new Date(n);y.setDate(n.getDate()-1);if(sameDay(d,n))return cap(rtf().format(0,'day'));if(sameDay(d,y))return cap(rtf().format(-1,'day'));return d.toLocaleDateString(LOC[L],{weekday:'long',day:'numeric',month:'long'})}
+const langSelect=()=>`<label class="langsel"><span class="sr">${tx('language')}</span><select data-lang>${Object.entries(LANGS).map(([k,v])=>`<option value="${k}" lang="${k}"${k===L?' selected':''}>${v}</option>`).join('')}</select></label>`;
+const legalLinks=()=>`<a class="linkish" href="/${L}/privacy/">${tx('privacy')}</a><a class="linkish" href="/${L}/terms/">${tx('terms')}</a>`;
+function applyShell(){
+  const H=document.documentElement;H.lang=L;H.dir=RTL[L]?'rtl':'ltr';
+  $$('[data-t]').forEach(e=>e.textContent=t(e.dataset.t));
+  $$('[data-ta]').forEach(e=>e.setAttribute('aria-label',t(e.dataset.ta)));
+  $('meta[name=description]')?.setAttribute('content',t('outLead')+' '+t('outShared'));
+}
 
 /* ---------- state (from the server) ---------- */
-let USER=null,ME=null,READY=false,OFFLINE=!sb,AUTHKNOWN=false;
+let USER=null,ME=null,READY=false,OFFLINE=!sb,AUTHKNOWN=false,RECOVERY=/type=recovery/.test(location.hash),LINKERR=false;
 const PROF={};                        // id -> pk_profiles row
 let POSTS=[],LIKES=[],CMTS=[],MSGS=[],BLOCKED=new Set();
 let BOOST=new Map(),PAY=null;           // post id -> boosted until; PAY = {price} when the paid boost is on sale
 const OPEN={};                        // post id -> comments open
+const SOUND=new Set();                // clips the person turned the sound on for
+const LOOKED=new Set();               // profiles already fetched on demand
 try{const r=new URLSearchParams(location.search).get('ref');if(r)localStorage.setItem('platformika.ref',r)}catch(e){}
+// an expired or used link from a sign-up or reset e-mail comes back as #error=...; say so instead of ignoring it
+if(/error_description=/.test(location.hash)){LINKERR=true;history.replaceState(null,'',location.pathname+location.search)}
 
 const posts=k=>POSTS.filter(p=>p.kind===k);
 const likesOf=id=>LIKES.filter(l=>l.post===id);
 const likedByMe=id=>!!USER&&LIKES.some(l=>l.post===id&&l.uid===USER.id);
 const cmtsOf=id=>CMTS.filter(c=>c.post===id);
-const who=id=>PROF[id]||{id,name:'משתמש',handle:'',hue:200};
+const who=id=>PROF[id]||{id,name:t('user'),handle:'',hue:200};
 const activeStories=()=>posts('story').filter(s=>Date.now()-ts(s.created_at)<86400000).sort((a,b)=>ts(a.created_at)-ts(b.created_at));
+const handle=h=>h?`<bdi dir="ltr">@${esc(h)}</bdi>`:'';
 
 async function loadProfiles(ids){
   const need=[...new Set(ids)].filter(id=>id&&!PROF[id]);if(!need.length)return;
   const{data}=await sb.from('pk_profiles').select('*').in('id',need);(data||[]).forEach(p=>PROF[p.id]=p);
 }
+// a profile or chat opened from a link may belong to someone who has not shown up in the feed yet
+function lookup(by,v){const k=by+':'+v;if(LOOKED.has(k))return false;LOOKED.add(k);
+  sb.from('pk_profiles').select('*').eq(by,v).limit(1).then(({data})=>{(data||[]).forEach(p=>PROF[p.id]=p);render(true)},()=>render(true));return true}
 async function loadAll(){
   if(!sb)return;
   const[pr,mr]=await Promise.all([
@@ -516,7 +742,6 @@ async function loadPay(){
     if(ok)PAY={price:+pr.price};
   }catch(e){PAY=null}
 }
-const boostUntil=x=>new Date(x).toLocaleDateString('he-IL',{day:'numeric',month:'short'});
 let reloadT=0;
 function reloadSoon(){clearTimeout(reloadT);reloadT=setTimeout(async()=>{await loadAll();render(true)},350)}
 let live=null;
@@ -532,12 +757,20 @@ function goLive(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&READY)reloadSoon()});
 
 /* ---------- helpers ---------- */
-function rel(x){const d=(Date.now()-ts(x))/1000;if(d<60)return'עכשיו';if(d<3600)return`לפני ${Math.floor(d/60)} דק׳`;if(d<86400)return`לפני ${Math.floor(d/3600)} שע׳`;if(d<172800)return'אתמול';return new Date(x).toLocaleDateString('he-IL',{day:'numeric',month:'short'})}
-const hm=x=>new Date(x).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
-function dayLabel(x){const d=new Date(x),t=new Date();const k=v=>v.toDateString();if(k(d)===k(t))return'היום';const y=new Date(t);y.setDate(t.getDate()-1);if(k(d)===k(y))return'אתמול';return d.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'})}
 function av(p,size=''){if(!p)return`<span class="av ${size}"></span>`;const src=p.avatar_url&&(p.avatar_url.startsWith('blob:')?p.avatar_url:media(p.avatar_url));return`<span class="av ${size}" style="--h:${hue(p.hue)}">${src?`<img src="${esc(src)}" alt="" decoding="async">`:esc([...(p.name||'?').trim()][0]||'?')}</span>`}
-function toast(t){$('.toast')?.remove();const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),2800)}
-async function copy(text,btn){try{await navigator.clipboard.writeText(text);toast('הקישור הועתק')}catch(e){const c=btn?.closest('.linkbox')?.querySelector('code');if(c){const r=document.createRange();r.selectNodeContents(c);const s=getSelection();s.removeAllRanges();s.addRange(r)}toast('סמנו את הקישור והעתיקו אותו')}}
+function toast(s){$('.toast')?.remove();const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=s;document.body.append(el);setTimeout(()=>el.remove(),2800)}
+const selectAll=el=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)};
+async function copy(text,btn){
+  try{await navigator.clipboard.writeText(text);toast(t('linkCopied'));return}catch(e){}
+  const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;opacity:0';document.body.append(ta);ta.select();
+  let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();
+  if(ok){toast(t('linkCopied'));return}
+  // no clipboard at all: put the link where it can be selected by hand
+  const c=btn?.closest('.linkbox')?.querySelector('code');
+  if(c){selectAll(c);toast(t('copyManual'));return}
+  openLayer(`${sheetHead(t('share'))}<div class="sheet-b"><div class="linkbox"><code>${esc(text)}</code></div><p class="hint">${tx('copyManual')}</p></div>`,{onMount:sh=>selectAll($('code',sh))});
+}
+async function share(url,btn){if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({url});return}catch(e){if(e&&e.name==='AbortError')return}}copy(url,btn)}
 function compress(file,max=1600,q=.84){return new Promise((res,rej)=>{if(!file||!file.type.startsWith('image/'))return rej(new Error('type'));const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('blob')),'image/jpeg',q)};im.onerror=rej;im.src=u})}
 function pickFile(accept){return new Promise(r=>{const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>r(i.files[0]||null);i.click()})}
 const rid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));
@@ -549,65 +782,69 @@ async function upload(blob,ext,type){
 }
 function mediaPath(url){const k='/'+BUCKET+'/';const i=(url||'').indexOf(k);return i<0?null:decodeURIComponent(url.slice(i+k.length))}
 const refLink=()=>SITE+'?ref='+encodeURIComponent(ME?.handle||'');
-const fmt=n=>new Intl.NumberFormat('he-IL').format(n);
-function busy(btn,on,label){if(!btn)return;if(on){btn.dataset.l=btn.innerHTML;btn.disabled=true;btn.innerHTML=label||'רגע…'}else{btn.disabled=false;if(btn.dataset.l)btn.innerHTML=btn.dataset.l}}
+function busy(btn,on,label){if(!btn)return;if(on){btn.dataset.l=btn.innerHTML;btn.disabled=true;btn.textContent=label||t('wait')}else{btn.disabled=false;if(btn.dataset.l)btn.innerHTML=btn.dataset.l}}
 function errText(e){const m=String(e?.message||e||'').toLowerCase();
-  if(m.includes('invalid login'))return'מייל או סיסמה לא נכונים';
-  if(m.includes('already registered')||m.includes('already been registered'))return'המייל הזה כבר רשום — התחברו במקום להירשם';
-  if(m.includes('rate limit'))return'יותר מדי ניסיונות — חכו דקה ונסו שוב';
-  if(m.includes('duplicate')||m.includes('unique'))return'שם המשתמש הזה תפוס — בחרו אחר';
-  if(m.includes('payload too large')||m.includes('exceeded the maximum'))return'הקובץ גדול מדי (עד 50MB)';
-  if(m.includes('mime')||m.includes('not supported'))return'סוג הקובץ לא נתמך';
-  if(m.includes('fetch')||m.includes('network'))return'אין חיבור לשרת — בדקו את האינטרנט';
-  return'משהו השתבש: '+(e?.message||'נסו שוב')}
+  if(m.includes('invalid login'))return t('eLogin');
+  if(m.includes('email not confirmed'))return t('eConfirm');
+  if(m.includes('already registered')||m.includes('already been registered'))return t('eExists');
+  if(m.includes('weak')||m.includes('password should'))return t('eWeak');
+  if(m.includes('rate limit'))return t('eRate');
+  if(m.includes('duplicate')||m.includes('unique'))return t('eTaken');
+  if(m.includes('payload too large')||m.includes('exceeded the maximum'))return t('eBig');
+  if(m.includes('mime')||m.includes('not supported'))return t('eType');
+  if(m.includes('fetch')||m.includes('network'))return t('eNet');
+  return t('eOther',{m:e?.message||t('eRetry')})}
+const sheetHead=title=>`<div class="sheet-h"><button class="iconbtn" data-close aria-label="${tx('close')}">${ic('x')}</button><h2>${esc(title)}</h2><span class="pad"></span></div>`;
+const emptyCard=(icon,title,body,actions='',tag='section')=>`<${tag} class="${tag==='section'?'card ':''}empty"><div class="art">${ic(icon)}</div><h2>${esc(title)}</h2>${body?`<p>${esc(body)}</p>`:''}${actions?`<div class="row">${actions}</div>`:''}</${tag}>`;
 
 /* ---------- layers (sheets) ---------- */
 let opener=null;
-function openLayer(html,{onMount,cls='',lock=false}={}){const L=$('#layer');if(!L.innerHTML)opener=document.activeElement;L.innerHTML=`<div class="scrim" data-scrim ${lock?'data-lock="1"':''}><div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;const sc=$('[data-scrim]',L);sc.addEventListener('click',e=>{if(e.target===sc&&!sc.dataset.lock)closeLayer()});const sh=$('.sheet',L),h=$('h1,h2',sh);if(h){h.id='layerTitle';sh.setAttribute('aria-labelledby','layerTitle')}onMount?.(sh);const f=$('[autofocus]',L)||$('input,textarea,button',L);f?.focus()}
+function openLayer(html,{onMount,cls='',lock=false}={}){const Lr=$('#layer'),swap=!!$('[data-scrim]',Lr);if(!Lr.innerHTML)opener=document.activeElement;Lr.innerHTML=`<div class="scrim ${swap?'still':''}" data-scrim ${lock?'data-lock="1"':''}><div class="sheet ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;const sc=$('[data-scrim]',Lr);sc.addEventListener('click',e=>{if(e.target===sc&&!sc.dataset.lock)closeLayer()});const sh=$('.sheet',Lr),h=$('h1,h2',sh);if(h){h.id='layerTitle';sh.setAttribute('aria-labelledby','layerTitle')}onMount?.(sh);const f=$('[autofocus]',Lr)||$('input,textarea,button',Lr);f?.focus()}
 function closeLayer(){const had=$('#layer').innerHTML;$('#layer').innerHTML='';stopStory();if(had&&opener&&opener.isConnected)opener.focus({preventScroll:true});opener=null}
 function closeMenus(){$$('.menu').forEach(m=>m.remove());$$('[data-act="post-menu"][aria-expanded="true"]').forEach(b=>b.setAttribute('aria-expanded','false'))}
 addEventListener('keydown',e=>{
-  const L=$('#layer');
+  const Lr=$('#layer');
   if(e.key==='Escape'){const m=$('.menu');if(m){const b=m.parentElement?.querySelector('[data-act="post-menu"]');closeMenus();b?.focus();return}
-    if(L.innerHTML&&!$('[data-scrim][data-lock]'))closeLayer();return}
+    if(Lr.innerHTML&&!$('[data-scrim][data-lock]'))closeLayer();return}
   // keep Tab inside an open sheet or the story viewer
-  if(e.key==='Tab'&&L.innerHTML){const f=$$('a[href],button:not([disabled]),input,textarea,video[controls]',L).filter(x=>x.offsetParent!==null||x.closest('.viewer'));if(!f.length)return;const a=f[0],z=f[f.length-1];
-    if(!L.contains(document.activeElement)){e.preventDefault();a.focus()}else if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
+  if(e.key==='Tab'&&Lr.innerHTML){const f=$$('a[href],button:not([disabled]),input,textarea,select,video[controls]',Lr).filter(x=>x.offsetParent!==null||x.closest('.viewer'));if(!f.length)return;const a=f[0],z=f[f.length-1];
+    if(!Lr.contains(document.activeElement)){e.preventDefault();a.focus()}else if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
   const m=$('.menu');if(m&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const bs=$$('button',m),i=bs.indexOf(document.activeElement);bs[(i+(e.key==='ArrowDown'?1:-1)+bs.length)%bs.length].focus()}
 });
 
 /* ---------- account (one Barusik account for every platform) ---------- */
-function authSheet(tab='login'){
-  openLayer(`
-  <div class="hero"><svg class="mark"><use href="#logo"/></svg><h1>${tab==='login'?'התחברות':'הרשמה'}</h1>
-  <p>משתמש אחד לכל הפלטפורמות של ברוסיק: פלטפורמיקה, קומפליצס ומה שיבוא. כבר יש לכם משתמש בקומפליצס? התחברו איתו.</p></div>
-  <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='login'}" data-auth="login">התחברות</button><button role="tab" aria-selected="${tab==='signup'}" data-auth="signup">הרשמה</button></div>
+const MAILRE=/^\S+@\S+\.\S+$/;
+function authSheet(tab='login',msg=''){
+  openLayer(`${sheetHead(t(tab))}
+  <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='login'}" data-auth="login">${tx('login')}</button><button role="tab" aria-selected="${tab==='signup'}" data-auth="signup">${tx('signup')}</button></div>
   <form class="sheet-b" id="auForm" novalidate>
-    ${tab==='signup'?`<div class="field"><label for="auName">שם משתמש</label><input id="auName" dir="ltr" autocomplete="username" maxlength="20" placeholder="yourname"></div>`:''}
-    <div class="field"><label for="auMail">מייל</label><input id="auMail" type="email" dir="ltr" autocomplete="email" autofocus></div>
-    <div class="field"><label for="auPass">סיסמה</label><input id="auPass" type="password" dir="ltr" autocomplete="${tab==='login'?'current-password':'new-password'}" minlength="6"></div>
-    <span class="err" id="auErr" role="alert" hidden></span>
-    <button class="btn primary block" type="submit">${tab==='login'?'התחברות':'יצירת משתמש'}</button>
-    ${tab==='login'?`<button type="button" class="btn ghost sm" id="auReset" style="align-self:center">שכחתי סיסמה</button>`:''}
-  </form>`,{cls:'onb',lock:true,onMount:sh=>{
-    $$('[data-auth]',sh).forEach(b=>b.onclick=()=>authSheet(b.dataset.auth));
-    const err=$('#auErr',sh),say=t=>{err.hidden=!t;err.textContent=t||''};
-    $('#auReset',sh)?.addEventListener('click',async()=>{const m=$('#auMail',sh).value.trim();if(!/^\S+@\S+\.\S+$/.test(m)){say('כתבו קודם את המייל שלכם');return}
-      await sb.auth.resetPasswordForEmail(m,{redirectTo:SITE});say('');toast('אם המייל רשום — נשלח אליו קישור לאיפוס')});
+    ${tab==='signup'?`<div class="field"><label for="auName">${tx('uname')}</label><input id="auName" dir="ltr" autocomplete="username" maxlength="20" placeholder="yourname" autocapitalize="none" spellcheck="false"></div>`:''}
+    <div class="field"><label for="auMail">${tx('mail')}</label><input id="auMail" type="email" dir="ltr" autocomplete="email" autocapitalize="none" spellcheck="false" autofocus></div>
+    <div class="field"><label for="auPass">${tx('pass')}</label><input id="auPass" type="password" dir="ltr" autocomplete="${tab==='login'?'current-password':'new-password'}" minlength="6"></div>
+    <span class="err" id="auErr" role="alert" ${msg?'':'hidden'}>${esc(msg)}</span>
+    <button class="btn primary block" type="submit">${tx(tab==='login'?'login':'createAcc')}</button>
+    ${tab==='login'?`<button type="button" class="btn ghost sm" id="auReset" style="align-self:center">${tx('forgot')}</button>`:''}
+    <p class="hint" style="text-align:center">${tx('outShared')}</p>
+  </form>`,{cls:'onb',onMount:sh=>{
+    $$('[data-auth]',sh).forEach(b=>b.onclick=()=>{const m=$('#auMail',sh).value;authSheet(b.dataset.auth);$('#auMail').value=m});
+    const err=$('#auErr',sh),say=s=>{err.hidden=!s;err.textContent=s||''};
+    $('#auReset',sh)?.addEventListener('click',async e=>{const m=$('#auMail',sh).value.trim();if(!MAILRE.test(m)){say(t('mailFirst'));$('#auMail',sh).focus();return}
+      const b=e.currentTarget;busy(b,true);const{error}=await sb.auth.resetPasswordForEmail(m,{redirectTo:SITE});busy(b,false);
+      if(error&&!/rate limit/i.test(error.message)){say(errText(error));return}say(error?t('eRate'):'');if(!error)toast(t('resetSent'))});
     $('#auForm',sh).addEventListener('submit',async e=>{e.preventDefault();const b=$('button[type=submit]',sh);
       const mail=$('#auMail',sh).value.trim(),pass=$('#auPass',sh).value;
-      if(!/^\S+@\S+\.\S+$/.test(mail)){say('כתובת מייל לא תקינה');return}
-      if(pass.length<6){say('הסיסמה צריכה לפחות 6 תווים');return}
-      busy(b,true);
+      if(tab==='signup'){const n=$('#auName',sh).value.trim();if(n.length<2||n.length>20){say(t('unameLen'));$('#auName',sh).focus();return}}
+      if(!MAILRE.test(mail)){say(t('badMail'));$('#auMail',sh).focus();return}
+      if(pass.length<6){say(t('passShort'));$('#auPass',sh).focus();return}
+      say('');busy(b,true);
       try{
         if(tab==='signup'){
           const name=$('#auName',sh).value.trim();
-          if(name.length<2||name.length>20){busy(b,false);say('שם המשתמש צריך 2–20 תווים');return}
           const{data:free}=await sb.rpc('username_available',{p_name:name});
-          if(free===false){busy(b,false);say('שם המשתמש תפוס — נסו אחר');return}
+          if(free===false){busy(b,false);say(t('unameTaken'));return}
           const{data,error}=await sb.auth.signUp({email:mail,password:pass,options:{data:{username:name},emailRedirectTo:SITE}});
           if(error)throw error;
-          if(!data.session){busy(b,false);say('');openLayer(`<div class="sheet-b" style="text-align:center"><div class="empty"><div class="art">${ic('send')}</div><h2>בדקו את המייל</h2><p>שלחנו קישור אימות ל־<b dir="ltr">${esc(mail)}</b>. אחרי שתאשרו — חזרו לכאן והתחברו.</p><button class="btn primary" id="auBack">להתחברות</button></div></div>`,{lock:true,onMount:s2=>{$('#auBack',s2).onclick=()=>authSheet('login')}});return}
+          if(!data.session){openLayer(`${sheetHead(t('checkMail'))}<div class="sheet-b" style="text-align:center"><p>${tx('checkMailB')}<br><b dir="ltr">${esc(mail)}</b></p><p>${tx('checkMailB2')}</p><button class="btn primary block" id="auBack">${tx('toLogin')}</button></div>`,{onMount:s2=>{$('#auBack',s2).onclick=()=>{authSheet('login');$('#auMail').value=mail;$('#auPass').focus()}}});return}
         }else{
           const{error}=await sb.auth.signInWithPassword({email:mail,password:pass});if(error)throw error;
         }
@@ -615,31 +852,42 @@ function authSheet(tab='login'){
     });
   }});
 }
+function passSheet(){
+  RECOVERY=false;
+  openLayer(`${sheetHead(t('newPass'))}
+  <form class="sheet-b" id="npForm" novalidate>
+    <div class="field"><label for="npPass">${tx('newPass')}</label><input id="npPass" type="password" dir="ltr" autocomplete="new-password" minlength="6" autofocus></div>
+    <span class="err" id="npErr" role="alert" hidden></span>
+    <button class="btn primary block" type="submit">${tx('newPassSave')}</button>
+  </form>`,{onMount:sh=>{
+    $('#npForm',sh).onsubmit=async e=>{e.preventDefault();const p=$('#npPass',sh).value,err=$('#npErr',sh);
+      if(p.length<6){err.hidden=false;err.textContent=t('passShort');return}
+      const b=$('button[type=submit]',sh);busy(b,true);const{error}=await sb.auth.updateUser({password:p});
+      if(error){busy(b,false);err.hidden=false;err.textContent=errText(error);return}
+      closeLayer();toast(t('passSaved'))};
+  }});
+}
 function onboarding(suggest){
   openLayer(`
-  <div class="hero"><svg class="mark"><use href="#logo"/></svg><h1>ברוכים הבאים לפלטפורמיקה</h1>
-  <p>פלטפורמה אחת לפוסטים, סטוריז, קליפים וצ'אטים, שבה 99% מהרווח הולך ליוצרים.</p>
-  <span class="tag">One Platform. Everyone Connected. Creators First.</span></div>
+  <div class="hero"><svg class="mark"><use href="#logo"/></svg><h1>${tx('onbT')}</h1><p>${tx('onbLead')}</p></div>
   <form class="sheet-b" id="onbForm" novalidate>
-    <div class="field"><label for="onbName">איך קוראים לך?</label><input id="onbName" autocomplete="name" placeholder="השם שיופיע בפרופיל" maxlength="40" value="${esc(suggest||'')}" autofocus></div>
-    <div class="field"><label for="onbHandle">שם משתמש בפלטפורמיקה</label><input id="onbHandle" dir="ltr" autocomplete="username" placeholder="yourname" maxlength="24" value="${esc((suggest||'').toLowerCase().replace(/[^a-z0-9._]/g,''))}"><span class="hint">אותיות באנגלית, מספרים, נקודה וקו תחתון</span><span class="err" id="onbErr" hidden></span></div>
-    <button class="btn primary block" type="submit">יצירת פרופיל בפלטפורמיקה</button>
-    <div class="note" style="flex-direction:column;align-items:stretch;gap:8px">
-      <span>את/ה מחובר/ת כ־<b dir="ltr">${esc(USER?.email||'')}</b>. למשתמש הזה עוד אין פרופיל בפלטפורמיקה.</span>
-      <button class="btn ghost block" type="button" id="onbOut">כבר יש לי פרופיל — התחברות עם משתמש אחר</button>
-    </div>
+    <div class="field"><label for="onbName">${tx('onbName')}</label><input id="onbName" autocomplete="name" placeholder="${tx('onbNamePh')}" maxlength="40" value="${esc(suggest||'')}" autofocus></div>
+    <div class="field"><label for="onbHandle">${tx('onbHandle')}</label><input id="onbHandle" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname" maxlength="24" value="${esc((suggest||'').toLowerCase().replace(/[^a-z0-9._]/g,''))}"><span class="hint">${tx('onbHint')}</span></div>
+    <span class="err" id="onbErr" role="alert" hidden></span>
+    <button class="btn primary block" type="submit">${tx('onbGo')}</button>
+    <div class="who">${tx('onbAs')}<b dir="ltr">${esc(USER?.email||'')}</b><br><button class="linkish" type="button" id="onbOut">${tx('onbOther')}</button></div>
   </form>`,{cls:'onb',lock:true,onMount:sh=>{
-    const n=$('#onbName',sh),h=$('#onbHandle',sh),err=$('#onbErr',sh);
+    const n=$('#onbName',sh),h=$('#onbHandle',sh),err=$('#onbErr',sh),say=s=>{err.hidden=!s;err.textContent=s||''};
     h.addEventListener('input',()=>{h.value=h.value.toLowerCase().replace(/[^a-z0-9._]/g,'')});
     $('#onbOut',sh).onclick=async()=>{await sb.auth.signOut();authSheet('login')};
     $('#onbForm',sh).addEventListener('submit',async e=>{e.preventDefault();
-      if(!n.value.trim()){err.hidden=false;err.textContent='כתבו שם כדי שחברים יזהו אתכם';n.focus();return}
-      if(h.value.length<3){err.hidden=false;err.textContent='שם המשתמש צריך לפחות 3 תווים';h.focus();return}
-      const b=$('button[type=submit]',sh);busy(b,true);
+      if(!n.value.trim()){say(t('onbNeedName'));n.focus();return}
+      if(h.value.length<3){say(t('onbHandleShort'));h.focus();return}
+      const b=$('button[type=submit]',sh);busy(b,true);say('');
       const row={id:USER.id,name:n.value.trim(),handle:h.value,hue:Math.floor(Math.random()*360)};
       const{data,error}=await sb.from('pk_profiles').insert(row).select().single();
-      if(error){busy(b,false);err.hidden=false;err.textContent=errText(error);return}
-      ME=PROF[USER.id]=data;closeLayer();render();toast('הפרופיל נוצר');
+      if(error){busy(b,false);say(errText(error));return}
+      ME=PROF[USER.id]=data;closeLayer();render();toast(t('profCreated'));
     });
   }});
 }
@@ -647,36 +895,37 @@ async function signedIn(user){
   USER=user;
   const{data}=await sb.from('pk_profiles').select('*').eq('id',user.id).maybeSingle();
   ME=data||null;if(ME)PROF[ME.id]=ME;
-  READY=true;await Promise.all([loadAll(),loadPay()]);goLive();render();
+  READY=true;await Promise.all([loadAll(),loadPay()]);goLive();
+  if(ME&&($('#auForm')||$('#onbForm')||$('#auBack')))closeLayer();
+  render();
   if(!ME){let s='';try{const r=await sb.from('profiles').select('username').eq('id',user.id).maybeSingle();s=r.data?.username||user.user_metadata?.username||''}catch(e){}onboarding(s)}
-  else if($('[data-scrim][data-lock]'))closeLayer();
+  else if(RECOVERY)passSheet();
 }
 
 /* ---------- compose ---------- */
 function compose(){
   let blob=null,url=null;
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>פוסט חדש</h2><span style="width:40px"></span></div>
+  openLayer(`${sheetHead(t('newPost'))}
   <div class="sheet-b">
-    <div style="display:flex;gap:12px;align-items:center">${av(ME)}<div><b>${esc(ME.name)}</b><div style="color:var(--muted);font-size:13px">ציבורי</div></div></div>
-    <label for="cmpText" class="sr">תוכן הפוסט</label>
-    <textarea id="cmpText" class="big" placeholder="מה חדש, ${esc(ME.name.split(' ')[0])}?" maxlength="2200" autofocus></textarea>
+    <div class="who-row">${av(ME)}<div><b>${esc(ME.name)}</b><small>${tx('public')}</small></div></div>
+    <label for="cmpText" class="sr">${tx('postBody')}</label>
+    <textarea id="cmpText" class="big" dir="auto" placeholder="${tx('whatsNew',{n:ME.name.split(' ')[0]})}" maxlength="2200" autofocus></textarea>
     <div id="cmpPrev"></div>
     <div class="tools">
-      <button class="btn ghost sm" id="cmpImg">${ic('image')}תמונה</button>
+      <button class="btn ghost sm" id="cmpImg">${ic('image')}${tx('photo')}</button>
       <span class="grow"></span>
-      <button class="btn primary" id="cmpPost" disabled>פרסום</button>
+      <button class="btn primary" id="cmpPost" disabled>${tx('publish')}</button>
     </div>
   </div>`,{onMount:sh=>{
-    const t=$('#cmpText',sh),b=$('#cmpPost',sh),pv=$('#cmpPrev',sh);
-    const upd=()=>{b.disabled=!t.value.trim()&&!blob};
-    t.addEventListener('input',upd);
-    const showPrev=()=>{pv.innerHTML=url?`<div class="prev"><img src="${url}" alt="תצוגה מקדימה"><button class="iconbtn" id="rmImg" aria-label="הסרת התמונה">${ic('x')}</button></div>`:'';$('#rmImg',pv)?.addEventListener('click',()=>{blob=null;url=null;showPrev();upd()})};
-    $('#cmpImg',sh).addEventListener('click',async()=>{const f=await pickFile('image/*');if(!f)return;try{blob=await compress(f);url=URL.createObjectURL(blob);showPrev();upd()}catch(e){toast('לא הצלחנו לפתוח את הקובץ. בחרו תמונה מסוג JPG או PNG.')}});
-    b.addEventListener('click',async()=>{busy(b,true,'מפרסם…');
-      try{const media=blob?await upload(blob,'jpg','image/jpeg'):null;
-        const{error}=await sb.from('pk_posts').insert({kind:'post',body:t.value.trim(),media_url:media,media_type:media?'image':null});if(error)throw error;
-        closeLayer();await loadAll();go('home');render();toast('הפוסט פורסם')}catch(x){busy(b,false);toast(errText(x))}});
+    const tA=$('#cmpText',sh),b=$('#cmpPost',sh),pv=$('#cmpPrev',sh);
+    const upd=()=>{b.disabled=!tA.value.trim()&&!blob};
+    tA.addEventListener('input',upd);
+    const showPrev=()=>{pv.innerHTML=url?`<div class="prev"><img src="${url}" alt="${tx('preview')}"><button class="iconbtn" id="rmImg" aria-label="${tx('rmPhoto')}">${ic('x')}</button></div>`:'';$('#rmImg',pv)?.addEventListener('click',()=>{blob=null;url=null;showPrev();upd()})};
+    $('#cmpImg',sh).addEventListener('click',async()=>{const f=await pickFile('image/*');if(!f)return;try{blob=await compress(f);url=URL.createObjectURL(blob);showPrev();upd()}catch(e){toast(t('badImg'))}});
+    b.addEventListener('click',async()=>{busy(b,true,t('publishing'));
+      try{const m=blob?await upload(blob,'jpg','image/jpeg'):null;
+        const{error}=await sb.from('pk_posts').insert({kind:'post',body:tA.value.trim(),media_url:m,media_type:m?'image':null});if(error)throw error;
+        closeLayer();await loadAll();if(location.hash.slice(1)!=='home')location.hash='home';render();scrollTo(0,0);toast(t('posted'))}catch(x){busy(b,false);toast(errText(x))}});
   }});
 }
 
@@ -684,19 +933,18 @@ function compose(){
 const BGS=['linear-gradient(150deg,#3B34E8,#9C5BFF)','linear-gradient(150deg,#FF6A3D,#E9A800)','linear-gradient(150deg,#0E9F6E,#1E6FD9)','linear-gradient(150deg,#16152B,#4C4B68)','linear-gradient(150deg,#E8344E,#9C5BFF)'];
 function storyCompose(){
   let bg=0;
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>סטורי חדש</h2><span style="width:40px"></span></div>
+  openLayer(`${sheetHead(t('newStory'))}
   <div class="sheet-b">
-    <div class="story-prev" id="stPrev" style="background:${BGS[0]}">כתבו משהו…</div>
-    <label for="stText" class="sr">טקסט הסטורי</label>
-    <div class="field"><input id="stText" placeholder="מה רוצים לשתף ל-24 שעות?" maxlength="140" autofocus></div>
-    <div class="swatches" role="group" aria-label="רקע">${BGS.map((g,i)=>`<button class="sw" style="background:${g}" aria-pressed="${i===0}" data-bg="${i}" aria-label="רקע ${i+1}"></button>`).join('')}</div>
-    <button class="btn primary block" id="stPost" disabled>שיתוף לסטורי</button>
+    <div class="story-prev" id="stPrev" dir="auto" style="background:${BGS[0]}">${tx('storyEmpty')}</div>
+    <label for="stText" class="sr">${tx('storyText')}</label>
+    <div class="field"><input id="stText" dir="auto" placeholder="${tx('storyPh')}" maxlength="140" autofocus></div>
+    <div class="swatches" role="group" aria-label="${tx('bg')}">${BGS.map((g,i)=>`<button class="sw" style="background:${g}" aria-pressed="${i===0}" data-bg="${i}" aria-label="${tx('bgN',{n:i+1})}"></button>`).join('')}</div>
+    <button class="btn primary block" id="stPost" disabled>${tx('shareStory')}</button>
   </div>`,{onMount:sh=>{
-    const t=$('#stText',sh),pv=$('#stPrev',sh),b=$('#stPost',sh);
-    t.addEventListener('input',()=>{pv.textContent=t.value||'כתבו משהו…';b.disabled=!t.value.trim()});
+    const tI=$('#stText',sh),pv=$('#stPrev',sh),b=$('#stPost',sh);
+    tI.addEventListener('input',()=>{pv.textContent=tI.value||t('storyEmpty');b.disabled=!tI.value.trim()});
     $$('.sw',sh).forEach(s=>s.addEventListener('click',()=>{bg=+s.dataset.bg;pv.style.background=BGS[bg];$$('.sw',sh).forEach(x=>x.setAttribute('aria-pressed',x===s))}));
-    b.addEventListener('click',async()=>{busy(b,true);const{error}=await sb.from('pk_posts').insert({kind:'story',body:t.value.trim(),bg});if(error){busy(b,false);toast(errText(error));return}closeLayer();await loadAll();render();toast('הסטורי עלה ל-24 שעות')});
+    b.addEventListener('click',async()=>{busy(b,true);const{error}=await sb.from('pk_posts').insert({kind:'story',body:tI.value.trim(),bg});if(error){busy(b,false);toast(errText(error));return}closeLayer();await loadAll();render();toast(t('storyUp'))});
   }});
 }
 let stTimer=null;
@@ -704,21 +952,22 @@ const storySeen=(()=>{try{return JSON.parse(localStorage.getItem('platformika.se
 function stopStory(){cancelAnimationFrame(stTimer);stTimer=null}
 function viewStories(author){
   const list=activeStories().filter(s=>s.author===author);if(!list.length)return;
-  let i=Math.max(0,list.findIndex(s=>!storySeen[s.id]));const L=$('#layer');if(!L.innerHTML)opener=document.activeElement;
+  let i=Math.max(0,list.findIndex(s=>!storySeen[s.id]));const Lr=$('#layer');if(!Lr.innerHTML)opener=document.activeElement;
   const show=()=>{
     stopStory();const s=list[i];storySeen[s.id]=1;try{localStorage.setItem('platformika.seen',JSON.stringify(storySeen))}catch(e){}
     const w=who(s.author);
-    L.innerHTML=`<div class="viewer" role="dialog" aria-modal="true" aria-label="צפייה בסטורי">
-      <div class="frame" style="background:${bgOf(s.bg)}">${esc(s.body)}
+    Lr.innerHTML=`<div class="viewer" role="dialog" aria-modal="true" aria-label="${tx('storyOf',{n:w.name})}">
+      <div class="frame" dir="auto" style="background:${bgOf(s.bg)}">${esc(s.body)}
         <div class="bars">${list.map((_,k)=>`<i><b style="width:${k<i?100:0}%"></b></i>`).join('')}</div>
-        <div class="vh">${av(w,'s32')}<span>${esc(w.name)} <small>${rel(s.created_at)}</small></span><button class="iconbtn x" data-close aria-label="סגירה">${ic('x')}</button></div>
-        <button class="tapzone prev" aria-label="הקודם"></button><button class="tapzone next" aria-label="הבא"></button>
+        <div class="vh">${av(w,'s32')}<span>${esc(w.name)} <small>${esc(rel(s.created_at))}</small></span><button class="iconbtn x" data-close aria-label="${tx('close')}">${ic('x')}</button></div>
+        <button class="tapzone prev" aria-label="${tx('prev')}"></button><button class="tapzone next" aria-label="${tx('next')}"></button>
       </div></div>`;
-    const bar=$$('.bars b',L)[i];const t0=performance.now(),D=5000;
+    const bar=$$('.bars b',Lr)[i];const t0=performance.now(),D=5000;
     const tick=now=>{const p=Math.min(1,(now-t0)/D);bar.style.width=p*100+'%';if(p<1)stTimer=requestAnimationFrame(tick);else next()};
     stTimer=requestAnimationFrame(tick);
-    $('.tapzone.next',L).onclick=next;$('.tapzone.prev',L).onclick=prev;$('.x',L).focus();
-    $('.viewer',L).onkeydown=e=>{if(e.key==='ArrowLeft'){e.preventDefault();next()}else if(e.key==='ArrowRight'){e.preventDefault();prev()}};
+    $('.tapzone.next',Lr).onclick=next;$('.tapzone.prev',Lr).onclick=prev;$('.x',Lr).focus();
+    // the arrow that points forward depends on the reading direction
+    $('.viewer',Lr).onkeydown=e=>{const fw=RTL[L]?'ArrowLeft':'ArrowRight',bw=RTL[L]?'ArrowRight':'ArrowLeft';if(e.key===fw){e.preventDefault();next()}else if(e.key===bw){e.preventDefault();prev()}};
   };
   const prev=()=>{i=Math.max(0,i-1);show()};
   const next=()=>{if(i<list.length-1){i++;show()}else{closeLayer();render()}};
@@ -729,56 +978,56 @@ function viewStories(author){
 function storiesTray(){
   const st=activeStories(),by=[];st.forEach(s=>{if(!by.includes(s.author))by.push(s.author)});
   if(by.includes(USER.id))by.splice(by.indexOf(USER.id),1),by.unshift(USER.id);
-  return`<section class="card" aria-label="סטוריז"><div class="stories">
-    <button class="story" data-act="story-new"><span class="ring add"><span class="inner">${ic('plus')}</span></span><span>הוספת סטורי</span></button>
-    ${by.map(a=>{const mine=st.filter(s=>s.author===a),last=mine[mine.length-1],seen=mine.every(s=>storySeen[s.id]),w=who(a);
-      return`<button class="story" data-act="story-view" data-author="${esc(a)}" aria-label="${a===USER.id?'הסטורי שלך':'הסטורי של '+esc(w.name)}"><span class="ring ${seen?'seen':''}"><span class="inner" style="background:${bgOf(last.bg)}" aria-hidden="true">${esc((last.body||'').slice(0,26))}</span></span><span>${a===USER.id?'הסטורי שלך':esc(w.name)}</span></button>`}).join('')}
+  return`<section class="card" aria-label="${tx('stories')}"><div class="stories">
+    <button class="story" data-act="story-new"><span class="ring add"><span class="inner">${ic('plus')}</span></span><span>${tx('addStory')}</span></button>
+    ${by.map(a=>{const mine=st.filter(s=>s.author===a),last=mine[mine.length-1],seen=mine.every(s=>storySeen[s.id]),w=who(a),lbl=a===USER.id?t('myStory'):w.name;
+      return`<button class="story" data-act="story-view" data-author="${esc(a)}" aria-label="${a===USER.id?tx('myStory'):tx('storyOf',{n:w.name})}"><span class="ring ${seen?'seen':''}"><span class="inner" dir="auto" style="background:${bgOf(last.bg)}" aria-hidden="true">${esc((last.body||'').slice(0,26))}</span></span><span>${esc(lbl)}</span></button>`}).join('')}
   </div></section>`;
 }
-function composer(){return`<section class="card composer" aria-label="יצירת פוסט"><div class="row">${av(ME)}<button class="fake" data-act="compose">מה חדש, ${esc(ME.name.split(' ')[0])}?</button></div>
-  <div class="acts"><button data-act="compose-img">${ic('image')}תמונה</button><button data-act="story-new">${ic('story')}סטורי</button><button data-act="clip-new">${ic('video')}קליפ</button></div></section>`}
+function composer(){return`<section class="card composer" aria-label="${tx('newPost')}"><div class="row">${av(ME)}<button class="fake" data-act="compose">${tx('whatsNew',{n:ME.name.split(' ')[0]})}</button></div>
+  <div class="acts"><button data-act="compose-img">${ic('image')}${tx('photo')}</button><button data-act="story-new">${ic('story')}${tx('story')}</button><button data-act="clip-new">${ic('video')}${tx('clip')}</button></div></section>`}
 function postHTML(p){
   const w=who(p.author),cs=cmtsOf(p.id),nl=likesOf(p.id).length,liked=likedByMe(p.id),m=media(p.media_url),big=!m&&(p.body||'').length<90,mine=p.author===USER.id,bo=BOOST.get(p.id);
-  return`<article class="card post" data-post="${p.id}" id="post-${p.id}" style="position:relative">
-  <div class="post-h"><a href="#u-${esc(w.handle)}">${av(w)}</a><div class="who"><a href="#u-${esc(w.handle)}" style="color:inherit"><b>${esc(w.name)}</b></a><small>${rel(p.created_at)} · ציבורי${bo?'<span class="promo">מקודם</span>':''}</small></div><button class="iconbtn" data-act="post-menu" data-mine="${mine?1:''}" aria-label="אפשרויות" aria-haspopup="menu" aria-expanded="false">${ic('more')}</button></div>
+  const prof=w.handle?`#u-${encodeURIComponent(w.handle)}`:'#home';
+  return`<article class="card post" data-post="${p.id}" id="post-${p.id}">
+  <div class="post-h"><a href="${prof}">${av(w)}</a><div class="who"><a href="${prof}"><b>${esc(w.name)}</b></a><small>${esc(rel(p.created_at))}${bo?`<span class="promo">${tx('promoted')}</span>`:''}</small></div><button class="iconbtn" data-act="post-menu" data-mine="${mine?1:''}" aria-label="${tx('options')}" aria-haspopup="menu" aria-expanded="false">${ic('more')}</button></div>
   ${p.body?`<p class="post-text ${big?'big':''}" dir="auto">${esc(p.body)}</p>`:''}
-  ${p.media_type==='image'&&m?`<img class="post-img" src="${esc(m)}" alt="תמונה מהפוסט" loading="lazy" decoding="async">`:''}
+  ${p.media_type==='image'&&m?`<img class="post-img" src="${esc(m)}" alt="${tx('postImg')}" loading="lazy" decoding="async">`:''}
   ${p.media_type==='video'&&m?`<video class="post-img" src="${esc(m)}" controls playsinline preload="metadata"></video>`:''}
-  ${(nl||cs.length)?`<div class="post-stats">${nl?`<span><svg class="i" style="width:16px;height:16px;fill:var(--like);stroke:var(--like);vertical-align:-3px"><use href="#i-heart"/></svg></span><span>${liked?(nl===1?'אהבת את זה':`את/ה ועוד ${fmt(nl-1)}`):fmt(nl)}</span>`:''}${cs.length?`<span style="margin-inline-start:auto">${cs.length===1?'תגובה אחת':fmt(cs.length)+' תגובות'}</span>`:''}</div>`:''}
+  ${(nl||cs.length)?`<div class="post-stats">${nl?`<span class="h" aria-label="${tx('nLikes',{n:fmt(nl)})}">${ic('heart')}${fmt(nl)}</span>`:''}${cs.length?`<span aria-label="${tx('nCmts',{n:fmt(cs.length)})}">${ic('comment')}${fmt(cs.length)}</span>`:''}</div>`:''}
   <div class="post-acts">
-    <button class="${liked?'on':''}" data-act="like" aria-pressed="${liked}">${ic('heart')}אהבתי</button>
-    <button data-act="comment">${ic('comment')}תגובה</button>
-    <button data-act="share">${ic('share')}שיתוף</button>
-    <button class="tip" data-act="tip">${ic('gift')}תמיכה</button>
+    <button class="${liked?'on':''}" data-act="like" aria-pressed="${liked}">${ic('heart')}${tx('like')}</button>
+    <button data-act="comment" aria-expanded="${!!OPEN[p.id]}">${ic('comment')}${tx('comment')}</button>
+    <button data-act="share">${ic('share')}${tx('share')}</button>
   </div>
-  ${mine&&p.kind==='post'&&PAY?`<a class="boost" href="/pay/?p=platformika_boost&amp;ref=${encodeURIComponent(p.id)}&amp;lang=he&amp;back=/platformika/"><span>${bo?`מקודם עד ${esc(boostUntil(bo))}. הארכה מוסיפה עוד 7 ימים.`:'הפוסט יופיע ראשון בפיד של כולם למשך 7 ימים.'}</span><b>${bo?'הארכה':'קידום'} · ₪${fmt(PAY.price)}</b></a>`:''}
+  ${mine&&p.kind==='post'&&PAY?`<a class="boost" href="/pay/?p=platformika_boost&amp;ref=${encodeURIComponent(p.id)}&amp;lang=${L}&amp;back=/platformika/"><span>${bo?tx('boostOn',{d:shortDate(bo)}):tx('boostOff')}</span><b>${tx(bo?'extend':'boost')} · ₪${fmt(PAY.price)}</b></a>`:''}
   <div class="comments" ${OPEN[p.id]?'':'hidden'}>
     ${cs.map(c=>{const cw=who(c.author);return`<div class="cmt">${av(cw,'s32')}<div class="bub"><b>${esc(cw.name)}</b><p dir="auto">${esc(c.body)}</p></div></div>`}).join('')}
-    <form class="cmt-in" data-act="cmt-form">${av(ME,'s32')}<label class="sr" for="c-${p.id}">תגובה</label><input id="c-${p.id}" placeholder="כתבו תגובה…" maxlength="500"><button class="iconbtn" aria-label="שליחת תגובה">${ic('send')}</button></form>
+    <form class="cmt-in" data-act="cmt-form">${av(ME,'s32')}<label class="sr" for="c-${p.id}">${tx('comment')}</label><input id="c-${p.id}" dir="auto" placeholder="${tx('writeCmt')}" maxlength="500"><button class="iconbtn send-c" aria-label="${tx('sendCmt')}">${ic('send')}</button></form>
   </div></article>`;
 }
 function vHome(){
   const q=(state.q||'').trim().toLowerCase();
   const list=posts('post').concat(q?posts('clip'):[]).filter(p=>!q||(p.body||'').toLowerCase().includes(q)||(who(p.author).name||'').toLowerCase().includes(q)||(who(p.author).handle||'').includes(q)).sort((a,b)=>(BOOST.has(b.id)-BOOST.has(a.id))||ts(b.created_at)-ts(a.created_at));
-  const people=q?Object.values(PROF).filter(u=>u.name.toLowerCase().includes(q)||(u.handle||'').includes(q)).slice(0,8):[];
+  const people=q?Object.values(PROF).filter(u=>(u.name||'').toLowerCase().includes(q)||(u.handle||'').includes(q)).slice(0,8):[];
   return`
-  <label class="search desk ${q||state.showSearch?'show':''}" for="q">${ic('search')}<input id="q" type="search" aria-label="חיפוש בפלטפורמיקה" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
-  ${OFFLINE?`<div class="note">${ic('info')}<span>אין חיבור לשרת כרגע. בדקו את האינטרנט — הפיד יתעדכן לבד כשהחיבור יחזור.</span></div>`:''}
+  <label class="search desk ${q||state.showSearch?'show':''}" for="q">${ic('search')}<input id="q" type="search" aria-label="${tx('searchPh')}" placeholder="${tx('searchPh')}" value="${esc(state.q||'')}" autocomplete="off"></label>
+  ${OFFLINE?`<div class="note">${ic('info')}<span>${tx('offline')}</span></div>`:''}
   ${q?'':storiesTray()}
   ${q?'':composer()}
-  ${people.length?`<section class="card"><div class="sec-h"><h3>אנשים</h3></div><div class="clist">${people.map(u=>`<a class="citem" href="#u-${esc(u.handle)}">${av(u)}<span class="meta"><b>${esc(u.name)}</b><span dir="ltr">@${esc(u.handle)}</span></span></a>`).join('')}</div></section>`:''}
-  ${list.length?list.map(postHTML).join(''):q?`<section class="card empty"><div class="art">${ic('search')}</div><h2>לא נמצאו תוצאות ל"${esc(state.q)}"</h2><p>נסו מילה אחרת, שם או שם משתמש.</p></section>`:
-  `<section class="card empty"><div class="art">${ic('users')}</div><h2>הפיד מחכה לפוסט הראשון</h2><p>מה שתפרסמו יופיע כאן — ובכל מכשיר שבו אתם או החברים שלכם מחוברים.</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn primary" data-act="compose">כתיבת פוסט ראשון</button><button class="btn ghost" data-act="invite">הזמנת חברים</button></div></section>`}`;
+  ${people.length?`<section class="card"><div class="sec-h"><h3>${tx('people')}</h3></div><div class="clist">${people.map(u=>`<a class="citem" href="#u-${encodeURIComponent(u.handle)}">${av(u)}<span class="meta"><b>${esc(u.name)}</b><span>${handle(u.handle)}</span></span></a>`).join('')}</div></section>`:''}
+  ${list.length?list.map(postHTML).join(''):q?emptyCard('search',t('noResults',{q:state.q.trim()}),t('noResultsB')):
+  emptyCard('edit',t('feedEmpty'),t('feedEmptyB'),`<button class="btn primary" data-act="compose">${tx('writePost')}</button><button class="btn ghost" data-act="invite">${tx('invite')}</button>`)}`;
 }
 function vClips(){
   const cl=posts('clip');
-  return`<div class="page-h"><h1>קליפים</h1><button class="btn primary sm" data-act="clip-new">${ic('plus')}העלאת קליפ</button></div>
-  ${cl.length?`<div class="clips">${cl.map(c=>{const w=who(c.author);return`<div class="clip" data-post="${c.id}"><video src="${esc(media(c.media_url))}" muted loop playsinline preload="metadata" data-clip aria-label="${esc(c.body||'קליפ')}"></video>
-    <div class="cap"><a href="#u-${esc(w.handle)}" style="color:#fff;font-weight:700">@${esc(w.handle)}</a>${c.body?' · '+esc(c.body):''}</div>
-    <button class="iconbtn" data-act="clip-sound" aria-label="הפעלת סאונד" style="position:absolute;top:8px;inset-inline-end:8px;background:rgba(0,0,0,.45);color:#fff">🔊</button>
-    <button class="iconbtn ${likedByMe(c.id)?'on':''}" data-act="like" aria-pressed="${likedByMe(c.id)}" aria-label="אהבתי" style="position:absolute;bottom:42px;inset-inline-end:8px;background:rgba(0,0,0,.45);color:${likedByMe(c.id)?'#ff5a72':'#fff'}">${ic('heart')}</button>
-    <button class="iconbtn" data-act="post-menu" data-mine="${c.author===USER.id?1:''}" aria-label="אפשרויות" aria-haspopup="menu" aria-expanded="false" style="position:absolute;top:8px;inset-inline-start:8px;background:rgba(0,0,0,.45);color:#fff">${ic('more')}</button></div>`}).join('')}</div>`:
-  `<section class="card empty"><div class="art">${ic('clips')}</div><h2>עוד אין כאן קליפים</h2><p>סרטונים אנכיים קצרים מכם ומהחברים שלכם יופיעו כאן, אחד אחרי השני.</p><button class="btn primary" data-act="clip-new">${ic('video')}העלאת קליפ</button></section>`}`;
+  return`<div class="page-h"><h1>${tx('clips')}</h1><button class="btn primary sm" data-act="clip-new">${ic('plus')}${tx('uploadClip')}</button></div>
+  ${cl.length?`<div class="clips">${cl.map(c=>{const w=who(c.author),lk=likedByMe(c.id),on=SOUND.has(c.id);return`<div class="clip" data-post="${c.id}"><video src="${esc(media(c.media_url))}" ${on?'':'muted'} loop playsinline preload="metadata" data-clip aria-label="${esc(c.body||t('clip'))}"></video>
+    <div class="cap">${w.handle?`<a href="#u-${encodeURIComponent(w.handle)}">${handle(w.handle)}</a>`:''}${c.body?`<span dir="auto"> · ${esc(c.body)}</span>`:''}</div>
+    <button class="iconbtn ov snd" data-act="clip-sound" aria-pressed="${on}" aria-label="${tx(on?'soundOff':'soundOn')}">${ic(on?'sound':'mute')}</button>
+    <button class="iconbtn ov lk ${lk?'on':''}" data-act="like" aria-pressed="${lk}" aria-label="${tx('like')}">${ic('heart')}</button>
+    <button class="iconbtn ov opt" data-act="post-menu" data-mine="${c.author===USER.id?1:''}" aria-label="${tx('options')}" aria-haspopup="menu" aria-expanded="false">${ic('more')}</button></div>`}).join('')}</div>`:
+  emptyCard('clips',t('clipsEmpty'),t('clipsEmptyB'),`<button class="btn primary" data-act="clip-new">${ic('video')}${tx('uploadClip')}</button>`)}`;
 }
 function convos(){
   const map={};MSGS.forEach(m=>{const other=m.sender===USER.id?m.recipient:m.sender;(map[other]=map[other]||[]).push(m)});
@@ -790,220 +1039,215 @@ function markRead(id){READ[id]=Date.now();try{localStorage.setItem('platformika.
 function chatListHTML(limit){
   const cs=convos().filter(c=>c.id!==USER.id).slice(0,limit||99),self=MSGS.filter(m=>m.sender===USER.id&&m.recipient===USER.id),last=self[self.length-1];
   return`<div class="clist">
-    ${cs.map(c=>{const w=who(c.id);return`<a class="citem" href="#chat-${c.id}">${av(w)}<span class="meta"><b>${esc(w.name)}<small>${hm(c.last.created_at)}</small></b><span>${c.last.sender===USER.id?'את/ה: ':''}${esc(c.last.body)}</span></span>${c.unread?`<b class="badge" style="position:static">${c.unread}</b>`:''}</a>`}).join('')}
-    <a class="citem" href="#chat-${USER.id}"><span class="av saved">${ic('bookmark','i')}</span><span class="meta"><b>הודעות לעצמי${last?`<small>${hm(last.created_at)}</small>`:''}</b><span>${last?esc(last.body):'מקום לרשימות, קישורים ותזכורות'}</span></span></a>
-    <button class="citem" data-act="chat-new"><span class="av" style="background:var(--surface-3);color:var(--brand)">${ic('plus','i')}</span><span class="meta"><b>צ'אט חדש</b><span>חפשו מישהו בפלטפורמיקה</span></span></button>
+    ${cs.map(c=>{const w=who(c.id);return`<a class="citem" href="#chat-${c.id}">${av(w)}<span class="meta"><b><span>${esc(w.name)}</span><small>${esc(listTime(c.last.created_at))}</small></b><span dir="auto">${c.last.sender===USER.id?tx('youPrefix'):''}${esc(c.last.body)}</span></span>${c.unread?`<b class="badge">${c.unread}</b>`:''}</a>`}).join('')}
+    <a class="citem" href="#chat-${USER.id}"><span class="av saved">${ic('bookmark')}</span><span class="meta"><b><span>${tx('notes')}</span>${last?`<small>${esc(listTime(last.created_at))}</small>`:''}</b><span dir="auto">${last?esc(last.body):tx('notesB')}</span></span></a>
+    <button class="citem" data-act="chat-new"><span class="av icon">${ic('plus')}</span><span class="meta"><b>${tx('newChat')}</b><span>${tx('newChatB')}</span></span></button>
   </div>`;
 }
 function vChats(){
-  return`<div class="page-h"><h1>צ'אטים</h1></div>
+  return`<div class="page-h"><h1>${tx('chats')}</h1></div>
   <section class="card">${chatListHTML()}</section>
-  ${convos().filter(c=>c.id!==USER.id).length?'':`<section class="card empty"><div class="art">${ic('chat')}</div><h2>השיחות שלכם יופיעו כאן</h2><p>צ'אט אישי עם כל מי שמצטרף לפלטפורמיקה. שלחו לחברים את הקישור האישי שלכם.</p><button class="btn primary" data-act="invite">${ic('link')}הזמנת חברים</button></section>`}`;
+  ${convos().filter(c=>c.id!==USER.id).length?'':emptyCard('chat',t('chatsEmpty'),t('chatsEmptyB'),`<button class="btn primary" data-act="chat-new">${ic('plus')}${tx('newChat')}</button><button class="btn ghost" data-act="invite">${ic('link')}${tx('invite')}</button>`)}`;
 }
 function vChat(id){
-  const self=id===USER.id,w=who(id);markRead(id);
+  const self=id===USER.id;
+  if(!self&&!UUID.test(id))return vProfile('\u0000');
+  if(!self&&!PROF[id]&&lookup('id',id))return`<p class="loading">${tx('loading')}</p>`;
+  if(!self&&!PROF[id])return vProfile('\u0000');
+  const w=who(id);markRead(id);
   const list=MSGS.filter(m=>self?(m.sender===USER.id&&m.recipient===USER.id):((m.sender===id&&m.recipient===USER.id)||(m.sender===USER.id&&m.recipient===id)));
   let prev='';
-  const body=list.map(n=>{const d=dayLabel(n.created_at);const sep=d!==prev?`<div class="day">${d}</div>`:'';prev=d;return sep+`<div class="msg ${n.sender===USER.id?'me':''}"><p dir="auto">${esc(n.body)}</p><small>${hm(n.created_at)}</small></div>`}).join('');
+  const body=list.map(n=>{const d=dayLabel(n.created_at);const sep=d!==prev?`<div class="day">${esc(d)}</div>`:'';prev=d;return sep+`<div class="msg ${n.sender===USER.id?'me':''}"><p dir="auto">${esc(n.body)}</p><small>${esc(hm(n.created_at))}</small></div>`}).join('');
+  const prof=`#u-${encodeURIComponent(w.handle||'')}`;
   return`<section class="card chat">
-    <div class="chat-h"><a class="iconbtn" href="#chats" aria-label="חזרה לצ'אטים">${ic('back')}</a>${self?`<span class="av saved s36">${ic('bookmark','i')}</span>`:`<a href="#u-${esc(w.handle)}">${av(w,'s36')}</a>`}<div class="who"><b>${self?'הודעות לעצמי':esc(w.name)}</b><br><small>${self?'רק אתם רואים את השיחה הזו':'@'+esc(w.handle)}</small></div></div>
-    <div class="chat-body" id="chatBody">${body||`<div class="day">${self?'כתבו לעצמכם רעיון, קישור או משימה':'שלחו הודעה ראשונה'}</div>`}</div>
-    <form class="chat-in" id="chatForm" data-to="${id}"><label class="sr" for="chatText">הודעה</label><textarea id="chatText" rows="1" placeholder="הודעה" maxlength="2000"></textarea><button class="send" aria-label="שליחה">${ic('send')}</button></form>
+    <div class="chat-h"><a class="iconbtn" href="#chats" aria-label="${tx('backChats')}">${ic('back','i flip')}</a>${self?`<span class="av saved s36">${ic('bookmark')}</span>`:`<a href="${prof}">${av(w,'s36')}</a>`}<div class="who">${self?`<b>${tx('notes')}</b><small>${tx('notesOnly')}</small>`:`<a href="${prof}"><b>${esc(w.name)}</b></a><small>${handle(w.handle)}</small>`}</div></div>
+    <div class="chat-body" id="chatBody">${body||`<div class="day">${tx(self?'notesHint':'firstMsg')}</div>`}</div>
+    <form class="chat-in" id="chatForm" data-to="${id}"><label class="sr" for="chatText">${tx('msg')}</label><textarea id="chatText" rows="1" dir="auto" placeholder="${tx('msg')}" maxlength="2000"></textarea><button class="send" aria-label="${tx('send')}">${ic('send')}</button></form>
   </section>`;
 }
 function alerts(){
   const mine=new Set(POSTS.filter(p=>p.author===USER.id).map(p=>p.id)),out=[];
-  LIKES.forEach(l=>{if(mine.has(l.post)&&l.uid!==USER.id)out.push({icon:'heart',text:`${who(l.uid).name} אהב/ה את הפוסט שלך`,at:l.created_at,href:'#home',post:l.post})});
-  CMTS.forEach(c=>{if(mine.has(c.post)&&c.author!==USER.id)out.push({icon:'comment',text:`${who(c.author).name} הגיב/ה: ${(c.body||'').slice(0,60)}`,at:c.created_at,post:c.post})});
-  MSGS.forEach(m=>{if(m.recipient===USER.id&&m.sender!==USER.id)out.push({icon:'chat',text:`הודעה מ־${who(m.sender).name}: ${(m.body||'').slice(0,60)}`,at:m.created_at,href:'#chat-'+m.sender})});
+  LIKES.forEach(l=>{if(mine.has(l.post)&&l.uid!==USER.id)out.push({icon:'heart',text:t('aLike',{n:who(l.uid).name}),at:l.created_at,post:l.post})});
+  CMTS.forEach(c=>{if(mine.has(c.post)&&c.author!==USER.id)out.push({icon:'comment',text:t('aCmt',{n:who(c.author).name,t:(c.body||'').slice(0,60)}),at:c.created_at,post:c.post})});
+  MSGS.forEach(m=>{if(m.recipient===USER.id&&m.sender!==USER.id)out.push({icon:'chat',text:t('aMsg',{n:who(m.sender).name,t:(m.body||'').slice(0,60)}),at:m.created_at,href:'#chat-'+m.sender})});
   return out.sort((a,b)=>ts(b.at)-ts(a.at)).slice(0,80);
 }
 const seenAlerts=()=>{try{return+localStorage.getItem('platformika.alertsSeen')||0}catch(e){return 0}};
 function vAlerts(){
   const list=alerts();
-  return`<div class="page-h"><h1>התראות</h1></div>
-  ${list.length?`<section class="card"><div class="clist">${list.map(a=>`<a class="citem" href="${a.href||'#home'}" ${a.post?`data-jump="${a.post}"`:''}><span class="av" style="background:var(--brand-soft);color:var(--brand)">${ic(a.icon,'i')}</span><span class="meta"><span style="white-space:normal;color:var(--ink)">${esc(a.text)}</span><small style="color:var(--muted);font-size:12.5px">${rel(a.at)}</small></span></a>`).join('')}</div></section>`:
-  `<section class="card empty"><div class="art">${ic('bell')}</div><h2>אין התראות חדשות</h2><p>לייקים, תגובות והודעות מהקהל שלכם יגיעו לכאן.</p></section>`}`;
+  return`<div class="page-h"><h1>${tx('alerts')}</h1></div>
+  ${list.length?`<section class="card"><div class="clist">${list.map(a=>{const p=a.post&&POSTS.find(x=>x.id===a.post);return`<a class="citem" href="${a.href||(p&&p.kind==='clip'?'#clips':'#home')}" ${p&&p.kind!=='clip'?`data-jump="${a.post}"`:''}><span class="av icon">${ic(a.icon)}</span><span class="meta"><span class="wrap" dir="auto">${esc(a.text)}</span><small class="when">${esc(rel(a.at))}</small></span></a>`}).join('')}</div></section>`:
+  emptyCard('bell',t('alertsEmpty'),t('alertsEmptyB'))}`;
 }
 function vCreators(){
-  const my=POSTS.filter(p=>p.author===USER.id),ids=new Set(my.map(p=>p.id)),nl=LIKES.filter(l=>ids.has(l.post)&&l.uid!==USER.id).length,nc=CMTS.filter(c=>ids.has(c.post)&&c.author!==USER.id).length;
-  return`<div class="page-h"><h1>מרכז היוצרים</h1></div>
+  const my=POSTS.filter(p=>p.author===USER.id&&p.kind!=='story'),ids=new Set(POSTS.filter(p=>p.author===USER.id).map(p=>p.id)),nl=LIKES.filter(l=>ids.has(l.post)&&l.uid!==USER.id).length,nc=CMTS.filter(c=>ids.has(c.post)&&c.author!==USER.id).length;
+  return`<div class="page-h"><h1>${tx('creators')}</h1></div>
   <section class="card hero-split">
-    <div class="donut" role="img" aria-label="99 אחוז מהרווח הנקי ליוצרים, 1 אחוז לפלטפורמה">
+    <div class="donut" role="img" aria-label="${tx('splitAria')}">
       <svg viewBox="0 0 120 120" width="150" height="150" style="transform:rotate(-90deg)"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface-3)" stroke-width="16"/><circle cx="60" cy="60" r="50" fill="none" stroke="var(--gold)" stroke-width="16" stroke-dasharray="${(2*Math.PI*50*.99).toFixed(1)} ${(2*Math.PI*50).toFixed(1)}" stroke-linecap="butt"/></svg>
-      <div class="c"><div><b>99%</b><small>ליוצרים</small></div></div>
+      <div class="c"><div><b>99%</b><small>${tx('toCreators')}</small></div></div>
     </div>
-    <div><h2>הרווח שלכם, לא שלנו</h2><p>99% מהרווח הנקי של הפלטפורמה מתחלק בין היוצרים. 1% נשאר להפעלה. תרומות מהקהל עוברות אליכם בלי עמלה בכלל.</p></div>
+    <div><h2>${tx('crH')}</h2><p>${tx('crP')}</p></div>
   </section>
   <div class="stats">
-    <div class="card stat"><small>יתרה</small><b>₪0.00</b></div>
-    <div class="card stat"><small>פרסומים</small><b>${fmt(my.length)}</b></div>
-    <div class="card stat"><small>לייקים שקיבלתם</small><b>${fmt(nl)}</b></div>
-    <div class="card stat"><small>תגובות שקיבלתם</small><b>${fmt(nc)}</b></div>
+    <div class="card stat"><small>${tx('stPosts')}</small><b>${fmt(my.length)}</b></div>
+    <div class="card stat"><small>${tx('stLikes')}</small><b>${fmt(nl)}</b></div>
+    <div class="card stat"><small>${tx('stCmts')}</small><b>${fmt(nc)}</b></div>
   </div>
-  <section class="card">
-    <div class="sec-h"><h3>איך מרוויחים</h3></div>
-    <div class="steps">
-      <div class="step"><span class="n">1</span><div><b>יוצרים תוכן</b><p>פוסטים, סטוריז וקליפים. כל צפייה ותגובה נספרות לחלק שלכם ברווח.</p></div></div>
-      <div class="step"><span class="n">2</span><div><b>הקהל תומך</b><p>כפתור "תמיכה" על כל פוסט שולח לכם תרומה ישירה, 0% עמלה.</p></div></div>
-      <div class="step"><span class="n">3</span><div><b>מקבלים תשלום</b><p>היתרה מתעדכנת אחת לחודש ואפשר למשוך אותה לחשבון הבנק.</p></div></div>
-    </div>
-  </section>
-  <section class="card invite"><h3>חבר מביא חבר</h3><p>כל חבר שמצטרף דרך הקישור שלכם מגדיל את הקהל שלכם מהיום הראשון.</p>${linkBox()}</section>`;
+  <section class="card plain"><h3>${tx('payH')}</h3><p>${tx('payP')}</p></section>
+  <section class="card invite"><h3>${tx('invite')}</h3><p>${tx('inviteP')}</p>${linkBox()}</section>`;
 }
-function linkBox(){return`<div class="linkbox"><code>${esc(refLink())}</code><button class="btn primary sm" data-act="copy-ref">${ic('copy')}העתקה</button></div>`}
-function vProfile(handle){
-  const u=handle?Object.values(PROF).find(p=>p.handle===handle):ME;
-  if(!u)return`<section class="card empty"><div class="art">${ic('user')}</div><h2>המשתמש לא נמצא</h2><p>אולי שם המשתמש השתנה.</p><a class="btn primary" href="#home">חזרה לבית</a></section>`;
-  const mine=u.id===USER.id,tab=state.ptab||'posts',ps=POSTS.filter(p=>p.author===u.id&&p.kind!=='story'),withMedia=ps.filter(p=>p.media_url),list=tab==='media'?withMedia:ps;
-  const got=LIKES.filter(l=>ps.some(p=>p.id===l.post)).length;
+function linkBox(){return`<div class="linkbox"><code>${esc(refLink())}</code><button class="btn primary sm" data-act="copy-ref">${ic('copy')}${tx('copy')}</button></div>`}
+function vProfile(h){
+  let u=h?Object.values(PROF).find(p=>p.handle===h):ME;
+  if(!u&&h&&h!=='\u0000'&&/^[a-z0-9._]{3,24}$/.test(h)&&lookup('handle',h))return`<p class="loading">${tx('loading')}</p>`;
+  if(!u)return emptyCard('user',t('notFound'),t('notFoundB'),`<a class="btn primary" href="#home">${tx('backHome')}</a>`);
+  const mine=u.id===USER.id,tab=state.ptab||'posts',ps=POSTS.filter(p=>p.author===u.id&&p.kind!=='story'),withMedia=ps.filter(p=>media(p.media_url)),list=tab==='media'?withMedia:ps;
+  const got=LIKES.filter(l=>ps.some(p=>p.id===l.post)).length,bl=BLOCKED.has(u.id);
   return`<section class="card" style="overflow:hidden">
     <div class="cover">${media(u.cover_url)?`<img src="${esc(media(u.cover_url))}" alt="">`:''}</div>
     <div class="prof">
-      <div class="head">${av(u,'s120')}<div style="display:flex;gap:8px;margin-bottom:6px">${mine?`<button class="btn ghost sm" data-act="edit-profile">${ic('edit')}עריכת פרופיל</button><button class="btn ghost sm" data-act="logout">התנתקות</button>`:`${BLOCKED.has(u.id)?'':`<a class="btn primary sm" href="#chat-${u.id}">${ic('chat')}הודעה</a>`}<button class="btn ghost sm" data-act="${BLOCKED.has(u.id)?'unblock':'block'}" data-uid="${u.id}">${BLOCKED.has(u.id)?'ביטול חסימה':'חסימה'}</button><button class="btn ghost sm" data-act="report" data-uid="${u.id}">דיווח</button>`}</div></div>
-      <div><h1>${esc(u.name)}</h1><div class="handle">@${esc(u.handle)}</div></div>
-      ${u.bio?`<p class="bio" dir="auto">${esc(u.bio)}</p>`:mine?`<button class="btn ghost sm" style="align-self:flex-start" data-act="edit-profile">הוספת ביו</button>`:''}
-      <div class="counts"><span><b>${fmt(ps.length)}</b>פרסומים</span><span><b>${fmt(got)}</b>לייקים</span></div>
-      ${mine?`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px"><a href="https://barusik.com/he/privacy/" target="_blank" rel="noopener" style="color:var(--muted)">מדיניות פרטיות</a><a href="https://barusik.com/he/terms/" target="_blank" rel="noopener" style="color:var(--muted)">תנאי שימוש</a><button class="linkish" data-act="delete-account" style="background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit">מחיקת החשבון</button></div>`:''}
+      <div class="head">${av(u,'s120')}<div class="acts">${mine?`<button class="btn ghost sm" data-act="edit-profile">${ic('edit')}${tx('editProf')}</button><button class="btn ghost sm" data-act="logout">${tx('logout')}</button>`:`${bl?'':`<a class="btn primary sm" href="#chat-${u.id}">${ic('chat')}${tx('message')}</a>`}<button class="btn ghost sm" data-act="${bl?'unblock':'block'}" data-uid="${u.id}">${tx(bl?'unblock':'block')}</button><button class="btn ghost sm" data-act="report" data-uid="${u.id}">${tx('report')}</button>`}</div></div>
+      <div><h1 dir="auto">${esc(u.name)}</h1><div class="handle">${handle(u.handle)}</div></div>
+      ${u.bio?`<p class="bio" dir="auto">${esc(u.bio)}</p>`:mine?`<button class="btn ghost sm" style="align-self:flex-start" data-act="edit-profile">${tx('addBio')}</button>`:''}
+      <div class="counts"><span><b>${fmt(ps.length)}</b>${tx('posts')}</span><span><b>${fmt(got)}</b>${tx('likes')}</span></div>
+      ${mine?`<div class="links">${langSelect()}${legalLinks()}<button class="linkish" data-act="delete-account">${tx('deleteAcc')}</button></div>`:''}
     </div>
-    <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='posts'}" data-ptab="posts">פוסטים</button><button role="tab" aria-selected="${tab==='media'}" data-ptab="media">תמונות וסרטונים</button></div>
-    ${list.length?`<div class="grid">${list.map(p=>`<a class="cell ${p.media_url?'has-img':''}" href="${p.kind==='clip'?'#clips':'#home'}" data-jump="${p.kind==='clip'?'':p.id}">${p.media_type==='image'&&media(p.media_url)?`<img src="${esc(media(p.media_url))}" alt="" loading="lazy" decoding="async">`:p.media_type==='video'&&media(p.media_url)?`<video src="${esc(media(p.media_url))}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`:esc((p.body||'').slice(0,80))}</a>`).join('')}</div>`:
-    `<div class="empty"><div class="art">${ic(tab==='media'?'camera':'edit')}</div><h2>${tab==='media'?'עוד אין תמונות':'עוד אין פוסטים'}</h2>${mine?`<button class="btn primary" data-act="${tab==='media'?'compose-img':'compose'}">יצירת פוסט</button>`:''}</div>`}
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='posts'}" data-ptab="posts">${tx('posts')}</button><button role="tab" aria-selected="${tab==='media'}" data-ptab="media">${tx('media')}</button></div>
+    ${list.length?`<div class="grid">${list.map(p=>{const m=media(p.media_url);return`<a class="cell ${m?'has-img':''}" href="${p.kind==='clip'?'#clips':'#home'}" data-jump="${p.kind==='clip'?'':p.id}">${p.media_type==='image'&&m?`<img src="${esc(m)}" alt="" loading="lazy" decoding="async">`:p.media_type==='video'&&m?`<video src="${esc(m)}" muted playsinline preload="metadata"></video>`:`<span dir="auto">${esc((p.body||'').slice(0,80))}</span>`}</a>`}).join('')}</div>`:
+    emptyCard(tab==='media'?'camera':'edit',t(tab==='media'?'noPhotos':'noPosts'),'',mine?`<button class="btn primary" data-act="${tab==='media'?'compose-img':'compose'}">${tx('createPost')}</button>`:'','div')}
   </section>`;
 }
 const NOT_READY=e=>/does not exist|schema cache|not find the function|relation .* does not exist/i.test(String(e?.message||''));
 async function blockUser(uid){
   if(!uid||uid===USER.id)return;
   const{error}=await sb.from('pk_blocks').insert({blocked:uid});
-  if(error&&!/duplicate/.test(error.message)){toast(NOT_READY(error)?'החסימה תהיה זמינה בקרוב':errText(error));return}
-  BLOCKED.add(uid);POSTS=POSTS.filter(p=>p.author!==uid);MSGS=MSGS.filter(m=>m.sender!==uid&&m.recipient!==uid);render();toast('המשתמש/ת נחסם/ה. לא תראו אותם ולא יוכלו לשלוח לכם הודעות')}
+  if(error&&!/duplicate/.test(error.message)){toast(NOT_READY(error)?t('blockSoon'):errText(error));return}
+  BLOCKED.add(uid);POSTS=POSTS.filter(p=>p.author!==uid);MSGS=MSGS.filter(m=>m.sender!==uid&&m.recipient!==uid);render(true);toast(t('blocked'))}
 async function unblockUser(uid){
   const{error}=await sb.from('pk_blocks').delete().eq('blocked',uid);
   if(error){toast(errText(error));return}
-  BLOCKED.delete(uid);toast('החסימה בוטלה');reloadSoon()}
+  BLOCKED.delete(uid);toast(t('unblocked'));reloadSoon()}
 function reportSheet(uid,postId){
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>${postId?'דיווח על פוסט':'דיווח על משתמש/ת'}</h2><span style="width:40px"></span></div>
-  <form class="sheet-b" id="rpForm">
-    <div class="field"><label for="rpWhy">מה הבעיה?</label><textarea id="rpWhy" maxlength="500" required placeholder="הטרדה, ספאם, תוכן פוגעני, התחזות…"></textarea><span class="hint">הדיווח נשלח לצוות ברוסיק בלבד. המשתמש/ת לא יידעו מי דיווח.</span></div>
-    <button class="btn primary block">שליחת דיווח</button>
+  openLayer(`${sheetHead(t(postId?'reportPost':'reportUser'))}
+  <form class="sheet-b" id="rpForm" novalidate>
+    <div class="field"><label for="rpWhy">${tx('reportWhy')}</label><textarea id="rpWhy" dir="auto" maxlength="500" placeholder="${tx('reportPh')}" autofocus></textarea><span class="hint">${tx('reportHint')}</span></div>
+    <span class="err" id="rpErr" role="alert" hidden></span>
+    <button class="btn primary block">${tx('reportSend')}</button>
   </form>`,{onMount:sh=>{
-    $('#rpWhy',sh).focus();
-    $('#rpForm',sh).onsubmit=async e=>{e.preventDefault();const why=$('#rpWhy',sh).value.trim();if(!why){toast('כתבו בקצרה מה הבעיה');return}
-      const b=$('button.primary',sh);busy(b,true,'שולח…');
+    $('#rpForm',sh).onsubmit=async e=>{e.preventDefault();const why=$('#rpWhy',sh).value.trim(),err=$('#rpErr',sh);if(!why){err.hidden=false;err.textContent=t('reportNeed');$('#rpWhy',sh).focus();return}
+      const b=$('button.primary',sh);busy(b,true,t('sending'));
       const{error}=await sb.from('pk_reports').insert({target_user:uid||null,post:postId||null,reason:why});
-      if(error){busy(b,false);toast(NOT_READY(error)?'הדיווח יהיה זמין בקרוב. בינתיים אפשר לכתוב ל-barusik.official@gmail.com':errText(error));return}
-      closeLayer();toast('תודה, הדיווח נשלח')};
+      if(error){busy(b,false);err.hidden=false;err.textContent=NOT_READY(error)?t('reportSoon',{m:CONTACT}):errText(error);return}
+      closeLayer();toast(t('reportThanks'))};
   }});
 }
 function deleteAccountSheet(){
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>מחיקת החשבון</h2><span style="width:40px"></span></div>
-  <form class="sheet-b" id="daForm">
-    <p>המחיקה סופית: החשבון המשותף של כל הפלטפורמות של ברוסיק יימחק, יחד עם הפוסטים, הקליפים, הסטוריז, התגובות, הלייקים, ההודעות והתמונות שלכם. אי אפשר לבטל.</p>
-    <div class="field"><label for="daOk">כדי לאשר, כתבו: מחיקה</label><input id="daOk" autocomplete="off"></div>
-    <button class="btn primary block" style="background:#DC2626">מחיקת החשבון לצמיתות</button>
+  const word=t('delWord');
+  openLayer(`${sheetHead(t('deleteAcc'))}
+  <form class="sheet-b" id="daForm" novalidate>
+    <p>${tx('delWarn')}</p>
+    <div class="field"><label for="daOk">${tx('delType',{w:word})}</label><input id="daOk" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+    <span class="err" id="daErr" role="alert" hidden></span>
+    <button class="btn danger block">${tx('delGo')}</button>
   </form>`,{onMount:sh=>{
-    $('#daForm',sh).onsubmit=async e=>{e.preventDefault();if($('#daOk',sh).value.trim()!=='מחיקה'){toast('כתבו "מחיקה" כדי לאשר');return}
-      const b=$('button.primary',sh);busy(b,true,'מוחק…');
+    $('#daForm',sh).onsubmit=async e=>{e.preventDefault();const err=$('#daErr',sh),say=s=>{err.hidden=!s;err.textContent=s||''};
+      if($('#daOk',sh).value.trim().toLowerCase()!==word.toLowerCase()){say(t('delNeed',{w:word}));$('#daOk',sh).focus();return}
+      const b=$('button.danger',sh);busy(b,true,t('deleting'));say('');
       try{
         const{data:files}=await sb.storage.from(BUCKET).list(USER.id,{limit:1000});
         if(files&&files.length)await sb.storage.from(BUCKET).remove(files.map(f=>USER.id+'/'+f.name));
         const{error}=await sb.rpc('delete_my_account');if(error)throw error;
-        await sb.auth.signOut().catch(()=>{});closeLayer();toast('החשבון נמחק');setTimeout(()=>location.reload(),1200);
-      }catch(x){busy(b,false);toast(NOT_READY(x)?'מחיקה עצמית תהיה זמינה בקרוב. בינתיים כתבו ל-barusik.official@gmail.com ונמחק תוך 7 ימים':errText(x))}};
+        await sb.auth.signOut().catch(()=>{});closeLayer();toast(t('deleted'));setTimeout(()=>location.reload(),1200);
+      }catch(x){busy(b,false);say(NOT_READY(x)?t('delSoon',{m:CONTACT}):errText(x))}};
   }});
 }
 function editProfile(){
   let photo=null,cover=null;
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>עריכת פרופיל</h2><span style="width:40px"></span></div>
-  <form class="sheet-b" id="epForm">
-    <div style="display:flex;gap:14px;align-items:center"><span id="epAv">${av(ME,'s96')}</span><div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn ghost sm" id="epPhoto">${ic('camera')}תמונת פרופיל</button><button type="button" class="btn ghost sm" id="epCover">${ic('image')}תמונת נושא</button></div></div>
-    <div class="field"><label for="epName">שם</label><input id="epName" value="${esc(ME.name)}" maxlength="40"></div>
-    <div class="field"><label for="epBio">ביו</label><textarea id="epBio" maxlength="160" placeholder="כמה מילים עליכם">${esc(ME.bio)}</textarea><span class="hint">עד 160 תווים</span></div>
-    <button class="btn primary block">שמירה</button>
+  openLayer(`${sheetHead(t('editProf'))}
+  <form class="sheet-b" id="epForm" novalidate>
+    <div class="who-row"><span id="epAv">${av(ME,'s96')}</span><div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><button type="button" class="btn ghost sm" id="epPhoto">${ic('camera')}${tx('avatar')}</button><button type="button" class="btn ghost sm" id="epCover">${ic('image')}${tx('cover')}</button></div></div>
+    <div class="field"><label for="epName">${tx('fName')}</label><input id="epName" dir="auto" value="${esc(ME.name)}" maxlength="40"></div>
+    <div class="field"><label for="epBio">${tx('fBio')}</label><textarea id="epBio" dir="auto" maxlength="160" placeholder="${tx('bioPh')}">${esc(ME.bio)}</textarea><span class="hint">${tx('bioHint')}</span></div>
+    <span class="err" id="epErr" role="alert" hidden></span>
+    <button class="btn primary block">${tx('save')}</button>
   </form>`,{onMount:sh=>{
-    $('#epPhoto',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{photo=await compress(f,400,.86);$('#epAv',sh).innerHTML=av({...ME,avatar_url:URL.createObjectURL(photo)},'s96')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
-    $('#epCover',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{cover=await compress(f,1600,.82);toast('תמונת הנושא נבחרה')}catch(e){toast('בחרו תמונה מסוג JPG או PNG')}};
-    $('#epForm',sh).onsubmit=async e=>{e.preventDefault();const n=$('#epName',sh).value.trim();if(!n){toast('השם לא יכול להיות ריק');return}
-      const b=$('button.primary',sh);busy(b,true,'שומר…');
+    const err=$('#epErr',sh),say=s=>{err.hidden=!s;err.textContent=s||''};
+    $('#epPhoto',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{photo=await compress(f,400,.86);$('#epAv',sh).innerHTML=av({...ME,avatar_url:URL.createObjectURL(photo)},'s96')}catch(e){toast(t('pickImg'))}};
+    $('#epCover',sh).onclick=async()=>{const f=await pickFile('image/*');if(!f)return;try{cover=await compress(f,1600,.82);toast(t('coverPicked'))}catch(e){toast(t('pickImg'))}};
+    $('#epForm',sh).onsubmit=async e=>{e.preventDefault();const n=$('#epName',sh).value.trim();if(!n){say(t('nameEmpty'));$('#epName',sh).focus();return}
+      const b=$('button.primary',sh);busy(b,true,t('saving'));say('');
       try{const patch={name:n,bio:$('#epBio',sh).value.trim()};
         if(photo)patch.avatar_url=await upload(photo,'jpg','image/jpeg');
         if(cover)patch.cover_url=await upload(cover,'jpg','image/jpeg');
         const{data,error}=await sb.from('pk_profiles').update(patch).eq('id',USER.id).select().single();if(error)throw error;
-        ME=PROF[USER.id]=data;closeLayer();render();toast('הפרופיל נשמר')}catch(x){busy(b,false);toast(errText(x))}};
+        ME=PROF[USER.id]=data;closeLayer();render(true);toast(t('saved'))}catch(x){busy(b,false);say(errText(x))}};
   }});
 }
 function inviteSheet(){
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>הזמנת חברים</h2><span style="width:40px"></span></div>
-  <div class="sheet-b">
-    <p style="color:var(--ink-2)">שלחו את הקישור האישי שלכם בוואטסאפ, בהודעה או במייל. מי שנרשם דרכו יראה את הפוסטים שלכם מהרגע הראשון.</p>
-    ${linkBox()}
-  </div>`);
+  openLayer(`${sheetHead(t('invite'))}<div class="sheet-b"><p>${tx('inviteB')}</p>${linkBox()}</div>`);
 }
 function chatNew(){
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>צ'אט חדש</h2><span style="width:40px"></span></div>
+  openLayer(`${sheetHead(t('newChat'))}
   <div class="sheet-b">
-    <div class="field"><label for="cnQ">חיפוש לפי שם או שם משתמש</label><input id="cnQ" autocomplete="off" autofocus></div>
-    <div class="clist" id="cnList"></div>
+    <div class="field"><label for="cnQ">${tx('findBy')}</label><input id="cnQ" type="search" autocomplete="off" autofocus></div>
+    <div class="clist" id="cnList" style="padding:0"><p class="loading" style="padding:12px">${tx('loading')}</p></div>
   </div>`,{onMount:sh=>{
-    const q=$('#cnQ',sh),L=$('#cnList',sh);let t=0;
-    const run=async()=>{const v=q.value.trim().replace(/[%,()]/g,'');let rows=[];
-      if(v.length>=1){const{data}=await sb.from('pk_profiles').select('*').or(`handle.ilike.%${v.toLowerCase()}%,name.ilike.%${v}%`).neq('id',USER.id).limit(20);rows=data||[]}
-      else{const{data}=await sb.from('pk_profiles').select('*').neq('id',USER.id).order('created_at',{ascending:false}).limit(20);rows=data||[]}
-      rows.forEach(r=>PROF[r.id]=r);
-      L.innerHTML=rows.length?rows.map(u=>`<a class="citem" href="#chat-${u.id}" data-close>${av(u)}<span class="meta"><b>${esc(u.name)}</b><span dir="ltr">@${esc(u.handle)}</span></span></a>`).join(''):`<p style="color:var(--muted);text-align:center;padding:12px">לא נמצא אף אחד. שלחו לחבר את קישור ההזמנה.</p>`};
-    q.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(run,250)});run();
+    const q=$('#cnQ',sh),list=$('#cnList',sh);let tm=0,seq=0;
+    const run=async()=>{const v=q.value.trim().replace(/[%,()*\\]/g,''),n=++seq;
+      let r=v?sb.from('pk_profiles').select('*').or(`handle.ilike.%${v.toLowerCase()}%,name.ilike.%${v}%`):sb.from('pk_profiles').select('*').order('created_at',{ascending:false});
+      const{data,error}=await r.neq('id',USER.id).limit(20);if(n!==seq)return;
+      if(error){list.innerHTML=`<p class="err" style="text-align:center;padding:12px">${esc(errText(error))}</p>`;return}
+      const rows=(data||[]).filter(u=>!BLOCKED.has(u.id));rows.forEach(u=>PROF[u.id]=u);
+      list.innerHTML=rows.length?rows.map(u=>`<a class="citem" href="#chat-${u.id}" data-close>${av(u)}<span class="meta"><b>${esc(u.name)}</b><span>${handle(u.handle)}</span></span></a>`).join(''):`<p class="hint" style="text-align:center;padding:12px">${tx('nobody')}</p>`};
+    q.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,250)});run();
   }});
-}
-function tipSheet(){
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>תמיכה ביוצר</h2><span style="width:40px"></span></div>
-  <div class="sheet-b">
-    <div style="display:flex;gap:8px;flex-wrap:wrap">${[5,10,20,50].map(v=>`<button class="btn ghost" disabled>₪${v}</button>`).join('')}</div>
-    <div class="note">${ic('info')}<span>תשלומים ייפתחו עם השקת הפלטפורמה. כל שקל שתתרמו יגיע ליוצר במלואו, 0% עמלה.</span></div>
-    <button class="btn ghost block" data-close>הבנתי</button>
-  </div>`);
 }
 function clipNew(){
   let file=null;
-  openLayer(`
-  <div class="sheet-h"><button class="iconbtn" data-close aria-label="סגירה">${ic('x')}</button><h2>קליפ חדש</h2><span style="width:40px"></span></div>
+  openLayer(`${sheetHead(t('newClip'))}
   <div class="sheet-b">
-    <button class="btn ghost block" id="clFile">${ic('video')}בחירת סרטון מהמכשיר</button>
-    <p class="hint" style="text-align:center;color:var(--muted);font-size:13px">MP4 או MOV, עד 50MB</p>
+    <button class="btn ghost block" id="clFile">${ic('video')}${tx('pickVideo')}</button>
+    <p class="hint" style="text-align:center">${tx('videoHint')}</p>
     <div id="clPrev"></div>
-    <div class="field"><label for="clCap">כיתוב</label><input id="clCap" maxlength="120" placeholder="על מה הקליפ?"></div>
-    <button class="btn primary block" id="clPost" disabled>פרסום קליפ</button>
+    <div class="field"><label for="clCap">${tx('caption')}</label><input id="clCap" dir="auto" maxlength="120" placeholder="${tx('captionPh')}"></div>
+    <button class="btn primary block" id="clPost" disabled>${tx('publish')}</button>
   </div>`,{onMount:sh=>{
-    $('#clFile',sh).onclick=async()=>{const f=await pickFile('video/*');if(!f)return;if(!f.type.startsWith('video/')){toast('בחרו קובץ וידאו');return}
-      if(f.size>MAX_VIDEO){toast('הסרטון גדול מ־50MB. קצרו אותו או צלמו באיכות נמוכה יותר.');return}
+    $('#clFile',sh).onclick=async()=>{const f=await pickFile('video/mp4,video/quicktime,video/webm');if(!f)return;if(!f.type.startsWith('video/')){toast(t('notVideo'));return}
+      if(f.size>MAX_VIDEO){toast(t('videoBig'));return}
       file=f;const u=URL.createObjectURL(f);$('#clPrev',sh).innerHTML=`<div class="clip" style="max-width:220px;margin:0 auto"><video src="${u}" muted autoplay loop playsinline></video></div>`;$('#clPost',sh).disabled=false};
-    $('#clPost',sh).onclick=async()=>{const b=$('#clPost',sh);busy(b,true,'מעלה את הסרטון…');
+    $('#clPost',sh).onclick=async()=>{const b=$('#clPost',sh);busy(b,true,t('uploading'));
       try{const ext=(file.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
         const type=file.type==='video/quicktime'||ext==='mov'?'video/quicktime':file.type==='video/webm'?'video/webm':'video/mp4';
         const url=await upload(file,ext,type);
         const{error}=await sb.from('pk_posts').insert({kind:'clip',body:$('#clCap',sh).value.trim(),media_url:url,media_type:'video'});if(error)throw error;
-        closeLayer();await loadAll();go('clips');render();toast('הקליפ פורסם')}catch(x){busy(b,false);toast(errText(x))}};
+        closeLayer();await loadAll();if(location.hash.slice(1)!=='clips')location.hash='clips';render();toast(t('clipPosted'))}catch(x){busy(b,false);toast(errText(x))}};
   }});
 }
 
 /* ---------- rail ---------- */
 function railHTML(){
   return`
-  <label class="search" for="qr">${ic('search')}<input id="qr" type="search" aria-label="חיפוש בפלטפורמיקה" placeholder="חיפוש בפלטפורמיקה" value="${esc(state.q||'')}" autocomplete="off"></label>
-  <section class="card wallet" aria-label="ארנק יוצרים">
-    <div class="top"><div><div class="lbl">הארנק שלי</div><div class="amt">₪0.00</div></div><span class="av s36" style="background:var(--gold-soft);color:var(--gold-ink)">${ic('coins','i')}</span></div>
-    <div class="split"><div class="bar" aria-hidden="true"><i class="c"></i><i class="o"></i></div></div>
-    <div class="legend"><span><b>99%</b> ליוצרים</span><span><b>1%</b> לפלטפורמה</span></div>
-    <a class="btn ghost sm" href="#creators">למרכז היוצרים</a>
+  <label class="search" for="qr">${ic('search')}<input id="qr" type="search" aria-label="${tx('searchPh')}" placeholder="${tx('searchPh')}" value="${esc(state.q||'')}" autocomplete="off"></label>
+  <section class="card wallet" aria-label="${tx('splitLbl')}">
+    <div class="lbl">${tx('splitLbl')}</div>
+    <div class="split" role="img" aria-label="${tx('splitAria')}"><div class="bar"><i class="c"></i><i class="o"></i></div></div>
+    <div class="legend"><span><b>99%</b> ${tx('toCreators')}</span><span><b>1%</b> ${tx('toPlatform')}</span></div>
+    <a class="btn ghost sm" href="#creators">${tx('toHub')}</a>
   </section>
-  <section class="card"><div class="sec-h"><h3>צ'אטים</h3><a href="#chats">הכול</a></div>${chatListHTML(4)}</section>
-  <section class="card invite"><h3>חבר מביא חבר</h3><p>פלטפורמיקה גדלה מחברים. שלחו את הקישור לחמישה אנשים שאתם סומכים עליהם.</p>${linkBox()}</section>
-  <p class="foot">פלטפורמיקה · מבית <a href="/">Barusik Platforms</a><br>משתמש אחד לכל הפלטפורמות<br>© ${new Date().getFullYear()} כל הזכויות שמורות</p>`;
+  <section class="card"><div class="sec-h"><h3>${tx('chats')}</h3><a href="#chats">${tx('all')}</a></div>${chatListHTML(4)}</section>
+  <section class="card invite"><h3>${tx('invite')}</h3><p>${tx('inviteP')}</p>${linkBox()}</section>
+  <div class="foot"><div class="links">${langSelect()}${legalLinks()}</div><p>${tx('name')} · ${tx('footBy')} <a href="/${L}/">Barusik Platforms</a> · © ${new Date().getFullYear()}</p></div>`;
+}
+function vOut(){
+  return`<section class="card landing">
+    <svg class="mark"><use href="#logo"/></svg>
+    <h1>${tx('name')}</h1>
+    <p class="lead">${tx('outLead')}</p>
+    <div class="row"><button class="btn primary" data-act="login">${tx('login')}</button><button class="btn ghost" data-act="signup">${tx('signup')}</button></div>
+    <p class="small">${tx('outShared')}</p>
+  </section>
+  <div class="links">${langSelect()}<a class="linkish" href="/${L}/">${tx('mainSite')}</a>${legalLinks()}</div>`;
 }
 
 /* ---------- router ---------- */
@@ -1012,48 +1256,61 @@ const VIEWS={home:vHome,clips:vClips,chats:vChats,alerts:vAlerts,creators:vCreat
 function go(r){if(location.hash!=='#'+r)location.hash=r;else render()}
 function render(soft){
   const raw=location.hash.slice(1)||'home';
-  if(!sb){$('#view').innerHTML=`<section class="card empty"><div class="art">${ic('info')}</div><h2>אין חיבור לאינטרנט</h2><p>פלטפורמיקה צריכה חיבור כדי לטעון את הפיד. נסו שוב בעוד רגע.</p><button class="btn primary" onclick="location.reload()">נסו שוב</button></section>`;return}
-  if(!READY){if(AUTHKNOWN&&!USER&&!$('#layer').innerHTML)authSheet('login');$('#view').innerHTML=`<section class="card empty"><div class="art">${ic('users')}</div><h2>פלטפורמיקה</h2><p>מתחברים…</p></section>`;$('#rail').innerHTML='';return}
-  if(!ME){$('#view').innerHTML='';$('#rail').innerHTML='';return}
+  if(!sb){document.body.classList.add('out');$('#view').innerHTML=emptyCard('info',t('noNet'),t('noNetB'),`<button class="btn primary" data-act="reload">${tx('eRetry')}</button>`);return}
+  if(!READY||!ME){
+    document.body.classList.add('out');$('#rail').innerHTML='';
+    $('#view').innerHTML=READY?'':!AUTHKNOWN||USER?`<p class="loading">${tx('loading')}</p>`:vOut();
+    document.title=t('name')+(L==='he'?' · Platformika':'');
+    return;
+  }
+  document.body.classList.remove('out');
   if(raw.startsWith('post-')){const id=raw.slice(5);history.replaceState(null,'','#home');setTimeout(()=>{const el=document.getElementById('post-'+id);el?.scrollIntoView({block:'center'});el?.classList.add('flash')},60)}
   const r=location.hash.slice(1)||'home';
   let html,navKey=r;
   if(r.startsWith('chat-')){html=vChat(r.slice(5));navKey='chats'}
-  else if(r.startsWith('u-')){html=vProfile(decodeURIComponent(r.slice(2)));navKey=r.slice(2)===ME.handle?'profile':''}
+  else if(r.startsWith('u-')){const h=decodeURIComponent(r.slice(2));html=vProfile(h);navKey=h===ME.handle?'profile':''}
   else{state.route=VIEWS[r]?r:'home';html=VIEWS[state.route]();navKey=state.route}
   if(r==='alerts'){try{localStorage.setItem('platformika.alertsSeen',String(Date.now()))}catch(e){}}
-  // keep what the person is typing when live updates redraw the page
-  const ae=document.activeElement,keep=ae&&ae.id&&$('#view').contains(ae)?{id:ae.id,v:ae.value,s:ae.selectionStart}:null;
+  // keep what the person is typing, and where each clip was playing, when live updates redraw the page
+  const ae=document.activeElement,keep=ae&&ae.id&&$('#view').contains(ae)&&'value' in ae?{id:ae.id,v:ae.value,s:ae.selectionStart}:null;
   const chatAtEnd=(()=>{const b=$('#chatBody');return!b||b.scrollHeight-b.scrollTop-b.clientHeight<60})();
+  const clipAt={};$$('[data-clip]').forEach(v=>{const id=v.closest('[data-post]')?.dataset.post;if(id)clipAt[id]=v.currentTime});
   const y=scrollY;
   $('#view').innerHTML=html;
   $('#rail').innerHTML=railHTML();
-  if(keep){const el=document.getElementById(keep.id);if(el){el.value=keep.v;el.focus();try{el.setSelectionRange(keep.s,keep.s)}catch(e){}}}
+  if(keep){const el=document.getElementById(keep.id);if(el){el.value=keep.v;el.focus({preventScroll:true});try{el.setSelectionRange(keep.s,keep.s)}catch(e){}}}
   if(soft)scrollTo(0,y);
   $$('[data-r]').forEach(a=>a.dataset.r===navKey?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
   const seen=seenAlerts(),unread=alerts().filter(a=>ts(a.at)>seen).length;
   $$('[data-badge]').forEach(b=>{b.hidden=!unread;b.textContent=unread});
-  $('#navMe').innerHTML=`${av(ME,'s36')}<span class="meta" style="min-width:0;line-height:1.2"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ME.name)}</b><small style="color:var(--muted);direction:ltr;display:block;text-align:right">@${esc(ME.handle)}</small></span>`;
-  if(r.startsWith('chat-')){const b=$('#chatBody');if(chatAtEnd)b.scrollTop=b.scrollHeight;bindChat()}
-  $$('[data-clip]').forEach(v=>{v.play?.().catch(()=>{})});
-  document.title=r.startsWith('chat-')?"צ'אט · פלטפורמיקה":r.startsWith('u-')?`${r.slice(2)} · פלטפורמיקה`:({home:'פלטפורמיקה',clips:'קליפים · פלטפורמיקה',chats:"צ'אטים · פלטפורמיקה",alerts:'התראות · פלטפורמיקה',creators:'מרכז היוצרים · פלטפורמיקה',profile:`${ME.name} · פלטפורמיקה`})[state.route]||'פלטפורמיקה';
+  $('#navMe').innerHTML=`${av(ME,'s36')}<span class="meta"><b>${esc(ME.name)}</b><small>${handle(ME.handle)}</small></span>`;
+  if(r.startsWith('chat-')&&$('#chatBody')){const b=$('#chatBody');if(chatAtEnd)b.scrollTop=b.scrollHeight;bindChat()}
+  $$('[data-clip]').forEach(v=>{const id=v.closest('[data-post]')?.dataset.post;if(clipAt[id])v.currentTime=clipAt[id];v.muted=!SOUND.has(id);v.play?.().catch(()=>{})});
+  const name=t('name');
+  document.title=r.startsWith('chat-')?`${t('chat')} · ${name}`:r.startsWith('u-')?`@${decodeURIComponent(r.slice(2))} · ${name}`:state.route==='home'?name:`${t(state.route==='profile'?'profile':state.route)} · ${name}`;
 }
-addEventListener('hashchange',()=>{render();scrollTo(0,0);const ae=document.activeElement;if(!ae||ae===document.body||!ae.matches('input,textarea'))$('#view').focus({preventScroll:true})});
+addEventListener('hashchange',()=>{closeMenus();render();scrollTo(0,0);const ae=document.activeElement;if(!ae||ae===document.body||!ae.matches('input,textarea'))$('#view').focus({preventScroll:true})});
 
 function bindChat(){
-  const f=$('#chatForm'),t=$('#chatText');if(!f)return;
-  const grow=()=>{t.style.height='auto';t.style.height=Math.min(120,t.scrollHeight)+'px'};
-  t.addEventListener('input',grow);
-  t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();f.requestSubmit()}});
-  f.addEventListener('submit',async e=>{e.preventDefault();const v=t.value.trim();if(!v)return;t.value='';
+  const f=$('#chatForm'),ta=$('#chatText');if(!f)return;
+  const grow=()=>{ta.style.height='auto';ta.style.height=Math.min(120,ta.scrollHeight)+'px'};
+  ta.addEventListener('input',grow);
+  ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();f.requestSubmit()}});
+  f.addEventListener('submit',async e=>{e.preventDefault();const v=ta.value.trim();if(!v)return;ta.value='';
     const tmp={id:'tmp'+Date.now(),sender:USER.id,recipient:f.dataset.to,body:v,created_at:new Date().toISOString()};MSGS.push(tmp);render(true);$('#chatText')?.focus();
     const{error}=await sb.from('pk_messages').insert({recipient:f.dataset.to,body:v});
-    if(error){MSGS=MSGS.filter(m=>m!==tmp);render(true);toast(errText(error))}else reloadSoon()});
+    if(error){MSGS=MSGS.filter(m=>m!==tmp);render(true);const n=$('#chatText');if(n&&!n.value)n.value=v;toast(errText(error))}else reloadSoon()});
 }
 
 /* ---------- events ---------- */
 document.addEventListener('input',e=>{
-  if(e.target.id==='q'||e.target.id==='qr'){state.q=e.target.value;const id=e.target.id,pos=e.target.selectionStart;if((location.hash.slice(1)||'home')!=='home'){location.hash='home'}render();const el=$('#'+id);if(el){el.focus();el.setSelectionRange(pos,pos)}}
+  if(e.target.id==='q'||e.target.id==='qr'){state.q=e.target.value;const id=e.target.id,pos=e.target.selectionStart;if((location.hash.slice(1)||'home')!=='home')history.replaceState(null,'','#home');render();const el=$('#'+id);if(el){el.focus();el.setSelectionRange(pos,pos)}}
+});
+document.addEventListener('change',e=>{
+  const s=e.target.closest('[data-lang]');if(!s||!T[s.value])return;
+  L=s.value;try{localStorage.setItem('barusik.lang',L)}catch(x){}
+  try{const u=new URL(location.href);if(u.searchParams.has('lang')){u.searchParams.set('lang',L);history.replaceState(null,'',u)}}catch(x){}
+  applyShell();render(true);$('[data-lang]')?.focus();
 });
 document.addEventListener('submit',async e=>{
   const f=e.target.closest('[data-act="cmt-form"]');if(!f)return;e.preventDefault();
@@ -1063,22 +1320,24 @@ document.addEventListener('submit',async e=>{
 });
 document.addEventListener('click',async e=>{
   const close=e.target.closest('[data-close]');if(close){closeLayer();if(close.tagName!=='A')return}
+  const wasOpen=$('[data-act="post-menu"][aria-expanded="true"]');
   if(!e.target.closest('.menu'))closeMenus();
   const pt=e.target.closest('[data-ptab]');if(pt){state.ptab=pt.dataset.ptab;render(true);return}
-  const jump=e.target.closest('[data-jump]');if(jump&&jump.dataset.jump){e.preventDefault();state.q='';go('home');setTimeout(()=>{document.getElementById('post-'+jump.dataset.jump)?.scrollIntoView({block:'center',behavior:'smooth'})},40);return}
+  const jump=e.target.closest('[data-jump]');if(jump&&jump.dataset.jump){e.preventDefault();state.q='';go('home');setTimeout(()=>{const el=document.getElementById('post-'+jump.dataset.jump);el?.scrollIntoView({block:'center',behavior:'smooth'});el?.classList.add('flash')},40);return}
   const a=e.target.closest('[data-act]');if(!a)return;
   const act=a.dataset.act;const postEl=a.closest('[data-post]');const p=postEl&&POSTS.find(x=>x.id===postEl.dataset.post);
   if(a.tagName==='A')e.preventDefault();
   switch(act){
+    case'login':case'signup':authSheet(act,LINKERR?t('linkBad'):'');LINKERR=false;break;
+    case'reload':location.reload();break;
     case'compose':compose();break;
-    case'compose-img':compose();setTimeout(()=>$('#cmpImg')?.click(),60);break;
+    case'compose-img':compose();$('#cmpImg')?.click();break;
     case'story-new':storyCompose();break;
     case'story-view':viewStories(a.dataset.author);break;
     case'clip-new':clipNew();break;
-    case'clip-sound':{const v=$('video',postEl);if(v){v.muted=!v.muted;a.textContent=v.muted?'🔊':'🔇';a.setAttribute('aria-label',v.muted?'הפעלת סאונד':'השתקה');v.play?.().catch(()=>{})}break}
+    case'clip-sound':{const v=$('video',postEl),id=postEl.dataset.post;if(!v)break;const on=!SOUND.has(id);on?SOUND.add(id):SOUND.delete(id);v.muted=!on;a.setAttribute('aria-pressed',on);a.setAttribute('aria-label',t(on?'soundOff':'soundOn'));a.innerHTML=ic(on?'sound':'mute');v.play?.().catch(()=>{});break}
     case'chat-new':chatNew();break;
     case'invite':inviteSheet();break;
-    case'tip':tipSheet();break;
     case'logout':await sb.auth.signOut();break;
     case'search':state.showSearch=!state.showSearch;go('home');setTimeout(()=>$('#q')?.focus(),30);break;
     case'copy-ref':copy(refLink(),a);break;
@@ -1093,32 +1352,33 @@ document.addEventListener('click',async e=>{
       const r=on?await sb.from('pk_likes').delete().eq('post',p.id).eq('uid',USER.id):await sb.from('pk_likes').insert({post:p.id});
       if(r.error&&!String(r.error.message).includes('duplicate')){toast(errText(r.error));reloadSoon()}break}
     case'comment':if(!p)break;OPEN[p.id]=!OPEN[p.id];render(true);if(OPEN[p.id])$('#c-'+p.id)?.focus();break;
-    case'share':if(p)copy(SITE+'#post-'+p.id,a);break;
-    case'post-menu':{if(!p)break;const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
-      m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}העתקת קישור</button>${a.dataset.mine?`<button role="menuitem" class="danger" data-m="del">${ic('trash')}מחיקה</button>`:`<button role="menuitem" data-m="report">${ic('info')}דיווח על הפוסט</button><button role="menuitem" data-m="block">חסימת המפרסם/ת</button>`}`;
+    case'share':if(p)share(SITE+'#post-'+p.id,a);break;
+    case'post-menu':{if(!p||wasOpen===a)break;const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
+      m.innerHTML=`<button role="menuitem" data-m="copy">${ic('link')}${tx('copyLink')}</button>${a.dataset.mine?`<button role="menuitem" class="danger" data-m="del">${ic('trash')}${tx('del')}</button>`:`<button role="menuitem" data-m="report">${ic('flag')}${tx('reportPostM')}</button><button role="menuitem" data-m="block">${ic('block')}${tx('blockM')}</button>`}`;
       postEl.append(m);a.setAttribute('aria-expanded','true');m.querySelector('button').focus();
       m.addEventListener('click',async ev=>{const b=ev.target.closest('[data-m]');if(!b)return;
-        if(b.dataset.m==='copy'){copy(SITE+'#post-'+p.id);m.remove()}
-        else if(b.dataset.m==='report'){m.remove();reportSheet(p.author,p.id)}
-        else if(b.dataset.m==='block'){m.remove();blockUser(p.author)}
+        if(b.dataset.m==='copy'){copy(SITE+(p.kind==='clip'?'#clips':'#post-'+p.id));closeMenus()}
+        else if(b.dataset.m==='report'){closeMenus();reportSheet(p.author,p.id)}
+        else if(b.dataset.m==='block'){closeMenus();blockUser(p.author)}
         else if(b.dataset.m==='del'){
-          if(!b.dataset.sure){b.dataset.sure=1;b.innerHTML=`${ic('trash')}ללחוץ שוב כדי למחוק`;return}
+          if(!b.dataset.sure){b.dataset.sure=1;b.innerHTML=`${ic('trash')}${tx('delSure')}`;return}
           const{error}=await sb.from('pk_posts').delete().eq('id',p.id);
           if(error){toast(errText(error));return}
           const path=mediaPath(p.media_url);if(path)sb.storage.from(BUCKET).remove([path]).catch(()=>{});
-          POSTS=POSTS.filter(x=>x.id!==p.id);render(true);toast('נמחק')}
+          POSTS=POSTS.filter(x=>x.id!==p.id);render(true);toast(t('removed'))}
       });break}
   }
 });
 
 /* ---------- start ---------- */
-render();
+applyShell();render();
 if(sb){
   sb.auth.onAuthStateChange((ev,session)=>{
     const u=session?.user||null;AUTHKNOWN=true;
+    if(ev==='PASSWORD_RECOVERY'){RECOVERY=true;if(READY&&ME)passSheet()}
     if(u&&(!USER||USER.id!==u.id)){signedIn(u)}
     else if(!u&&USER){USER=null;ME=null;READY=false;closeLayer();render()}
-    else if(!u&&!USER){READY=false;render()}
+    else if(!u&&!USER){READY=false;render();if(LINKERR){LINKERR=false;authSheet('login',t('linkBad'))}}
   });
   // signed in from another tab or another Barusik platform: pick the session up without a reload
   const recheck=()=>{if(USER)return;sb.auth.getSession().then(({data})=>{const u=data?.session?.user;if(u&&!USER)signedIn(u)}).catch(()=>{})};
@@ -1129,6 +1389,6 @@ if(sb){
 </script>
 
 
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.2.0').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.3.0').catch(()=>{}));</script>
 <script src="/lib/app.js?v=1" data-app="pk" defer></script>
 </body></html>
