@@ -371,7 +371,7 @@
         ${isHost() && s.playing && !s.paused ? `<button class="btn ghost small" id="pz">${esc(T.pause)}</button>` : ''}
         ${ms >= 0 ? (s.seats[ms].away ? `<button class="btn small" id="bk">${esc(T.back)}</button>` : `<button class="btn ghost small" id="aw">${esc(T.away)}</button>`) + `<button class="btn ghost small" id="rb">${esc(T.rebuy)}</button><button class="btn ghost small" id="lv">${esc(T.leave)}</button>` : ''}
         <button class="btn ghost small sidebtn" id="sideO">${esc(T.log)}${unread ? ' •' : ''}</button>
-        <div class="watch" style="width:100%"><span aria-hidden="true">👁</span>${esc(T.watched)}<span class="co"> · ${esc(T.chipsOnly)}</span></div>`;
+`;
       $('#share').onclick = async () => { const url = `${location.origin}/poker/?r=${id}`; try { if (navigator.share) await navigator.share({ title: T.title, text: T.shareText, url }); else { await navigator.clipboard.writeText(url); toast(T.copied); } } catch {} };
       $('#go')?.addEventListener('click', () => call(s.paused ? 'pause' : 'start', { room: id, on: false }).catch(fail));
       $('#pz')?.addEventListener('click', () => call('pause', { room: id, on: true }).catch(fail));
