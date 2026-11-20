@@ -94,6 +94,22 @@
     click() { if (!on()) return; noise(0.01, 3000, 2000, 0.12, 'bandpass', 2); },
     splat() { if (!on()) return; noise(0.32, 1500, 160, 0.6, 'lowpass', 0.9, 0, 1.6); tone(220, 0.18, 0.15, 0, 'sine', 70); noise(0.12, 600, 200, 0.25, 'lowpass', 1, 0.08); },
     whoosh() { if (!on()) return; noise(0.35, 500, 3000, 0.12, 'bandpass', 0.7, 0, 1); },
+    // a knife cutting the air, then biting into the frame and humming
+    swish() { if (!on()) return; noise(0.22, 1600, 7000, 0.13, 'bandpass', 2.2, 0, 1); },
+    thunk() { if (!on()) return; tone(150, 0.12, 0.55, 0, 'sine', 70); noise(0.03, 5000, 3000, 0.5, 'highpass', 0.8, 0, 3); tone(2600, 0.4, 0.035, 0.01, 'triangle'); tone(3900, 0.3, 0.02, 0.01); tone(330, 0.4, 0.07, 0.03, 'triangle', 290); },
+    // poop landing: wet and rude
+    squish() { if (!on()) return; noise(0.42, 700, 120, 0.7, 'lowpass', 1.2, 0, 1.2); tone(95, 0.38, 0.2, 0.02, 'sawtooth', 52); tone(150, 0.14, 0.07, 0.06, 'square', 75); },
+    // the jelly toy bouncing off a face
+    boing() {
+      if (!on()) return; const a = ctx(); if (!a) return;
+      const t = a.currentTime, o = a.createOscillator(), g = a.createGain(), l = a.createOscillator(), lg = a.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(540, t + 0.09); o.frequency.exponentialRampToValueAtTime(180, t + 0.6);
+      l.frequency.value = 22; lg.gain.value = 38; l.connect(lg).connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+      o.connect(g).connect(out); o.start(t); l.start(t); o.stop(t + 0.7); l.stop(t + 0.7);
+    },
+    // a hand in the wicker basket
+    toss() { if (!on()) return; noise(0.14, 2200, 900, 0.16, 'bandpass', 1.2, 0, 2); noise(0.08, 1400, 800, 0.1, 'bandpass', 1, 0.06); },
   };
   const reduced = () => root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const headSVG = (i) => A.avatarSVG(i).replace('viewBox="0 0 100 110"', 'viewBox="17 8 66 66"');
@@ -166,8 +182,18 @@
         let dx = below ? x + side * (bw / 2 + (side < 0 ? ov : 0) + 14) : x + ux * (reach + 12) + (x < cx - 4 ? 1 : -1) * bw * 0.32, dy = below ? y - bh * 0.15 : y + uy * (reach + 12);
         if (tall && Math.abs(ux) > 0.5 && !below) { dx = x + Math.sign(ux) * (bw / 2 - 6); dy = y - bh / 2 - 12; }
         if (br && dx > br.l && dx < br.r && dy > br.t && dy < br.b) dy = y < (br.t + br.b) / 2 ? br.t - 4 : br.b + 4;
+        // the basket: the corner of the box farthest from her bet, the dealer button and my own cards, on screen, a bottom corner if it can be
+        const corners = { br: [x + bw / 2 - 6, y + bh / 2, 0], bl: [x - bw / 2 + bw * 0.3, y + bh / 2, 0], tr: [x + bw / 2 - 6, y - bh / 2, 40], tl: [x - bw / 2 + bw * 0.3, y - bh / 2, 40] };
+        let bk = 'br', best = -Infinity;
+        for (const c in corners) {
+          const [qx, qy, pen] = corners[c];
+          const off = qx > W - 22 || qx < 22 || qy > H - 14 ? 1000 : 0;
+          // far enough is enough (70px clears a bet pill); then the bottom wins, since cards sit on top
+          const sc = Math.min(70, Math.hypot(qx - bx, qy - by), Math.hypot(qx - dx, qy - dy) + 8, k ? Math.hypot(qx - cx, qy - (cy + B - bh)) - 60 : 70) - pen - off;
+          if (sc > best + 0.5) { best = sc; bk = c; }
+        }
         const P = (v, w) => (v / w) * 100;
-        out.push({ k, x: P(x, W), y: P(y, H), bx: P(bx, W), by: P(by, H), dx: P(dx, W), dy: P(dy, H), top: y < cy - B * 0.35, side: Math.abs(ux) > 0.8 ? (ux > 0 ? 'l' : 'r') : '' });
+        out.push({ k, x: P(x, W), y: P(y, H), bx: P(bx, W), by: P(by, H), dx: P(dx, W), dy: P(dy, H), top: y < cy - B * 0.35, side: Math.abs(ux) > 0.8 ? (ux > 0 ? 'l' : 'r') : '', bk });
       }
       return out;
     }
@@ -183,7 +209,7 @@
             <div class="box">
               <span class="av" aria-hidden="true"><span class="avs"></span></span>
               <span class="who"><bdi class="nm"></bdi><span class="st"></span></span>
-              <button class="tom" type="button"><span aria-hidden="true">🍅</span><b></b></button>
+              <button class="tom" type="button"><span class="bks"></span><b></b></button>
               <span class="tm"><i></i></span>
             </div>
             <span class="tag hide"></span>
@@ -193,58 +219,105 @@
         const bet = document.createElement('div'); bet.className = 'bet hide';
         seatsEl.appendChild(bet); seatsEl.appendChild(el);
         const q = (s) => el.querySelector(s);
-        const nd = { el, bet, sit: q('.sit'), move: q('.move'), pl: q('.pl'), cards: q('.cards'), box: q('.box'), av: q('.av'), avs: q('.avs'), nm: q('.nm'), st: q('.st'), tom: q('.tom'), tomN: q('.tom b'), tm: q('.tm i'), tag: q('.tag'), hn: q('.hn'), bub: q('.bub'), k: {} };
+        const nd = { el, bet, sit: q('.sit'), move: q('.move'), pl: q('.pl'), cards: q('.cards'), box: q('.box'), av: q('.av'), avs: q('.avs'), nm: q('.nm'), st: q('.st'), tom: q('.tom'), tomN: q('.tom b'), bks: q('.bks'), tm: q('.tm i'), tag: q('.tag'), hn: q('.hn'), bub: q('.bub'), k: {} };
         nd.sit.onclick = () => view && view.onSit && view.onSit(i);
         nd.move.onclick = () => view && view.onSit && view.onSit(i);
         nd.box.addEventListener('click', (e) => {
           if (!view || e.target.closest('.tom')) return;
-          if (aiming && i !== view.me) { e.stopPropagation(); setAim(false); view.onThrow && view.onThrow(i); return; }
+          if (aiming && i !== view.me) { e.stopPropagation(); const it = sel; setAim(false); view.onThrow && view.onThrow(i, it); return; }
           if (i === view.me && view.onAvatar && e.target.closest('.av')) return view.onAvatar();
           if (i !== view.me && view.onNote && view.seats[i]) view.onNote(i, nd.box);
         });
         nd.tom.addEventListener('click', (e) => {
           e.stopPropagation();
           if (!view) return;
-          if (i !== view.me) { if (aiming) { setAim(false); view.onThrow && view.onThrow(i); } return; }
-          if (nd.dragged) { nd.dragged = false; return; }
-          const t = view.seats[i] && view.seats[i].tom;
-          if (!t && view.onBuy) return view.onBuy();
+          if (i !== view.me) { if (aiming) { const it = sel; setAim(false); view.onThrow && view.onThrow(i, it); } return; }
+          if (nd.dragged || nd.held) { nd.dragged = nd.held = false; return; }
+          // a tap opens the basket with the last thing picked ready in the hand; the next tap on a face throws it
           setAim(!aiming);
         });
+        // a long press (phone) or the right button (computer) is the shop
+        nd.tom.addEventListener('contextmenu', (e) => { e.preventDefault(); if (view && i === view.me && view.onBuy) { setAim(false); view.onBuy(sel); } });
         dragThrow(nd, i);
         nodes.push(nd);
       }
     }
 
-    /* tomatoes: tap your 🍅 and then a player, or drag it onto her */
+    /* the basket: tap it and the things in it come out in a fan, the one picked last already in the hand;
+       tap a face to throw it, or drag it onto her. A long press or the right button opens the shop. */
+    const ITEMS = A.ITEMS || ['tomato'];
+    let sel = (() => { try { return ITEMS.includes(localStorage.getItem('barusik.poker.item')) ? localStorage.getItem('barusik.poker.item') : 'tomato'; } catch { return 'tomato'; } })();
+    let fan = null;
+    const bagOf = (i) => (view && view.seats[i] && view.seats[i].bag) || {};
+    const pick = (k) => { sel = k; try { localStorage.setItem('barusik.poker.item', k); } catch {} };
     function setAim(on) {
-      aiming = on && !!view && view.me >= 0 && !!view.onThrow;
+      aiming = on && !!view && view.me >= 0 && !!view.onThrow && !!nodes[view.me];
       tbl.classList.toggle('aiming', aiming);
       aimbar.classList.toggle('hide', !aiming);
-      if (aiming) {
-        aimbar.innerHTML = `<span>${esc(T.aimHint)}</span>${view.onBuy ? `<button type="button" data-b>${esc(T.buyT)}</button>` : ''}<button type="button" data-x aria-label="${esc(T.cancel)}">✕</button>`;
-        aimbar.querySelector('[data-x]').onclick = (e) => { e.stopPropagation(); setAim(false); };
-        const b = aimbar.querySelector('[data-b]'); if (b) b.onclick = (e) => { e.stopPropagation(); setAim(false); view.onBuy(); };
-      }
+      if (fan) { const f = fan; fan = null; f.classList.add('out'); setTimeout(() => f.remove(), 220); }
+      if (!aiming) return;
+      const mine = bagOf(view.me);
+      // nothing of the picked kind left: take whatever there is
+      if (!(mine[sel] > 0)) { const has = ITEMS.find((k) => mine[k] > 0); if (has) pick(has); }
+      const nd = nodes[view.me];
+      nd.tom.classList.remove('open'); void nd.tom.offsetWidth; nd.tom.classList.add('open'); sfx.toss();
+      // the fan: an arc over the basket, kept inside the table
+      const c = at(nd.tom), W = tbl.clientWidth, n = ITEMS.length + 1, R = Math.max(84, Math.min(104, W * 0.1));
+      const f = document.createElement('div'); f.className = 'fan';
+      const span = Math.PI * 0.86, a0 = -Math.PI / 2 - span / 2;
+      let minX = Infinity, maxX = -Infinity, maxY = -Infinity;
+      const spots = Array.from({ length: n }, (_, k) => { const a = a0 + (span * k) / (n - 1); const p = { x: Math.cos(a) * R, y: Math.sin(a) * R * 0.8 }; minX = Math.min(minX, c.x + p.x); maxX = Math.max(maxX, c.x + p.x); maxY = Math.max(maxY, p.y); return p; });
+      const shift = minX < 30 ? 30 - minX : maxX > W - 30 ? W - 30 - maxX : 0;
+      // lift the whole fan clear of my own box and cards, so nothing covers my hand, name or stack
+      const cardsUp = nd.cards.childElementCount && nd.cards.offsetHeight ? at(nd.cards, 0.5, 0).y : Infinity;
+      const top = Math.min(at(nd.box, 0.5, 0).y, cardsUp) - c.y, lift = Math.min(0, top - 30 - maxY);
+      spots.forEach((p) => { p.y += lift; });
+      f.style.left = c.x + 'px'; f.style.top = c.y + 'px';
+      f.innerHTML = ITEMS.map((k, j) => { const have = mine[k] === Infinity ? '∞' : mine[k] | 0;
+        return `<button type="button" class="fi${k === sel ? ' on' : ''}${have ? '' : ' none'}" data-it="${k}" style="--dx:${spots[j].x + shift}px;--dy:${spots[j].y}px;--d:${j * 40}ms" aria-label="${esc((T.items && T.items[k]) || k)}${have ? ` (${have})` : ''}" title="${esc((T.items && T.items[k]) || k)}">${A.itemSVG(k)}<em>${have ? '×' + have : (view.prices && view.prices[k] ? fmt(view.prices[k]) : '')}</em></button>`; }).join('')
+        + `<button type="button" class="fi shop" data-shop style="--dx:${spots[n - 1].x + shift}px;--dy:${spots[n - 1].y}px;--d:${(n - 1) * 40}ms" aria-label="${esc(T.shopT || '')}" title="${esc(T.shopT || '')}">🛒</button>`;
+      f.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const b = e.target.closest('button'); if (!b) return;
+        if (b.dataset.shop != null) { setAim(false); return view.onBuy && view.onBuy(sel); }
+        const k = b.dataset.it; sfx.click();
+        if (!(bagOf(view.me)[k] > 0)) { setAim(false); return view.onBuy && view.onBuy(k); }
+        pick(k); f.querySelectorAll('.fi').forEach((x) => x.classList.toggle('on', x.dataset.it === k)); paintBar();
+      });
+      fx.after(f); fan = f;
+      paintBar();
     }
-    tbl.addEventListener('click', (e) => { if (aiming && !e.target.closest('.box') && !e.target.closest('.aimbar')) setAim(false); });
+    function paintBar() {
+      if (!aiming) return;
+      const hold = matchMedia('(hover: hover) and (pointer: fine)').matches ? T.rightBuy : T.holdBuy;
+      aimbar.innerHTML = `<span class="ai">${A.itemSVG(sel)}</span><span>${esc(T.aimHint2 || T.aimHint)}${hold ? `<small>${esc(hold)}</small>` : ''}</span><button type="button" data-x aria-label="${esc(T.cancel)}">✕</button>`;
+      aimbar.querySelector('[data-x]').onclick = (e) => { e.stopPropagation(); setAim(false); };
+    }
+    tbl.addEventListener('click', (e) => { if (aiming && !e.target.closest('.box') && !e.target.closest('.aimbar') && !e.target.closest('.fan')) setAim(false); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && aiming) setAim(false); });
     function dragThrow(nd, i) {
-      let start = null, ghost = null;
+      let start = null, ghost = null, hold = 0;
       nd.tom.addEventListener('pointerdown', (e) => {
-        if (!view || i !== view.me || !view.onThrow || !(view.seats[i] && view.seats[i].tom)) return;
+        if (!view || i !== view.me || !view.onThrow || e.button > 0) return;
         start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+        nd.held = false;
+        // held still for half a second: the shop
+        clearTimeout(hold);
+        if (e.pointerType !== 'mouse') hold = setTimeout(() => { if (!start || ghost) return; start = null; nd.held = true; try { navigator.vibrate && navigator.vibrate(20); } catch {} setAim(false); view.onBuy && view.onBuy(sel); }, 480);
       });
       nd.tom.addEventListener('pointermove', (e) => {
         if (!start) return;
         if (!ghost && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) {
+          clearTimeout(hold);
+          const mine = bagOf(i); if (!(mine[sel] > 0)) { const has = ITEMS.find((k) => mine[k] > 0); if (!has) { start = null; return; } pick(has); }
           try { nd.tom.setPointerCapture(start.id); } catch {}
-          ghost = document.createElement('div'); ghost.className = 'flyt drag'; ghost.innerHTML = A.tomatoSVG(); document.body.appendChild(ghost);
+          ghost = document.createElement('div'); ghost.className = 'flyt drag it-' + sel; ghost.innerHTML = A.itemSVG(sel); document.body.appendChild(ghost);
           tbl.classList.add('aiming');
         }
         if (ghost) { ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px'; }
       });
       const end = (e, cancel) => {
+        clearTimeout(hold);
         if (!start) return;
         start = null;
         if (!ghost) return;
@@ -253,7 +326,7 @@
         if (cancel) return;
         const hit = document.elementsFromPoint(e.clientX, e.clientY).map((x) => x.closest && x.closest('.seat')).find((s) => s && s.dataset.seat != null);
         const to = hit ? +hit.dataset.seat : -1;
-        if (to >= 0 && to !== view.me && view.seats[to]) view.onThrow(to);
+        if (to >= 0 && to !== view.me && view.seats[to]) { const it = sel; setAim(false); view.onThrow(to, it); }
       };
       nd.tom.addEventListener('pointerup', (e) => end(e, false));
       nd.tom.addEventListener('pointercancel', (e) => end(e, true));
@@ -287,6 +360,7 @@
           nd.bet.style.left = p.bx + '%'; nd.bet.style.top = p.by + '%';
           nd.el.classList.toggle('me', i === v.me); nd.el.classList.toggle('top', p.top);
           nd.el.classList.toggle('s-l', p.side === 'l'); nd.el.classList.toggle('s-r', p.side === 'r');
+          nd.el.dataset.bk = p.bk;
         });
       }
       const newHand = v.hand !== last.hand;
@@ -430,13 +504,16 @@
         if (w && !last.wins[i]) { fly(at(board), at(nd.box), 5, 250); wonNow = true; }
         last.wins[i] = w; last.bets[i] = bet;
 
-        // the tomato badge
-        const t = s.tom ?? 0;
+        // the basket, with what is in it
+        const bag = s.bag || { tomato: s.tom ?? 0 }, t = ITEMS.reduce((a, x) => a + (bag[x] || 0), 0);
         nd.tom.classList.toggle('hide', v.baskets === false);
+        const sig = ITEMS.map((x) => (bag[x] === Infinity ? 'i' : Math.min(8, bag[x] | 0))).join('.');
+        if (k.bag !== sig) { nd.bks.innerHTML = A.basketSVG(bag); if (k.bag != null && t > (k.tom || 0)) { nd.tom.classList.remove('got'); void nd.tom.offsetWidth; nd.tom.classList.add('got'); } k.bag = sig; }
         if (k.tom !== t) { nd.tomN.textContent = t === Infinity ? '∞' : t > 999 ? '999+' : String(t); k.tom = t; }
         nd.tom.classList.toggle('mine', me);
-        nd.tom.title = me ? T.aim : `${t === Infinity ? '∞' : t} ${T.tomatoes}`;
-        nd.tom.setAttribute('aria-label', me ? `${T.aim} (${t === Infinity ? '∞' : t})` : `${s.name}: ${t === Infinity ? '∞' : t} ${T.tomatoes}`);
+        const what = ITEMS.filter((x) => bag[x]).map((x) => `${bag[x] === Infinity ? '∞' : bag[x]} ${(T.items && T.items[x]) || x}`).join(', ') || '0';
+        nd.tom.title = me ? T.aim : `${s.name}: ${what}`;
+        nd.tom.setAttribute('aria-label', me ? `${T.aim} (${what})` : `${s.name}: ${what}`);
         nd.av.classList.toggle('pick', me && !!v.onAvatar);
         k.uid = s.uid;
       });
@@ -444,32 +521,53 @@
       last.hand = v.hand; last.pot = v.pot;
     }
 
-    /* a tomato from one player to another's face */
+    /* something from one player's basket to another's face. Each thing flies and lands its own way:
+       a tomato splats, poop splats and stinks, a knife spins in and sticks quivering, the toy wobbles in and bounces off. */
     function throwAt(from, to, opts = {}) {
-      const a = nodes[from], b = nodes[to];
+      const a = nodes[from], b = nodes[to], kind = ITEMS.includes(opts.item) ? opts.item : 'tomato';
       if (!b || b.pl.classList.contains('hide')) return;
-      const p0 = a && !a.pl.classList.contains('hide') ? at(a.tom) : at(board);
+      const fromBasket = a && !a.pl.classList.contains('hide');
+      const p0 = fromBasket ? at(a.tom, 0.5, 0.3) : at(board);
       const p1 = at(b.av);
-      const done = () => {
-        const sp = document.createElement('div'); sp.className = 'splat2'; sp.innerHTML = A.splatSVG();
-        sp.style.width = Math.max(56, b.av.offsetWidth * 1.9) + 'px'; sp.style.left = p1.x + 'px'; sp.style.top = p1.y + 'px';
-        fx.appendChild(sp); setTimeout(() => sp.remove(), 3600);
-        b.el.classList.remove('hit'); void b.el.offsetWidth; b.el.classList.add('hit');
-        clearTimeout(b.hitT); b.hitT = setTimeout(() => b.el.classList.remove('hit'), 1700);
-        if (!opts.quiet) sfx.splat();
+      const face = Math.max(40, b.av.offsetWidth);
+      const flinch = () => { b.el.classList.remove('hit'); void b.el.offsetWidth; b.el.classList.add('hit'); clearTimeout(b.hitT); b.hitT = setTimeout(() => b.el.classList.remove('hit'), 1700); };
+      const put = (cls, html, w, life) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; d.style.width = w + 'px'; d.style.left = p1.x + 'px'; d.style.top = p1.y + 'px'; fx.appendChild(d); setTimeout(() => d.remove(), life); return d; };
+      const landed = () => {
+        flinch();
+        if (kind === 'knife') {
+          // stuck in the frame at a slant, humming, then it drops out
+          const d = put('stuck', A.itemSVG('knife'), face * 1.35, 3300); d.style.setProperty('--r', (p0.x > p1.x ? 150 : 30) + 'deg');
+          put('bang', '<i></i><i></i><i></i><i></i><i></i><i></i>', face * 1.2, 600);
+          if (!opts.quiet) sfx.thunk();
+        } else if (kind === 'dildo') {
+          // squashes on the face and bounces away, with a BOING
+          const d = put('bounce', A.itemSVG('dildo'), face * 0.42, 1500); d.style.setProperty('--sx', (p0.x <= p1.x ? 1 : -1) * face * 1.1 + 'px');
+          put('boingt', 'BOING!', face * 1.6, 1200);
+          if (!opts.quiet) sfx.boing();
+        } else {
+          put('splat2' + (kind === 'poop' ? ' poop' : ''), A.splatSVG(kind), Math.max(56, b.av.offsetWidth * 1.9), 3600);
+          if (!opts.quiet) (kind === 'poop' ? sfx.squish() : sfx.splat());
+        }
         opts.onHit && opts.onHit();
       };
-      if (reduced()) return done();
-      const el = document.createElement('div'); el.className = 'flyt'; el.innerHTML = A.tomatoSVG();
+      // out of the basket: it jumps a little
+      if (fromBasket) { a.tom.classList.remove('toss'); void a.tom.offsetWidth; a.tom.classList.add('toss'); clearTimeout(a.tossT); a.tossT = setTimeout(() => a.tom.classList.remove('toss'), 600); }
+      if (reduced()) return landed();
+      const el = document.createElement('div'); el.className = 'flyt it-' + kind; el.innerHTML = A.itemSVG(kind);
       fx.appendChild(el);
-      const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y), lift = Math.min(150, 40 + dist * 0.3), steps = 18, frames = [];
-      for (let s = 0; s <= steps; s++) {
-        const t = s / steps, x = p0.x + (p1.x - p0.x) * t, y = p0.y + (p1.y - p0.y) * t - Math.sin(Math.PI * t) * lift, sc = 0.9 + Math.sin(Math.PI * t) * 0.5;
-        frames.push({ transform: `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${t * 720}deg) scale(${sc})`, offset: t });
+      const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y), steps = 22, frames = [];
+      const lift = kind === 'knife' ? Math.min(60, 10 + dist * 0.1) : Math.min(150, 40 + dist * 0.3);
+      const aim = (Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180) / Math.PI;
+      for (let k = 0; k <= steps; k++) {
+        const t = k / steps, x = p0.x + (p1.x - p0.x) * t, y = p0.y + (p1.y - p0.y) * t - Math.sin(Math.PI * t) * lift, sc = 0.9 + Math.sin(Math.PI * t) * 0.5;
+        const rot = kind === 'knife' ? aim + t * 1080 : kind === 'dildo' ? Math.sin(t * Math.PI * 5) * 35 + t * 200 : kind === 'poop' ? t * 400 : t * 720;
+        const squash = kind === 'dildo' ? ` scale(${1 + Math.sin(t * Math.PI * 6) * 0.12}, ${1 - Math.sin(t * Math.PI * 6) * 0.12})` : '';
+        frames.push({ transform: `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${rot}deg) scale(${sc})${squash}`, offset: t });
       }
-      if (!opts.quiet) sfx.whoosh();
-      const anim = el.animate(frames, { duration: Math.min(850, 380 + dist * 0.8), easing: 'cubic-bezier(.35,.05,.55,1)', fill: 'forwards' });
-      anim.onfinish = () => { el.remove(); done(); };
+      if (!opts.quiet) (kind === 'knife' ? sfx.swish() : sfx.whoosh());
+      const dur = kind === 'knife' ? Math.min(560, 260 + dist * 0.5) : Math.min(850, 380 + dist * 0.8);
+      const anim = el.animate(frames, { duration: dur, easing: kind === 'knife' ? 'cubic-bezier(.4,.1,.6,1)' : 'cubic-bezier(.35,.05,.55,1)', fill: 'forwards' });
+      anim.onfinish = () => { el.remove(); landed(); };
     }
 
     /* a chat line over the player's seat for a few seconds, like PokerNow */

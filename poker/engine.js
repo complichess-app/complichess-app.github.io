@@ -308,7 +308,8 @@
     let maxTo = p.bet + p.chips;
     // pot limit: call, then raise by the size of the pot after the call
     if (this.game !== 'nlh') maxTo = Math.min(maxTo, this.currentBet + this.pot() + toCall);
-    const o = { toCall, call: callAmt, check: toCall === 0, fold: toCall > 0, raise: false, minTo: 0, maxTo, bet: this.currentBet === 0 };
+    // allTo: everything she has; when maxTo is less, the biggest raise is the pot, not all in
+    const o = { toCall, call: callAmt, check: toCall === 0, fold: toCall > 0, raise: false, minTo: 0, maxTo, allTo: p.bet + p.chips, bet: this.currentBet === 0 };
     if (p.canRaise && p.chips > toCall && maxTo > this.currentBet) {
       const minTo = this.currentBet === 0 ? Math.min(this.minOpen, maxTo) : this.currentBet + this.minRaise;
       o.raise = true; o.minTo = Math.min(minTo, maxTo);

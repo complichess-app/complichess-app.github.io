@@ -219,3 +219,44 @@ window.POKER_T = {
   };
   for (const k in W) Object.assign(window.POKER_T[k], W[k], EN);
 })();
+
+/* The basket (2026-11-20): tomatoes, poop, knives and toys; and who asks to run it twice. */
+(function () {
+  const B = {
+    he: { myStack: 'הערימה שלך: {a}', items: { tomato: 'עגבנייה', poop: 'קקי', knife: 'סכין', dildo: 'דילדו' }, shopT: 'הסלסלה', shopNote: 'קונים עם צ׳יפים מהערימה שלך בשולחן, כשאתה לא באמצע יד. עגבנייה מקבלים בחינם על כל יד שמנצחים.',
+      chipsEach: '{a} צ׳יפים כל אחד', haveN: 'יש לך {a}', lthrowI: '{n} זרק {i} על {t}', lbuyI: '{n} קנה {a} {i}', aimHint2: 'על מי זורקים? לחצו על הפנים', holdBuy: 'לחיצה ארוכה על הסלסלה: קנייה', rightBuy: 'קליק ימני על הסלסלה: קנייה',
+      noItem: 'אין לך {i} בסלסלה', practiceFree: 'באימון הסלסלה לא נגמרת', shut: 'סגירה', ritWants: '{n} רוצה להריץ פעמיים',
+      aim: 'הסלסלה: לחיצה בוחרת מה לזרוק, ואז לוחצים על פנים. לחיצה ארוכה או קליק ימני: קנייה',
+      err: { no_items: 'אין לך את זה בסלסלה', soon: 'עוד רגע זה עובד: הסלסלה החדשה בדרך' } },
+    en: { myStack: 'Your stack: {a}', items: { tomato: 'Tomato', poop: 'Poop', knife: 'Knife', dildo: 'Dildo' }, shopT: 'The basket', shopNote: 'Paid with chips from your stack at this table, when you are not in a hand. Every hand you win puts a free tomato in.',
+      chipsEach: '{a} chips each', haveN: 'You have {a}', lthrowI: '{n} threw a {i} at {t}', lbuyI: '{n} bought {a} {i}', aimHint2: 'Who gets it? Tap a face', holdBuy: 'Long press the basket to buy', rightBuy: 'Right-click the basket to buy',
+      noItem: 'No {i} in your basket', practiceFree: 'In practice the basket never runs out', shut: 'Close', ritWants: '{n} wants to run it twice',
+      aim: 'Your basket: tap to pick what to throw, then tap a face. Long press or right-click to buy',
+      err: { no_items: 'You have none of that in your basket', soon: 'Almost there: the new basket is on its way' } },
+    ar: { myStack: 'رصيدك: {a}', items: { tomato: 'طماطم', poop: 'براز', knife: 'سكين', dildo: 'لعبة وردية' }, shopT: 'السلة', shopNote: 'تدفع برقاقات من رصيدك على هذه الطاولة، حين لا تكون في يد. كل يد تربحها تضع طماطم مجانية.',
+      chipsEach: '{a} رقاقة لكل واحدة', haveN: 'لديك {a}', lthrowI: '{n} رمى {i} على {t}', lbuyI: '{n} اشترى {a} {i}', aimHint2: 'على من نرمي؟ اضغط على وجه', holdBuy: 'اضغط مطولًا على السلة للشراء', rightBuy: 'انقر بالزر الأيمن على السلة للشراء',
+      noItem: 'لا يوجد {i} في سلتك', practiceFree: 'في التدريب لا تفرغ السلة', shut: 'إغلاق', ritWants: '{n} يريد تشغيلها مرتين',
+      aim: 'سلتك: اضغط لتختار ما ترميه ثم اضغط على وجه. ضغطة مطولة أو زر أيمن للشراء',
+      err: { no_items: 'ليس لديك هذا في السلة', soon: 'قريبًا: السلة الجديدة في الطريق' } },
+    ru: { myStack: 'Ваш стек: {a}', items: { tomato: 'Помидор', poop: 'Какашка', knife: 'Нож', dildo: 'Дилдо' }, shopT: 'Корзина', shopNote: 'Оплата фишками из вашего стека за этим столом, когда вы не в раздаче. За каждую выигранную раздачу — бесплатный помидор.',
+      chipsEach: '{a} фишек за штуку', haveN: 'У вас {a}', lthrowI: '{n} бросил {i} в {t}', lbuyI: '{n} купил {a} {i}', aimHint2: 'В кого бросаем? Нажмите на лицо', holdBuy: 'Долгое нажатие на корзину — покупка', rightBuy: 'Правый клик по корзине — покупка',
+      noItem: 'В корзине нет: {i}', practiceFree: 'В тренировке корзина не кончается', shut: 'Закрыть', ritWants: '{n} хочет раздать дважды',
+      aim: 'Корзина: нажмите, выберите, что бросить, и нажмите на лицо. Долгое нажатие или правый клик — покупка',
+      err: { no_items: 'Этого нет в вашей корзине', soon: 'Скоро: новая корзина уже в пути' } },
+    es: { myStack: 'Tu stack: {a}', items: { tomato: 'Tomate', poop: 'Caca', knife: 'Cuchillo', dildo: 'Dildo' }, shopT: 'La cesta', shopNote: 'Se paga con fichas de tu stack en esta mesa, cuando no estás en una mano. Cada mano que ganas mete un tomate gratis.',
+      chipsEach: '{a} fichas cada uno', haveN: 'Tienes {a}', lthrowI: '{n} le tiró un {i} a {t}', lbuyI: '{n} compró {a} {i}', aimHint2: '¿A quién? Toca una cara', holdBuy: 'Mantén pulsada la cesta para comprar', rightBuy: 'Clic derecho en la cesta para comprar',
+      noItem: 'No tienes {i} en la cesta', practiceFree: 'En la práctica la cesta no se acaba', shut: 'Cerrar', ritWants: '{n} quiere correrla dos veces',
+      aim: 'Tu cesta: toca para elegir qué tirar y luego toca una cara. Mantén pulsado o clic derecho para comprar',
+      err: { no_items: 'No tienes eso en la cesta', soon: 'Casi listo: la cesta nueva está en camino' } },
+    fr: { myStack: 'Votre tapis : {a}', items: { tomato: 'Tomate', poop: 'Caca', knife: 'Couteau', dildo: 'Gode' }, shopT: 'Le panier', shopNote: 'Payé avec les jetons de votre tapis à cette table, hors d’une main. Chaque main gagnée ajoute une tomate gratuite.',
+      chipsEach: '{a} jetons pièce', haveN: 'Vous en avez {a}', lthrowI: '{n} a lancé {i} sur {t}', lbuyI: '{n} a acheté {a} {i}', aimHint2: 'Sur qui ? Touchez un visage', holdBuy: 'Appui long sur le panier pour acheter', rightBuy: 'Clic droit sur le panier pour acheter',
+      noItem: 'Pas de {i} dans votre panier', practiceFree: 'À l’entraînement, le panier ne se vide jamais', shut: 'Fermer', ritWants: '{n} veut la jouer deux fois',
+      aim: 'Votre panier : touchez pour choisir quoi lancer, puis touchez un visage. Appui long ou clic droit pour acheter',
+      err: { no_items: 'Vous n’avez pas ça dans votre panier', soon: 'Presque prêt : le nouveau panier arrive' } },
+  };
+  for (const k in B) {
+    const t = window.POKER_T[k]; if (!t) continue;
+    const { err, ...rest } = B[k];
+    Object.assign(t, rest); t.err = Object.assign(t.err || {}, err);
+  }
+})();

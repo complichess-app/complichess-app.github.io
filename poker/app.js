@@ -5,6 +5,10 @@
   const SB_URL = 'https://iktmyrfbejtjsiehcrar.supabase.co', SB_KEY = 'sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
   const FN = SB_URL + '/functions/v1/poker';
   const P = window.Poker, ALL = window.POKER_T, PT = window.PokerTable;
+  // the basket: what it holds and what each costs (the server charges the same)
+  const A = window.PokerArt, ITEMS = (window.PokerArt && window.PokerArt.ITEMS) || ['tomato'];
+  const PRICES = { tomato: 100, poop: 300, knife: 600, dildo: 1000 }, FULL = { tomato: Infinity, poop: Infinity, knife: Infinity, dildo: Infinity };
+  const itemTag = (k) => `<span class="ii">${A.itemSVG(k || 'tomato')}</span>${esc(T.items[k || 'tomato'])}`;
   const LANGS = ['he', 'en', 'ar', 'ru', 'es', 'fr'], NAMES = { he: 'עברית', en: 'English', ar: 'العربية', ru: 'Русский', es: 'Español', fr: 'Français' };
   const qs = new URLSearchParams(location.search);
   let L = qs.get('lang'); try { L = L || localStorage.getItem('barusik.lang'); } catch {}
@@ -273,8 +277,8 @@
       case 'pause': return esc(T.lpause); case 'resume': return esc(T.lresume); case 'closed': return esc(T.lclosed);
       case 'away': return fill(esc(T.laway), { n }); case 'ask': return fill(esc(T.lask), { n }); case 'denied': return fill(esc(T.ldenied), { n });
       case 'chips': return fill(esc(T.lchips), { n, a });
-      case 'throw': return fill(esc(T.lthrow), { n, t: `<bdi class="cs">${esc(e.to || '')}</bdi>` });
-      case 'buy': return fill(esc(T.lbuy), { n, a });
+      case 'throw': return fill(esc(T.lthrowI), { n, i: itemTag(e.it), t: `<bdi class="cs">${esc(e.to || '')}</bdi>` });
+      case 'buy': return fill(esc(T.lbuyI), { n, a, i: itemTag(e.it) });
       case 'show': return fill(esc(T.lshow), { n }) + (e.b ? ` [${e.b.map(cardLabel).join(' ')}]` : '');
       case 'settings': return fill(esc(e.next ? T.lsettingsNext : T.lsettings), { a: `<bdi class="n">${e.sb}/${e.bb}</bdi>` }) + (e.game ? ` · ${esc(T[e.game] || '')}` : '');
       default: return '';
@@ -318,10 +322,12 @@
     const size = (f) => clamp(cur + (pot + o.toCall) * f);
     const step = Math.max(1, v.bb >= 20 ? Math.floor(v.bb / 2) : 1);
     const word = o.bet ? T.bet : T.raise;
+    // pot limit: the top of the slider is the pot, so it says POT; ALL IN only when it really is everything
+    const maxL = o.maxTo >= (o.allTo ?? me.bet + me.chips) ? T.allin : T.potB;
     let open = false, sure = false;
     // before the flop with nothing but the blinds in: sizes in big blinds; otherwise parts of the pot
     const open1 = !(v.board || []).length && cur <= (v.bb || 0) * 2 && v.bb;
-    const presets = !o.raise ? [] : (open1 ? [['2 BB', clamp(v.bb * 2)], ['2.5 BB', clamp(v.bb * 2.5)], ['3 BB', clamp(v.bb * 3)], ['4 BB', clamp(v.bb * 4)], [T.potB, size(1)], [T.allin, o.maxTo]] : [[T.minB, o.minTo], [T.half, size(0.5)], [T.q3, size(0.75)], [T.potB, size(1)], [T.allin, o.maxTo]])
+    const presets = !o.raise ? [] : (open1 ? [['2 BB', clamp(v.bb * 2)], ['2.5 BB', clamp(v.bb * 2.5)], ['3 BB', clamp(v.bb * 3)], ['4 BB', clamp(v.bb * 4)], [T.potB, size(1)], [maxL, o.maxTo]] : [[T.minB, o.minTo], [T.half, size(0.5)], [T.q3, size(0.75)], [T.potB, size(1)], [maxL, o.maxTo]])
       .filter((x, i, all) => i === all.length - 1 || (x[1] >= o.minTo && x[1] < o.maxTo && all.findIndex((y) => y[1] === x[1]) === i));
     const paint = () => {
       const callB = o.check ? `<button class="act c" data-k="c">${esc(T.checkB)}</button>` : `<button class="act c" data-k="c">${esc(T.callW)}<small>${num(o.call)}${o.call >= me.chips ? ' · ' + esc(T.allin) : ''}</small></button>`;
@@ -344,7 +350,7 @@
         return;
       }
       const range = $('input[type=range]', el), box = $('input[type=number]', el), go = btn('go');
-      const label = () => { const x = clamp(+box.value || o.minTo); go.innerHTML = x >= o.maxTo ? `${esc(T.allin)}<small>${num(x)}</small>` : o.bet ? `${esc(T.bet)}<small>${num(x)}</small>` : `${esc(T.raise)}<small>${esc(T.toW)} ${num(x)}</small>`; };
+      const label = () => { const x = clamp(+box.value || o.minTo); go.innerHTML = x >= o.maxTo ? `${esc(maxL)}<small>${num(x)}</small>` : o.bet ? `${esc(T.bet)}<small>${num(x)}</small>` : `${esc(T.raise)}<small>${esc(T.toW)} ${num(x)}</small>`; };
       const setTo = (x) => { box.value = range.value = clamp(x); label(); };
       range.oninput = () => { box.value = range.value; label(); };
       box.oninput = () => { range.value = box.value; label(); };
@@ -461,44 +467,61 @@
     const st = () => room.state;
     const isHost = () => room && (room.host === USER.id || admin);
     const mySeat = () => (st().seats || []).findIndex((s) => s && s.uid === USER.id);
-    const myTom = () => counts[USER.id] ?? 0;
+    const myBag = () => counts[USER.id] || {};
+    // a basket row: tomatoes always; poop, knives and toys once the new columns are in the database
+    const bagOf = (x) => ({ tomato: x.tomatoes | 0, poop: x.poop | 0, knife: x.knife | 0, dildo: x.dildo | 0 });
+    let itemsReady = true;
 
     async function loadCounts() {
       if (!room) return;
       const uids = [...new Set([USER.id, ...(st().seats || []).filter(Boolean).map((x) => x.uid)])];
-      const r = await sb.from('po_baskets').select('uid,tomatoes').in('uid', uids);
+      let r = await sb.from('po_baskets').select('uid,tomatoes,poop,knife,dildo').in('uid', uids);
+      if (r.error) { itemsReady = false; r = await sb.from('po_baskets').select('uid,tomatoes').in('uid', uids); }
       if (r.error || !alive) return;
-      for (const u of uids) counts[u] = 0;
-      for (const x of r.data || []) counts[x.uid] = x.tomatoes;
+      for (const u of uids) counts[u] = {};
+      for (const x of r.data || []) counts[x.uid] = bagOf(x);
       draw();
     }
     bchan = sb.channel('po-baskets-' + id).on('postgres_changes', { event: '*', schema: 'public', table: 'po_baskets' }, (p) => {
       const x = p.new; if (!x || !x.uid || !(x.uid in counts)) return;
       if (x.uid === USER.id && pendingThrows > 0) return; // my own throws are already counted down
-      counts[x.uid] = x.tomatoes; draw();
+      counts[x.uid] = bagOf(x); draw();
     }).subscribe();
-    async function throwAt(seat) {
-      const ms = mySeat();
+    async function throwAt(seat, item) {
+      const ms = mySeat(), it = ITEMS.includes(item) ? item : 'tomato';
       if (ms < 0) return toast(T.err.not_seated);
-      if (!myTom()) { toast(T.err.no_tomatoes); return buyTomatoes(); }
+      if (!(myBag()[it] > 0)) { toast(fill(T.noItem, { i: T.items[it] })); return openShop(it); }
       const tid = Math.random().toString(36).slice(2, 10);
       (seenThrows ||= new Set()).add(tid);
-      counts[USER.id] = myTom() - 1; pendingThrows++; draw();
-      tbl.throwAt(ms, seat);
-      try { await call('throw', { room: id, seat, tid }); }
-      catch (x) { fail(x); }
+      counts[USER.id] = { ...myBag(), [it]: myBag()[it] - 1 }; pendingThrows++; draw();
+      tbl.throwAt(ms, seat, { item: it });
+      try { await call(it === 'tomato' ? 'throw' : 'throwItem', { room: id, seat, tid, item: it }); }
+      catch (x) { fail(x.message === 'bad_action' ? new Error('soon') : x); }
       finally { pendingThrows--; if (!pendingThrows) setTimeout(loadCounts, 400); }
     }
-    function buyTomatoes() {
-      const d = document.createElement('dialog');
-      d.innerHTML = `<h2>🍅 ${esc(T.buyT)}</h2><form method="dialog"><p class="mute small" style="margin:0">${esc(T.basketT)}</p>
-        <label>${esc(T.howMany)} <span class="mute small">(${esc(T.buyEach)})</span><input name="n" type="number" inputmode="numeric" min="1" value="5" required></label>
-        <div class="row"><button value="x" class="btn ghost" formnovalidate>${esc(T.cancel)}</button><button value="ok" class="btn" autofocus>${esc(T.buyGo)}</button></div></form>`;
+    // the shop: everything the basket can hold, paid from my stack at this table
+    function openShop(want) {
+      const d = document.createElement('dialog'); d.className = 'shopd';
+      const bag = myBag(), stack = (st().seats[mySeat()] || {}).chips;
+      d.innerHTML = `<h2>🧺 ${esc(T.shopT)}</h2><p class="mute small" style="margin:0">${esc(T.shopNote)}${stack != null ? `<br>${fill(esc(T.myStack), { a: `<b>${PT.fmt(stack)}</b>` })}` : ''}</p>
+        <div class="shopl">${ITEMS.map((k) => `<div class="si${k === want ? ' want' : ''}" data-it="${k}"><span class="sic">${A.itemSVG(k)}</span>
+          <span class="sn"><b>${esc(T.items[k])}</b><small>${esc(fill(T.chipsEach, { a: PT.fmt(PRICES[k]) }))} · ${esc(fill(T.haveN, { a: bag[k] | 0 }))}</small></span>
+          <span class="qty"><button type="button" data-d="-1" aria-label="−">−</button><output>1</output><button type="button" data-d="1" aria-label="+">+</button></span>
+          <button type="button" class="btn small" data-buy>${esc(T.buyGo)}</button></div>`).join('')}</div>
+        <div class="row"><button type="button" class="btn ghost" data-x>${esc(T.shut || T.cancel)}</button></div>`;
       document.body.appendChild(d); d.showModal();
-      d.addEventListener('close', async () => {
-        const n = +new FormData($('form', d)).get('n'); d.remove();
-        if (d.returnValue !== 'ok' || !(n > 0)) return;
-        try { await call('buy', { room: id, n }); counts[USER.id] = myTom() + n; draw(); toast(`🍅 +${n}`); } catch (x) { fail(x); }
+      const w = d.querySelector('.si.want'); if (w) w.scrollIntoView({ block: 'nearest' });
+      d.addEventListener('close', () => d.remove());
+      d.querySelector('[data-x]').onclick = () => d.close();
+      d.querySelectorAll('.si').forEach((row) => {
+        const k = row.dataset.it, o = row.querySelector('output');
+        row.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => { const n = Math.max(1, Math.min(99, (+o.textContent || 1) + +b.dataset.d)); o.textContent = n; row.querySelector('[data-buy]').textContent = `${T.buyGo} · ${PT.fmt(n * PRICES[k])}`; }));
+        row.querySelector('[data-buy]').onclick = async (e) => {
+          const n = +o.textContent || 1; e.target.disabled = true;
+          if (k !== 'tomato' && !itemsReady) { e.target.disabled = false; return fail(new Error('soon')); }
+          try { await call(k === 'tomato' ? 'buy' : 'buyItem', { room: id, n, item: k }); counts[USER.id] = { ...myBag(), [k]: (myBag()[k] | 0) + n }; draw(); PT.sfx.toss(); toast(`🧺 +${n} ${T.items[k]}`); d.close(); }
+          catch (x) { e.target.disabled = false; fail(x.message === 'bad_action' ? new Error('soon') : x); }
+        };
       });
     }
     // tomatoes thrown by others: from their seat to the face
@@ -509,8 +532,9 @@
         if (seenThrows.has(t.id)) continue; seenThrows.add(t.id);
         if (Date.now() - t.at > 8000 || !tbl) continue;
         const me = mySeat();
-        tbl.throwAt(t.fs, t.to, { onHit: () => { if (t.to === me) { buzz([30, 40, 60]); say(fill(T.lthrow, { n: t.from, t: t.name })); } } });
-        const fu = (st().seats[t.fs] || {}).uid; if (fu && fu in counts) counts[fu] = Math.max(0, counts[fu] - 1);
+        const it = t.it || 'tomato';
+        tbl.throwAt(t.fs, t.to, { item: it, onHit: () => { if (t.to === me) { buzz(it === 'knife' ? [60, 30, 20] : [30, 40, 60]); say(fill(T.lthrowI, { n: t.from, i: T.items[it], t: t.name })); } } });
+        const fu = (st().seats[t.fs] || {}).uid; if (fu && counts[fu]) counts[fu] = { ...counts[fu], [it]: Math.max(0, (counts[fu][it] | 0) - 1) };
       }
     }
     // new chat lines pop over the speaker's seat
@@ -589,7 +613,7 @@
         }
         let hand = '', best = null;
         if (showdown && Array.isArray(cards) && board.length === 5 && !p.folded) { hand = handDesc(cards, board); if (winners[i]) best = P.bestFive(cards, board); }
-        return { uid: x.uid, av: x.av || 0, tom: counts[x.uid] ?? 0, name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
+        return { uid: x.uid, av: x.av || 0, bag: counts[x.uid] || {}, name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
       });
       const inHandStage = live && live.stage !== 'done' && live.stage !== 'idle';
       const pot = live ? (live.stage === 'done' ? 0 : live.pot - seats.reduce((t, x) => t + (x ? x.bet : 0), 0)) : 0;
@@ -603,13 +627,13 @@
       } else if (!inHandStage) { const el = (s.seats || []).filter((x) => x && x.chips > 0 && !x.away).length; if (el < 2) msg = esc(T.needTwo); }
       if (s.paused && isHost()) centerBtn = { label: T.resume, onClick: () => call('pause', { room: id, on: false }).catch(fail) };
       if (s.bombNext && !inHandStage) msg = '💣 ' + esc(T.bombComing);
-      if (s.ask) msg = esc(T.ritWait) + ' ' + s.ask.seats.map((x) => (x in (s.ask.votes || {}) ? (s.ask.votes[x] ? '✌️' : '☝️') : '…')).join(' ');
+      if (s.ask) msg = esc(T.ritWait) + ': ' + s.ask.seats.map((x) => `<bdi>${esc((s.seats[x] || {}).name || '?')}</bdi> ${x in (s.ask.votes || {}) ? (s.ask.votes[x] ? '✌️' : '☝️') : '…'}`).join(' · ');
       if (ms < 0 && !myReq && !msg && !centerBtn && !inHandStage) msg = esc(T.pickSeat);
       const mine = ms >= 0 ? seats[ms] : null;
       const board2 = (s.hand && s.hand.board2) || null;
       let myHand = mine && Array.isArray(mine.cards) && !mine.folded ? handDesc(mine.cards, board) : '';
       if (myHand && board2 && board2.length >= 3) myHand += '  |  ' + handDesc(mine.cards, board2);
-      return { holes: (s.hand && s.hand.holes) || (s.settings.game === 'plo' ? 4 : 2), onThrow: throwAt, onBuy: buyTomatoes,
+      return { holes: (s.hand && s.hand.holes) || (P.HOLES && P.HOLES[s.settings.game]) || 2, onThrow: throwAt, onBuy: openShop, prices: PRICES,
         onAvatar: () => pickLook({ av: s.seats[ms].av || 0 }, (l) => call('avatar', { room: id, avatar: l.av, photo: '' }).catch(fail)),
         onSit: (seat) => (ms >= 0 ? (inHandStage && live.players[ms] && !live.players[ms].out ? toast(T.err.in_hand) : call('move', { room: id, seat }).catch(fail)) : askChips('sit', seat)),
         n, me: ms, seats, button: s.hand ? s.hand.button : null, bb: s.settings.bb, board, board2, double: !!(s.hand ? s.hand.double : s.settings.double) && !!s.hand, pot: Math.max(0, pot),
@@ -745,7 +769,7 @@
           <label>${esc(T.minBuy)}<input name="minBuy" type="number" value="${g.minBuy}"></label><label>${esc(T.maxBuy)}<input name="maxBuy" type="number" value="${g.maxBuy}"></label>
           <label>${esc(T.approveOn)}<input name="approve" type="checkbox" ${g.approve ? 'checked' : ''}></label>
           <label>${esc(T.straddleOn)}<input name="straddle" type="checkbox" ${g.straddle ? 'checked' : ''}></label>
-          ${PLUS ? `<label>${esc(T.runTwice)}<select name="runTwice">${[['no', T.ritNo], ['yes', T.ritYes], ['ask', T.ritAsk]].map(([v, l]) => `<option value="${v}"${(g.runTwice === true ? 'yes' : g.runTwice === false || g.runTwice == null ? 'no' : g.runTwice) === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>` : `<label>${esc(T.runTwice)}<input name="runTwice" type="checkbox" ${g.runTwice ? 'checked' : ''}></label>`}
+          ${PLUS ? `<label>${esc(T.runTwice)}<select name="runTwice">${[['no', T.ritNo], ['yes', T.ritYes], ['ask', T.ritAsk]].map(([v, l]) => `<option value="${v}"${(g.runTwice === true ? 'yes' : g.runTwice === false ? 'no' : g.runTwice == null ? 'ask' : g.runTwice) === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>` : `<label>${esc(T.runTwice)}<input name="runTwice" type="checkbox" ${g.runTwice ? 'checked' : ''}></label>`}
           ${PLUS ? `<label>${esc(T.dblOn)}<input name="double" type="checkbox" ${g.double ? 'checked' : ''}></label>
           <label>${esc(T.rabbitOn)}<input name="rabbit" type="checkbox" ${g.rabbit !== false ? 'checked' : ''}></label>` : ''}
           <label>${esc(T.bonus72)}<input name="bonus72" type="number" min="0" value="${g.bonus72 || 0}"></label>
@@ -785,7 +809,9 @@
       const canShow = lp && s.live.stage === 'done' && !lp.out && !lp.cards && my.cards;
       let html = '';
       const myVote = s.ask && v.me >= 0 && s.ask.seats.includes(v.me) && !(v.me in (s.ask.votes || {}));
-      if (myVote) html = `<div class="info"><span class="yt">${esc(T.ritQ)}</span></div><div class="row"><button class="act c" data-rit="0">${esc(T.ritOnce)}</button><button class="act r" data-rit="1">${esc(T.ritTwice)}</button></div>`;
+      // who already asked for two runs, and how long is left to answer
+      const askers = s.ask ? s.ask.seats.filter((x) => (s.ask.votes || {})[x] === true).map((x) => (s.seats[x] || {}).name).filter(Boolean) : [];
+      if (myVote) html = `<div class="info"><span class="yt">${esc(T.ritQ)}</span>${askers.length ? `<span class="hs">✌️ ${esc(fill(T.ritWants, { n: askers.join(', ') }))}</span>` : ''}<span class="ritt" style="--t:${Math.max(0, (s.ask.until || 0) - Date.now()) / 1000}s"><i></i></span></div><div class="row"><button class="act c" data-rit="0">${esc(T.ritOnce)}</button><button class="act r" data-rit="1">${esc(T.ritTwice)}</button></div>`;
       else if (myReq) html = `<div class="row"><span class="waitl" style="flex:1;align-self:center" dir="auto">${esc(T.pending)}</span><button class="act s" id="cx" style="flex:0 0 auto;padding:0 18px">${esc(T.cancel)}</button></div>`;
       else if (me && me.away) html = `<div class="row"><button class="act c" id="imb">${esc(T.back)}</button></div>`;
       const canRabbit = PLUS && s.settings.rabbit && s.live && s.live.stage === 'done' && s.hand && (s.hand.board || []).length < 5 && !(rabbit && rabbit.hand === s.handNo);
@@ -861,7 +887,7 @@
         const cards = p.cards.length ? (show ? p.cards : p.folded ? null : 'back') : null;
         let hand = '', best = null;
         if (done && Array.isArray(cards) && !p.folded && t.board.length === 5) { hand = handDesc(cards, t.board); if (win[i]) best = P.bestFive(cards, t.board); }
-        return { uid: p.id, av, name: p.name, chips: p.chips, bet: p.bet, folded: p.folded, allIn: p.allIn, cards, win: win[i] || 0, hand, best, tom: Infinity };
+        return { uid: p.id, av, name: p.name, chips: p.chips, bet: p.bet, folded: p.folded, allIn: p.allIn, cards, win: win[i] || 0, hand, best, bag: FULL };
       });
       const pot = done ? 0 : t.pot() - t.seats.reduce((a, p) => a + p.bet, 0);
       let msg = '';
@@ -897,7 +923,8 @@
       if (!alive) return;
       const v = view();
       drawBar();
-      v.onThrow = (to) => { tbl.throwAt(0, to); log.push({ k: 'throw', name: table.seats[0].name, to: table.seats[to].name }); drawSide(); if (Math.random() < 0.35) setTimeout(() => botThrow(to, 0), 900 + Math.random() * 900); };
+      v.onThrow = (to, it) => { tbl.throwAt(0, to, { item: it }); log.push({ k: 'throw', name: table.seats[0].name, to: table.seats[to].name, it: it === 'tomato' ? undefined : it }); drawSide(); if (Math.random() < 0.35) setTimeout(() => botThrow(to, 0), 900 + Math.random() * 900); };
+      v.onBuy = () => toast(T.practiceFree); v.prices = PRICES;
       if (!tbl) tbl = PT.createTable($('#felt'), T);
       tbl.update(v);
       const mine = turn === 0 && table.stage !== 'done';
@@ -915,8 +942,10 @@
     }
     function botThrow(from, to) {
       if (!alive || !tbl || !table.seats[from] || from === to) return;
-      tbl.throwAt(from, to);
-      log.push({ k: 'throw', name: table.seats[from].name, to: table.seats[to].name }); drawSide();
+      // mostly tomatoes; now and then something worse
+      const r = Math.random(), it = r < 0.55 ? 'tomato' : r < 0.8 ? 'poop' : r < 0.93 ? 'knife' : 'dildo';
+      tbl.throwAt(from, to, { item: it });
+      log.push({ k: 'throw', name: table.seats[from].name, to: table.seats[to].name, it: it === 'tomato' ? undefined : it }); drawSide();
     }
     function step() {
       if (!alive) return;

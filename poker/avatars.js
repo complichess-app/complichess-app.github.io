@@ -102,32 +102,71 @@
     </svg>`;
   }
 
-  /* the wicker basket: up to seven tomatoes show, past that it stays full */
-  function basketSVG(n) {
-    const k = Math.max(0, Math.min(7, n | 0));
-    const spots = [[15, 16], [27, 17], [39, 17], [51, 16], [21, 9], [33, 8], [45, 9]];
-    const toms = spots.slice(0, k).map(([x, y], i) => `<g transform="translate(${x} ${y})"><circle r="6.2" fill="url(#tg)"/><path d="M-2.6-5.4l2.6 1.6 2.6-1.6-1.2 2.4 2 .6-3.4.4-1.6 1.4-1.4-1.4-3-.6 1.8-.8z" fill="#3E8E2F"/><ellipse cx="-2" cy="-1.6" rx="1.6" ry="1" fill="#fff" opacity=".35"/></g>`).join('');
-    return `<svg class="bk-svg" viewBox="0 0 68 44" aria-hidden="true" focusable="false">
-      <defs><radialGradient id="tg" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#FF6A4D"/><stop offset=".6" stop-color="#E0342B"/><stop offset="1" stop-color="#A4161A"/></radialGradient>
-      <linearGradient id="wk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C98B4B"/><stop offset="1" stop-color="#8A5527"/></linearGradient></defs>
+  /* what the basket holds: each drawn once, used in the basket, in the hand and in flight */
+  const ITEMS = ['tomato', 'poop', 'knife', 'dildo'];
+  const G = {
+    // a round tomato, r 8 around 0,0
+    tomato: () => `<circle r="8" fill="url(#tf)"/><path d="M-3.4-7l3.4 2 3.4-2-1.6 3.2 2.6.8-4.4.5-2 1.8-1.8-1.8-4-.8 2.4-1z" fill="#3E8E2F"/><ellipse cx="-2.6" cy="-2" rx="2" ry="1.2" fill="#fff" opacity=".35"/>`,
+    // the classic swirl, with a grin; about 18 wide around 0,0
+    poop: () => `<path d="M-8.8 7.4c-1.7-2.5.2-5 2.7-5.2-1.3-2.6 1-5 3.5-4.8-.5-2.8 1.6-4.9 4-5.4-.3 1.3.5 2.3 1.9 2.8 2.5 1 3.2 3.3 1.9 4.8 2.6.3 3.9 2.8 2.6 4.8 2.5.7 3.1 3.5 1.4 5.1-1.3 1.2-3.2 1.4-9 1.4s-7.7-.2-9-1.5z" fill="url(#pf)"/>
+      <path d="M-6.2 2.4c3.2 1.1 9.4 1.1 12.6-.2M-4.2-2.2c2.5.9 6.9.9 9-.2" stroke="#3F2209" stroke-width=".8" fill="none" opacity=".55" stroke-linecap="round"/>
+      <ellipse cx="-2.3" cy="3.6" rx="1.45" ry="1.7" fill="#fff"/><ellipse cx="2.3" cy="3.6" rx="1.45" ry="1.7" fill="#fff"/><circle cx="-2" cy="4" r=".8" fill="#1A0D04"/><circle cx="2.6" cy="4" r=".8" fill="#1A0D04"/>
+      <path d="M-2.2 6.6c1.3 1 3.1 1 4.4 0" stroke="#1A0D04" stroke-width=".8" fill="none" stroke-linecap="round"/><ellipse cx="-3.8" cy="-.6" rx="1.8" ry=".7" fill="#fff" opacity=".22"/>`,
+    // a kitchen knife lying flat, 40 long and 12 high, the point on the right
+    knife: () => `<path d="M15.2 3.1h17.3c3.1 0 6.1 1.6 7.3 3.3-3.5 2.4-8.1 3.5-13.1 3.5H15.2z" fill="url(#kb)"/>
+      <path d="M15.2 3.1h17.3c3.1 0 6.1 1.6 7.3 3.3" stroke="#fff" stroke-width=".55" fill="none" opacity=".85"/><path d="M17 8.7c6.2.4 13.2 0 19.8-2.1" stroke="#7D8893" stroke-width=".5" fill="none"/>
+      <rect x="13" y="2.4" width="2.6" height="8" rx=".7" fill="#C3CBD3"/><rect x=".5" y="3.5" width="12.9" height="5.9" rx="2.5" fill="url(#kh)"/>
+      <circle cx="4" cy="6.45" r=".85" fill="#DDE2E6"/><circle cx="9.4" cy="6.45" r=".85" fill="#DDE2E6"/>`,
+    // a pink jelly toy standing on its suction cup, 16 wide and 40 high
+    dildo: () => `<path d="M3.9 34.2V9.6a4.1 4.1 0 0 1 8.2 0v24.6z" fill="url(#dg)"/><ellipse cx="8" cy="35.4" rx="7.2" ry="2.7" fill="#9E1256"/><ellipse cx="8" cy="34.6" rx="6.6" ry="2.1" fill="url(#dg)"/>
+      <path d="M6.2 10.4v19.8" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".5"/><ellipse cx="6.7" cy="7.4" rx="1" ry="1.7" fill="#fff" opacity=".6"/>`,
+  };
+  const DEFS = `<defs><radialGradient id="tf" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#FF6A4D"/><stop offset=".6" stop-color="#E0342B"/><stop offset="1" stop-color="#A4161A"/></radialGradient>
+    <radialGradient id="pf" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#B07338"/><stop offset=".6" stop-color="#7A4519"/><stop offset="1" stop-color="#4A270B"/></radialGradient>
+    <linearGradient id="kb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6F8FA"/><stop offset=".55" stop-color="#C8D0D8"/><stop offset="1" stop-color="#8B96A1"/></linearGradient>
+    <linearGradient id="kh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4E3627"/><stop offset="1" stop-color="#1E130B"/></linearGradient>
+    <linearGradient id="dg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C2186B"/><stop offset=".42" stop-color="#FF62B2"/><stop offset="1" stop-color="#A3125A"/></linearGradient>
+    <linearGradient id="wk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D09252"/><stop offset="1" stop-color="#8A5527"/></linearGradient></defs>`;
+  const BOX = { tomato: '-10 -10 20 20', poop: '-10 -10 20 20', knife: '0 0 40 12', dildo: '0 0 16 40' };
+  const itemSVG = (k) => `<svg viewBox="${BOX[k] || BOX.tomato}" class="tm-svg it-${k}" aria-hidden="true" focusable="false">${DEFS}${(G[k] || G.tomato)()}</svg>`;
+
+  /* the wicker basket: up to seven things show, a mix of whatever is in it; past that it stays full.
+     Knives and toys stand up at the back, sticking out over the rim. */
+  function basketSVG(bag) {
+    const b = typeof bag === 'number' ? { tomato: bag } : bag || {};
+    const left = {}; for (const k of ITEMS) left[k] = Math.min(7, Math.max(0, b[k] === Infinity ? 2 : b[k] | 0));
+    const show = [];
+    while (show.length < 7 && ITEMS.some((k) => left[k] > 0)) for (const k of ITEMS) if (left[k] > 0 && show.length < 7) { show.push(k); left[k]--; }
+    const tall = [...new Set(show.filter((k) => k === 'knife' || k === 'dildo'))], round = show.filter((k) => k === 'tomato' || k === 'poop');
+    const spots = [[15, 13], [27, 14], [39, 14], [51, 13], [21, 5], [33, 4], [45, 5]];
+    const back = tall.map((k) => (k === 'knife'
+      ? `<g transform="translate(45 27) rotate(-64) scale(.95) translate(0 -6)">${G.knife()}</g>`
+      : `<g transform="translate(22 27) rotate(-20) scale(.95) translate(-8 -36)">${G.dildo()}</g>`)).join('');
+    const put = (k, i) => `<g transform="translate(${spots[i][0]} ${spots[i][1]}) scale(.78)">${G[k]()}</g>`;
+    // the back row first, then what stands up, then the front row over its foot
+    const front = round.slice(0, 4).map(put).join(''), backRow = round.slice(4).map((k, j) => put(k, j + 4)).join('');
+    return `<svg class="bk-svg" viewBox="0 -12 68 56" aria-hidden="true" focusable="false">${DEFS}
       <path d="M10 18c2-12 46-12 48 0" fill="none" stroke="#8A5527" stroke-width="2.6"/>
-      ${toms}
+      ${backRow}${back}${front}
       <path d="M4 20h60l-6 20c-1 2-3 3-5 3H15c-2 0-4-1-5-3z" fill="url(#wk)"/>
       <g stroke="#6E401B" stroke-width="1" opacity=".75" fill="none"><path d="M6 26h56M8 32h52M10 38h48"/><path d="M14 20l3 22M24 20l1.5 22M34 20v22M44 20l-1.5 22M54 20l-3 22"/></g>
-      <path d="M3 18.5h62v3.4H3z" fill="#A86B34"/>
+      <path d="M3 18.5h62v3.4H3z" fill="#A86B34"/><path d="M3 18.5h62" stroke="#E2AE6E" stroke-width=".8" opacity=".7"/>
     </svg>`;
   }
 
   /* one tomato for flying, and the mess it leaves */
-  const tomatoSVG = () => `<svg viewBox="-10 -10 20 20" class="tm-svg" aria-hidden="true"><defs><radialGradient id="tf" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#FF6A4D"/><stop offset=".6" stop-color="#E0342B"/><stop offset="1" stop-color="#A4161A"/></radialGradient></defs><circle r="8" fill="url(#tf)"/><path d="M-3.4-7l3.4 2 3.4-2-1.6 3.2 2.6.8-4.4.5-2 1.8-1.8-1.8-4-.8 2.4-1z" fill="#3E8E2F"/><ellipse cx="-2.6" cy="-2" rx="2" ry="1.2" fill="#fff" opacity=".35"/></svg>`;
-  const splatSVG = () => `<svg viewBox="0 0 100 100" class="sp-svg" aria-hidden="true">
-    <g fill="#D7281F"><path d="M50 22c8 0 9 9 16 8s14 6 10 13 4 12-3 17-3 14-12 13-10 8-17 3-14 2-14-7-11-8-6-14-4-12 4-17 8-3 9-14z"/>
+  const tomatoSVG = () => itemSVG('tomato');
+  const SPLAT = { tomato: ['#D7281F', '#B71C1C', '#FF8A70'], poop: ['#6E3F16', '#4A270B', '#9C6430'] };
+  const splatSVG = (k = 'tomato') => { const [c, d, h] = SPLAT[k] || SPLAT.tomato; return `<svg viewBox="0 0 100 100" class="sp-svg" aria-hidden="true">
+    <g fill="${c}"><path d="M50 22c8 0 9 9 16 8s14 6 10 13 4 12-3 17-3 14-12 13-10 8-17 3-14 2-14-7-11-8-6-14-4-12 4-17 8-3 9-14z"/>
     <circle cx="20" cy="30" r="5"/><circle cx="82" cy="28" r="4"/><circle cx="86" cy="62" r="5"/><circle cx="14" cy="64" r="4"/><circle cx="30" cy="88" r="3"/><circle cx="74" cy="86" r="3.4"/></g>
-    <g fill="#F2E3B3" opacity=".9"><ellipse cx="44" cy="44" rx="2" ry="3.2" transform="rotate(30 44 44)"/><ellipse cx="58" cy="52" rx="2" ry="3.2" transform="rotate(-20 58 52)"/><ellipse cx="50" cy="60" rx="2" ry="3.2" transform="rotate(70 50 60)"/><ellipse cx="38" cy="58" rx="1.8" ry="2.8"/></g>
-    <g fill="#B71C1C" class="sp-drip"><path d="M36 70c2 0 3 2 3 6v10c0 3-4 3-4 0V76c0-4-1-6 1-6z"/><path d="M60 72c2 0 2.6 2 2.6 5v14c0 3-4 3-4 0V77c0-3-.6-5 1.4-5z"/><path d="M48 74c1.6 0 2 1.6 2 4v6c0 2.6-3.4 2.6-3.4 0v-6c0-2.4 0-4 1.4-4z"/></g>
-    <path d="M40 34c6-4 14-2 18 2" stroke="#FF8A70" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
-    <path d="M44 16l2 2M48 15h0M62 18l-2 2" stroke="#3E8E2F" stroke-width="2.4" stroke-linecap="round"/>
-  </svg>`;
+    ${k === 'poop' ? `<g fill="${d}" opacity=".8"><circle cx="42" cy="46" r="4"/><circle cx="58" cy="40" r="3"/><circle cx="54" cy="58" r="3.6"/></g>
+      <g class="sp-stink" fill="none" stroke="#9BC53D" stroke-width="2.4" stroke-linecap="round" opacity=".85"><path d="M34 18c-4-4 4-6 0-10s4-6 0-9"/><path d="M50 14c-4-4 4-6 0-10s4-6 0-9"/><path d="M66 18c-4-4 4-6 0-10s4-6 0-9"/></g>`
+    : `<g fill="#F2E3B3" opacity=".9"><ellipse cx="44" cy="44" rx="2" ry="3.2" transform="rotate(30 44 44)"/><ellipse cx="58" cy="52" rx="2" ry="3.2" transform="rotate(-20 58 52)"/><ellipse cx="50" cy="60" rx="2" ry="3.2" transform="rotate(70 50 60)"/><ellipse cx="38" cy="58" rx="1.8" ry="2.8"/></g>
+      <path d="M44 16l2 2M48 15h0M62 18l-2 2" stroke="#3E8E2F" stroke-width="2.4" stroke-linecap="round"/>`}
+    <g fill="${d}" class="sp-drip"><path d="M36 70c2 0 3 2 3 6v10c0 3-4 3-4 0V76c0-4-1-6 1-6z"/><path d="M60 72c2 0 2.6 2 2.6 5v14c0 3-4 3-4 0V77c0-3-.6-5 1.4-5z"/><path d="M48 74c1.6 0 2 1.6 2 4v6c0 2.6-3.4 2.6-3.4 0v-6c0-2.4 0-4 1.4-4z"/></g>
+    <path d="M40 34c6-4 14-2 18 2" stroke="${h}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
+  </svg>`; };
 
-  root.PokerArt = { LOOKS, avatarSVG, basketSVG, tomatoSVG, splatSVG, count: LOOKS.length };
+  root.PokerArt = { LOOKS, avatarSVG, basketSVG, tomatoSVG, splatSVG, itemSVG, ITEMS, count: LOOKS.length };
 })(window);
