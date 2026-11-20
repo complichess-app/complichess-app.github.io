@@ -683,7 +683,14 @@
     const r = rand();
     const behindStack = p.chips - o.call;
     const committed = behindStack < after * 0.3;      // so little left that folding later makes no sense
-    const to = (x) => Math.max(o.minTo, Math.min(o.maxTo, roundChips(x, bb)));
+    // every raise is a round number: a multiple of twice the small blind (sb 100: 400 or 600, never 500); all-in is all-in
+    const unit = Math.max(1, 2 * (t.sb || bb / 2));
+    const to = (x) => {
+      let v = Math.round(x / unit) * unit;
+      if (v < o.minTo) v = Math.ceil(o.minTo / unit) * unit;
+      if (v > o.maxTo) { const down = Math.floor(o.maxTo / unit) * unit; v = o.maxTo >= (o.allTo ?? Infinity) || down < o.minTo ? o.maxTo : down; }
+      return v;
+    };
     const potRaise = (frac) => to(t.currentBet + Math.max(bb, after * frac));
     const raise = (x) => (o.raise ? { type: 'raise', to: x >= o.maxTo || size === 1 ? x : to(t.currentBet + (x - t.currentBet) * size) } : o.check ? { type: 'check' } : { type: 'call' });
     const callOrFold = (edge) => (o.check ? { type: 'check' } : eq + edge >= price ? { type: 'call' } : { type: 'fold' });
