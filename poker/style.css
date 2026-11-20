@@ -482,3 +482,10 @@ dialog.shopd{width:min(460px,94vw)}
 .botbar .bsp{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.botbar .bsp small{font-size:11px;color:var(--mute);white-space:nowrap}
 .botbar input[type=range]{flex:1;min-width:60px;accent-color:var(--brass2);height:26px}
 .botbar .bv{font-size:12px;white-space:nowrap;color:var(--brass2);min-width:70px;text-align:center}
+
+.botbar .bpre{grid-column:span 3;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt);cursor:pointer}
+.bsw.sm{width:34px;height:20px}.bsw.sm i{width:14px;height:14px}.bsw.sm.on i{transform:translateX(14px)}
+/* a big pot, for whoever has the legendary bot: the edges of the screen blink red */
+body.potalarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;box-shadow:inset 0 0 0 5px rgba(255,45,45,.95),inset 0 0 46px 6px rgba(255,0,0,.55);animation:potalarm .8s ease-in-out infinite alternate}
+@keyframes potalarm{from{opacity:.15}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){body.potalarm::after{animation:none;opacity:.8}}

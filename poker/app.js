@@ -463,16 +463,18 @@
       const row = (k, v, lo, hi, txt, lab) => `<span class="bk2">${esc(lab)}</span><span class="bsp" dir="ltr"><small>${esc(lo)}</small><input type="range" data-k="${k}" min="-1" max="1" step="0.125" value="${v || 0}" aria-label="${esc(lab)}"><small>${esc(hi)}</small></span><b class="bv" data-v="${k}" dir="auto">${esc(txt(v || 0))}</b>`;
       el.innerHTML = `<button type="button" class="bsw${myBot.on ? ' on' : ''}" role="switch" aria-checked="${myBot.on}" aria-label="${esc(T.botTitle)}"><i></i></button>
         <span class="bl" dir="auto">🤖</span>${row('speed', myBot.speed, T.slowS, T.fastS, speedTxt, T.speedL)}
+        <span></span><span></span><label class="bpre" dir="auto"><button type="button" class="bsw sm${myBot.pre !== false ? ' on' : ''}" role="switch" aria-checked="${myBot.pre !== false}" data-pre><i></i></button>${esc(T.preRaise)}</label>
         <span></span><span></span>${row('size', myBot.size, T.smallS, T.bigS, sizeTxt, T.sizeL)}`;
-      const sw = el.querySelector('.bsw');
-      sw.onclick = () => { sw.disabled = true; PT.sfx.click(); call('mybot', { room: id, on: !myBot.on }).then((r) => { myBot = r.allowed ? { on: !!r.on, speed: r.speed || 0, size: r.size || 0 } : null; toast(myBot && myBot.on ? T.botOnT : T.botOff); drawBotBar(); draw(); }).catch((x) => { sw.disabled = false; fail(x); }); };
+      const sw = el.querySelector('.bsw'), pre = el.querySelector('[data-pre]');
+      pre.onclick = () => { pre.disabled = true; PT.sfx.click(); const want = myBot.pre === false; call('mybot', { room: id, pre: want }).then((r) => { myBot = r.allowed ? { on: !!r.on, speed: r.speed || 0, size: r.size || 0, pre: r.pre !== false } : null; drawBotBar(); }).catch((x) => { pre.disabled = false; fail(x); }); };
+      sw.onclick = () => { sw.disabled = true; PT.sfx.click(); call('mybot', { room: id, on: !myBot.on }).then((r) => { myBot = r.allowed ? { on: !!r.on, speed: r.speed || 0, size: r.size || 0, pre: r.pre !== false } : null; toast(myBot && myBot.on ? T.botOnT : T.botOff); drawBotBar(); draw(); }).catch((x) => { sw.disabled = false; fail(x); }); };
       el.querySelectorAll('input[type=range]').forEach((rg) => {
         const k = rg.dataset.k, out = el.querySelector(`[data-v=${k}]`), txt = k === 'speed' ? speedTxt : sizeTxt;
         rg.oninput = () => { out.textContent = txt(+rg.value); };
         rg.onchange = () => { const v = +rg.value; myBot = { ...myBot, [k]: v }; el._key = JSON.stringify(myBot); call('mybot', { room: id, [k]: v }).catch(fail); };
       });
     }
-    const askBot = () => { if (mySeat() < 0) { myBot = null; return; } call('mybot', { room: id, get: true }).then((r) => { const b = r.allowed ? { on: !!r.on, speed: r.speed || 0, size: r.size || 0 } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; draw(); } }).catch(() => {}); };
+    const askBot = () => { if (mySeat() < 0) { myBot = null; return; } call('mybot', { room: id, get: true }).then((r) => { const b = r.allowed ? { on: !!r.on, speed: r.speed || 0, size: r.size || 0, pre: r.pre !== false } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; draw(); } }).catch(() => {}); };
     let room = null, my = { hand: -1, cards: null }, unread = 0, admin = false, timers = [], alive = true, chan = null, lastTurnMine = false, chatSeen = null;
     let tbl = null, seenThrows = null, wonHand = 0, bchan = null, pendingThrows = 0, lastReqs = 0;
     let rabbit = null; // {hand, board}: the cards that would have come, only for me
@@ -597,7 +599,7 @@
       apply(r.data);
     }
     function gone(text, practice) {
-      alive = false; closeDrawer(); document.body.classList.remove('in-room');
+      alive = false; closeDrawer(); document.body.classList.remove('in-room', 'potalarm');
       app.innerHTML = `<div class="home"><div class="note">${esc(text)}</div><p style="display:flex;gap:10px"><a class="btn" href="./">${esc(T.title)}</a>${practice ? `<a class="btn ghost" href="?practice=5">${esc(T.practice)}</a>` : ''}</p></div>`;
     }
     function apply(row) {
@@ -606,7 +608,7 @@
       if (room.status === 'closed') { gone(T.closed); return; }
       const live = st().live, ms = mySeat();
       const handNo = st().handNo || 0;
-      if (ms >= 0 && live && live.players[ms] && live.players[ms].has && my.hand !== handNo) { my.hand = handNo; my.cards = null; call('my', { room: id }).then((r) => { if ('bot' in r) { const b = r.bot ? { on: !!r.bot.on, speed: r.bot.speed || 0, size: r.bot.size || 0 } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; $('#rbar')._key = ''; } } if (r.hand === handNo) { my.cards = r.cards; draw(); } }).catch(() => { my.hand = -1; }); }
+      if (ms >= 0 && live && live.players[ms] && live.players[ms].has && my.hand !== handNo) { my.hand = handNo; my.cards = null; call('my', { room: id }).then((r) => { if ('bot' in r) { const b = r.bot ? { on: !!r.bot.on, speed: r.bot.speed || 0, size: r.bot.size || 0, pre: r.bot.pre !== false } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; $('#rbar')._key = ''; } } if (r.hand === handNo) { my.cards = r.cards; draw(); } }).catch(() => { my.hand = -1; }); }
       if (!live || !live.players[ms]) my.cards = null;
       schedule();
       const seatKey = (st().seats || []).map((x) => (x ? x.uid : '')).join(',');
@@ -839,6 +841,11 @@
       if (!alive || !room || !$('#felt')) return;
       const v = view(), s = st();
       drawBar(); drawBanner(); drawChatDock(); drawBotBar();
+      // a big pot: the screen's edges blink red, only for whoever has the legendary bot
+      { const lv = s.live, inHand = lv && lv.stage !== 'done' && lv.stage !== 'idle';
+        const n = inHand ? Object.values(lv.players || {}).filter((p) => p && !p.out).length : 0;
+        const potNow = inHand ? lv.pot : 0;
+        document.body.classList.toggle('potalarm', !!myBot && inHand && potNow > 10 * n * (s.settings.sb || 0)); }
       if (!tbl) tbl = PT.createTable($('#felt'), T);
       tbl.update(v);
       const mine = s.turn && s.turn.s === v.me && v.me >= 0;
