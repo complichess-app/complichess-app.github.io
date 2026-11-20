@@ -279,7 +279,7 @@
       case 'pause': return esc(T.lpause); case 'resume': return esc(T.lresume); case 'closed': return esc(T.lclosed);
       case 'away': return fill(esc(T.laway), { n }); case 'ask': return fill(esc(T.lask), { n }); case 'denied': return fill(esc(T.ldenied), { n });
       case 'chips': return fill(esc(T.lchips), { n, a });
-      case 'bot': return fill(esc(e.on ? T.lbotOn : T.lbotOff), { n });
+      case 'bot': return '';
       case 'throw': return fill(esc(T.lthrowI), { n, i: itemTag(e.it), t: `<bdi class="cs">${esc(e.to || '')}</bdi>` });
       case 'buy': return fill(esc(T.lbuyI), { n, a, i: itemTag(e.it) });
       case 'show': return fill(esc(T.lshow), { n }) + (e.b ? ` [${e.b.map(cardLabel).join(' ')}]` : '');
@@ -449,6 +449,8 @@
       return;
     }
     roomShell();
+    let myBot = null; // the legendary bot, if the admin gave it to me: { on }; only I am told
+    const askBot = () => { if (mySeat() < 0) { myBot = null; return; } call('mybot', { room: id, get: true }).then((r) => { const b = r.allowed ? { on: !!r.on } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; draw(); } }).catch(() => {}); };
     let room = null, my = { hand: -1, cards: null }, unread = 0, admin = false, timers = [], alive = true, chan = null, lastTurnMine = false, chatSeen = null;
     let tbl = null, seenThrows = null, wonHand = 0, bchan = null, pendingThrows = 0, lastReqs = 0;
     let rabbit = null; // {hand, board}: the cards that would have come, only for me
@@ -582,11 +584,11 @@
       if (room.status === 'closed') { gone(T.closed); return; }
       const live = st().live, ms = mySeat();
       const handNo = st().handNo || 0;
-      if (ms >= 0 && live && live.players[ms] && live.players[ms].has && my.hand !== handNo) { my.hand = handNo; my.cards = null; call('my', { room: id }).then((r) => { if (r.hand === handNo) { my.cards = r.cards; draw(); } }).catch(() => { my.hand = -1; }); }
+      if (ms >= 0 && live && live.players[ms] && live.players[ms].has && my.hand !== handNo) { my.hand = handNo; my.cards = null; call('my', { room: id }).then((r) => { if ('bot' in r && JSON.stringify(r.bot) !== JSON.stringify(myBot)) { myBot = r.bot; $('#rbar')._key = ''; } if (r.hand === handNo) { my.cards = r.cards; draw(); } }).catch(() => { my.hand = -1; }); }
       if (!live || !live.players[ms]) my.cards = null;
       schedule();
       const seatKey = (st().seats || []).map((x) => (x ? x.uid : '')).join(',');
-      if (seatKey !== apply.seatKey) { apply.seatKey = seatKey; loadCounts(); }
+      if (seatKey !== apply.seatKey) { apply.seatKey = seatKey; loadCounts(); askBot(); }
       chatBubbles();
       // a check knocks on the table
       const lg = st().log || [], lastAt = lg.length ? lg[lg.length - 1].at : 0;
@@ -630,7 +632,7 @@
         }
         let hand = '', best = null;
         if (showdown && Array.isArray(cards) && board.length === 5 && !p.folded) { hand = handDesc(cards, board); if (winners[i]) best = P.bestFive(cards, board); }
-        return { uid: x.uid, av: x.av || 0, bag: bagFor(x.uid), bot: !!x.bot, name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
+        return { uid: x.uid, av: x.av || 0, bag: bagFor(x.uid), bot: i === ms && !!(myBot && myBot.on), name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
       });
       const inHandStage = live && live.stage !== 'done' && live.stage !== 'idle';
       const pot = live ? (live.stage === 'done' ? 0 : live.pot - seats.reduce((t, x) => t + (x ? x.bet : 0), 0)) : 0;
@@ -679,7 +681,7 @@
         B.push(me.away ? ['bk', T.back, 'green wide keep', () => call('back', { room: id }).catch(fail)] : ['aw', T.away, 'wide', () => call('away', { room: id }).catch(fail)]);
         if (g.straddle) B.push(['sd', T.straddle + (me.straddle ? ' ✓' : ''), 'wide' + (me.straddle ? ' on' : ''), () => call('straddle', { room: id, on: !me.straddle }).catch(fail)]);
         // the legendary bot, for whoever the admin gave it to
-        if ((s.botOk || {})[USER.id]) B.push(['bot', '🤖 ' + T.botB + (me.bot ? ' ✓' : ''), 'wide' + (me.bot ? ' on' : ''), () => call('mybot', { room: id, on: !me.bot }).then(() => toast(me.bot ? T.botOff : T.botOnT)).catch(fail)]);
+        if (myBot) B.push(['bot', '🤖 ' + T.botB + (myBot.on ? ' ✓' : ''), 'wide' + (myBot.on ? ' on' : ''), () => { const was = myBot.on; call('mybot', { room: id, on: !was }).then((r) => { myBot = r.allowed ? { on: r.on } : null; $('#rbar')._key = ''; drawBar(); draw(); toast(was ? T.botOff : T.botOnT); }).catch(fail); }]);
         B.push(['rb', T.rebuy, 'wide', () => askChips('rebuy')]);
         B.push(['lv', T.leave, 'wide', () => call('leave', { room: id }).catch(fail)]);
       }
