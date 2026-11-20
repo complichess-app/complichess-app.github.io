@@ -37,13 +37,20 @@
   sel.addEventListener('change', () => setLang(sel.value));
 
   /* ---------- account (the one Barusik account) ---------- */
-  const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'complichess-auth' } }) : null;
+  // Guests play under a name only. Their session lives under its own key, so it never shows up as a login on the rest of barusik.com.
+  const GKEY = 'barusik-poker-guest';
+  const mk = (key) => window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: key } });
+  const has = (k) => { try { return !!localStorage.getItem(k); } catch { return false; } };
+  const sbMain = window.supabase ? mk('complichess-auth') : null;
+  const sbGuest = window.supabase && !has('complichess-auth') && has(GKEY) ? mk(GKEY) : null;
+  const sb = sbGuest || sbMain;
+  const isGuest = () => !!(USER && USER.is_anonymous);
   let session = null, USER = null, GOOGLE = false;
   const myName = () => (USER && (USER.user_metadata?.username || USER.user_metadata?.full_name || (USER.email || '').split('@')[0])) || '';
   function drawAcct() {
     const el = $('#acct');
-    el.innerHTML = USER ? `<b>${esc(myName())}</b><button class="btn ghost small" id="out">${esc(T.signOut)}</button>` : '';
-    $('#out')?.addEventListener('click', async () => { await sb.auth.signOut(); });
+    el.innerHTML = USER ? `<b>${esc(myName())}</b>${isGuest() ? `<span class="pill">${esc(T.guestTag)}</span>` : ''}<button class="btn ghost small" id="out">${esc(T.signOut)}</button>` : '';
+    $('#out')?.addEventListener('click', async () => { await sb.auth.signOut(); if (sbGuest) { try { localStorage.removeItem(GKEY); } catch {} location.reload(); } });
   }
   if (sb) {
     sb.auth.onAuthStateChange((_e, s) => { const had = !!USER; session = s; USER = s?.user || null; drawAcct(); if (had !== !!USER) route(); });
@@ -69,7 +76,12 @@
     box.className = 'box';
     let mode = 'in', keep = { em: '', un: '' };
     const draw = (msg = '') => {
-      box.innerHTML = `<h2>${esc(mode === 'in' ? T.signIn : T.signUp)}</h2><p>${esc(T.needIn)}</p>
+      box.innerHTML = `<form id="gf" class="guest"><h2>${esc(T.guest)}</h2><p>${esc(T.guestT)}</p>
+          <label>${esc(T.guestName)}<input id="gn" maxlength="20" minlength="2" required autocomplete="nickname" value="${esc(keep.gn || '')}"></label>
+          <div class="err" id="gm" role="alert"></div>
+          <button class="btn">${esc(T.guestGo)}</button></form>
+        <div class="or">${esc(T.orAccount)}</div>
+        <h2>${esc(mode === 'in' ? T.signIn : T.signUp)}</h2><p>${esc(T.needIn)}</p>
         ${GOOGLE ? `<button class="btn gbtn" id="lg">${esc(T.google)}</button><div class="or">${esc(T.or)}</div>` : ''}
         <form id="lf" style="display:flex;flex-direction:column;gap:10px">
           ${mode === 'up' ? `<label>${esc(T.uname)}<input id="lu" autocomplete="username" maxlength="20" required value="${esc(keep.un)}"></label>` : ''}
@@ -80,6 +92,17 @@
           ${mode === 'in' ? `<button type="button" class="btn ghost small" id="lf2">${esc(T.forgot)}</button>` : ''}
           <button type="button" class="btn ghost small" id="lt">${esc(mode === 'in' ? T.toUp : T.toIn)}</button>
         </form>`;
+      $('#gf', box).onsubmit = async (e) => {
+        e.preventDefault();
+        const name = $('#gn', box).value.trim().replace(/\s+/g, ' '); keep.gn = name;
+        if (name.length < 2 || name.length > 20) { $('#gm', box).textContent = T.short; return; }
+        const b = $('#gf button', box); b.disabled = true;
+        const g = mk(GKEY);
+        const r = await g.auth.signInAnonymously({ options: { data: { username: name } } });
+        if (r.error) { b.disabled = false; $('#gm', box).textContent = authErr(r.error); return; }
+        try { localStorage.setItem('barusik.poker.name', name); } catch {}
+        location.reload();
+      };
       const save = () => { keep.em = $('#le', box).value.trim(); const u = $('#lu', box); if (u) keep.un = u.value.trim(); };
       $('#lt', box).onclick = () => { save(); mode = mode === 'in' ? 'up' : 'in'; draw(); };
       $('#lg', box)?.addEventListener('click', () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/poker/' + (back || ''), queryParams: { prompt: 'select_account' } } }));

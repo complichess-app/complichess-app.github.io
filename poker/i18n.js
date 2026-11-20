@@ -187,3 +187,16 @@ window.POKER_T = {
   };
   for (const k in window.POKER_T) Object.assign(window.POKER_T[k], PN);
 })();
+
+/* Playing as a guest: a name for the table, no account. */
+(function () {
+  const G = {
+    he: { guest: 'כניסה כאורח', guestT: 'בלי משתמש ובלי מייל: בוחרים שם שיוצג ליד השולחן ונכנסים.', guestName: 'השם שיוצג במשחק', guestGo: 'להיכנס עם השם הזה', orAccount: 'או עם חשבון ברוסיק', guestTag: 'אורח' },
+    en: { guest: 'Play as a guest', guestT: 'No account, no e-mail: pick the name shown at the table and you are in.', guestName: 'Your name at the table', guestGo: 'Play with this name', orAccount: 'or with a Barusik account', guestTag: 'Guest' },
+    ar: { guest: 'الدخول كضيف', guestT: 'بلا حساب وبلا بريد: اختر الاسم الذي يظهر على الطاولة وادخل.', guestName: 'اسمك على الطاولة', guestGo: 'العب بهذا الاسم', orAccount: 'أو بحساب Barusik', guestTag: 'ضيف' },
+    ru: { guest: 'Играть как гость', guestT: 'Без аккаунта и почты: выберите имя для стола и заходите.', guestName: 'Ваше имя за столом', guestGo: 'Играть с этим именем', orAccount: 'или с аккаунтом Barusik', guestTag: 'Гость' },
+    es: { guest: 'Jugar como invitado', guestT: 'Sin cuenta ni correo: elige el nombre que se verá en la mesa y entra.', guestName: 'Tu nombre en la mesa', guestGo: 'Jugar con este nombre', orAccount: 'o con una cuenta de Barusik', guestTag: 'Invitado' },
+    fr: { guest: 'Jouer en invité', guestT: 'Sans compte ni e-mail : choisissez le nom affiché à la table et entrez.', guestName: 'Votre nom à la table', guestGo: 'Jouer avec ce nom', orAccount: 'ou avec un compte Barusik', guestTag: 'Invité' },
+  };
+  for (const k in G) Object.assign(window.POKER_T[k], G[k]);
+})();
