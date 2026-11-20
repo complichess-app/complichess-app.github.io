@@ -121,7 +121,7 @@
   /* one tomato for flying, and the mess it leaves */
   const tomatoSVG = () => `<svg viewBox="-10 -10 20 20" class="tm-svg" aria-hidden="true"><defs><radialGradient id="tf" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#FF6A4D"/><stop offset=".6" stop-color="#E0342B"/><stop offset="1" stop-color="#A4161A"/></radialGradient></defs><circle r="8" fill="url(#tf)"/><path d="M-3.4-7l3.4 2 3.4-2-1.6 3.2 2.6.8-4.4.5-2 1.8-1.8-1.8-4-.8 2.4-1z" fill="#3E8E2F"/><ellipse cx="-2.6" cy="-2" rx="2" ry="1.2" fill="#fff" opacity=".35"/></svg>`;
   const splatSVG = () => `<svg viewBox="0 0 100 100" class="sp-svg" aria-hidden="true">
-    <g fill="#D7281F"><path d="M50 22c8 0 9 9 16 8s14 6 10 13 4 12-3 17-3 14-12 13-10 8-17 3-14 2-14-7-11-8-6-14-4-12 4-17 8-3 9-14 21-16z"/>
+    <g fill="#D7281F"><path d="M50 22c8 0 9 9 16 8s14 6 10 13 4 12-3 17-3 14-12 13-10 8-17 3-14 2-14-7-11-8-6-14-4-12 4-17 8-3 9-14z"/>
     <circle cx="20" cy="30" r="5"/><circle cx="82" cy="28" r="4"/><circle cx="86" cy="62" r="5"/><circle cx="14" cy="64" r="4"/><circle cx="30" cy="88" r="3"/><circle cx="74" cy="86" r="3.4"/></g>
     <g fill="#F2E3B3" opacity=".9"><ellipse cx="44" cy="44" rx="2" ry="3.2" transform="rotate(30 44 44)"/><ellipse cx="58" cy="52" rx="2" ry="3.2" transform="rotate(-20 58 52)"/><ellipse cx="50" cy="60" rx="2" ry="3.2" transform="rotate(70 50 60)"/><ellipse cx="38" cy="58" rx="1.8" ry="2.8"/></g>
     <g fill="#B71C1C" class="sp-drip"><path d="M36 70c2 0 3 2 3 6v10c0 3-4 3-4 0V76c0-4-1-6 1-6z"/><path d="M60 72c2 0 2.6 2 2.6 5v14c0 3-4 3-4 0V77c0-3-.6-5 1.4-5z"/><path d="M48 74c1.6 0 2 1.6 2 4v6c0 2.6-3.4 2.6-3.4 0v-6c0-2.4 0-4 1.4-4z"/></g>

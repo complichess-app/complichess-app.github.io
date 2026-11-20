@@ -100,6 +100,25 @@
     return best;
   }
 
+  /* Omaha Hi/Lo: the best low of five different ranks 8 or under (ace low), exactly two from the hand.
+     Bigger is better, 0 means no low qualifies. */
+  const lowRank = (c) => { const r = rankOf(c); return r === 14 ? 1 : r; };
+  function lowValue(hole, board) {
+    if (!board || board.length < 3) return 0;
+    let best = 0;
+    for (let a = 0; a < hole.length; a++) for (let b = a + 1; b < hole.length; b++)
+      for (let i = 0; i < board.length; i++) for (let j = i + 1; j < board.length; j++) for (let k = j + 1; k < board.length; k++) {
+        const rs = [hole[a], hole[b], board[i], board[j], board[k]].map(lowRank);
+        if (rs.some((r) => r > 8) || new Set(rs).size < 5) continue;
+        rs.sort((x, y) => y - x);
+        let v = 0; for (const r of rs) v = v * 16 + (9 - r); // the lower the top card, the better
+        if (v > best) best = v;
+      }
+    return best;
+  }
+  const HOLES = { nlh: 2, plh: 2, plo: 4, plo8: 4, plo5: 5 };
+  const holesOf = (game) => HOLES[game] || 2;
+
   /* the five cards that make the hand, for highlighting on the table: bestFive(hole, board) */
   function bestFive(hole, board) {
     if (board === undefined) return bestOf(hole);
@@ -176,7 +195,8 @@
   // events go out through table.on(type, data) so the page can animate and the log can speak
   function Table(opts) {
     this.sb = opts.sb; this.bb = opts.bb;
-    this.game = opts.game || 'nlh';                       // nlh no-limit hold'em, plh pot-limit hold'em, plo pot-limit omaha
+    this.game = HOLES[opts.game] ? opts.game : 'nlh';     // nlh no-limit hold'em, plh pot-limit hold'em, plo / plo8 (hi-lo) / plo5 pot-limit omaha
+    this.double = !!opts.double;                           // double board: two boards every hand, each wins half the pot
     this.minOpen = Math.max(1, opts.minRaise || opts.bb);
     this.ante = Math.max(0, opts.ante || 0);               // dead money from everyone before the cards
     this.runTwice = !!opts.runTwice;                       // all-in before the river: two boards, half the pot each
@@ -204,10 +224,12 @@
   // extra: { bomb: amount everyone puts in before a hand that starts on the flop, straddle: seat index or -1 }
   Table.prototype.startHand = function (extra = {}) {
     for (const p of this.seats) { p.out = p.chips <= 0; p.cards = []; p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.canRaise = true; p.shown = false; p.showMine = false; }
-    this.board2 = null; this.bombed = false;
+    this.bombed = false;
     if (this.live().length < 2) { this.stage = 'idle'; return false; }
     this.hand++;
     this.deck = shuffled();
+    // a second board only when the deck has the cards for it (five-card Omaha at a full table doesn't)
+    this.board2 = this.double && this.live().length * holesOf(this.game) + 10 <= 52 ? [] : null;
     this.board = [];
     this.button = this.next(this.button, (p) => !p.out);
     const heads = this.live().length === 2;
@@ -241,7 +263,7 @@
     }
     // two cards each, one at a time starting left of the button
     let s = this.button;
-    for (let round = 0; round < (this.game === 'plo' ? 4 : 2); round++) {
+    for (let round = 0; round < holesOf(this.game); round++) {
       for (let k = 0; k < this.live().length; k++) {
         s = this.next(s, (p) => !p.out);
         this.seats[s].cards.push(this.deck.pop());
@@ -255,6 +277,12 @@
     this.toAct = this.next(strad >= 0 ? strad : bbSeat, this.canAct);
     this.settleOrContinue(true);
     return true;
+  };
+
+  // the burn card, unless the deck is too short for it and the cards still to come
+  Table.prototype.burn = function () {
+    const need = (5 - this.board.length) + (this.board2 ? 5 - this.board2.length : 0);
+    if (this.deck.length > need) this.deck.pop();
   };
 
   Table.prototype.post = function (seat, amount, kind) {
@@ -361,10 +389,11 @@
     const i = order.indexOf(this.stage);
     if (i === 3) return this.finish();
     this.stage = order[i + 1];
-    this.deck.pop(); // burn
+    this.burn();
     const n = this.stage === 'flop' ? 3 : 1;
     for (let k = 0; k < n; k++) this.board.push(this.deck.pop());
-    this.on('board', { stage: this.stage, board: this.board.slice() });
+    if (this.board2) { this.burn(); for (let k = 0; k < n; k++) this.board2.push(this.deck.pop()); }
+    this.on('board', { stage: this.stage, board: this.board.slice(), board2: this.board2 ? this.board2.slice() : undefined });
     const able = this.seats.filter(this.canAct);
     if (able.length < 2) return this.nextStreet(); // run it out
     this.toAct = this.next(this.button, this.canAct);
@@ -395,42 +424,50 @@
     this.returnUncalled();
     const left = this.inHand();
     const results = [];
+    const hilo = this.game === 'plo8';
+    const deal = (b, more = 0) => { while (b.length < 5) { if (this.deck.length > 5 - b.length + more) this.deck.pop(); const n = b.length === 0 ? 3 : 1; for (let k = 0; k < n; k++) b.push(this.deck.pop()); } return b; };
+    const twice = this.runTwice && !this.board2 && this.board.length < 5 && this.deck.length >= 2 * (5 - this.board.length);
+    const scoresOn = (board) => { const hi = {}, lo = {}; for (const p of left) { hi[p.seat] = value(p.cards, board); if (hilo) lo[p.seat] = lowValue(p.cards, board); p.shown = true; } return { hi, lo }; };
     if (left.length === 1) {
       const w = left[0];
       const amount = this.pot();
       w.chips += amount;
       results.push({ seats: [w.seat], amount, share: { [w.seat]: amount }, score: null, uncontested: true });
-    } else if (this.runTwice && this.board.length < 5) {
-      // run it twice: the same cards so far, two different finishes, each board wins half of every pot
-      const base = this.board.slice();
-      const deal = (b) => { while (b.length < 5) { this.deck.pop(); const n = b.length === 0 ? 3 : 1; for (let k = 0; k < n; k++) b.push(this.deck.pop()); } return b; };
-      const A = deal(base.slice()), Bd = deal(base.slice());
-      this.board = A; this.board2 = Bd;
-      this.on('board', { stage: 'river', board: A.slice(), runout: true });
-      this.on('board2', { board: Bd.slice() });
-      const sA = {}, sB = {};
-      for (const p of left) { sA[p.seat] = value(p.cards, A); sB[p.seat] = value(p.cards, Bd); p.shown = true; }
-      this.on('showdown', { scores: sA, scores2: sB });
+    } else if (this.board2 || twice) {
+      // two boards: double board deals both all hand long; run it twice deals the second from where the first stood
+      let A, Bd;
+      if (this.board2) {
+        const before = this.board.length;
+        A = deal(this.board, 5 - this.board2.length); Bd = deal(this.board2);
+        if (A.length > before) this.on('board', { stage: 'river', board: A.slice(), board2: Bd.slice(), runout: true });
+      } else {
+        const base = this.board.slice();
+        A = deal(base.slice(), 5 - base.length); Bd = deal(base.slice());
+        this.board = A; this.board2 = Bd;
+        this.on('board', { stage: 'river', board: A.slice(), runout: true });
+        this.on('board2', { board: Bd.slice() });
+      }
+      const sA = scoresOn(A), sB = scoresOn(Bd);
+      this.on('showdown', { scores: sA.hi, scores2: sB.hi });
       for (const pot of this.pots()) {
-        const half = Math.floor(pot.amount / 2);
-        results.push(this.award(pot, half, sA, 1), this.award(pot, pot.amount - half, sB, 2));
+        const half = Math.floor(pot.amount / 2) + (pot.amount % 2);
+        results.push(...this.split(pot, half, sA, 1), ...this.split(pot, pot.amount - half, sB, 2));
       }
     } else {
       // run out whatever is missing (all-in before the river)
       while (this.board.length < 5) {
-        this.deck.pop();
+        if (this.deck.length > 5 - this.board.length) this.deck.pop();
         const n = this.board.length === 0 ? 3 : 1;
         for (let k = 0; k < n; k++) this.board.push(this.deck.pop());
         this.on('board', { stage: this.board.length === 3 ? 'flop' : this.board.length === 4 ? 'turn' : 'river', board: this.board.slice(), runout: true });
       }
-      const scores = {};
-      for (const p of left) { scores[p.seat] = value(p.cards, this.board); p.shown = true; }
-      this.on('showdown', { scores });
-      for (const pot of this.pots()) results.push(this.award(pot, pot.amount, scores, 0));
+      const sc = scoresOn(this.board);
+      this.on('showdown', { scores: sc.hi });
+      for (const pot of this.pots()) results.push(...this.split(pot, pot.amount, sc, 0));
     }
     // the 7-2: whoever wins a pot holding seven-deuce collects from everyone who was dealt in
     const bonus = [];
-    if (this.bonus72 && this.game !== 'plo') {
+    if (this.bonus72 && holesOf(this.game) === 2) {
       const won = new Set(); results.forEach((r) => r.seats.forEach((x) => won.add(x)));
       for (const w of won) {
         const p = this.seats[w], rk = p.cards.map(rankOf).sort((a, b) => a - b);
@@ -447,6 +484,16 @@
     for (const p of this.seats) { p.bet = 0; p.total = 0; }
     this.stage = 'done';
     this.on('result', { results, board: this.board.slice(), board2: this.board2 ? this.board2.slice() : null, bonus });
+  };
+
+  // a pot (or the half of it that one board plays for): high hand, and in hi-lo half to the best qualifying low
+  Table.prototype.split = function (pot, amount, sc, run) {
+    if (this.game !== 'plo8') return [this.award(pot, amount, sc.hi, run)];
+    const lows = {}; for (const s of pot.eligible) if (sc.lo[s]) lows[s] = sc.lo[s];
+    if (!Object.keys(lows).length) return [this.award(pot, amount, sc.hi, run)];
+    const hiPart = Math.floor(amount / 2) + (amount % 2);
+    const lo = this.award(pot, amount - hiPart, lows, run); lo.low = true;
+    return [this.award(pot, hiPart, sc.hi, run), lo];
   };
 
   // split one pot (or half of one, when running it twice) between the best hands
@@ -511,7 +558,7 @@
   }
   const roundChips = (v, bb) => { const u = bb >= 100 ? bb / 4 : bb / 2; return Math.max(u, Math.round(v / u) * u); };
 
-  const api = { Table, evaluate, value, category, bestFive, equity, odds, decide, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
+  const api = { Table, evaluate, value, lowValue, holesOf, HOLES, category, bestFive, equity, odds, decide, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Poker = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
