@@ -247,7 +247,7 @@
        tap a face to throw it, or drag it onto her. A long press or the right button opens the shop. */
     const ITEMS = A.ITEMS || ['tomato'];
     let sel = (() => { try { return ITEMS.includes(localStorage.getItem('barusik.poker.item')) ? localStorage.getItem('barusik.poker.item') : 'tomato'; } catch { return 'tomato'; } })();
-    let fan = null;
+    let fan = null, fanTop = null;
     const bagOf = (i) => (view && view.seats[i] && view.seats[i].bag) || {};
     const pick = (k) => { sel = k; try { localStorage.setItem('barusik.poker.item', k); } catch {} };
     function setAim(on) {
@@ -271,7 +271,14 @@
       // lift the whole fan clear of my own box and cards, so nothing covers my hand, name or stack
       const cardsUp = nd.cards.childElementCount && nd.cards.offsetHeight ? at(nd.cards, 0.5, 0).y : Infinity;
       const top = Math.min(at(nd.box, 0.5, 0).y, cardsUp) - c.y, lift = Math.min(0, top - 30 - maxY);
-      spots.forEach((p) => { p.y += lift; });
+      // and clear of the other players too, or their faces could not be tapped: lift it further until nobody is under it
+      const tr = tbl.getBoundingClientRect();
+      const faces = nodes.filter((n, i) => i !== view.me && !n.pl.classList.contains('hide')).map((n) => { const r = n.box.getBoundingClientRect(), a = n.av.getBoundingClientRect(); return { l: Math.min(r.left, a.left) - tr.left - 4, r: r.right - tr.left + 4, t: Math.min(r.top, a.top) - tr.top - 4, b: Math.max(r.bottom, a.bottom) - tr.top + 4 }; });
+      const under = (dy) => spots.reduce((t, p) => { const x = c.x + p.x + shift, y = c.y + p.y + lift + dy; return t + faces.reduce((u, f) => u + Math.max(0, Math.min(x + 26, f.r) - Math.max(x - 26, f.l)) * Math.max(0, Math.min(y + 30, f.b) - Math.max(y - 26, f.t)), 0); }, 0);
+      let up = 0, least = under(0);
+      for (const dy of [-40, -80, -120, -160, -200]) { if (c.y + maxY + lift + dy - R < 0) break; const u = under(dy); if (u < least - 1) { least = u; up = dy; } if (!least) break; }
+      spots.forEach((p) => { p.y += lift + up; });
+      fanTop = c.y + Math.min(...spots.map((p) => p.y)) - 30;
       f.style.left = c.x + 'px'; f.style.top = c.y + 'px';
       f.innerHTML = ITEMS.map((k, j) => { const have = mine[k] === Infinity ? '∞' : mine[k] | 0;
         return `<button type="button" class="fi${k === sel ? ' on' : ''}${have ? '' : ' none'}" data-it="${k}" style="--dx:${spots[j].x + shift}px;--dy:${spots[j].y}px;--d:${j * 40}ms" aria-label="${esc((T.items && T.items[k]) || k)}${have ? ` (${have})` : ''}" title="${esc((T.items && T.items[k]) || k)}">${A.itemSVG(k)}<em>${have ? '×' + have : (view.prices && view.prices[k] ? fmt(view.prices[k]) : '')}</em></button>`; }).join('')
@@ -292,6 +299,21 @@
       const hold = matchMedia('(hover: hover) and (pointer: fine)').matches ? T.rightBuy : T.holdBuy;
       aimbar.innerHTML = `<span class="ai">${A.itemSVG(sel)}</span><span>${esc(T.aimHint2 || T.aimHint)}${hold ? `<small>${esc(hold)}</small>` : ''}</span><button type="button" data-x aria-label="${esc(T.cancel)}">✕</button>`;
       aimbar.querySelector('[data-x]').onclick = (e) => { e.stopPropagation(); setAim(false); };
+      placeBar();
+    }
+    // the bar goes where it hides nobody's face: over the fan, on the board, at the top or at the bottom, whichever covers the least
+    function placeBar() {
+      const tr = tbl.getBoundingClientRect(), W = tbl.clientWidth, H = tbl.clientHeight, bw = aimbar.offsetWidth, bh = aimbar.offsetHeight;
+      const faces = nodes.filter((n, i) => i !== view.me && !n.pl.classList.contains('hide')).map((n) => { const r = n.box.getBoundingClientRect(), a = n.av.getBoundingClientRect(); return { l: Math.min(r.left, a.left) - tr.left, r: r.right - tr.left, t: Math.min(r.top, a.top) - tr.top, b: Math.max(r.bottom, a.bottom) - tr.top }; });
+      const bd = at(board);
+      const ys = [fanTop != null ? fanTop - bh - 6 : null, bd.y - bh / 2, H * 0.02, H - bh - 6].filter((y) => y != null).map((y) => Math.max(4, Math.min(H - bh - 4, y)));
+      const l = W / 2 - bw / 2, r = W / 2 + bw / 2;
+      let best = ys[0], least = Infinity;
+      for (const y of ys) {
+        let hit = 0; for (const f of faces) hit += Math.max(0, Math.min(r, f.r) - Math.max(l, f.l)) * Math.max(0, Math.min(y + bh, f.b) - Math.max(y, f.t));
+        if (hit < least - 1) { least = hit; best = y; }
+      }
+      aimbar.style.top = best + 'px';
     }
     tbl.addEventListener('click', (e) => { if (aiming && !e.target.closest('.box') && !e.target.closest('.aimbar') && !e.target.closest('.fan')) setAim(false); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && aiming) setAim(false); });
