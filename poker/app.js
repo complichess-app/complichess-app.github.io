@@ -297,7 +297,7 @@
       const waiting = me && Array.isArray(me.cards) && !me.folded && !me.allIn && v.toAct >= 0 && v.toAct !== v.me;
       const key = ['w', street, pre.v, extra.html || '', !!waiting, hs].join('|');
       if (el._wkey === key) return; el._wkey = key;
-      el.innerHTML = `<div class="info">${hs}</div>` + (waiting ? `<div class="row">${[['cf', T.checkFold], ['ca', T.callAny]].map(([k, l]) => `<button class="act p${pre.v === k ? ' on' : ''}" data-pre="${k}" aria-pressed="${pre.v === k}">${esc(l)}</button>`).join('')}</div>` : '') + (extra.html || '');
+      el.innerHTML = `<div class="info">${hs}</div>` + (waiting ? `<div class="row">${[['f', T.fold], ['cf', T.checkFold], ['ca', T.callAny]].map(([k, l]) => `<button class="act p${pre.v === k ? ' on' : ''}" data-pre="${k}" aria-pressed="${pre.v === k}">${esc(l)}</button>`).join('')}</div>` : '') + (extra.html || '');
       el.querySelectorAll('[data-pre]').forEach((b) => (b.onclick = () => { pre.v = pre.v === b.dataset.pre ? '' : b.dataset.pre; pre.key = street; el._wkey = ''; drawActions(el, v, o, send, extra); }));
       extra.bind && extra.bind(el);
       return;
@@ -309,10 +309,8 @@
     // a box ticked in advance plays itself the moment the turn arrives
     if (pre.v && pre.key === street) {
       const k = pre.v; pre.v = '';
-      if (k === 'ca' || o.check || k === 'cf') {
-        el.innerHTML = `<div class="info">${hs}</div>`;
-        return send(k === 'cf' ? (o.check ? 'check' : 'fold') : (o.check ? 'check' : 'call'), 0);
-      }
+      el.innerHTML = `<div class="info">${hs}</div>`;
+      return send(k === 'f' ? 'fold' : k === 'cf' ? (o.check ? 'check' : 'fold') : (o.check ? 'check' : 'call'), 0);
     }
     const pot = v.pot + v.seats.reduce((t, x) => t + (x ? x.bet : 0), 0);
     const clamp = (x) => Math.max(o.minTo, Math.min(o.maxTo, Math.round(x)));
@@ -338,7 +336,7 @@
       const done = (type, to) => { el.querySelectorAll('button,input').forEach((x) => (x.disabled = true)); PT.sfx.click(); send(type, to); };
       const btn = (k) => $(`[data-k=${k}]`, el);
       if (!open) {
-        btn('f').onclick = () => { if (o.check && !sure) { sure = true; paint(); return; } done('fold', 0); };
+        btn('f').onclick = () => done('fold', 0);
         btn('c').onclick = () => done(o.check ? 'check' : 'call', 0);
         btn('r') && (btn('r').onclick = () => { if (o.minTo >= o.maxTo) return done('raise', o.maxTo); open = true; paint();
           // on a computer the amount box is ready to type into; on a phone the keyboard waits until the box itself is tapped

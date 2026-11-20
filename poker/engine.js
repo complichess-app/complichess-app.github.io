@@ -324,7 +324,7 @@
     let type = action.type;
     if (type === 'check' && !o.check) type = 'call';
     if (type === 'call' && o.check) type = 'check';
-    if (type === 'fold' && o.check) type = 'check'; // never fold for free
+    // folding is allowed at any point, even when a check is free (timeouts and CHECK/FOLD still check)
     if (type === 'raise' && !o.raise) type = o.check ? 'check' : 'call';
 
     if (type === 'fold') {
