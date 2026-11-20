@@ -469,3 +469,10 @@ dialog.shopd{width:min(460px,94vw)}
 .qty output{min-width:22px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
 .si .btn.small{min-height:36px;padding:0 12px;font-size:13.5px;white-space:nowrap}
 @media (max-width:420px){.si{grid-template-columns:40px 1fr auto;grid-template-areas:"i n n" "i q b"}.sic{grid-area:i;width:40px;height:40px}.sn{grid-area:n}.qty{grid-area:q;justify-self:start}.si .btn.small{grid-area:b}}
+/* the legendary bot's window */
+dialog.botd{width:min(400px,92vw);display:flex;flex-direction:column;gap:14px}
+dialog.botd:not([open]){display:none}
+.botd .bon{width:100%}
+.botd .spd{display:flex;flex-direction:column;gap:8px;color:var(--txt);font-size:14px}
+.botd .rng{display:flex;align-items:center;gap:10px}.botd .rng small{color:var(--mute);font-size:12px;white-space:nowrap}
+.botd input[type=range]{flex:1;accent-color:var(--brass2);height:28px}
