@@ -159,10 +159,10 @@
           const netOf = (sc) => { const q = sc && sc.players ? sc.players.find((y) => y.seat === x.i) : null; return q ? `<span class="${q.net > 0 ? 'pos' : q.net < 0 ? 'neg' : ''}">${q.net > 0 ? '+' : q.net < 0 ? '−' : ''}${num(Math.abs(q.net))}</span>` : ''; };
           const right = !playing || contenders.length < 2 ? '' : final && mine ? (fut.twice ? `<div class="two"><span class="mute">פעם אחת</span>${netOf(fut.once)}<span class="mute">פעמיים</span>${netOf(fut.twice)}</div>` : netOf(fut.once)) : inIt ? (wonAny ? '🏆' : '<span class="neg small">מפסיד</span>') : '';
           return `<div class="pl ${turn === x.i && playing ? 'turn' : ''} ${p && p.folded ? 'fold' : ''} ${playing && wonAny && inIt ? 'win' : ''}"><div class="cards">${p && p.cards ? p.cards.map((c) => card(c)).join('') : card(null) + card(null)}</div>
-          <div><div class="nm">${esc(x.name)} ${x.uid === ROOM.host ? '<span class="pill">מנהל</span>' : ''} ${x.away ? '<span class="pill w">לא ליד השולחן</span>' : ''} ${p && p.folded ? '<span class="pill">ויתר</span>' : ''}</div>
+          <div><div class="nm">${esc(x.name)} ${x.bot ? '<span class="pill y">🤖 בוט אגדי משחק</span>' : (ROOM.state.botOk || {})[x.uid] ? '<span class="pill">🤖 יש לו בוט</span>' : ''} ${x.uid === ROOM.host ? '<span class="pill">מנהל</span>' : ''} ${x.away ? '<span class="pill w">לא ליד השולחן</span>' : ''} ${p && p.folded ? '<span class="pill">ויתר</span>' : ''}</div>
             <div class="sub">צ׳יפים ${num(x.chips)}${p && p.bet ? ` · הימור ${num(p.bet)}` : ''}${p && p.total ? ` · ביד ${num(p.total)}` : ''}${cat && !ends ? ` · ${esc(cat)}` : ''}${final && mine && !fut.twice && inIt ? ` · בסוף ${num(mine.after)}` : ''}</div>
             ${ends}
-            <div class="tools" style="margin-top:6px"><input type="number" min="0" value="${x.chips}" data-chips="${x.i}" aria-label="צ׳יפים של ${esc(x.name)}"><button class="ghost small" data-a="chips" data-seat="${x.i}">לקבוע צ׳יפים</button><button class="ghost small" data-a="add" data-seat="${x.i}" data-v="${g.minBuy}">+${num(g.minBuy)}</button><button class="ghost small" data-a="kick" data-seat="${x.i}">להוציא</button>${x.uid !== ROOM.host ? `<button class="ghost small" data-a="host" data-seat="${x.i}">להעביר ניהול</button>` : ''}</div></div>
+            <div class="tools" style="margin-top:6px"><input type="number" min="0" value="${x.chips}" data-chips="${x.i}" aria-label="צ׳יפים של ${esc(x.name)}"><button class="ghost small" data-a="chips" data-seat="${x.i}">לקבוע צ׳יפים</button><button class="ghost small" data-a="add" data-seat="${x.i}" data-v="${g.minBuy}">+${num(g.minBuy)}</button><button class="ghost small" data-a="kick" data-seat="${x.i}">להוציא</button>${x.uid !== ROOM.host ? `<button class="ghost small" data-a="host" data-seat="${x.i}">להעביר ניהול</button>` : ''}${(ROOM.state.botOk || {})[x.uid] ? `<button class="ghost small" data-a="bot" data-seat="${x.i}" data-v="0">🤖 לקחת את הבוט</button>` : `<button class="ghost small" data-a="bot" data-seat="${x.i}" data-v="1">🤖 לתת בוט אגדי</button>`}</div></div>
           <div class="odds">${right}</div></div>`; }).join('') || '<p class="mute">אין אף אחד ליד השולחן.</p>'}
       </section>
       <div style="display:flex;flex-direction:column;gap:16px">
@@ -216,6 +216,7 @@
         if (a === 'add') { const cur = ROOM.state.seats[seat].chips; return run('chips', { room: CODE, seat, to: cur + +el.dataset.v }, 'נוסף'); }
         if (a === 'kick') { if (confirm('להוציא את השחקן מהשולחן?')) run('kick', { room: CODE, seat }); return; }
         if (a === 'host') return run('host', { room: CODE, seat }, 'הניהול הועבר');
+        if (a === 'bot') return run('bot', { room: CODE, seat, on: el.dataset.v === '1', start: el.dataset.v === '1' }, el.dataset.v === '1' ? 'הבוט האגדי משחק בשבילו' : 'הבוט נלקח');
       });
     });
     const f = document.getElementById('setf');

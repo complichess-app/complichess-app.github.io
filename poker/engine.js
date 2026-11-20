@@ -601,9 +601,132 @@
     if (o.toCall <= t.bb && strength > 0.7) return { type: 'call' };
     return { type: 'fold' };
   }
+
+  /* ---------- the legendary bot ----------
+     Plays only what any player could know: its own cards, the board and what everyone has put in.
+     Each opponent gets a range from the chips she has committed (more chips, stronger hands); the hand is dealt
+     out many times against those ranges, hi/lo splits included, and the decision weighs the share of the pot it
+     expects against the price: value bets sized to the pot, traps, semi-bluffs on draws, river bluffs, no hero calls. */
+  // two hole cards: a Chen-style score, turned into "this hand beats that share of all starting hands"
+  const chen = (a, b) => {
+    const ra = rankOf(a), rb = rankOf(b), hi = Math.max(ra, rb), lo = Math.min(ra, rb);
+    const pts = (r) => (r === 14 ? 10 : r === 13 ? 8 : r === 12 ? 7 : r === 11 ? 6 : r / 2);
+    if (ra === rb) return Math.max(5, pts(hi) * 2);
+    let v = pts(hi) + (suitOf(a) === suitOf(b) ? 2 : 0);
+    const gap = hi - lo - 1;
+    v -= gap <= 0 ? 0 : gap === 1 ? 1 : gap === 2 ? 2 : gap === 3 ? 4 : 5;
+    if (gap <= 1 && hi < 12) v += 1;
+    return v;
+  };
+  let PCT = null;
+  const pct2 = (a, b) => {
+    if (!PCT) {
+      PCT = new Float32Array(52 * 52); const all = [];
+      for (let x = 0; x < 52; x++) for (let y = x + 1; y < 52; y++) all.push([chen(x, y), x, y]);
+      all.sort((m, n) => m[0] - n[0]);
+      // equal scores share the same percentile
+      let i = 0; while (i < all.length) { let j = i; while (j < all.length && all[j][0] === all[i][0]) j++; const q = (i + j) / 2 / all.length; for (let k = i; k < j; k++) { PCT[all[k][1] * 52 + all[k][2]] = q; PCT[all[k][2] * 52 + all[k][1]] = q; } i = j; }
+    }
+    return PCT[a * 52 + b];
+  };
+  // the share of the pot this seat should expect at showdown, against what the others are likely to hold
+  function potShare(t, seat, ms) {
+    const p = t.seats[seat], hole = p.cards, board = t.board, hl = hiLo(t.game), hc = hole.length;
+    const opps = t.inHand().filter((q) => q !== p);
+    if (!opps.length) return 1;
+    const used = new Set([...hole, ...board]);
+    const d = []; for (let c = 0; c < 52; c++) if (!used.has(c)) d.push(c);
+    const need = 5 - board.length, bb = Math.max(1, t.bb || 1);
+    // how wide each opponent's range is: everything for a big blind who only checked, the top few percent after big bets
+    const keep = opps.map((q) => Math.max(0.1, Math.min(0.92, 0.92 - 0.16 * Math.log2(Math.max(1, (q.total || 0) / bb)))));
+    // after the flop: whoever has put a lot in rarely holds nothing on this board (any game, Omaha too)
+    const fit = (k, cat) => (cat >= 2 ? 1 : cat === 1 ? (k < 0.3 ? 0.4 : k < 0.6 ? 0.75 : 1) : k < 0.3 ? 0.1 : k < 0.6 ? 0.3 : 0.7);
+    const minIt = hc > 2 ? 120 : 300, maxIt = hc > 2 ? 700 : 2500, t0 = Date.now();
+    let sum = 0, n = 0, pos = 0;
+    const take = () => { const j = pos + Math.floor(rand() * (d.length - pos)); const x = d[j]; d[j] = d[pos]; d[pos] = x; return d[pos++]; };
+    while (n < maxIt && (n < minIt || Date.now() - t0 < ms)) {
+      pos = 0;
+      const hands = [];
+      for (let o = 0; o < opps.length; o++) {
+        let h;
+        for (let tries = 0; ; tries++) {
+          const start = pos; h = []; for (let k = 0; k < hc; k++) h.push(take());
+          if (tries >= 12) break;
+          if (board.length >= 3 ? rand() < fit(keep[o], category(value(h, board))) : hc !== 2 || pct2(h[0], h[1]) >= 1 - keep[o]) break;
+          pos = start;
+        }
+        hands.push(h);
+      }
+      const full = board.slice(); for (let k = 0; k < need; k++) full.push(take());
+      const mine = value(hole, full);
+      let best = mine, wins = 1;
+      for (const h of hands) { const v = value(h, full); if (v > best) { best = v; wins = 1; } else if (v === best) wins++; }
+      let hi = mine === best ? 1 / wins : 0;
+      if (hl) {
+        const ml = lowValue(hole, full); let bl = ml, lw = ml ? 1 : 0;
+        for (const h of hands) { const v = lowValue(h, full); if (v > bl) { bl = v; lw = 1; } else if (v && v === bl) lw++; }
+        if (bl) hi = hi / 2 + (ml && ml === bl ? 0.5 / lw : 0);
+      }
+      sum += hi; n++;
+    }
+    return sum / n;
+  }
+  function legend(t, seat, ms = 140) {
+    const p = t.seats[seat], o = t.options(seat);
+    const omaha = p.cards.length > 2, street = t.board.length, bb = Math.max(1, t.bb || 1);
+    const opps = t.inHand().length - 1;
+    const pot = t.pot(), after = pot + o.toCall;
+    const eq = potShare(t, seat, ms);
+    const fair = 1 / (opps + 1), strength = eq / fair;
+    const price = o.toCall / (after || 1);
+    const r = rand();
+    const behindStack = p.chips - o.call;
+    const committed = behindStack < after * 0.3;      // so little left that folding later makes no sense
+    const to = (x) => Math.max(o.minTo, Math.min(o.maxTo, roundChips(x, bb)));
+    const potRaise = (frac) => to(t.currentBet + Math.max(bb, after * frac));
+    const raise = (x) => (o.raise ? { type: 'raise', to: x } : o.check ? { type: 'check' } : { type: 'call' });
+    const callOrFold = (edge) => (o.check ? { type: 'check' } : eq + edge >= price ? { type: 'call' } : { type: 'fold' });
+    const tight = omaha ? 0.82 : 1; // omaha hands run closer together
+
+    if (street === 0) {
+      const raisers = Math.max(0, Math.round(Math.log2(Math.max(1, t.currentBet / bb))));
+      // heads-up nearly every hand is worth a raise; the more players, the tighter
+      const openAt = (opps === 1 ? 1.03 : opps === 2 ? 1.15 : 1.26) * tight;
+      if (o.toCall <= bb && t.currentBet <= bb) {                       // nobody has raised yet
+        const limpers = t.seats.filter((q) => q !== p && !q.out && !q.folded && q.total >= bb).length - 1;
+        if (strength > openAt || (strength > openAt * 0.88 && r < 0.3)) return raise(to(bb * (opps === 1 ? 2.5 : 2.5 + Math.max(0, limpers)) + (opps > 3 ? bb / 2 : 0)));
+        if (o.check) return { type: 'check' };
+        return strength > (opps === 1 ? 0.8 : 0.92) * tight ? { type: 'call' } : { type: 'fold' };
+      }
+      // facing a raise
+      const threeAt = (opps === 1 ? (raisers >= 2 ? 1.35 : 1.18) : raisers >= 2 ? 1.75 : 1.5) * tight;
+      if (strength > threeAt && r < 0.85) return raise(committed || raisers >= 3 ? o.maxTo : to(t.currentBet * (opps === 1 ? 3 : 3.2)));
+      if (committed) return callOrFold(0.02);
+      return callOrFold(behindStack > after * 4 ? 0.05 : 0);  // deep: a little for what the flop may bring
+    }
+
+    const river = street === 5;
+    const valueAt = opps === 1 ? 0.6 : Math.max(0.36, fair * 1.7);
+    if (o.check) {
+      // nobody has bet: value, a trap now and then, semi-bluffs with draws, the odd stab heads-up, a river bluff
+      if (eq > 0.88 && !river && r < 0.22) return { type: 'check' };
+      if (eq > valueAt) return raise(potRaise(river && eq > 0.88 ? 0.9 : 0.5 + r * 0.3));
+      if (!river && eq > 0.32 && opps <= 2 && r < 0.4) return raise(potRaise(0.5));
+      if (!river && opps === 1 && r < 0.22) return raise(potRaise(0.45));
+      if (river && opps === 1 && eq < 0.25 && r < 0.24) return raise(potRaise(0.66));
+      return { type: 'check' };
+    }
+    // facing a bet
+    const raiseAt = opps === 1 ? 0.76 : Math.max(0.6, fair * 2.4);
+    if (eq > raiseAt) return r < 0.7 || committed ? raise(committed ? o.maxTo : to(t.currentBet * 2.8)) : { type: 'call' };
+    if (!river && opps === 1 && eq > 0.4 && eq < 0.58 && r < 0.12 && !committed) return raise(to(t.currentBet * 3));
+    if (committed) return callOrFold(0.03);
+    // implied odds before the river, a stricter price on the river and against several players
+    return callOrFold((river ? -0.02 : 0.04) - (opps > 1 ? 0.03 * (opps - 1) : 0));
+  }
   const roundChips = (v, bb) => { const u = bb >= 100 ? bb / 4 : bb / 2; return Math.max(u, Math.round(v / u) * u); };
 
-  const api = { Table, evaluate, value, lowValue, holesOf, hiLo, maxPlayers, HOLES, category, bestFive, equity, odds, decide, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
+  const api = { Table, evaluate, value, lowValue, holesOf, hiLo, maxPlayers, HOLES, category, bestFive, equity, odds, decide, legend, potShare, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Poker = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

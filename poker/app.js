@@ -279,6 +279,7 @@
       case 'pause': return esc(T.lpause); case 'resume': return esc(T.lresume); case 'closed': return esc(T.lclosed);
       case 'away': return fill(esc(T.laway), { n }); case 'ask': return fill(esc(T.lask), { n }); case 'denied': return fill(esc(T.ldenied), { n });
       case 'chips': return fill(esc(T.lchips), { n, a });
+      case 'bot': return fill(esc(e.on ? T.lbotOn : T.lbotOff), { n });
       case 'throw': return fill(esc(T.lthrowI), { n, i: itemTag(e.it), t: `<bdi class="cs">${esc(e.to || '')}</bdi>` });
       case 'buy': return fill(esc(T.lbuyI), { n, a, i: itemTag(e.it) });
       case 'show': return fill(esc(T.lshow), { n }) + (e.b ? ` [${e.b.map(cardLabel).join(' ')}]` : '');
@@ -629,7 +630,7 @@
         }
         let hand = '', best = null;
         if (showdown && Array.isArray(cards) && board.length === 5 && !p.folded) { hand = handDesc(cards, board); if (winners[i]) best = P.bestFive(cards, board); }
-        return { uid: x.uid, av: x.av || 0, bag: bagFor(x.uid), name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
+        return { uid: x.uid, av: x.av || 0, bag: bagFor(x.uid), bot: !!x.bot, name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
       });
       const inHandStage = live && live.stage !== 'done' && live.stage !== 'idle';
       const pot = live ? (live.stage === 'done' ? 0 : live.pot - seats.reduce((t, x) => t + (x ? x.bet : 0), 0)) : 0;
@@ -677,6 +678,8 @@
       if (me) {
         B.push(me.away ? ['bk', T.back, 'green wide keep', () => call('back', { room: id }).catch(fail)] : ['aw', T.away, 'wide', () => call('away', { room: id }).catch(fail)]);
         if (g.straddle) B.push(['sd', T.straddle + (me.straddle ? ' ✓' : ''), 'wide' + (me.straddle ? ' on' : ''), () => call('straddle', { room: id, on: !me.straddle }).catch(fail)]);
+        // the legendary bot, for whoever the admin gave it to
+        if ((s.botOk || {})[USER.id]) B.push(['bot', '🤖 ' + T.botB + (me.bot ? ' ✓' : ''), 'wide' + (me.bot ? ' on' : ''), () => call('mybot', { room: id, on: !me.bot }).then(() => toast(me.bot ? T.botOff : T.botOnT)).catch(fail)]);
         B.push(['rb', T.rebuy, 'wide', () => askChips('rebuy')]);
         B.push(['lv', T.leave, 'wide', () => call('leave', { room: id }).catch(fail)]);
       }

@@ -461,7 +461,8 @@
         if (k.uid !== s.uid) { k.av = null; k.name = null; k.tom = null; }
         const lk = s.av || 0;
         if (k.av !== lk) { nd.avs.innerHTML = headSVG(lk); k.av = lk; }
-        if (k.name !== s.name) { nd.nm.textContent = s.name; k.name = s.name; }
+        const nmT = (s.bot ? '🤖 ' : '') + s.name;
+        if (k.name !== nmT) { nd.nm.textContent = nmT; k.name = nmT; nd.nm.title = s.bot ? T.botSeat || '' : ''; }
         const stx = s.away ? `<em>${esc(T.isAway)}</em>` : s.allIn && s.cards ? `<em class="ai">${esc(T.allin)}</em>` : num(s.chips);
         if (k.st !== stx) { nd.st.innerHTML = stx; k.st = stx; }
         nd.el.classList.toggle('turn', v.toAct === i);
