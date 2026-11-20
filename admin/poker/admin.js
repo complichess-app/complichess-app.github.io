@@ -15,6 +15,44 @@
   const RK = { 10: '10', 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }, SU = ['♠', '♥', '♦', '♣'];
   const card = (c, cls = '') => c == null ? `<span class="card ghost ${cls}"></span>` : `<span class="card ${P.suitOf(c) === 1 || P.suitOf(c) === 2 ? 'red' : ''} ${cls}" role="img" aria-label="${(RK[P.rankOf(c)] || P.rankOf(c)) + SU[P.suitOf(c)]}"><span class="r">${RK[P.rankOf(c)] || P.rankOf(c)}<i>${SU[P.suitOf(c)]}</i></span><span class="s">${SU[P.suitOf(c)]}</span></span>`;
 
+  // how the hand ends if nobody folds: hand names on the final boards, who takes what
+  const HANDS = ['קלף גבוה', 'זוג', 'שני זוגות', 'שלישייה', 'רצף', 'צבע', 'פול האוס', 'רביעייה', 'רצף בצבע'];
+  const lowTxt = (v) => { const r = []; for (let i = 0; i < 5; i++) { r.unshift(9 - (v % 16)); v = Math.floor(v / 16); } return r.map((x) => (x === 1 ? 'A' : x)).join('-'); };
+  const handOn = (cards, board, game) => {
+    if (!cards || cards.length < 2 || !board || board.length < 5) return '';
+    const hi = HANDS[P.category(P.value(cards, board))];
+    const lo = P.hiLo && P.hiLo(game) ? P.lowValue(cards, board) : 0;
+    return lo ? `${hi} · לואו ${lowTxt(lo)}` : hi;
+  };
+  // the old server (before the function update) sends only the cards still to come: work it out from those
+  function guess(v, contenders, game) {
+    const A = v.board.concat(v.upcoming || []); if (A.length < 5) return null;
+    const B = v.board2 ? v.board2.concat(v.upcoming2 || []) : null;
+    const best = (board, run) => {
+      const out = []; let top = -1, w = [];
+      for (const p of contenders) { const x = P.value(p.cards, board); if (x > top) { top = x; w = [p.seat]; } else if (x === top) w.push(p.seat); }
+      out.push({ seats: w, run, low: false });
+      if (P.hiLo && P.hiLo(game)) { let lt = 0, lw = []; for (const p of contenders) { const x = P.lowValue(p.cards, board); if (x > lt) { lt = x; lw = [p.seat]; } else if (x && x === lt) lw.push(p.seat); } if (lw.length) out.push({ seats: lw, run, low: true }); }
+      return out;
+    };
+    return { board: A, board2: B, results: B ? [...best(A, 1), ...best(B, 2)] : best(A, 0), players: null };
+  }
+  function endHTML(sc, title, names, cardsOf, game, amt) {
+    if (!sc) return '';
+    const groups = {}; const lines = [];
+    for (const r of sc.results) {
+      if (r.uncontested) continue;
+      const g = `${r.run}|${r.low ? 1 : 0}`; const k = (groups[g] = (groups[g] || 0) + 1);
+      const board = r.run === 2 ? sc.board2 : sc.board;
+      const many = sc.results.filter((x) => `${x.run}|${x.low ? 1 : 0}` === g).length > 1;
+      const tag = [r.run ? `לוח ${r.run}` : '', r.low ? 'לואו' : '', many ? (k === 1 ? 'קופה ראשית' : 'קופת צד') : ''].filter(Boolean).join(' · ');
+      const who = r.seats.map((x) => `<b>${esc(names[x] || '?')}</b>`).join(' + ');
+      const hand = r.seats.length ? esc(r.low ? 'לואו ' + lowTxt(P.lowValue(cardsOf[r.seats[0]], board)) : HANDS[P.category(P.value(cardsOf[r.seats[0]], board))]) : '';
+      lines.push(`<div>🏆 ${tag ? `<span class="mute">${tag}:</span> ` : ''}${who} · ${hand}${amt && r.amount != null ? ` · ${num(r.amount)}${r.seats.length > 1 ? ' <span class="mute">(מתחלקים)</span>' : ''}` : ''}</div>`);
+    }
+    return `<div class="end">${title ? `<div class="hd">${title}</div>` : ''}${lines.join('')}</div>`;
+  }
+
   let session = null;
   async function call(a, body = {}) {
     const { data } = await sb.auth.getSession(); session = data.session;
@@ -70,7 +108,7 @@
     const a = e.a != null ? num(e.a) : '', n = esc(e.name || ''), all = e.all ? esc(T.lall) : '';
     const m = { hand: () => `<div class="hd">${fill(T.lhand, { a: e.n })}</div>`, sb: () => fill(T.lsb, { n, a }), bb: () => fill(T.lbb, { n, a }), fold: () => fill(T.lfold, { n }), check: () => fill(T.lcheck, { n }), call: () => fill(T.lcall, { n, a }) + all, bet: () => fill(T.lbet, { n, a }) + all, raise: () => fill(T.lraise, { n, a }) + all,
       board: () => fill(T.lboard, { a: `<span class="board" style="display:inline-flex;gap:3px">${e.b.map((c) => (RK[P.rankOf(c)] || P.rankOf(c)) + SU[P.suitOf(c)]).join(' ')}</span>` }), back: () => fill(T.lback, { n, a }),
-      win: () => e.cat == null ? fill(T.lwin, { n: esc((e.names || []).join(', ')), a }) : fill(T.lwinH, { n: esc((e.names || []).join(', ')), a, h: T.hands[e.cat] }),
+      win: () => e.cat == null ? fill(T.lwin, { n: esc((e.names || []).join(', ')), a }) : fill(T.lwinH, { n: esc((e.names || []).join(', ')), a, h: HANDS[e.cat] }),
       sit: () => fill(T.lsit, { n, a }), left: () => fill(T.lleft, { n, a }), rebuy: () => fill(T.lrebuy, { n, a }), kick: () => fill(T.lkick, { n }), host: () => fill(T.lhost, { n }), admin: () => T.ladmin, pause: () => T.lpause, resume: () => T.lresume, closed: () => T.lclosed, away: () => fill(T.laway, { n }), ask: () => fill(T.lask, { n }), denied: () => fill(T.ldenied, { n }), chips: () => fill(T.lchips, { n, a }), throw: () => fill(T.lthrow, { n, t: esc(e.to || '') }), ante: () => fill(T.lante, { n, a }), straddle: () => fill(T.lstraddle, { n, a }), bomb: () => fill(T.lbombp, { n, a }), b72: () => fill(T.l72, { n, a }), bombon: () => fill(T.lbombon, { a }), bomboff: () => T.lbomboff, board2: () => fill(T.lboard2, { a: e.b.map((c) => (RK[P.rankOf(c)] || P.rankOf(c)) + SU[P.suitOf(c)]).join(' ') }), buy: () => fill(T.lbuy, { n, a }), show: () => fill(T.lshow, { n }), settings: () => fill(T.lsettings, { a: `${e.sb}/${e.bb}` }) }[e.k];
     const s = m ? m() : '';
     return s.startsWith('<div') ? s : `<div>${s}</div>`;
@@ -79,11 +117,18 @@
   function roomHTML() {
     if (!CODE) return '';
     if (!ROOM) return `<section class="panel"><p class="mute">החדר ${esc(CODE)} לא נמצא או נסגר.</p></section>`;
-    const s = ROOM.state, g = s.settings, live = s.live, v = VIEW || { players: [], board: [], odds: {}, upcoming: [] };
+    const s = ROOM.state, g = s.settings, live = s.live, v = VIEW || { players: [], board: [], upcoming: [] };
     const playing = live && live.stage !== 'done' && live.stage !== 'idle';
     const turn = s.turn ? s.turn.s : -1;
     const byseat = Object.fromEntries((v.players || []).map((p) => [p.seat, p]));
     const seats = s.seats.map((x, i) => x ? { ...x, i, p: byseat[i] } : null).filter(Boolean);
+    const game = g.game || 'nlh', fut = v.future || null;
+    const f = s.pendingSettings || g, rit = f.runTwice === 'ask' ? 'ask' : f.runTwice === true || f.runTwice === 'yes' ? 'yes' : 'no';
+    const contenders = (v.players || []).filter((p) => !p.out && !p.folded && p.cards && p.cards.length >= 2);
+    const names = Object.fromEntries(seats.map((x) => [x.i, x.name])), cardsOf = Object.fromEntries((v.players || []).map((p) => [p.seat, p.cards]));
+    const guessed = !fut && playing && contenders.length >= 2 ? guess(v, contenders, game) : null;
+    // nobody can bet any more (all in): the amounts are final, not just the hands
+    const final = !!fut && (v.ask || contenders.filter((p) => p.chips > 0).length < 2);
     const hostLabel = ROOM.host_kind === 'admin' ? 'אתה' : ROOM.host_kind === 'waiting' ? 'מחכה לך' : (s.seats.find((x) => x && x.uid === ROOM.host) || {}).name || s.creator;
     const pot = live ? live.pot : 0;
     return `<section class="panel"><div class="top"><h2>${esc(s.title || ROOM.name)}</h2><span class="pill g n">${esc(ROOM.id)}</span><span class="pill">${T[g.game || 'nlh']} · ${num(g.sb)}/${num(g.bb)}</span><span class="pill">מנהל החדר: ${esc(hostLabel)}</span>${s.paused ? '<span class="pill w">מושהה</span>' : s.playing ? '<span class="pill y">משחקים</span>' : '<span class="pill">לא התחיל</span>'}
@@ -93,26 +138,46 @@
       ${(s.requests || []).length ? `<section class="panel"><h3 style="margin-bottom:8px">בקשות</h3>${s.requests.map((r) => `<div class="req"><b>${esc(r.name)}</b><span>${r.kind === 'sit' ? 'רוצה לשבת עם' : 'מבקש עוד'}</span><input type="number" value="${r.amount}" data-amt="${esc(r.id)}" aria-label="כמה צ׳יפים"><button class="small" data-a="ok" data-id="${esc(r.id)}">לאשר</button><button class="ghost small" data-a="no" data-id="${esc(r.id)}">לסרב</button></div>`).join('')}</section>` : ''}
       <div class="grid"><section class="panel" style="display:flex;flex-direction:column;gap:10px">
         <div class="top"><h3>השולחן</h3><span class="pill">יד ${s.handNo || 0}</span>${live ? `<span class="pill">${esc({ preflop: 'לפני הפלופ', flop: 'פלופ', turn: 'טרן', river: 'ריבר', done: 'היד נגמרה' }[live.stage] || live.stage)}</span>` : ''}<span class="sp"></span><span>קופה ${num(pot)}</span></div>
-        <div class="board">${[0, 1, 2, 3, 4].map((i) => v.board[i] != null ? card(v.board[i]) : playing && v.upcoming[i - v.board.length] != null ? card(v.upcoming[i - v.board.length], 'up') : card(null)).join('')}${playing && v.upcoming.length ? '<span class="small mute" style="direction:rtl">&nbsp;מסומן = הקלפים הבאים בחפיסה</span>' : ''}</div>
-        ${seats.map((x) => { const p = x.p; const o = v.odds && v.odds[x.i]; const pct = o ? Math.round((o.win + o.tie) * 1000) / 10 : null;
-          const cat = p && p.cards && p.cards.length >= 2 && v.board.length >= 3 ? T.hands[P.category(P.value(p.cards, v.board))] : '';
-          return `<div class="pl ${turn === x.i && playing ? 'turn' : ''} ${p && p.folded ? 'fold' : ''}"><div class="cards">${p && p.cards ? p.cards.map((c) => card(c)).join('') : card(null) + card(null)}</div>
+        ${(() => { // the boards, the cards still to come marked
+          const row = (have, more, label) => `<div class="board">${[0, 1, 2, 3, 4].map((i) => have[i] != null ? card(have[i]) : playing && more[i - have.length] != null ? card(more[i - have.length], 'up') : card(null)).join('')}${label ? `<span class="small mute bl">${label}</span>` : ''}</div>`;
+          let h = row(v.board || [], v.upcoming || [], v.board2 || (fut && fut.twice) ? 'לוח 1' : '');
+          if (v.board2) h += row(v.board2, v.upcoming2 || [], 'לוח 2');
+          else if (fut && fut.twice && fut.twice.board2) h += row(v.board, fut.twice.board2.slice(v.board.length), 'לוח 2, אם מריצים פעמיים');
+          return h + (playing && (v.upcoming || []).length ? '<span class="small mute">מסומן = הקלפים הבאים בחפיסה</span>' : '');
+        })()}
+        ${playing && contenders.length >= 2 && (fut ? fut.once : guessed) ? `<section class="endbox"><h3>איך היד נגמרת${final ? '' : ' <span class="small mute">(אם אף אחד לא מתקפל)</span>'}</h3>${fut && fut.twice ? endHTML(fut.once, 'אם מריצים פעם אחת', names, cardsOf, game, final) + endHTML(fut.twice, 'אם מריצים פעמיים', names, cardsOf, game, final) : endHTML(fut ? fut.once : guessed, '', names, cardsOf, game, final)}${final ? '' : '<p class="small mute">עוד יש הימורים, אז הסכום הסופי עוד לא ידוע.</p>'}</section>` : ''}
+        ${seats.map((x) => { const p = x.p; const inIt = p && !p.folded && !p.out && p.cards && p.cards.length >= 2;
+          const cat = p && p.cards && p.cards.length >= 2 && v.board.length >= 3 ? handOn(p.cards, v.board.length === 5 ? v.board : null, game) || HANDS[P.category(P.value(p.cards, v.board))] : '';
+          // per run: the hand they end with, and whether it wins
+          const endLine = (sc) => { if (!sc) return ''; const wins = sc.results.filter((r) => r.seats.includes(x.i));
+            const parts = (sc.board2 ? [[sc.board, 1], [sc.board2, 2]] : [[sc.board, 0]]).map(([b, run]) => { const hiW = wins.some((r) => r.run === run && !r.low), loW = wins.some((r) => r.run === run && r.low); const lo = P.hiLo(game) ? P.lowValue(p.cards, b) : 0; return `${run ? `לוח ${run}: ` : ''}<b>${esc(HANDS[P.category(P.value(p.cards, b))])}</b>${hiW ? ' 🏆' : ''}${lo ? ` · לואו ${lowTxt(lo)}${loW ? ' 🏆' : ''}` : ''}`; });
+            return parts.join(' · '); };
+          const scs = fut ? (fut.twice ? [[fut.once, 'פעם אחת'], [fut.twice, 'פעמיים']] : [[fut.once, '']]) : guessed ? [[guessed, '']] : [];
+          const ends = playing && inIt && contenders.length >= 2 ? scs.filter(([sc]) => sc).map(([sc, l]) => `<div class="fut">${l ? `<span class="mute">${l}:</span> ` : 'בסוף: '}${endLine(sc)}</div>`).join('') : '';
+          const mine = fut && fut.once && fut.once.players ? fut.once.players.find((q) => q.seat === x.i) : null;
+          const wonAny = scs.some(([sc]) => sc && sc.results.some((r) => r.seats.includes(x.i)));
+          const netOf = (sc) => { const q = sc && sc.players ? sc.players.find((y) => y.seat === x.i) : null; return q ? `<span class="${q.net > 0 ? 'pos' : q.net < 0 ? 'neg' : ''}">${q.net > 0 ? '+' : q.net < 0 ? '−' : ''}${num(Math.abs(q.net))}</span>` : ''; };
+          const right = !playing || contenders.length < 2 ? '' : final && mine ? (fut.twice ? `<div class="two"><span class="mute">פעם אחת</span>${netOf(fut.once)}<span class="mute">פעמיים</span>${netOf(fut.twice)}</div>` : netOf(fut.once)) : inIt ? (wonAny ? '🏆' : '<span class="neg small">מפסיד</span>') : '';
+          return `<div class="pl ${turn === x.i && playing ? 'turn' : ''} ${p && p.folded ? 'fold' : ''} ${playing && wonAny && inIt ? 'win' : ''}"><div class="cards">${p && p.cards ? p.cards.map((c) => card(c)).join('') : card(null) + card(null)}</div>
           <div><div class="nm">${esc(x.name)} ${x.uid === ROOM.host ? '<span class="pill">מנהל</span>' : ''} ${x.away ? '<span class="pill w">לא ליד השולחן</span>' : ''} ${p && p.folded ? '<span class="pill">ויתר</span>' : ''}</div>
-            <div class="sub">צ׳יפים ${num(x.chips)}${p && p.bet ? ` · הימור ${num(p.bet)}` : ''}${p && p.total ? ` · ביד ${num(p.total)}` : ''}${cat ? ` · ${esc(cat)}` : ''}</div>
-            ${pct != null ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ''}
+            <div class="sub">צ׳יפים ${num(x.chips)}${p && p.bet ? ` · הימור ${num(p.bet)}` : ''}${p && p.total ? ` · ביד ${num(p.total)}` : ''}${cat && !ends ? ` · ${esc(cat)}` : ''}${final && mine && !fut.twice && inIt ? ` · בסוף ${num(mine.after)}` : ''}</div>
+            ${ends}
             <div class="tools" style="margin-top:6px"><input type="number" min="0" value="${x.chips}" data-chips="${x.i}" aria-label="צ׳יפים של ${esc(x.name)}"><button class="ghost small" data-a="chips" data-seat="${x.i}">לקבוע צ׳יפים</button><button class="ghost small" data-a="add" data-seat="${x.i}" data-v="${g.minBuy}">+${num(g.minBuy)}</button><button class="ghost small" data-a="kick" data-seat="${x.i}">להוציא</button>${x.uid !== ROOM.host ? `<button class="ghost small" data-a="host" data-seat="${x.i}">להעביר ניהול</button>` : ''}</div></div>
-          <div class="odds">${pct != null ? `${pct}%` : ''}</div></div>`; }).join('') || '<p class="mute">אין אף אחד ליד השולחן.</p>'}
+          <div class="odds">${right}</div></div>`; }).join('') || '<p class="mute">אין אף אחד ליד השולחן.</p>'}
       </section>
       <div style="display:flex;flex-direction:column;gap:16px">
-        <section class="panel"><h3 style="margin-bottom:8px">הגדרות</h3><form class="form" id="setf">
+        <section class="panel"><h3 style="margin-bottom:8px">הגדרות${s.pendingSettings ? ' <span class="pill w">נכנסות ביד הבאה</span>' : ''}</h3><form class="form" id="setf">
           <label>שם החדר<input name="title" value="${esc(s.title || '')}" maxlength="20"></label>
-          <label>סוג משחק<select name="game" style="height:38px">${['nlh', 'plh', 'plo'].map((x) => `<option value="${x}"${(g.game || 'nlh') === x ? ' selected' : ''}>${T[x]}</option>`).join('')}</select></label>
-          <label>סמול<input name="sb" type="number" value="${g.sb}"></label><label>ביג<input name="bb" type="number" value="${g.bb}"></label>
-          <label>כניסה מינימלית<input name="minBuy" type="number" value="${g.minBuy}"></label><label>כניסה מקסימלית<input name="maxBuy" type="number" value="${g.maxBuy}"></label>
-          <label>מינ׳ רייז<input name="minRaise" type="number" value="${g.minRaise || g.bb}"></label><label>אנטה<input name="ante" type="number" value="${g.ante || 0}"></label><label>בונוס 7-2<input name="bonus72" type="number" value="${g.bonus72 || 0}"></label><label>בומב פוט<input name="bombAmt" type="number" value="${g.bombAmt || g.bb * 2}"></label>
-          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="runTwice" type="checkbox" ${g.runTwice ? 'checked' : ''} style="height:20px;width:20px">להריץ פעמיים</label>
-          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="straddle" type="checkbox" ${g.straddle ? 'checked' : ''} style="height:20px;width:20px">סטראדל</label><label>שניות לתור<input name="turn" type="number" value="${g.turn}"></label><label>מקומות<input name="seats" type="number" min="2" max="9" value="${g.seats}"></label>
-          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="approve" type="checkbox" ${g.approve ? 'checked' : ''} style="height:20px;width:20px">כניסה באישור</label>
+          <label style="grid-column:span 2">סוג משחק<select name="game" style="height:38px">${['nlh', 'plo5', 'plo', 'plh', 'plo58', 'plo8', 'plo6', 'plo68'].map((x) => `<option value="${x}"${(f.game || 'nlh') === x ? ' selected' : ''}>${esc(T[x] || x)}</option>`).join('')}</select></label>
+          <label>סמול<input name="sb" type="number" value="${f.sb}"></label><label>ביג<input name="bb" type="number" value="${f.bb}"></label>
+          <label>כניסה מינימלית<input name="minBuy" type="number" value="${f.minBuy}"></label><label>כניסה מקסימלית<input name="maxBuy" type="number" value="${f.maxBuy}"></label>
+          <label>מינ׳ רייז<input name="minRaise" type="number" value="${f.minRaise || f.bb}"></label><label>אנטה<input name="ante" type="number" value="${f.ante || 0}"></label><label>בונוס 7-2<input name="bonus72" type="number" value="${f.bonus72 || 0}"></label><label>בומב פוט<input name="bombAmt" type="number" value="${f.bombAmt || f.bb * 2}"></label>
+          <label>להריץ פעמיים<select name="runTwice" style="height:38px">${[['no', 'לא'], ['yes', 'תמיד'], ['ask', 'לשאול את השחקנים']].map(([k, l]) => `<option value="${k}"${rit === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label>שניות לתור<input name="turn" type="number" value="${f.turn}"></label><label>בנק זמן (שנ׳)<input name="timeBank" type="number" min="0" max="300" value="${f.timeBank ?? 30}"></label><label>מקומות<input name="seats" type="number" min="2" max="9" value="${f.seats}"></label>
+          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="straddle" type="checkbox" ${f.straddle ? 'checked' : ''} style="height:20px;width:20px">סטראדל</label>
+          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="double" type="checkbox" ${f.double ? 'checked' : ''} style="height:20px;width:20px">שני לוחות</label>
+          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="rabbit" type="checkbox" ${f.rabbit !== false ? 'checked' : ''} style="height:20px;width:20px">ציד ארנבים</label>
+          <label style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input name="approve" type="checkbox" ${f.approve ? 'checked' : ''} style="height:20px;width:20px">כניסה באישור</label>
           <button>שמירה</button></form></section>
         <section class="panel"><h3 style="margin-bottom:8px">צ׳יפים</h3><table><thead><tr><th></th><th>נכנס</th><th>יצא</th><th>סיכום</th></tr></thead><tbody>${Object.entries(s.ledger || {}).map(([uid, l]) => { const seat = s.seats.find((x) => x && x.uid === uid); const now = seat ? seat.chips : 0; const net = now + l.out - l.in; return `<tr><td>${esc(l.name)}</td><td>${num(l.in)}</td><td>${num(l.out + now)}</td><td class="${net > 0 ? 'pos' : net < 0 ? 'neg' : ''}">${num(net)}</td></tr>`; }).join('')}</tbody></table></section>
         <section class="panel"><h3 style="margin-bottom:8px">צ׳אט</h3><div class="log" id="chat">${(s.chat || []).map((m) => `<div><b>${esc(m.name)}:</b> <bdi>${esc(m.text)}</bdi></div>`).join('') || '<p class="mute">אין הודעות</p>'}</div>
@@ -154,7 +219,7 @@
       });
     });
     const f = document.getElementById('setf');
-    if (f && !f.dataset.w) { f.dataset.w = 1; f.addEventListener('submit', (e) => { e.preventDefault(); const d = new FormData(f); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise', 'ante', 'bonus72', 'bombAmt']) o[k] = +d.get(k); o.approve = !!d.get('approve'); o.game = d.get('game'); o.runTwice = !!d.get('runTwice'); o.straddle = !!d.get('straddle'); run('settings', { room: CODE, settings: o, title: d.get('title') }, 'נשמר'); }); }
+    if (f && !f.dataset.w) { f.dataset.w = 1; f.addEventListener('submit', (e) => { e.preventDefault(); const d = new FormData(f); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise', 'ante', 'bonus72', 'bombAmt']) o[k] = +d.get(k); o.timeBank = +d.get('timeBank'); o.approve = !!d.get('approve'); o.game = d.get('game'); o.runTwice = d.get('runTwice'); o.straddle = !!d.get('straddle'); o.double = !!d.get('double'); o.rabbit = !!d.get('rabbit'); call('settings', { room: CODE, settings: o, title: d.get('title') }).then((r) => { toast(r && r.next ? 'נשמר. נכנס לתוקף ביד הבאה' : 'נשמר'); refresh(); }).catch((e2) => toast('שגיאה: ' + e2.message)); }); }
     const say = document.getElementById('say');
     if (say && !say.dataset.w) { say.dataset.w = 1; say.addEventListener('submit', (e) => { e.preventDefault(); const i = say.querySelector('input'); const text = i.value.trim(); if (!text) return; i.value = ''; i.blur(); run('say', { room: CODE, text }); }); }
   }

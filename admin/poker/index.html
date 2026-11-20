@@ -46,7 +46,13 @@ input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid
 .pl .nm{font-weight:700}.pl .sub{font-size:13px;color:var(--mute)}
 .bar{height:8px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#9BF0C6)}
 [dir=rtl] .bar i{margin-inline-start:auto}
-.odds{font-size:20px;font-weight:800;color:var(--ok);min-width:64px;text-align:center}
+.odds{font-size:18px;font-weight:800;min-width:64px;text-align:center}
+.pl.win{border-color:rgba(61,220,151,.55);box-shadow:inset 0 0 0 1px rgba(61,220,151,.25)}
+.fut{font-size:13.5px;margin-top:3px}
+.endbox{background:rgba(61,220,151,.07);border:1px solid rgba(61,220,151,.3);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}.endbox h3{font-size:15px}
+.end{display:flex;flex-direction:column;gap:2px;font-size:14px}.end .hd{color:var(--gold);font-weight:700;margin-top:4px}
+.board .bl{padding-inline:6px}
+.odds .two{display:grid;grid-template-columns:auto auto;gap:2px 8px;font-size:13.5px;align-items:baseline;direction:rtl}
 .tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tools input{width:110px}
 .log{max-height:340px;overflow:auto;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
@@ -65,8 +71,8 @@ table{border-collapse:collapse;width:100%;font-size:13.5px}td,th{padding:4px 6px
 <body>
 <div class="wrap" id="app"><p class="mute">טוען…</p></div>
 <script src="/lib/supabase.js"></script>
-<script src="/poker/engine.js?v=4"></script>
-<script src="/poker/i18n.js?v=7"></script>
-<script src="admin.js?v=3"></script>
+<script src="/poker/i18n.js?v=11"></script>
+<script src="/poker/engine.js?v=9"></script>
+<script src="admin.js?v=4"></script>
 </body>
 </html>

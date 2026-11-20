@@ -446,8 +446,14 @@
       // two boards: double board deals both all hand long; run it twice deals the second from where the first stood
       let A, Bd;
       if (this.board2) {
+        // double board: street by street, both boards each street, exactly as nextStreet would have dealt them
         const before = this.board.length;
-        A = deal(this.board, 5 - this.board2.length); Bd = deal(this.board2);
+        while (this.board.length < 5 && this.deck.length) {
+          const n = this.board.length === 0 ? 3 : 1;
+          this.burn(); for (let k = 0; k < n; k++) this.board.push(this.deck.pop());
+          this.burn(); for (let k = 0; k < n; k++) this.board2.push(this.deck.pop());
+        }
+        A = this.board; Bd = this.board2;
         if (A.length > before) this.on('board', { stage: 'river', board: A.slice(), board2: Bd.slice(), runout: true });
       } else {
         const base = this.board.slice();
