@@ -204,7 +204,7 @@
     this.double = !!opts.double;                           // double board: two boards every hand, each wins half the pot
     this.minOpen = Math.max(1, opts.minRaise || opts.bb);
     this.ante = Math.max(0, opts.ante || 0);               // dead money from everyone before the cards
-    this.runTwice = !!opts.runTwice;                       // all-in before the river: two boards, half the pot each
+    this.runTwice = opts.runTwice === 'ask' ? 'ask' : opts.runTwice === true || opts.runTwice === 'yes' ? 'yes' : 'no'; // all-in before the river: two boards (yes), one (no), or the players choose (ask)
     this.bonus72 = Math.max(0, opts.bonus72 || 0);         // win a hand holding 7-2 and everyone dealt in pays you this  // the smallest bet, and the smallest raise until someone raises more
     this.seats = opts.players.map((p, i) => ({
       seat: i, id: p.id, name: p.name, human: !!p.human, style: p.style || null,
@@ -229,7 +229,7 @@
   // extra: { bomb: amount everyone puts in before a hand that starts on the flop, straddle: seat index or -1 }
   Table.prototype.startHand = function (extra = {}) {
     for (const p of this.seats) { p.out = p.chips <= 0; p.cards = []; p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.canRaise = true; p.shown = false; p.showMine = false; }
-    this.bombed = false;
+    this.bombed = false; this.ask = null; this.twiceNow = false;
     // a deck can't deal six-card Omaha to more than seven: the last ones to sit wait
     { const cap = maxPlayers(this.game); this.live().slice(cap).forEach((p) => (p.out = true)); }
     if (this.live().length < 2) { this.stage = 'idle'; return false; }
@@ -395,6 +395,8 @@
     const order = ['preflop', 'flop', 'turn', 'river'];
     const i = order.indexOf(this.stage);
     if (i === 3) return this.finish();
+    // nobody can bet any more: run the rest out (once, twice, or ask the players first)
+    if (this.inHand().length > 1 && this.seats.filter(this.canAct).length < 2 && this.board.length < 5) return this.runOut();
     this.stage = order[i + 1];
     this.burn();
     const n = this.stage === 'flop' ? 3 : 1;
@@ -433,7 +435,7 @@
     const results = [];
     const hilo = hiLo(this.game);
     const deal = (b, more = 0) => { while (b.length < 5) { if (this.deck.length > 5 - b.length + more) this.deck.pop(); const n = b.length === 0 ? 3 : 1; for (let k = 0; k < n; k++) b.push(this.deck.pop()); } return b; };
-    const twice = this.runTwice && !this.board2 && this.board.length < 5 && this.deck.length >= 2 * (5 - this.board.length);
+    const twice = !!this.twiceNow && !this.board2 && this.board.length < 5 && this.deck.length >= 2 * (5 - this.board.length);
     const scoresOn = (board) => { const hi = {}, lo = {}; for (const p of left) { hi[p.seat] = value(p.cards, board); if (hilo) lo[p.seat] = lowValue(p.cards, board); p.shown = true; } return { hi, lo }; };
     if (left.length === 1) {
       const w = left[0];
@@ -491,6 +493,35 @@
     for (const p of this.seats) { p.bet = 0; p.total = 0; }
     this.stage = 'done';
     this.on('result', { results, board: this.board.slice(), board2: this.board2 ? this.board2.slice() : null, bonus });
+  };
+
+  // all in and nothing left to bet: cards face up, then once or twice. "ask": every player in the pot chooses,
+  // and it runs twice only if they all say yes (one "once" settles it), like PokerNow.
+  Table.prototype.runOut = function () {
+    const mode = this.runTwice === 'ask' ? 'ask' : this.runTwice === true || this.runTwice === 'yes' ? 'yes' : 'no';
+    for (const p of this.inHand()) p.shown = true;
+    if (mode === 'ask' && !this.board2 && this.deck.length >= 2 * (5 - this.board.length)) {
+      const seats = this.inHand().map((p) => p.seat);
+      this.ask = { seats, votes: {} }; this.toAct = -1;
+      this.on('ask', { seats });
+      return;
+    }
+    this.twiceNow = mode === 'yes';
+    return this.finish();
+  };
+  Table.prototype.vote = function (seat, yes) {
+    if (!this.ask || !this.ask.seats.includes(seat) || seat in this.ask.votes) return false;
+    this.ask.votes[seat] = !!yes;
+    const all = this.ask.seats.every((s) => s in this.ask.votes);
+    if (!yes) this.resolveAsk(false);
+    else if (all) this.resolveAsk(this.ask.seats.every((s) => this.ask.votes[s]));
+    return true;
+  };
+  Table.prototype.resolveAsk = function (twice) {
+    if (!this.ask) return;
+    this.ask = null; this.twiceNow = !!twice;
+    this.on('asked', { twice: !!twice });
+    this.finish();
   };
 
   // a pot (or the half of it that one board plays for): high hand, and in hi-lo half to the best qualifying low
