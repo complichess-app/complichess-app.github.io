@@ -671,7 +671,8 @@
     }
     return sum / n;
   }
-  function legend(t, seat, ms = 140) {
+  // size: its owner's taste in bets, 0.5 (half the usual) to 2 (twice); all-in stays all-in
+  function legend(t, seat, ms = 140, size = 1) {
     const p = t.seats[seat], o = t.options(seat);
     const omaha = p.cards.length > 2, street = t.board.length, bb = Math.max(1, t.bb || 1);
     const opps = t.inHand().length - 1;
@@ -684,7 +685,7 @@
     const committed = behindStack < after * 0.3;      // so little left that folding later makes no sense
     const to = (x) => Math.max(o.minTo, Math.min(o.maxTo, roundChips(x, bb)));
     const potRaise = (frac) => to(t.currentBet + Math.max(bb, after * frac));
-    const raise = (x) => (o.raise ? { type: 'raise', to: x } : o.check ? { type: 'check' } : { type: 'call' });
+    const raise = (x) => (o.raise ? { type: 'raise', to: x >= o.maxTo || size === 1 ? x : to(t.currentBet + (x - t.currentBet) * size) } : o.check ? { type: 'check' } : { type: 'call' });
     const callOrFold = (edge) => (o.check ? { type: 'check' } : eq + edge >= price ? { type: 'call' } : { type: 'fold' });
     const tight = omaha ? 0.82 : 1; // omaha hands run closer together
 

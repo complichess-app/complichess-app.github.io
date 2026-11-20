@@ -383,7 +383,7 @@
     app.innerHTML = `<div class="room" id="room" dir="ltr">
         <div class="rbar" id="rbar"></div>
         <div class="tablearea" id="felt"></div>
-        <div class="dock" dir="ltr"><div class="chatdock hide" id="chatdock"></div><span></span><div class="acts" id="acts" aria-live="off"></div></div>
+        <div class="dock" dir="ltr"><div class="chatdock hide" id="chatdock"></div><div class="botbar hide" id="botbar"></div><div class="acts" id="acts" aria-live="off"></div></div>
         <div class="banner" id="banner"></div>
       </div>`;
     const scrim = document.createElement('div'); scrim.className = 'scrim'; scrim.id = 'scrim';
@@ -451,27 +451,28 @@
     roomShell();
     let myBot = null; // the legendary bot, if the admin gave it to me: { on }; only I am told
     // the bot's own window: on or off, and how fast it plays (twice as slow .. twice as fast)
+    const sizeTxt = (v) => { const f = Math.pow(2, Math.abs(v)); return Math.abs(v) < 0.01 ? T.normalSp : fill(v > 0 ? T.biggerX : T.smallerX, { a: (Math.round(f * 10) / 10).toString() }); };
     const speedTxt = (v) => { const f = Math.pow(2, Math.abs(v)); return Math.abs(v) < 0.01 ? T.normalSp : fill(v > 0 ? T.fasterX : T.slowerX, { a: (Math.round(f * 10) / 10).toString() }); };
-    function botSheet() {
-      if (!myBot) return;
-      const d = document.createElement('dialog'); d.className = 'botd';
-      const paint = () => {
-        d.innerHTML = `<h2>🤖 ${esc(T.botTitle)}</h2>
-          <button type="button" class="btn ${myBot.on ? '' : 'ghost'} bon" data-on>${esc(myBot.on ? T.botIsOn : T.botIsOff)}</button>
-          <label class="spd"><span>${esc(T.speedL)}: <b data-v>${esc(speedTxt(myBot.speed || 0))}</b></span>
-            <span class="rng" dir="ltr"><small>${esc(T.slow2)}</small><input type="range" min="-1" max="1" step="0.125" value="${myBot.speed || 0}" aria-label="${esc(T.speedL)}"><small>${esc(T.fast2)}</small></span></label>
-          <p class="mute small" style="margin:0">${esc(T.botNote)}</p>
-          <div class="row"><button type="button" class="btn ghost" data-x>${esc(T.shut || T.cancel)}</button></div>`;
-        d.querySelector('[data-x]').onclick = () => d.close();
-        d.querySelector('[data-on]').onclick = (e) => { e.target.disabled = true; call('mybot', { room: id, on: !myBot.on }).then((r) => { myBot = r.allowed ? { on: !!r.on, speed: r.speed || 0 } : null; $('#rbar')._key = ''; drawBar(); draw(); if (!myBot) return d.close(); paint(); }).catch((x) => { e.target.disabled = false; fail(x); }); };
-        const rg = d.querySelector('input[type=range]'), out = d.querySelector('[data-v]');
-        rg.oninput = () => { out.textContent = speedTxt(+rg.value); };
-        rg.onchange = () => { const v = +rg.value; myBot.speed = v; call('mybot', { room: id, speed: v }).catch(fail); };
-      };
-      paint(); document.body.appendChild(d); d.showModal();
-      d.addEventListener('close', () => d.remove());
+    // the bot's strip at the bottom of the screen, for its owner only: on/off and how fast it plays
+    function drawBotBar() {
+      const el = $('#botbar'); if (!el) return;
+      const key = myBot ? JSON.stringify(myBot) : '';
+      if (el._key === key) return; el._key = key;
+      el.classList.toggle('hide', !myBot);
+      if (!myBot) { el.innerHTML = ''; return; }
+      const row = (k, v, lo, hi, txt, lab) => `<span class="bk2">${esc(lab)}</span><span class="bsp" dir="ltr"><small>${esc(lo)}</small><input type="range" data-k="${k}" min="-1" max="1" step="0.125" value="${v || 0}" aria-label="${esc(lab)}"><small>${esc(hi)}</small></span><b class="bv" data-v="${k}" dir="auto">${esc(txt(v || 0))}</b>`;
+      el.innerHTML = `<button type="button" class="bsw${myBot.on ? ' on' : ''}" role="switch" aria-checked="${myBot.on}" aria-label="${esc(T.botTitle)}"><i></i></button>
+        <span class="bl" dir="auto">🤖</span>${row('speed', myBot.speed, T.slowS, T.fastS, speedTxt, T.speedL)}
+        <span></span><span></span>${row('size', myBot.size, T.smallS, T.bigS, sizeTxt, T.sizeL)}`;
+      const sw = el.querySelector('.bsw');
+      sw.onclick = () => { sw.disabled = true; PT.sfx.click(); call('mybot', { room: id, on: !myBot.on }).then((r) => { myBot = r.allowed ? { on: !!r.on, speed: r.speed || 0, size: r.size || 0 } : null; toast(myBot && myBot.on ? T.botOnT : T.botOff); drawBotBar(); draw(); }).catch((x) => { sw.disabled = false; fail(x); }); };
+      el.querySelectorAll('input[type=range]').forEach((rg) => {
+        const k = rg.dataset.k, out = el.querySelector(`[data-v=${k}]`), txt = k === 'speed' ? speedTxt : sizeTxt;
+        rg.oninput = () => { out.textContent = txt(+rg.value); };
+        rg.onchange = () => { const v = +rg.value; myBot = { ...myBot, [k]: v }; el._key = JSON.stringify(myBot); call('mybot', { room: id, [k]: v }).catch(fail); };
+      });
     }
-    const askBot = () => { if (mySeat() < 0) { myBot = null; return; } call('mybot', { room: id, get: true }).then((r) => { const b = r.allowed ? { on: !!r.on, speed: r.speed || 0 } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; draw(); } }).catch(() => {}); };
+    const askBot = () => { if (mySeat() < 0) { myBot = null; return; } call('mybot', { room: id, get: true }).then((r) => { const b = r.allowed ? { on: !!r.on, speed: r.speed || 0, size: r.size || 0 } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; draw(); } }).catch(() => {}); };
     let room = null, my = { hand: -1, cards: null }, unread = 0, admin = false, timers = [], alive = true, chan = null, lastTurnMine = false, chatSeen = null;
     let tbl = null, seenThrows = null, wonHand = 0, bchan = null, pendingThrows = 0, lastReqs = 0;
     let rabbit = null; // {hand, board}: the cards that would have come, only for me
@@ -605,7 +606,7 @@
       if (room.status === 'closed') { gone(T.closed); return; }
       const live = st().live, ms = mySeat();
       const handNo = st().handNo || 0;
-      if (ms >= 0 && live && live.players[ms] && live.players[ms].has && my.hand !== handNo) { my.hand = handNo; my.cards = null; call('my', { room: id }).then((r) => { if ('bot' in r) { const b = r.bot ? { on: !!r.bot.on, speed: r.bot.speed || 0 } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; $('#rbar')._key = ''; } } if (r.hand === handNo) { my.cards = r.cards; draw(); } }).catch(() => { my.hand = -1; }); }
+      if (ms >= 0 && live && live.players[ms] && live.players[ms].has && my.hand !== handNo) { my.hand = handNo; my.cards = null; call('my', { room: id }).then((r) => { if ('bot' in r) { const b = r.bot ? { on: !!r.bot.on, speed: r.bot.speed || 0, size: r.bot.size || 0 } : null; if (JSON.stringify(b) !== JSON.stringify(myBot)) { myBot = b; $('#rbar')._key = ''; } } if (r.hand === handNo) { my.cards = r.cards; draw(); } }).catch(() => { my.hand = -1; }); }
       if (!live || !live.players[ms]) my.cards = null;
       schedule();
       const seatKey = (st().seats || []).map((x) => (x ? x.uid : '')).join(',');
@@ -704,7 +705,6 @@
         B.push(me.away ? ['bk', T.back, 'green wide keep', () => call('back', { room: id }).catch(fail)] : ['aw', T.away, 'wide', () => call('away', { room: id }).catch(fail)]);
         if (g.straddle) B.push(['sd', T.straddle + (me.straddle ? ' ✓' : ''), 'wide' + (me.straddle ? ' on' : ''), () => call('straddle', { room: id, on: !me.straddle }).catch(fail)]);
         // the legendary bot, for whoever the admin gave it to
-        if (myBot) B.push(['bot', '🤖 ' + T.botB + (myBot.on ? ' ✓' : ''), 'wide' + (myBot.on ? ' on' : ''), botSheet]);
         B.push(['rb', T.rebuy, 'wide', () => askChips('rebuy')]);
         B.push(['lv', T.leave, 'wide', () => call('leave', { room: id }).catch(fail)]);
       }
@@ -838,7 +838,7 @@
     function draw() {
       if (!alive || !room || !$('#felt')) return;
       const v = view(), s = st();
-      drawBar(); drawBanner(); drawChatDock();
+      drawBar(); drawBanner(); drawChatDock(); drawBotBar();
       if (!tbl) tbl = PT.createTable($('#felt'), T);
       tbl.update(v);
       const mine = s.turn && s.turn.s === v.me && v.me >= 0;
