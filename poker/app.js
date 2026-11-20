@@ -610,6 +610,8 @@
       const now = Date.now(), jitter = () => 250 + Math.random() * 700;
       const at = [];
       if (st().turn) at.push(st().turn.until);
+      // the server may ask to be woken earlier in a turn (st.nudge)
+      if (st().turn && st().nudge && st().nudge > now - 1500 && st().nudge < st().turn.until) at.push(st().nudge);
       if (st().ask) at.push(st().ask.until);
       if (st().nextAt && st().playing && !st().paused) at.push(st().nextAt);
       for (const t of at) timers.push(setTimeout(() => call('tick', { room: id }).catch(() => {}), Math.max(0, t - now) + jitter()));
