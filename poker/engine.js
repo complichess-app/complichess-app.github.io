@@ -116,8 +116,13 @@
       }
     return best;
   }
-  const HOLES = { nlh: 2, plh: 2, plo: 4, plo8: 4, plo5: 5 };
+  // PokerNow's games: hold'em (no limit, pot limit), and pot-limit Omaha with 4, 5 or 6 cards, high or hi/lo
+  const HOLES = { nlh: 2, plh: 2, plo: 4, plo8: 4, plo5: 5, plo58: 5, plo6: 6, plo68: 6 };
+  const HILO = { plo8: 1, plo58: 1, plo68: 1 };
   const holesOf = (game) => HOLES[game] || 2;
+  const hiLo = (game) => !!HILO[game];
+  // with burns skipped when short, the deck holds everyone's cards plus one board
+  const maxPlayers = (game) => Math.min(9, Math.floor(47 / holesOf(game)));
 
   /* the five cards that make the hand, for highlighting on the table: bestFive(hole, board) */
   function bestFive(hole, board) {
@@ -225,6 +230,8 @@
   Table.prototype.startHand = function (extra = {}) {
     for (const p of this.seats) { p.out = p.chips <= 0; p.cards = []; p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.canRaise = true; p.shown = false; p.showMine = false; }
     this.bombed = false;
+    // a deck can't deal six-card Omaha to more than seven: the last ones to sit wait
+    { const cap = maxPlayers(this.game); this.live().slice(cap).forEach((p) => (p.out = true)); }
     if (this.live().length < 2) { this.stage = 'idle'; return false; }
     this.hand++;
     this.deck = shuffled();
@@ -424,7 +431,7 @@
     this.returnUncalled();
     const left = this.inHand();
     const results = [];
-    const hilo = this.game === 'plo8';
+    const hilo = hiLo(this.game);
     const deal = (b, more = 0) => { while (b.length < 5) { if (this.deck.length > 5 - b.length + more) this.deck.pop(); const n = b.length === 0 ? 3 : 1; for (let k = 0; k < n; k++) b.push(this.deck.pop()); } return b; };
     const twice = this.runTwice && !this.board2 && this.board.length < 5 && this.deck.length >= 2 * (5 - this.board.length);
     const scoresOn = (board) => { const hi = {}, lo = {}; for (const p of left) { hi[p.seat] = value(p.cards, board); if (hilo) lo[p.seat] = lowValue(p.cards, board); p.shown = true; } return { hi, lo }; };
@@ -488,7 +495,7 @@
 
   // a pot (or the half of it that one board plays for): high hand, and in hi-lo half to the best qualifying low
   Table.prototype.split = function (pot, amount, sc, run) {
-    if (this.game !== 'plo8') return [this.award(pot, amount, sc.hi, run)];
+    if (!hiLo(this.game)) return [this.award(pot, amount, sc.hi, run)];
     const lows = {}; for (const s of pot.eligible) if (sc.lo[s]) lows[s] = sc.lo[s];
     if (!Object.keys(lows).length) return [this.award(pot, amount, sc.hi, run)];
     const hiPart = Math.floor(amount / 2) + (amount % 2);
@@ -558,7 +565,7 @@
   }
   const roundChips = (v, bb) => { const u = bb >= 100 ? bb / 4 : bb / 2; return Math.max(u, Math.round(v / u) * u); };
 
-  const api = { Table, evaluate, value, lowValue, holesOf, HOLES, category, bestFive, equity, odds, decide, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
+  const api = { Table, evaluate, value, lowValue, holesOf, hiLo, maxPlayers, HOLES, category, bestFive, equity, odds, decide, cardText, parse, rankOf, suitOf, shuffled, STYLES, roundChips };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Poker = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

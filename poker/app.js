@@ -155,7 +155,8 @@
 
   /* ---------- cards ---------- */
   const RK = { 10: '10', 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
-  const GAMES = ['nlh', 'plh', 'plo', 'plo8', 'plo5'];
+  const GAMES = ['nlh', 'plh', 'plo', 'plo8', 'plo5', 'plo58', 'plo6', 'plo68'];
+  const SHORT = { nlh: 'NLH', plh: 'PLH', plo: 'PLO', plo8: 'PLO Hi/Lo', plo5: 'PLO5', plo58: 'PLO5 Hi/Lo', plo6: 'PLO6', plo68: 'PLO6 Hi/Lo' };
   // the newer server (hand history, double board, Hi/Lo, time bank, rabbit) answers `myhands`; an older one doesn't know it
   let PLUS = null, plusP = null;
   function probePlus() {
@@ -206,6 +207,7 @@
         <div class="row"><label>${esc(T.blinds)}<select name="bl">${[[5, 10], [10, 20], [25, 50], [50, 100], [100, 200], [500, 1000]].map(([s, b], i) => `<option value="${s}/${b}"${i === 1 ? ' selected' : ''}>${s}/${b}</option>`).join('')}</select></label>
         <label>${esc(T.seats)}<select name="seats">${[2, 4, 6, 8, 9].map((n) => `<option${n === 9 ? ' selected' : ''}>${n}</option>`).join('')}</select></label></div>
         <label>${esc(T.game)}<select name="game">${games().map((g) => `<option value="${g}">${esc(T[g])}</option>`).join('')}</select></label>
+        <label>${esc(T.maxBuy)}<input name="maxBuy" type="number" inputmode="numeric" min="100" max="100000000" step="100" value="100000"></label>
         <label class="check"><input type="checkbox" name="approve" checked>${esc(T.approveOn)}</label>
         <button class="btn">${esc(T.createGo)}</button>`;
       c.onsubmit = async (e) => {
@@ -213,7 +215,7 @@
         const f = new FormData(c); const [s, b] = String(f.get('bl')).split('/').map(Number);
         const btn = $('button.btn', c); btn.disabled = true;
         try {
-          const r = await call('create', { title: f.get('title'), name: f.get('name'), settings: { sb: s, bb: b, seats: +f.get('seats'), approve: !!f.get('approve'), minBuy: b * 50, maxBuy: b * 200, game: f.get('game'), minRaise: b } });
+          const r = await call('create', { title: f.get('title'), name: f.get('name'), settings: { sb: s, bb: b, seats: +f.get('seats'), approve: !!f.get('approve'), minBuy: b * 50, maxBuy: Math.max(b * 50, +f.get('maxBuy') || 100000), game: f.get('game'), minRaise: b } });
           try { localStorage.setItem('barusik.poker.name', String(f.get('name'))); } catch {}
           go('?r=' + r.room);
         } catch (x) { fail(x); btn.disabled = false; }
@@ -272,7 +274,7 @@
       case 'throw': return fill(esc(T.lthrow), { n, t: `<bdi class="cs">${esc(e.to || '')}</bdi>` });
       case 'buy': return fill(esc(T.lbuy), { n, a });
       case 'show': return fill(esc(T.lshow), { n }) + (e.b ? ` [${e.b.map(cardLabel).join(' ')}]` : '');
-      case 'settings': return fill(esc(T.lsettings), { a: `<bdi class="n">${e.sb}/${e.bb}</bdi>` });
+      case 'settings': return fill(esc(e.next ? T.lsettingsNext : T.lsettings), { a: `<bdi class="n">${e.sb}/${e.bb}</bdi>` }) + (e.game ? ` · ${esc(T[e.game] || '')}` : '');
       default: return '';
     }
   }
@@ -639,12 +641,12 @@
       B.push(['ledger', T.ledger, 'wide' + (drawerTab === 'ledger' ? ' on' : ''), () => toggle('ledger')]);
       B.push(['opt', T.settings, 'wide' + (drawerTab === 'opt' ? ' on' : ''), () => toggle('opt')]);
       B.push(['share', T.share, 'gold wide', share]);
-      const key = JSON.stringify([B.map((b) => b[0] + b[1] + b[2]), s.title, g.game, g.sb, g.bb, unread, PT.prefs.bbs]);
+      const key = JSON.stringify([B.map((b) => b[0] + b[1] + b[2]), s.title, g.game, g.sb, g.bb, unread, PT.prefs.bbs, s.pendingSettings || 0]);
       const bar = $('#rbar');
       if (bar._key !== key) {
         bar._key = key;
         bar.innerHTML = `<a class="rb-home" href="./" aria-label="${esc(T.title)}">♠</a>
-          <div class="rb-title"><b dir="auto">${esc(s.title || room.name || id)}</b><span class="code">${esc(id)}</span><span class="game">${esc(T[g.game || 'nlh'])} · <bdi class="n">${g.sb.toLocaleString('en-US')}/${g.bb.toLocaleString('en-US')}</bdi></span></div>
+          <div class="rb-title"><b dir="auto">${esc(s.title || room.name || id)}</b><span class="code">${esc(id)}</span><span class="game">${esc(T[g.game || 'nlh'])} · <bdi class="n">${g.sb.toLocaleString('en-US')}/${g.bb.toLocaleString('en-US')}</bdi>${s.pendingSettings ? ` <span class="pill" style="background:rgba(217,164,65,.18);color:var(--brass2)">${esc(T.nextL)}: ${SHORT[s.pendingSettings.game] || ''} <bdi class="n">${s.pendingSettings.sb}/${s.pendingSettings.bb}</bdi></span>` : ''}</span></div>
           <span class="sp"></span>
           <div class="rb-btns" dir="ltr">${B.map(([k, l, c]) => `<button type="button" class="rbtn ${c.replace('phoneonly', '')}${c.includes('phoneonly') ? ' po' : ''}" data-b="${k}">${esc(l)}${k === 'chat' && unread ? '<span class="dot"></span>' : ''}</button>`).join('')}
           <button type="button" class="rbtn icon rb-menu keep" id="mnu" aria-label="${esc(T.menu)}">☰</button></div>`;
@@ -694,7 +696,9 @@
       $('#tabs [aria-selected=true]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       $('#tabs').querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { drawerTab = b.dataset.t; if (drawerTab === 'chat') unread = 0; drawSide(); drawBar(); }));
       $('#sideX').onclick = () => { closeDrawer(); drawBar(); };
-      const foot = $('#sidefoot'); foot.innerHTML = '';
+      const sameTab = pane.dataset.tab === drawerTab; if (!sameTab) pane._okey = '';
+      const foot = $('#sidefoot'); if (!(sameTab && drawerTab === 'opt')) foot.innerHTML = '';
+      if (drawerTab !== 'opt') pane.dataset.tab = drawerTab;
       if (drawerTab === 'log') { pane.innerHTML = logHTML(s.log || []); pane.scrollTop = pane.scrollHeight; }
       else if (drawerTab === 'hands' || drawerTab === 'stats') {
         if (hist.off) { pane.innerHTML = `<p class="mute" dir="auto">${esc(T.histOff)}</p>`; return; }
@@ -717,9 +721,14 @@
         const rows = Object.entries(s.ledger || {}).map(([uid, l]) => { const seat = s.seats.find((x) => x && x.uid === uid); const now = seat ? seat.chips : 0; const net = now + l.out - l.in; return `<tr><td><bdi>${esc(l.name)}</bdi></td><td>${num(l.in)}</td><td>${num(l.out)}</td><td>${seat ? num(now) : '–'}</td><td class="${net > 0 ? 'pos' : net < 0 ? 'neg' : ''}">${net > 0 ? '+' : ''}${num(net)}</td></tr>`; }).join('');
         pane.innerHTML = `<table class="ledger"><thead><tr><th>${esc(T.player)}</th><th>${esc(T.inL)}</th><th>${esc(T.outL)}</th><th>${esc(T.stack)}</th><th>${esc(T.net)}</th></tr></thead><tbody>${rows}</tbody></table><p class="mute small" dir="auto">${esc(T.chipsOnly)}</p>`;
       } else if (drawerTab === 'opt') {
-        const g = s.settings, host = isHost();
+        // the form is redrawn only when something it shows changed, so half-made edits survive other players' moves
+        const okey = JSON.stringify([s.settings, s.pendingSettings || 0, s.title, isHost(), s.bombNext, s.playing, (s.seats || []).map((x) => x && [x.uid, x.name, x.chips]), PT.prefs, L, PLUS]);
+        if (pane.dataset.tab === 'opt' && pane._okey === okey) return;
+        pane._okey = okey; pane.dataset.tab = 'opt';
+        const g = s.pendingSettings || s.settings, host = isHost();
         pane.innerHTML = prefsHTML() + (host ? `<form id="setf" style="display:flex;flex-direction:column">
-          <h3>${esc(T.gameOpts)}</h3>
+          <h3>${esc(T.gameOpts)}${s.pendingSettings ? ` <span class="pill" style="background:rgba(217,164,65,.18);color:var(--brass2)">${esc(T.nextL)}</span>` : ''}</h3>
+          <p class="mute small" dir="auto" style="margin:0 0 6px">${esc(T.optsNote)}</p>
           <label>${esc(T.roomName)}<input name="title" maxlength="20" value="${esc(s.title || '')}" dir="auto"></label>
           <label>${esc(T.game)}<select name="game">${games().map((x) => `<option value="${x}"${g.game === x ? ' selected' : ''}>${esc(T[x])}</option>`).join('')}</select></label>
           <label>${esc(T.sb)}<input name="sb" type="number" min="1" value="${g.sb}"></label><label>${esc(T.bb)}<input name="bb" type="number" min="2" value="${g.bb}"></label>
@@ -743,7 +752,7 @@
           <div style="margin-top:14px"><button class="btn red small" id="cl">${esc(T.close)}</button></div>` : '');
         bindPrefs(pane, () => { tbl && tbl.relayout(); draw(); drawSide(); });
         if (host) {
-          $('#setf').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise', 'ante', 'bonus72', 'bombAmt', 'timeBank']) o[k] = +f.get(k); o.approve = !!f.get('approve'); o.runTwice = !!f.get('runTwice'); o.straddle = !!f.get('straddle'); if (PLUS) { o.double = !!f.get('double'); o.rabbit = !!f.get('rabbit'); } else delete o.timeBank; o.game = f.get('game'); call('settings', { room: id, settings: o, title: f.get('title') }).then(() => toast('✓')).catch(fail); };
+          $('#setf').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise', 'ante', 'bonus72', 'bombAmt', 'timeBank']) o[k] = +f.get(k); o.approve = !!f.get('approve'); o.runTwice = !!f.get('runTwice'); o.straddle = !!f.get('straddle'); if (PLUS) { o.double = !!f.get('double'); o.rabbit = !!f.get('rabbit'); } else delete o.timeBank; o.game = f.get('game'); call('settings', { room: id, settings: o, title: f.get('title') }).then((r) => toast(r && r.next ? '✓ ' + T.savedNext : '✓ ' + T.savedNow)).catch(fail); };
           pane.querySelectorAll('[data-stkb]').forEach((b) => (b.onclick = () => { const i = +b.dataset.stkb; call('chips', { room: id, seat: i, to: +pane.querySelector(`[data-stk="${i}"]`).value }).then(() => toast('✓')).catch(fail); }));
           pane.querySelectorAll('[data-kick]').forEach((b) => (b.onclick = () => call('kick', { room: id, seat: +b.dataset.kick }).catch(fail)));
           pane.querySelectorAll('[data-host]').forEach((b) => (b.onclick = () => call('host', { room: id, seat: +b.dataset.host }).catch(fail)));
