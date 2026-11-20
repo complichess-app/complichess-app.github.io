@@ -203,52 +203,6 @@
 
   /* ---------- the table, drawn from a plain view ---------- */
   // view: { n, me, seats[{name,chips,bet,folded,allIn,cards,away,leaving,win,hand}|null], button, sb, bb, board, pot, toAct, until, turnSec, msg, canSit }
-  let lastBoard = '', lastHole = '';
-  function seatPos(i, n, me) {
-    const base = me >= 0 ? me : 0;
-    const k = (i - base + n) % n;
-    const a = Math.PI / 2 + (k / n) * Math.PI * 2 * (rtl() ? -1 : 1);
-    const wide = innerWidth > 640;
-    const b = k === 0 ? 0.55 : 0.68, rx = wide ? 45 : 41, ry = wide ? 42 : 45, ad = a + (rtl() ? 0.42 : -0.42) * (k === 0 ? 1.3 : 1);
-    return { dx: 50 + Math.cos(ad) * rx * 0.66, dy: 50 + Math.sin(ad) * ry * 0.66, x: 50 + Math.cos(a) * (wide ? 45 : 41), y: 50 + Math.sin(a) * (wide ? 42 : 45), bx: 50 + Math.cos(a) * (wide ? 45 : 41) * b, by: 50 + Math.sin(a) * (wide ? 42 : 45) * b };
-  }
-  function drawTable(felt, v, onSit) {
-    const bkey = v.board.join(',');
-    const newBoard = bkey !== lastBoard; const prevBoard = lastBoard ? lastBoard.split(',').length : 0; lastBoard = bkey;
-    const win = new Set(); for (const s of v.seats) if (s && s.win) s.best?.forEach((c) => win.add(c));
-    let html = `<div class="oval"><div class="mark">BARUSIK</div></div><div class="center">
-      <div class="board">${[0, 1, 2, 3, 4].map((i) => cardHTML(v.board[i] ?? null, (newBoard && i >= prevBoard && v.board[i] != null ? 'in ' : '') + (win.size && v.board[i] != null ? (win.has(v.board[i]) ? 'hl' : 'dim') : ''))).join('')}</div>
-      ${v.pot ? `<div class="potv"><span class="chip"></span>${esc(T.pot)} ${num(v.pot)}</div>` : ''}
-      ${v.msg ? `<div class="msg">${v.msg}</div>` : ''}</div>`;
-    for (let i = 0; i < v.n; i++) {
-      const s = v.seats[i]; const p = seatPos(i, v.n, v.me);
-      if (!s) {
-        html += `<div class="seat" style="left:${p.x}%;top:${p.y}%">${v.canSit ? `<button class="empty" data-sit="${i}">${esc(T.sitHere)}</button>` : `<div class="empty">${esc(T.empty)}</div>`}</div>`;
-        continue;
-      }
-      const me = i === v.me;
-      const cards = s.cards === 'back' ? Array(v.holes || 2).fill('back') : Array.isArray(s.cards) ? s.cards : [];
-      const hk = me ? cards.join(',') + v.hand : '';
-      const fresh = me && hk !== lastHole; if (me) lastHole = hk;
-      const turn = v.toAct === i;
-      const left = turn && v.until ? Math.max(0, v.until - Date.now()) : 0;
-      html += `<div class="seat ${me ? 'me' : ''} ${turn ? 'turn' : ''} ${s.folded ? 'folded' : ''} ${s.win ? 'win' : ''}" style="left:${p.x}%;top:${p.y}%">
-        <div class="hole ${cards.length > 2 ? 'four' : ''}">${cards.map((c) => cardHTML(c, (fresh ? 'in ' : '') + (win.size && c !== 'back' ? (win.has(c) ? 'hl' : 'dim') : ''))).join('')}</div>
-        <div class="plate" data-plate="${i}">${v.canThrow && !me ? `<button class="tom" data-throw="${i}" aria-label="${esc(fill(T.throwAt, { n: s.name }))}" title="${esc(fill(T.throwAt, { n: s.name }))}">🍅</button>` : ''}${s.allIn ? `<span class="tag">${esc(T.allin)}</span>` : s.away ? `<span class="tag" style="background:#555;color:#eee">${esc(T.isAway)}</span>` : ''}
-          <div class="nm">${esc(s.name)}${me && s.name !== T.you ? ` <span class="mute small">(${esc(T.you)})</span>` : ''}</div>
-          <div class="ch">${num(s.chips)}</div>
-          ${s.hand ? `<div class="hand">${esc(s.hand)}</div>` : ''}
-          ${turn && v.until ? `<div class="timer"><i class="go" style="animation-duration:${left}ms;transform:scaleX(${Math.min(1, left / (v.turnSec * 1000))})"></i></div>` : ''}
-        </div></div>`;
-      if (s.bet > 0) html += `<div class="chipst" style="left:${p.bx}%;top:${p.by}%"><span class="chip ${s.bet >= (v.bb || 1) * 10 ? 'b' : ''}"></span>${num(s.bet)}</div>`;
-      if (s.win) html += `<div class="chipst" style="left:${p.bx}%;top:${p.by}%;color:var(--ok)">+${num(s.win)}</div>`;
-    }
-    if (v.button != null && v.seats[v.button]) { const p = seatPos(v.button, v.n, v.me); html += `<div class="dbtn" style="left:${p.dx}%;top:${p.dy}%" title="${esc(T.dealer)}" aria-label="${esc(T.dealer)}">D</div>`; }
-    felt.innerHTML = html;
-    felt.querySelectorAll('[data-sit]').forEach((b) => (b.onclick = () => onSit(+b.dataset.sit)));
-    felt.querySelectorAll('[data-throw]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); v.onThrow && v.onThrow(+b.dataset.throw); }));
-  }
-
   function drawActions(el, v, o, send) {
     if (!o) { el.innerHTML = v.under || ''; return; }
     const me = v.seats[v.me];
@@ -275,12 +229,15 @@
     const n = esc(e.name || ''); const all = e.all ? esc(T.lall) : '';
     switch (e.k) {
       case 'hand': return `<div class="hd">${fill(esc(T.lhand), { a: e.n })}</div>`;
-      case 'sb': return fill(esc(T.lsb), { n, a }); case 'bb': return fill(esc(T.lbb), { n, a });
+      case 'sb': return fill(esc(T.lsb), { n, a }); case 'bb': return fill(esc(T.lbb), { n, a }); case 'ante': return fill(esc(T.lante), { n, a }); case 'straddle': return fill(esc(T.lstraddle), { n, a }); case 'bomb': return fill(esc(T.lbombp), { n, a });
       case 'fold': return fill(esc(T.lfold), { n }); case 'check': return fill(esc(T.lcheck), { n });
       case 'call': return fill(esc(T.lcall), { n, a }) + all; case 'bet': return fill(esc(T.lbet), { n, a }) + all; case 'raise': return fill(esc(T.lraise), { n, a }) + all;
       case 'board': return fill(esc(T.lboard), { a: `<bdi dir="ltr">${e.b.map(cardLabel).join(' ')}</bdi>` });
       case 'back': return fill(esc(T.lback), { n, a });
-      case 'win': return (e.cat == null ? fill(esc(T.lwin), { n: esc((e.names || []).join(', ')), a }) : fill(esc(T.lwinH), { n: esc((e.names || []).join(', ')), a, h: esc(handName(e.cat)) }));
+      case 'board2': return fill(esc(T.lboard2), { a: `<bdi dir="ltr">${e.b.map(cardLabel).join(' ')}</bdi>` });
+      case 'b72': return fill(esc(T.l72), { n, a });
+      case 'bombon': return fill(esc(T.lbombon), { a }); case 'bomboff': return esc(T.lbomboff);
+      case 'win': return (e.run ? `<b>${esc(fill(T.runN, { a: e.run }))}</b> ` : '') + (e.cat == null ? fill(esc(T.lwin), { n: esc((e.names || []).join(', ')), a }) : fill(esc(T.lwinH), { n: esc((e.names || []).join(', ')), a, h: esc(handName(e.cat)) }));
       case 'sit': return fill(esc(T.lsit), { n, a }); case 'left': return fill(esc(T.lleft), { n, a }); case 'rebuy': return fill(esc(T.lrebuy), { n, a });
       case 'kick': return fill(esc(T.lkick), { n }); case 'host': return fill(esc(T.lhost), { n }); case 'admin': return esc(T.ladmin);
       case 'pause': return esc(T.lpause); case 'resume': return esc(T.lresume); case 'closed': return esc(T.lclosed);
@@ -307,9 +264,52 @@
     $('#sideX').onclick = () => $('#side').classList.remove('open');
   }
 
+
+  /* ---------- characters and photos ---------- */
+  const lookHTML = (l) => (l && l.ph ? `<span class="ph"><img src="${esc(l.ph)}" alt="" draggable="false"></span>` : PokerArt.avatarSVG((l && l.av) || 0));
+  function savedLook() {
+    let av = Math.floor(Math.random() * PokerArt.count), ph = '';
+    try { const v = localStorage.getItem('barusik.poker.look'); if (v != null && v !== '') av = (+v || 0) % PokerArt.count; ph = ''; } catch {}
+    return { av, ph };
+  }
+  // shrink to a 256×256 square, WebP (JPEG where the browser can't write WebP)
+  async function shrink(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+      const s = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement('canvas'); c.width = c.height = 256;
+      c.getContext('2d').drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2.6, s, s, 0, 0, 256, 256);
+      let blob = await new Promise((ok) => c.toBlob(ok, 'image/webp', 0.86));
+      if (!blob || blob.type !== 'image/webp') blob = await new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.86));
+      return blob;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function uploadPhoto(file) {
+    if (!file || !/^image\//.test(file.type)) throw new Error('photo');
+    const blob = await shrink(file);
+    const path = USER.id + '.webp';
+    const r = await sb.storage.from('po-faces').upload(path, blob, { upsert: true, contentType: blob.type, cacheControl: '3600' });
+    if (r.error) throw new Error('photo');
+    const url = `${SB_URL}/storage/v1/object/public/po-faces/${path}?v=${Date.now()}`;
+    try { localStorage.setItem('barusik.poker.photo.' + USER.id, url); } catch {}
+    return url;
+  }
+  function pickLook(cur, then) {
+    const d = document.createElement('dialog');
+    d.className = 'looks';
+    d.innerHTML = `<h2>${esc(T.pickLook)}</h2><div class="lookgrid">
+
+      ${PokerArt.LOOKS.map((l, i) => `<button type="button" class="look${cur && !cur.ph && i === cur.av ? ' on' : ''}" data-i="${i}"><span class="avs">${PokerArt.avatarSVG(i)}</span><b>${esc(l.name)}</b></button>`).join('')}</div>
+      <div class="row"><button class="btn ghost" data-x>${esc(T.cancel)}</button></div>`;
+    document.body.appendChild(d); d.showModal();
+    const done = (l) => { try { localStorage.setItem('barusik.poker.look', String(l.av)); } catch {} d.close(); then(l); };
+    d.querySelector('[data-x]').onclick = () => d.close();
+    d.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => done({ av: +b.dataset.i, ph: '' })));
+    d.addEventListener('close', () => d.remove());
+  }
+
   /* ================= rooms with friends ================= */
   function openRoom(id) {
-    lastBoard = ''; lastHole = '';
     if (!USER) {
       app.innerHTML = `<div class="home"><div class="grid3" style="grid-template-columns:minmax(0,460px);justify-content:center;padding-top:30px"></div></div>`;
       $('.grid3', app).appendChild(loginBox('?r=' + id));
@@ -317,14 +317,35 @@
     }
     roomShell(id, [['log', T.log], ['chat', T.chat], ['ledger', T.ledger]]);
     let room = null, my = { hand: -1, cards: null }, tab = 'log', unread = 0, admin = false, timers = [], alive = true, chan = null, lastTurnMine = false;
-    let basket = null, seenThrows = null, wonHand = 0, bchan = null;
-    const loadBasket = async () => { const r = await sb.from('po_baskets').select('tomatoes').eq('uid', USER.id).maybeSingle(); if (!r.error) { basket = r.data ? r.data.tomatoes : 0; if (room && $('#bar')) drawBar(); } };
-    loadBasket();
-    bchan = sb.channel('po-basket-' + USER.id).on('postgres_changes', { event: '*', schema: 'public', table: 'po_baskets', filter: `uid=eq.${USER.id}` }, () => loadBasket()).subscribe();
+    let lastSeatKey = '', tbl = null, seenThrows = null, wonHand = 0, bchan = null;
+    const counts = {};
+    const myTom = () => counts[USER.id] ?? 0;
+    async function loadCounts() {
+      if (!room) return;
+      const uids = [...new Set([USER.id, ...(st().seats || []).filter(Boolean).map((x) => x.uid)])];
+      const r = await sb.from('po_baskets').select('uid,tomatoes').in('uid', uids);
+      if (r.error) return;
+      for (const u of uids) counts[u] = 0;
+      for (const x of r.data || []) counts[x.uid] = x.tomatoes;
+      draw();
+    }
+    bchan = sb.channel('po-baskets-' + id).on('postgres_changes', { event: '*', schema: 'public', table: 'po_baskets' }, (p) => {
+      const x = p.new; if (!x || !x.uid || !(x.uid in counts)) return;
+      if (x.uid === USER.id && pendingThrows > 0) return; // my own throws are already counted down
+      counts[x.uid] = x.tomatoes; draw();
+    }).subscribe();
+    let pendingThrows = 0;
     async function throwAt(seat) {
-      if (!basket) { toast(T.err.no_tomatoes); return buyTomatoes(); }
-      basket = Math.max(0, basket - 1); drawBar();
-      try { await call('throw', { room: id, seat }); } catch (x) { fail(x); loadBasket(); }
+      const ms = mySeat();
+      if (ms < 0) return toast(T.err.not_seated);
+      if (!myTom()) { toast(T.err.no_tomatoes); return buyTomatoes(); }
+      const tid = Math.random().toString(36).slice(2, 10);
+      (seenThrows ||= new Set()).add(tid);
+      counts[USER.id] = myTom() - 1; pendingThrows++; draw();
+      tbl.throwAt(ms, seat);
+      try { await call('throw', { room: id, seat, tid }); }
+      catch (x) { fail(x); }
+      finally { pendingThrows--; if (!pendingThrows) setTimeout(loadCounts, 400); }
     }
     function buyTomatoes() {
       const d = document.createElement('dialog');
@@ -335,28 +356,19 @@
       d.addEventListener('close', async () => {
         const n = +new FormData($('form', d)).get('n'); d.remove();
         if (d.returnValue !== 'ok' || !(n > 0)) return;
-        try { await call('buy', { room: id, n }); basket = (basket || 0) + n; drawBar(); toast(`🍅 +${n}`); } catch (x) { fail(x); }
+        try { await call('buy', { room: id, n }); counts[USER.id] = myTom() + n; draw(); toast(`🍅 +${n}`); } catch (x) { fail(x); }
       });
     }
-    // tomatoes in flight: from the thrower's seat (or the top edge for someone standing) to the target
+    // tomatoes thrown by others: basket to face
     function animateThrows() {
       const list = st().throws || [];
       if (seenThrows === null) { seenThrows = new Set(list.map((t) => t.id)); return; }
-      const felt = $('#fx'); if (!felt) return;
-      const n = st().settings.seats, me = mySeat();
       for (const t of list) {
         if (seenThrows.has(t.id)) continue; seenThrows.add(t.id);
-        if (Date.now() - t.at > 8000) continue;
-        const to = seatPos(t.to, n, me), from = t.fs >= 0 ? seatPos(t.fs, n, me) : { x: 50, y: -4 };
-        const el = document.createElement('div'); el.className = 'flyt'; el.textContent = '🍅';
-        el.style.left = from.x + '%'; el.style.top = from.y + '%';
-        felt.appendChild(el);
-        requestAnimationFrame(() => requestAnimationFrame(() => { el.style.left = to.x + '%'; el.style.top = to.y + '%'; el.classList.add('go'); }));
-        setTimeout(() => {
-          el.remove();
-          const sp = document.createElement('div'); sp.className = 'splat'; sp.style.left = to.x + '%'; sp.style.top = to.y + '%'; felt.appendChild(sp); setTimeout(() => sp.remove(), 2600);
-          if (t.to === me) { if (navigator.vibrate) navigator.vibrate([30, 40, 60]); say(fill(T.lthrow, { n: t.from, t: t.name })); }
-        }, 620);
+        if (Date.now() - t.at > 8000 || !tbl) continue;
+        const me = mySeat();
+        tbl.throwAt(t.fs, t.to, { onHit: () => { if (t.to === me) { if (navigator.vibrate) navigator.vibrate([30, 40, 60]); say(fill(T.lthrow, { n: t.from, t: t.name })); } } });
+        const fu = (st().seats[t.fs] || {}).uid; if (fu && fu in counts) counts[fu] = Math.max(0, counts[fu] - 1);
       }
     }
     const st = () => room.state;
@@ -383,11 +395,13 @@
       if (ms >= 0 && live && live.players[ms] && live.players[ms].has && my.hand !== handNo) { my.hand = handNo; my.cards = null; call('my', { room: id }).then((r) => { if (r.hand === handNo) { my.cards = r.cards; draw(); } }).catch(() => {}); }
       if (!live || !live.players[ms]) my.cards = null;
       schedule();
+      const seatKey = (st().seats || []).map((x) => (x ? x.uid : '')).join(',');
+      if (seatKey !== lastSeatKey) { lastSeatKey = seatKey; loadCounts(); }
       draw();
       animateThrows();
       // a hand I won: a tomato landed in my basket
       const res = st().hand && st().hand.results;
-      if (res && live && live.stage === 'done' && st().handNo !== wonHand && res.some((r) => r.seats.includes(ms))) { wonHand = st().handNo; toast(T.gotT); setTimeout(loadBasket, 1200); }
+      if (res && live && live.stage === 'done' && st().handNo !== wonHand) { const won = res.some((r) => r.seats.includes(ms)); wonHand = st().handNo; if (won) toast(T.gotT); setTimeout(loadCounts, 1500); }
     }
     // the clock lives on the server; any open page may nudge it when a deadline passes
     function schedule() {
@@ -418,7 +432,7 @@
         let hand = '', best = null;
         if (showdown && Array.isArray(cards) && cards.length >= 2 && live.stage === 'done' && s.hand.board.length === 5 && !p.folded) { hand = handName(P.category(P.value(cards, s.hand.board))); if (winners[i]) best = P.bestFive(cards, s.hand.board); }
         else if (i === ms && Array.isArray(cards) && s.hand && s.hand.board.length >= 3 && live.stage !== 'done') hand = handName(P.category(P.value(cards, s.hand.board)));
-        return { name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
+        return { uid: x.uid, ph: x.ph || '', av: x.av || 0, tom: counts[x.uid] ?? 0, name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
       });
       const pot = live ? (live.stage === 'done' ? 0 : live.pot - seats.reduce((t, x) => t + (x ? x.bet : 0), 0)) : 0;
       const myReq = (s.requests || []).find((r) => r.uid === USER.id);
@@ -426,8 +440,13 @@
       if (s.paused) msg = esc(T.paused);
       else if (!s.playing) msg = esc(isHost() ? T.needTwo : T.waitStart);
       else if (!live || live.stage === 'done' || live.stage === 'idle') { const el = (s.seats || []).filter((x) => x && x.chips > 0 && !x.away).length; if (el < 2) msg = esc(T.needTwo); }
+      if (s.bombNext && (!live || live.stage === 'done')) msg = '💣 ' + esc(T.bombComing);
       if (myReq) msg = esc(T.pending);
-      return { holes: (s.hand && s.hand.holes) || (s.settings.game === 'plo' ? 4 : 2), canThrow: true, onThrow: throwAt, n, me: ms, seats, button: s.hand ? s.hand.button : null, sb: s.hand?.sb, bb: s.settings.bb, board: s.hand ? s.hand.board : [], pot: Math.max(0, pot), toAct: s.turn ? s.turn.s : -1, until: s.turn ? s.turn.until : 0, turnSec: s.settings.turn, msg, canSit: ms < 0 && !myReq, hand: s.handNo || 0 };
+      const inLive = ms >= 0 && live && live.players[ms] && live.stage !== 'done' && live.stage !== 'idle';
+      return { holes: (s.hand && s.hand.holes) || (s.settings.game === 'plo' ? 4 : 2), onThrow: throwAt, onBuy: buyTomatoes, onAimHint: () => toast(T.aimHint),
+        onAvatar: () => pickLook({ av: s.seats[ms].av || 0, ph: s.seats[ms].ph || '' }, (l) => call('avatar', { room: id, avatar: l.av, photo: l.ph }).catch(fail)),
+        onSit: (seat) => (ms >= 0 ? (inLive ? toast(T.err.in_hand) : call('move', { room: id, seat }).catch(fail)) : askChips('sit', seat)),
+        n, me: ms, seats, button: s.hand ? s.hand.button : null, sb: s.hand?.sb, bb: s.settings.bb, board: s.hand ? s.hand.board : [], board2: (s.hand && s.hand.board2) || null, pot: Math.max(0, pot), toAct: s.turn ? s.turn.s : -1, until: s.turn ? s.turn.until : 0, turnSec: s.settings.turn, msg, canSit: !myReq && (ms < 0 || !inLive), hand: s.handNo || 0 };
     }
     function drawBanner() {
       const el = $('#banner'); if (!el || !room) return;
@@ -445,11 +464,10 @@
       const hostName = room.host_kind === 'admin' ? T.adminHost : room.host === USER.id ? T.youHost : room.host_kind === 'player' ? fill(T.hostIs, { n: (s.seats.find((x) => x && x.uid === room.host) || {}).name || s.creator }) : '';
       $('#bar').innerHTML = `<h1>${esc(s.title || room.name || id)}</h1><span class="pill b n">${esc(id)}</span><span class="pill">${esc(T[s.settings.game || 'nlh'])} · ${num(s.settings.sb)}/${num(s.settings.bb)}</span>${hostName ? `<span class="pill ${room.host_kind === 'admin' ? 'g' : ''}">${esc(hostName)}</span>` : ''}
         <span style="flex:1"></span>
-        <button class="btn ghost small" id="bask" title="${esc(T.basket)}" aria-label="${esc(T.basket)}: ${basket ?? 0} ${esc(T.tomatoes)}">🍅 <bdi class="n">${basket ?? '…'}</bdi></button>
         <button class="btn small" id="share">${esc(T.share)}</button>
         ${isHost() && (!s.playing || s.paused) ? `<button class="btn small" id="go">${esc(s.paused ? T.resume : T.start)}</button>` : ''}
         ${isHost() && s.playing && !s.paused ? `<button class="btn ghost small" id="pz">${esc(T.pause)}</button>` : ''}
-        ${ms >= 0 ? (s.seats[ms].away ? `<button class="btn small" id="bk">${esc(T.back)}</button>` : `<button class="btn ghost small" id="aw">${esc(T.away)}</button>`) + `<button class="btn ghost small" id="rb">${esc(T.rebuy)}</button><button class="btn ghost small" id="lv">${esc(T.leave)}</button>` : ''}
+        ${ms >= 0 ? (s.seats[ms].away ? `<button class="btn small" id="bk">${esc(T.back)}</button>` : `<button class="btn ghost small" id="aw">${esc(T.away)}</button>`) + `${s.settings.straddle ? `<button class="btn ${s.seats[ms].straddle ? '' : 'ghost'} small" id="sd" aria-pressed="${!!s.seats[ms].straddle}">${esc(T.straddle)}</button>` : ''}<button class="btn ghost small" id="rb">${esc(T.rebuy)}</button><button class="btn ghost small" id="lv">${esc(T.leave)}</button>` : ''}
         <button class="btn ghost small sidebtn" id="sideO">${esc(T.log)}${unread ? ' •' : ''}</button>
 `;
       $('#share').onclick = async () => { const url = `${location.origin}/poker/?r=${id}`; try { if (navigator.share) await navigator.share({ title: T.title, text: T.shareText, url }); else { await navigator.clipboard.writeText(url); toast(T.copied); } } catch {} };
@@ -459,23 +477,25 @@
       $('#aw')?.addEventListener('click', () => call('away', { room: id }).catch(fail));
       $('#lv')?.addEventListener('click', () => call('leave', { room: id }).catch(fail));
       $('#rb')?.addEventListener('click', () => askChips('rebuy'));
-      $('#bask').onclick = () => { if (mySeat() >= 0) buyTomatoes(); else toast(T.basketT); };
+      $('#sd')?.addEventListener('click', () => call('straddle', { room: id, on: !s.seats[ms].straddle }).catch(fail));
       $('#sideO')?.addEventListener('click', () => { $('#side').classList.add('open'); });
     }
     function askChips(kind, seat) {
       const s = st().settings;
+      let look = savedLook();
       const d = document.createElement('dialog');
       d.innerHTML = `<h2>${esc(kind === 'sit' ? T.sitT : T.rebuy)}</h2><form method="dialog">
-        ${kind === 'sit' ? `<label>${esc(T.yourName)}<input name="name" maxlength="20" required value="${esc((() => { try { return localStorage.getItem('barusik.poker.name'); } catch { return ''; } })() || myName())}"></label>` : ''}
+        ${kind === 'sit' ? `<div class="lookrow"><span class="avs" id="lkv">${lookHTML(look)}</span><button type="button" class="btn ghost small" id="lkb">${esc(T.pickLook)}</button></div><label>${esc(T.yourName)}<input name="name" maxlength="20" required value="${esc((() => { try { return localStorage.getItem('barusik.poker.name'); } catch { return ''; } })() || myName())}"></label>` : ''}
         <label>${esc(T.amount)} <span class="mute small n">(${s.minBuy.toLocaleString('en-US')}–${s.maxBuy.toLocaleString('en-US')})</span><input name="amount" type="number" inputmode="numeric" min="${kind === 'sit' ? s.minBuy : s.bb}" max="${s.maxBuy}" value="${s.minBuy}" required></label>
         <p class="mute small" style="margin:0">${esc(T.chipsOnly)}</p>
         <div class="row"><button value="x" class="btn ghost" formnovalidate>${esc(T.cancel)}</button><button value="ok" class="btn">${esc(kind === 'sit' ? (isHost() || !s.approve ? T.sitGo : T.ask) : T.rebuy)}</button></div></form>`;
       document.body.appendChild(d); d.showModal();
+      $('#lkb', d)?.addEventListener('click', () => pickLook(look, (l) => { look = l; $('#lkv', d).innerHTML = lookHTML(l); }));
       d.addEventListener('close', async () => {
         const f = new FormData($('form', d)); d.remove();
         if (d.returnValue !== 'ok') return;
         try {
-          if (kind === 'sit') { try { localStorage.setItem('barusik.poker.name', String(f.get('name'))); } catch {} const r = await call('sit', { room: id, seat, name: f.get('name'), amount: +f.get('amount') }); if (r.pending) toast(T.pending); }
+          if (kind === 'sit') { try { localStorage.setItem('barusik.poker.name', String(f.get('name'))); } catch {} const r = await call('sit', { room: id, seat, name: f.get('name'), amount: +f.get('amount'), avatar: look.av, photo: look.ph }); if (r.pending) toast(T.pending); }
           else { const r = await call('rebuy', { room: id, amount: +f.get('amount') }); if (r.pending) toast(T.pending); }
         } catch (x) { fail(x); }
       });
@@ -503,18 +523,26 @@
           <label>${esc(T.game)}<select name="game" style="width:170px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--room);padding:0 8px">${['nlh', 'plh', 'plo'].map((x) => `<option value="${x}"${g.game === x ? ' selected' : ''}>${esc(T[x])}</option>`).join('')}</select></label>
           <label>${esc(T.sb)}<input name="sb" type="number" min="1" value="${g.sb}"></label><label>${esc(T.bb)}<input name="bb" type="number" min="2" value="${g.bb}"></label>
           <label>${esc(T.minRaise)}<input name="minRaise" type="number" min="${g.bb}" value="${g.minRaise || g.bb}"></label>
+          <label>${esc(T.ante)}<input name="ante" type="number" min="0" value="${g.ante || 0}"></label>
+          <label>${esc(T.bonus72)}<input name="bonus72" type="number" min="0" value="${g.bonus72 || 0}"></label>
+          <label>${esc(T.bombAmt)}<input name="bombAmt" type="number" min="1" value="${g.bombAmt || g.bb * 2}"></label>
+          <label>${esc(T.runTwice)}<input name="runTwice" type="checkbox" ${g.runTwice ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--brass)"></label>
+          <label>${esc(T.straddleOn)}<input name="straddle" type="checkbox" ${g.straddle ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--brass)"></label>
           <label>${esc(T.minBuy)}<input name="minBuy" type="number" value="${g.minBuy}"></label><label>${esc(T.maxBuy)}<input name="maxBuy" type="number" value="${g.maxBuy}"></label>
           <label>${esc(T.turnTime)}<input name="turn" type="number" min="10" max="300" value="${g.turn}"></label>
           <label>${esc(T.seats)}<input name="seats" type="number" min="2" max="9" value="${g.seats}"></label>
           <label>${esc(T.approveOn)}<input name="approve" type="checkbox" ${g.approve ? 'checked' : ''} style="width:20px;height:20px;accent-color:var(--brass)"></label>
           <button class="btn small">${esc(T.save)}</button></form>
           <div class="hd">${esc(T.seats)}</div>
-          ${s.seats.map((x, i) => x ? `<div class="pl"><b>${esc(x.name)}</b>${num(x.chips)}${x.uid !== USER.id ? `<button class="btn ghost small" data-kick="${i}">${esc(T.kick)}</button>` : ''}${x.uid !== room.host ? `<button class="btn ghost small" data-host="${i}">${esc(T.makeHost)}</button>` : ''}</div>` : '').join('')}
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${s.playing ? `<button class="btn ghost small" id="nx">${esc(T.nextHand)}</button>` : ''}<button class="btn red small" id="cl">${esc(T.close)}</button></div>`;
-        $('#setf').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise']) o[k] = +f.get(k); o.approve = !!f.get('approve'); o.game = f.get('game'); call('settings', { room: id, settings: o, title: f.get('title') }).then(() => toast('✓')).catch(fail); };
+          ${s.seats.map((x, i) => x ? `<div class="pl"><b>${esc(x.name)}</b><input type="number" min="0" value="${x.chips}" data-stk="${i}" aria-label="${esc(T.setStack)} ${esc(x.name)}" style="width:96px"><button class="btn ghost small" data-stkb="${i}">${esc(T.setStack)}</button>${x.ph ? `<button class="btn ghost small" data-noph="${i}">${esc(T.removePhoto)}</button>` : ''}${x.uid !== USER.id ? `<button class="btn ghost small" data-kick="${i}">${esc(T.kick)}</button>` : ''}${x.uid !== room.host ? `<button class="btn ghost small" data-host="${i}">${esc(T.makeHost)}</button>` : ''}</div>` : '').join('')}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn ${s.bombNext ? '' : 'ghost'} small" id="bmb">💣 ${esc(s.bombNext ? T.bombCancel : T.bombNext)}</button>${s.playing ? `<button class="btn ghost small" id="nx">${esc(T.nextHand)}</button>` : ''}<button class="btn red small" id="cl">${esc(T.close)}</button></div>`;
+        $('#setf').onsubmit = (e) => { e.preventDefault(); const f = new FormData(e.target); const o = {}; for (const k of ['sb', 'bb', 'minBuy', 'maxBuy', 'turn', 'seats', 'minRaise', 'ante', 'bonus72', 'bombAmt']) o[k] = +f.get(k); o.approve = !!f.get('approve'); o.runTwice = !!f.get('runTwice'); o.straddle = !!f.get('straddle'); o.game = f.get('game'); call('settings', { room: id, settings: o, title: f.get('title') }).then(() => toast('✓')).catch(fail); };
+        pane.querySelectorAll('[data-stkb]').forEach((b) => (b.onclick = () => { const i = +b.dataset.stkb; call('chips', { room: id, seat: i, to: +pane.querySelector(`[data-stk="${i}"]`).value }).then(() => toast('✓')).catch(fail); }));
+        pane.querySelectorAll('[data-noph]').forEach((b) => (b.onclick = () => call('nophoto', { room: id, seat: +b.dataset.noph }).catch(fail)));
         pane.querySelectorAll('[data-kick]').forEach((b) => (b.onclick = () => call('kick', { room: id, seat: +b.dataset.kick }).catch(fail)));
         pane.querySelectorAll('[data-host]').forEach((b) => (b.onclick = () => call('host', { room: id, seat: +b.dataset.host }).catch(fail)));
         $('#nx')?.addEventListener('click', () => call('next', { room: id }).catch(fail));
+        $('#bmb').onclick = () => call('bomb', { room: id, on: !s.bombNext }).catch(fail);
         $('#cl').onclick = () => { if (confirm(T.closeQ)) call('close', { room: id }).catch(fail); };
       }
     }
@@ -522,7 +550,8 @@
       if (!room || !$('#felt')) return;
       const v = view(), s = st();
       drawBar(); drawBanner();
-      drawTable($('#felt'), v, (seat) => askChips('sit', seat));
+      if (!tbl) tbl = PokerTable.createTable($('#felt'), $('#fx'), T, rtl);
+      tbl.update(v);
       const mine = s.turn && s.turn.s === v.me && v.me >= 0;
       if (mine && !lastTurnMine) { ding(); say(T.yourTurn); }
       lastTurnMine = mine;
@@ -544,13 +573,17 @@
     document.addEventListener('visibilitychange', vis);
     let quick; const moved = () => { clearTimeout(quick); quick = setTimeout(load, 120); };
     addEventListener('poker:moved', moved);
-    leaveRoom = () => { alive = false; removeEventListener('poker:moved', moved); timers.forEach(clearTimeout); clearInterval(poll); document.removeEventListener('visibilitychange', vis); if (chan) sb.removeChannel(chan); if (bchan) sb.removeChannel(bchan); };
+    leaveRoom = () => { alive = false; removeEventListener('poker:moved', moved); timers.forEach(clearTimeout); clearInterval(poll); document.removeEventListener('visibilitychange', vis); if (chan) sb.removeChannel(chan); if (bchan) sb.removeChannel(bchan); removeEventListener('resize', onResize); };
+    const onResize = () => { clearTimeout(rz); rz = setTimeout(draw, 120); }; let rz; addEventListener('resize', onResize);
   }
 
   /* ================= practice against bots ================= */
-  const BOTS = ['Mika', 'Rafi', 'Noa', 'Omar', 'Lena', 'Ivan', 'Sofia', 'Pierre'];
+  const BOTS = ['Mika', 'Noa', 'Lena', 'Sofia', 'Yael', 'Maya', 'Lia', 'Tamar'];
   function openPractice() {
-    lastBoard = ''; lastHole = '';
+    let tbl = null;
+    const looks = Array.from({ length: PokerArt.count }, (_, i) => i).sort(() => Math.random() - 0.5);
+    const mine = USER ? savedLook() : { av: (() => { try { return +(localStorage.getItem('barusik.poker.look') || 0) % PokerArt.count; } catch { return 0; } })(), ph: '' };
+    const myLook = mine.av;
     const nb = Math.max(1, Math.min(5, +qs.get('practice') || 5));
     let bank = 10000; try { bank = +(localStorage.getItem('barusik.poker.bank') ?? 10000); } catch {}
     if (!(bank > 0)) bank = 10000;
@@ -571,7 +604,13 @@
         else if (type === 'board') log.push({ k: 'board', b: d.board });
         else if (type === 'uncalled') log.push({ k: 'back', name: nm(d.seat), a: d.amount });
         else if (type === 'turn') turn = d.seat;
-        else if (type === 'result') { turn = -1; result = d.results; for (const r of d.results) log.push({ k: 'win', names: r.seats.map(nm), a: r.amount, cat: r.score == null ? null : P.category(r.score) }); }
+        else if (type === 'result') {
+          turn = -1; result = d.results;
+          for (const r of d.results) log.push({ k: 'win', names: r.seats.map(nm), a: r.amount, cat: r.score == null ? null : P.category(r.score) });
+          // now and then a bot who just lost throws a tomato at the winner
+          const w = d.results[0] && d.results[0].seats[0];
+          if (w != null && Math.random() < 0.3) { const losers = table.seats.map((p, i) => i).filter((i) => i !== w && table.seats[i].cards.length && i !== 0); if (losers.length) setTimeout(() => botThrow(losers[Math.floor(Math.random() * losers.length)], w), 1400); }
+        }
       },
     });
     table.button = Math.floor(Math.random() * table.seats.length);
@@ -579,12 +618,12 @@
       const t = table, done = t.stage === 'done';
       const win = {}; if (done && result) for (const r of result) for (const [s, a] of Object.entries(r.share)) win[s] = (win[s] || 0) + a;
       const seats = t.seats.map((p, i) => {
-        if (p.out && !done) return { name: p.name, chips: p.chips, bet: 0, cards: null, folded: true };
+        if (p.out && !done) return { av: looks[i % PokerArt.count], name: p.name, chips: p.chips, bet: 0, cards: null, folded: true };
         const show = i === 0 || (done && p.shown);
         const cards = p.cards.length ? (show ? p.cards : p.folded ? null : 'back') : null;
         let hand = '', best = null;
         if (Array.isArray(cards) && t.board.length >= 3 && !p.folded) { hand = handName(P.category(P.value(cards, t.board))); if (win[i] && done && t.board.length === 5) best = P.bestFive(cards, t.board); }
-        return { name: p.name, chips: p.chips, bet: p.bet, folded: p.folded, allIn: p.allIn, cards, win: win[i] || 0, hand, best };
+        return { ph: i === 0 ? mine.ph : '', av: i === 0 ? myLook : looks.filter((x) => x !== myLook)[(i - 1) % (PokerArt.count - 1)], name: p.name, chips: p.chips, bet: p.bet, folded: p.folded, allIn: p.allIn, cards, win: win[i] || 0, hand, best };
       });
       const pot = done ? 0 : t.pot() - t.seats.reduce((a, p) => a + p.bet, 0);
       let msg = '';
@@ -598,13 +637,26 @@
       $('#bar').innerHTML = `<h1>${esc(T.practice)}</h1><span class="pill">10/20</span><span class="pill b">${esc(T.practiceBank)}: ${num(table.seats[0].chips)}</span><span style="flex:1"></span><button class="btn ghost small" id="ng">${esc(T.newGame)}</button><button class="btn ghost small sidebtn" id="sideO">${esc(T.log)}</button><div class="watch" style="width:100%">${esc(T.chipsOnly)}</div>`;
       $('#ng').onclick = () => { try { localStorage.setItem('barusik.poker.bank', String(Math.max(table.seats[0].chips, 10000))); } catch {} clearTimeout(timer); alive = false; route(); };
       $('#sideO').onclick = () => $('#side').classList.add('open');
-      drawTable($('#felt'), v, () => {});
+      // practice: tomatoes without limit, at the bots and back
+      v.seats.forEach((x) => { if (x) x.tom = Infinity; });
+      v.onThrow = (to) => { tbl.throwAt(0, to); log.push({ k: 'throw', name: table.seats[0].name, to: table.seats[to].name }); drawLog(); if (Math.random() < 0.35) setTimeout(() => botThrow(to, 0), 900 + Math.random() * 900); };
+      v.onAimHint = () => toast(T.aimHint);
+      if (!tbl) tbl = PokerTable.createTable($('#felt'), $('#fx'), T, rtl);
+      tbl.update(v);
       const mine = turn === 0 && table.stage !== 'done';
       if (mine) say(T.yourTurn);
       const broke = table.stage === 'done' && table.seats[0].chips === 0;
       v.under = broke ? `<div class="row"><button class="btn" id="rf">${esc(T.refill)}</button></div>` : '';
       drawActions($('#acts'), v, mine ? table.options(0) : null, (type, to) => { table.act(0, { type, to }); step(); });
       $('#rf')?.addEventListener('click', () => { table.seats[0].chips = 10000; save(); step(); });
+      drawLog();
+    }
+    function botThrow(from, to) {
+      if (!alive || !tbl || !table.seats[from] || from === to) return;
+      tbl.throwAt(from, to);
+      log.push({ k: 'throw', name: table.seats[from].name, to: table.seats[to].name }); drawLog();
+    }
+    function drawLog() {
       $('#pane').innerHTML = log.slice(-80).map((e) => { const l = logLine(e); return l.startsWith('<div') ? l : `<div class="li">${l}</div>`; }).join('');
       $('#pane').scrollTop = 1e9;
     }

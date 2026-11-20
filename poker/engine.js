@@ -177,7 +177,10 @@
   function Table(opts) {
     this.sb = opts.sb; this.bb = opts.bb;
     this.game = opts.game || 'nlh';                       // nlh no-limit hold'em, plh pot-limit hold'em, plo pot-limit omaha
-    this.minOpen = Math.max(1, opts.minRaise || opts.bb);  // the smallest bet, and the smallest raise until someone raises more
+    this.minOpen = Math.max(1, opts.minRaise || opts.bb);
+    this.ante = Math.max(0, opts.ante || 0);               // dead money from everyone before the cards
+    this.runTwice = !!opts.runTwice;                       // all-in before the river: two boards, half the pot each
+    this.bonus72 = Math.max(0, opts.bonus72 || 0);         // win a hand holding 7-2 and everyone dealt in pays you this  // the smallest bet, and the smallest raise until someone raises more
     this.seats = opts.players.map((p, i) => ({
       seat: i, id: p.id, name: p.name, human: !!p.human, style: p.style || null,
       chips: p.chips, cards: [], bet: 0, total: 0, folded: false, allIn: false, acted: false, canRaise: true, out: p.chips <= 0,
@@ -198,8 +201,10 @@
   Table.prototype.pot = function () { return this.seats.reduce((s, p) => s + p.total, 0); };
   Table.prototype.canAct = (p) => !p.out && !p.folded && !p.allIn;
 
-  Table.prototype.startHand = function () {
-    for (const p of this.seats) { p.out = p.chips <= 0; p.cards = []; p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.canRaise = true; p.shown = false; }
+  // extra: { bomb: amount everyone puts in before a hand that starts on the flop, straddle: seat index or -1 }
+  Table.prototype.startHand = function (extra = {}) {
+    for (const p of this.seats) { p.out = p.chips <= 0; p.cards = []; p.bet = 0; p.total = 0; p.folded = false; p.allIn = false; p.acted = false; p.canRaise = true; p.shown = false; p.showMine = false; }
+    this.board2 = null; this.bombed = false;
     if (this.live().length < 2) { this.stage = 'idle'; return false; }
     this.hand++;
     this.deck = shuffled();
@@ -210,8 +215,30 @@
     const bbSeat = this.next(sbSeat, (p) => !p.out);
     this.sbSeat = sbSeat; this.bbSeat = bbSeat;
     this.on('hand', { hand: this.hand, button: this.button, sb: sbSeat, bb: bbSeat });
-    this.post(sbSeat, this.sb, 'sb');
-    this.post(bbSeat, this.bb, 'bb');
+    if (this.ante) for (const p of this.live()) {
+      const a = Math.min(this.ante, p.chips);
+      p.chips -= a; p.total += a; if (p.chips === 0) p.allIn = true;
+      this.on('blind', { seat: p.seat, amount: a, kind: 'ante' });
+    }
+    const bomb = Math.max(0, extra.bomb || 0);
+    if (bomb) {
+      this.bombed = true;
+      for (const p of this.live()) {
+        const a = Math.min(bomb, p.chips);
+        p.chips -= a; p.total += a; if (p.chips === 0) p.allIn = true;
+        this.on('blind', { seat: p.seat, amount: a, kind: 'bomb' });
+      }
+    } else {
+      this.post(sbSeat, this.sb, 'sb');
+      this.post(bbSeat, this.bb, 'bb');
+    }
+    // a straddle: the player after the big blind puts in twice the big blind and acts last before the flop
+    let strad = -1;
+    if (!bomb && !heads && extra.straddle != null) {
+      const utg = this.next(bbSeat, (p) => !p.out);
+      const willing = Array.isArray(extra.straddle) ? extra.straddle : [extra.straddle];
+      if (willing.includes(utg) && utg !== this.button && this.seats[utg].chips > this.bb * 2) { strad = utg; this.post(utg, this.bb * 2, 'straddle'); }
+    }
     // two cards each, one at a time starting left of the button
     let s = this.button;
     for (let round = 0; round < (this.game === 'plo' ? 4 : 2); round++) {
@@ -222,9 +249,10 @@
     }
     this.on('deal', {});
     this.stage = 'preflop';
-    this.currentBet = this.bb;
-    this.minRaise = Math.max(this.bb, this.minOpen);
-    this.toAct = this.next(bbSeat, this.canAct);
+    if (bomb) { this.currentBet = 0; this.minRaise = this.minOpen; this.nextStreet(); return true; }
+    this.currentBet = strad >= 0 ? this.bb * 2 : this.bb;
+    this.minRaise = Math.max(this.currentBet, this.minOpen);
+    this.toAct = this.next(strad >= 0 ? strad : bbSeat, this.canAct);
     this.settleOrContinue(true);
     return true;
   };
@@ -372,6 +400,21 @@
       const amount = this.pot();
       w.chips += amount;
       results.push({ seats: [w.seat], amount, share: { [w.seat]: amount }, score: null, uncontested: true });
+    } else if (this.runTwice && this.board.length < 5) {
+      // run it twice: the same cards so far, two different finishes, each board wins half of every pot
+      const base = this.board.slice();
+      const deal = (b) => { while (b.length < 5) { this.deck.pop(); const n = b.length === 0 ? 3 : 1; for (let k = 0; k < n; k++) b.push(this.deck.pop()); } return b; };
+      const A = deal(base.slice()), Bd = deal(base.slice());
+      this.board = A; this.board2 = Bd;
+      this.on('board', { stage: 'river', board: A.slice(), runout: true });
+      this.on('board2', { board: Bd.slice() });
+      const sA = {}, sB = {};
+      for (const p of left) { sA[p.seat] = value(p.cards, A); sB[p.seat] = value(p.cards, Bd); p.shown = true; }
+      this.on('showdown', { scores: sA, scores2: sB });
+      for (const pot of this.pots()) {
+        const half = Math.floor(pot.amount / 2);
+        results.push(this.award(pot, half, sA, 1), this.award(pot, pot.amount - half, sB, 2));
+      }
     } else {
       // run out whatever is missing (all-in before the river)
       while (this.board.length < 5) {
@@ -383,25 +426,44 @@
       const scores = {};
       for (const p of left) { scores[p.seat] = value(p.cards, this.board); p.shown = true; }
       this.on('showdown', { scores });
-      for (const pot of this.pots()) {
-        const elig = pot.eligible.filter((s) => scores[s] != null);
-        let best = -1;
-        for (const s of elig) best = Math.max(best, scores[s]);
-        const winners = elig.filter((s) => scores[s] === best);
-        // odd chips go to the first winner left of the button
-        const ordered = [];
-        let s = this.button;
-        for (let k = 0; k < this.seats.length; k++) { s = (s + 1) % this.seats.length; if (winners.includes(s)) ordered.push(s); }
-        const each = Math.floor(pot.amount / ordered.length);
-        let odd = pot.amount - each * ordered.length;
-        const share = {};
-        for (const w of ordered) { const a = each + (odd > 0 ? 1 : 0); if (odd > 0) odd--; this.seats[w].chips += a; share[w] = a; }
-        results.push({ seats: ordered, amount: pot.amount, share, score: best, uncontested: false });
+      for (const pot of this.pots()) results.push(this.award(pot, pot.amount, scores, 0));
+    }
+    // the 7-2: whoever wins a pot holding seven-deuce collects from everyone who was dealt in
+    const bonus = [];
+    if (this.bonus72 && this.game !== 'plo') {
+      const won = new Set(); results.forEach((r) => r.seats.forEach((x) => won.add(x)));
+      for (const w of won) {
+        const p = this.seats[w], rk = p.cards.map(rankOf).sort((a, b) => a - b);
+        if (rk.length !== 2 || rk[0] !== 2 || rk[1] !== 7) continue;
+        p.shown = true;
+        for (const q of this.seats) {
+          if (q === p || q.out || !q.cards.length) continue;
+          const a = Math.min(this.bonus72, q.chips);
+          if (a > 0) { q.chips -= a; p.chips += a; bonus.push({ from: q.seat, to: w, amount: a }); }
+        }
+        this.on('bonus72', { seat: w, total: bonus.filter((b) => b.to === w).reduce((t, b) => t + b.amount, 0) });
       }
     }
     for (const p of this.seats) { p.bet = 0; p.total = 0; }
     this.stage = 'done';
-    this.on('result', { results, board: this.board.slice() });
+    this.on('result', { results, board: this.board.slice(), board2: this.board2 ? this.board2.slice() : null, bonus });
+  };
+
+  // split one pot (or half of one, when running it twice) between the best hands
+  Table.prototype.award = function (pot, amount, scores, run) {
+    const elig = pot.eligible.filter((s) => scores[s] != null);
+    let best = -1;
+    for (const s of elig) best = Math.max(best, scores[s]);
+    const winners = elig.filter((s) => scores[s] === best);
+    // odd chips go to the first winner left of the button
+    const ordered = [];
+    let s = this.button;
+    for (let k = 0; k < this.seats.length; k++) { s = (s + 1) % this.seats.length; if (winners.includes(s)) ordered.push(s); }
+    const each = Math.floor(amount / ordered.length);
+    let odd = amount - each * ordered.length;
+    const share = {};
+    for (const w of ordered) { const a = each + (odd > 0 ? 1 : 0); if (odd > 0) odd--; this.seats[w].chips += a; share[w] = a; }
+    return { seats: ordered, amount, share, score: best, uncontested: false, run };
   };
 
   /* ---------- the bots ---------- */

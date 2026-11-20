@@ -3,7 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co wss://iktmyrfbejtjsiehcrar.supabase.co https://cloudflareinsights.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://iktmyrfbejtjsiehcrar.supabase.co; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co wss://iktmyrfbejtjsiehcrar.supabase.co https://cloudflareinsights.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ברוסיק פוקר · Barusik Poker</title>
 <meta name="description" content="טקסס הולדם עם החברים בחדר פרטי עם קישור, או אימון מול בוטים. משחקים על צ׳יפים בלבד, בלי כסף.">
@@ -229,6 +229,98 @@ dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
   .watch .co{display:none}
   .actions{position:sticky;bottom:0;z-index:20;background:linear-gradient(rgba(14,26,23,0),var(--room) 22%);padding-top:18px}
 }
+
+/* ---------- the seats, v2: a character behind every plate, her basket beside her ---------- */
+.seats{position:absolute;inset:0;z-index:3;pointer-events:none}
+.seats>*{pointer-events:auto}
+.seat{position:absolute;transform:translate(-50%,-62%);display:flex;flex-direction:column;align-items:center;width:var(--sw);--sw:clamp(92px,15vw,150px);--avw:clamp(62px,8.4vw,104px);z-index:3;transition:left .5s ease,top .5s ease}
+.seat.empty-seat{transform:translate(-50%,-50%)}
+.seat .who{position:relative;display:flex;flex-direction:column;align-items:center;width:100%}
+.seat .av{position:relative;width:var(--avw);aspect-ratio:100/110;margin-bottom:-12px;z-index:1;cursor:default;border-radius:46% 46% 18% 18%;background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.08),rgba(0,0,0,0) 70%)}
+.seat .av.clickable{cursor:pointer}
+.seat .avs{position:absolute;inset:0;z-index:1;transition:transform .25s}
+.seat .avs svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
+.av-shut{display:none}
+.seat.hit .av-open{display:none}.seat.hit .av-shut{display:inline}
+.seat.hit .avs{animation:flinch .55s cubic-bezier(.3,1.6,.5,1)}
+@keyframes flinch{0%{transform:none}15%{transform:translate(-5px,-2px) rotate(-7deg) scale(.96)}35%{transform:translate(4px,1px) rotate(5deg)}55%{transform:translate(-3px,0) rotate(-3deg)}75%{transform:translate(2px,0) rotate(1deg)}100%{transform:none}}
+.seat.folded .avs{filter:grayscale(.75) brightness(.7)}
+.seat.turn .av:after{content:"";position:absolute;inset:-6px;border-radius:50% 50% 20% 20%;box-shadow:0 0 0 3px rgba(241,198,107,.75),0 0 24px rgba(241,198,107,.5);pointer-events:none;animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 3px rgba(241,198,107,.35),0 0 10px rgba(241,198,107,.2)}}
+.seat .hole{position:absolute;left:50%;bottom:-2%;transform:translateX(-50%);display:flex;gap:2px;direction:ltr;z-index:2;--cw:calc(var(--avw)*.36)}
+.seat .hole .card{--card-w:var(--cw);box-shadow:0 6px 12px -4px rgba(0,0,0,.7)}
+.seat .hole .card:nth-child(1){transform:rotate(-7deg) translateY(2px)}.seat .hole .card:nth-child(2){transform:rotate(6deg)}
+.seat .hole.four{gap:0}.seat .hole.four .card{--card-w:calc(var(--avw)*.27)}
+.seat .hole.four .card:nth-child(1){transform:rotate(-12deg) translateY(4px)}.seat .hole.four .card:nth-child(2){transform:rotate(-4deg)}.seat .hole.four .card:nth-child(3){transform:rotate(4deg)}.seat .hole.four .card:nth-child(4){transform:rotate(12deg) translateY(4px)}
+.seat.me{--avw:clamp(72px,9.6vw,118px)}
+.seat.me .hole{left:auto;right:auto;bottom:auto;top:16%;transform:none;inset-inline-end:calc(50% + var(--avw)*.44);--cw:calc(var(--avw)*.6)}
+.seat.me .hole.four .card{--card-w:calc(var(--avw)*.44)}
+
+.seat .hole .card.in{animation:deal .4s cubic-bezier(.2,.9,.3,1) both}.seat .hole .card.d1{animation-delay:.08s}.seat .hole .card.d2{animation-delay:.16s}.seat .hole .card.d3{animation-delay:.24s}
+.seat .hole .card.hl{transform:translateY(-6px)}
+.seat .plate{position:relative;z-index:3;width:100%;padding:5px 8px 6px}
+
+.seat.winner .plate{border-color:var(--ok);box-shadow:0 0 0 3px rgba(95,211,154,.3)}
+.seat.turn .plate{border-color:var(--brass-2)}
+.seat .tag{position:absolute;top:-9px;inset-inline-end:-6px;font-size:10.5px;font-weight:800;border-radius:999px;padding:1px 6px;background:var(--hot);color:#2A0A00}
+.seat .tag.grey{background:#555;color:#eee}
+.seat .hand{font-size:11.5px;color:var(--ok);font-weight:600;min-height:0}
+.seat .hand:empty{display:none}
+.seat .timer{position:absolute;inset-inline:6px;bottom:2px;height:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.seat .timer i{display:block;height:100%;background:var(--brass-2);transform-origin:0 50%;transform:scaleX(0)}
+[dir=rtl] .seat .timer i{transform-origin:100% 50%}
+.seat .timer i.go{animation:shrink linear forwards}
+.seat .bask{position:absolute;top:calc(var(--avw)*.42);inset-inline-start:calc(100% - 6px);display:flex;flex-direction:column;align-items:center;gap:1px;z-index:3}
+.seat.right .bask{inset-inline-start:auto;inset-inline-end:calc(100% - 6px)}
+[dir=rtl] .seat .bask{inset-inline-start:auto;inset-inline-end:calc(100% - 6px)}
+[dir=rtl] .seat.right .bask{inset-inline-end:auto;inset-inline-start:calc(100% - 6px)}
+.seat .bkb{width:calc(var(--avw)*.62);touch-action:none;cursor:default;padding:0}
+.seat.mine .bkb{cursor:grab}
+.seat .bkb svg{width:100%;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+.seat .bkn{min-width:26px;height:22px;border-radius:999px;background:#1C0E08;color:#FFB59E;font:700 12px/22px var(--fb);padding:0 7px;box-shadow:inset 0 0 0 1px rgba(255,120,90,.35);cursor:default}
+.seat.mine .bkn{cursor:pointer;background:var(--brass);color:var(--ink);box-shadow:none}
+.seat.mine .bkn:not([disabled]):hover{filter:brightness(1.08)}
+.seat .bkn[disabled]{opacity:1}
+.seat .bkb[disabled]{opacity:1}
+.seat .sit{width:clamp(70px,12vw,100px);height:46px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.22);display:grid;place-items:center;font-size:12.5px;color:var(--mute)}
+.seat .sit:hover{border-color:var(--brass);color:var(--brass-2)}
+.seat .emptyl{width:clamp(70px,12vw,100px);height:46px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.12);display:grid;place-items:center;font-size:12px;color:rgba(157,176,167,.6)}
+.felt.aiming .seat:not(.mine):not(.empty-seat) .av{cursor:crosshair}
+.felt.aiming .seat:not(.mine):not(.empty-seat) .av:before{content:"";position:absolute;inset:8% 16% 30%;border-radius:50%;border:2px dashed #FF6A4D;z-index:4;animation:aim 1s linear infinite}
+@keyframes aim{to{transform:rotate(360deg)}}
+.felt.aiming .seat.mine .bkb{animation:wob .5s ease-in-out infinite alternate}
+@keyframes wob{to{transform:rotate(-6deg) scale(1.06)}}
+.chipst.win{color:var(--ok)}
+.flyt{position:absolute;left:0;top:0;width:clamp(26px,3.2vw,38px);height:clamp(26px,3.2vw,38px);pointer-events:none;z-index:40;will-change:transform}
+.flyt svg,.tm-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.4))}
+.flyt.drag{position:fixed;transform:translate(-50%,-50%);z-index:60}
+.splat2{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:41;animation:splat2 3.4s ease-out forwards}
+.splat2 svg{width:100%;display:block}
+.splat2 .sp-drip{animation:drip 3s ease-in forwards}
+@keyframes splat2{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}10%{transform:translate(-50%,-50%) scale(1.18)}18%{transform:translate(-50%,-50%) scale(.96)}26%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+@keyframes drip{from{transform:translateY(-6px)}to{transform:translateY(10px)}}
+dialog.looks{width:min(560px,94vw)}
+.board.b2{margin-top:-4px}.board.b2 .card{--card-w:clamp(26px,6vw,44px)}
+.ph{position:absolute;left:12%;right:12%;top:6%;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#0B1512;box-shadow:0 0 0 3px var(--brass),0 10px 18px -6px rgba(0,0,0,.6);display:grid;place-items:center}
+.ph img{width:100%;height:100%;object-fit:cover;display:block;user-select:none;-webkit-user-drag:none}
+.ph.cam{font-size:30px;box-shadow:0 0 0 2px dashed rgba(255,255,255,.2);background:rgba(255,255,255,.05)}
+.look .avs,.lookrow .avs{position:relative}
+.look.photo{cursor:pointer}
+.seat.photo .hole{bottom:-4%}
+.lookgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
+.look{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;border-radius:16px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1.5px transparent}
+.look.on,.look:hover{box-shadow:inset 0 0 0 2px var(--brass)}
+.look .avs,.lookrow .avs{width:100%;max-width:96px;aspect-ratio:100/110;display:block}
+.look .avs svg,.lookrow .avs svg{width:100%;height:100%;display:block}
+.look b{font-size:13px}
+.lookrow{display:flex;align-items:center;gap:12px}.lookrow .avs{width:72px}
+@media (max-width:640px){
+  .seat{--sw:clamp(70px,22vw,96px);--avw:clamp(48px,13.5vw,60px)}
+  .seat.me{--avw:clamp(58px,16vw,74px)}
+  .seat:not(.me) .hole{bottom:10%;--cw:calc(var(--avw)*.4)}
+  .seat .plate{padding:3px 5px 4px}
+  .lookgrid{grid-template-columns:repeat(4,1fr);gap:6px}
+}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -243,10 +335,12 @@ dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 <main id="app" tabindex="-1"></main>
 <div id="live" class="sr" aria-live="polite"></div>
 <script src="/lib/supabase.js"></script>
-<script src="i18n.js?v=3"></script>
-<script src="engine.js?v=2"></script>
-<script src="app.js?v=4"></script>
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.1.0').catch(()=>{}));</script>
+<script src="i18n.js?v=5"></script>
+<script src="engine.js?v=4"></script>
+<script src="avatars.js?v=2"></script>
+<script src="table.js?v=2"></script>
+<script src="app.js?v=6"></script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.3.0').catch(()=>{}));</script>
 <script src="/lib/app.js?v=2" data-app="po" defer></script>
 </body>
 </html>
