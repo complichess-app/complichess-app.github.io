@@ -67,39 +67,65 @@
   function loginBox(back) {
     const box = document.createElement('div');
     box.className = 'box';
-    let mode = 'in';
+    let mode = 'in', keep = { em: '', un: '' };
     const draw = (msg = '') => {
       box.innerHTML = `<h2>${esc(mode === 'in' ? T.signIn : T.signUp)}</h2><p>${esc(T.needIn)}</p>
         ${GOOGLE ? `<button class="btn gbtn" id="lg">${esc(T.google)}</button><div class="or">${esc(T.or)}</div>` : ''}
         <form id="lf" style="display:flex;flex-direction:column;gap:10px">
-          ${mode === 'up' ? `<label>${esc(T.uname)}<input id="lu" autocomplete="username" maxlength="20" required></label>` : ''}
-          <label>${esc(T.email)}<input id="le" type="email" dir="ltr" autocomplete="email" required></label>
+          ${mode === 'up' ? `<label>${esc(T.uname)}<input id="lu" autocomplete="username" maxlength="20" required value="${esc(keep.un)}"></label>` : ''}
+          <label>${esc(T.email)}<input id="le" type="email" dir="ltr" autocomplete="email" required value="${esc(keep.em)}"></label>
           <label>${esc(T.password)}<input id="lp" type="password" dir="ltr" autocomplete="${mode === 'in' ? 'current-password' : 'new-password'}" required minlength="6"></label>
-          <div class="err" id="lm">${esc(msg)}</div>
+          <div class="err" id="lm" role="alert">${esc(msg)}</div>
           <button class="btn">${esc(mode === 'in' ? T.signIn : T.signUp)}</button>
+          ${mode === 'in' ? `<button type="button" class="btn ghost small" id="lf2">${esc(T.forgot)}</button>` : ''}
           <button type="button" class="btn ghost small" id="lt">${esc(mode === 'in' ? T.toUp : T.toIn)}</button>
         </form>`;
-      $('#lt', box).onclick = () => { mode = mode === 'in' ? 'up' : 'in'; draw(); };
+      const save = () => { keep.em = $('#le', box).value.trim(); const u = $('#lu', box); if (u) keep.un = u.value.trim(); };
+      $('#lt', box).onclick = () => { save(); mode = mode === 'in' ? 'up' : 'in'; draw(); };
       $('#lg', box)?.addEventListener('click', () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/poker/' + (back || ''), queryParams: { prompt: 'select_account' } } }));
+      $('#lf2', box)?.addEventListener('click', async () => {
+        save();
+        if (!keep.em) { $('#lm', box).textContent = T.email; $('#le', box).focus(); return; }
+        const r = await sb.auth.resetPasswordForEmail(keep.em, { redirectTo: `https://barusik.com/${L}/` });
+        $('#lm', box).textContent = r.error ? authErr(r.error) : T.resetSent;
+      });
       $('#lf', box).onsubmit = async (e) => {
         e.preventDefault();
-        const em = $('#le', box).value.trim(), pw = $('#lp', box).value, un = mode === 'up' ? $('#lu', box).value.trim() : '';
+        save();
+        const pw = $('#lp', box).value;
         const m = (s) => { $('#lm', box).textContent = s; };
-        if (pw.length < 6 || (mode === 'up' && (un.length < 2 || un.length > 20))) return m(T.short);
+        if (pw.length < 6 || (mode === 'up' && (keep.un.length < 2 || keep.un.length > 20))) return m(T.short);
+        const btn = $('#lf button.btn', box); btn.disabled = true;
         try {
           if (mode === 'up') {
-            const r = await sb.auth.signUp({ email: em, password: pw, options: { data: { username: un }, emailRedirectTo: 'https://barusik.com/poker/' + (back || '') } });
+            const r = await sb.auth.signUp({ email: keep.em, password: pw, options: { data: { username: keep.un }, emailRedirectTo: 'https://barusik.com/poker/' + (back || '') } });
             if (r.error) throw r.error;
+            // an e-mail that already has an account: go to sign in with it
+            if (r.data.user && Array.isArray(r.data.user.identities) && r.data.user.identities.length === 0) { mode = 'in'; draw(T.exists); return; }
             if (!r.data.session) { mode = 'in'; draw(T.check); return; }
           } else {
-            const r = await sb.auth.signInWithPassword({ email: em, password: pw });
+            const r = await sb.auth.signInWithPassword({ email: keep.em, password: pw });
             if (r.error) throw r.error;
           }
-        } catch (x) { m(x && x.status === 400 ? T.badLogin : errT(navigator.onLine === false ? 'offline' : 'server')); }
+        } catch (x) {
+          if (x && (x.code === 'user_already_exists' || x.code === 'email_exists' || /already/i.test(x.message || ''))) { mode = 'in'; draw(T.exists); return; }
+          m(authErr(x));
+        }
+        btn.disabled = false;
       };
     };
     draw();
     return box;
+  }
+  function authErr(x) {
+    if (navigator.onLine === false) return T.err.offline;
+    const c = (x && x.code) || '', st = x && x.status;
+    if (c === 'invalid_credentials' || (st === 400 && /invalid/i.test(x.message || ''))) return T.badLogin;
+    if (c === 'email_not_confirmed') return T.check;
+    if (c === 'weak_password') return T.weak;
+    if (c === 'over_request_rate_limit' || c === 'over_email_send_rate_limit' || st === 429) return T.tooMany;
+    if (c === 'validation_failed' || c === 'email_address_invalid') return T.badEmail;
+    return T.err.server;
   }
 
   /* ---------- cards ---------- */
