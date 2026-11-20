@@ -333,12 +333,14 @@
         + `<div class="info">${hs}<span class="yt">${esc(T.yourTurn)}</span></div>`
         + `<div class="row">${open ? `<button class="act b" data-k="back">${esc(T.back2)}</button>` : `<button class="act f${sure ? ' sure' : ''}" data-k="f">${esc(sure ? T.foldSure : T.fold)}</button>${callB}`}${raiseB}</div>`
         + (matchMedia('(hover:hover)').matches ? `<div class="keys">${esc(T.keys)}</div>` : '');
-      const done = (type, to) => { el.querySelectorAll('button,input').forEach((x) => (x.disabled = true)); send(type, to); };
+      const done = (type, to) => { el.querySelectorAll('button,input').forEach((x) => (x.disabled = true)); PT.sfx.click(); send(type, to); };
       const btn = (k) => $(`[data-k=${k}]`, el);
       if (!open) {
         btn('f').onclick = () => { if (o.check && !sure) { sure = true; paint(); return; } done('fold', 0); };
         btn('c').onclick = () => done(o.check ? 'check' : 'call', 0);
-        btn('r') && (btn('r').onclick = () => { if (o.minTo >= o.maxTo) return done('raise', o.maxTo); open = true; paint(); const b = $('input[type=number]', el); b.focus({ preventScroll: true }); b.select(); });
+        btn('r') && (btn('r').onclick = () => { if (o.minTo >= o.maxTo) return done('raise', o.maxTo); open = true; paint();
+          // on a computer the amount box is ready to type into; on a phone the keyboard waits until the box itself is tapped
+          if (matchMedia('(hover: hover) and (pointer: fine)').matches) { const b = $('input[type=number]', el); b.focus({ preventScroll: true }); b.select(); } });
         return;
       }
       const range = $('input[type=range]', el), box = $('input[type=number]', el), go = btn('go');
@@ -491,7 +493,7 @@
       const d = document.createElement('dialog');
       d.innerHTML = `<h2>🍅 ${esc(T.buyT)}</h2><form method="dialog"><p class="mute small" style="margin:0">${esc(T.basketT)}</p>
         <label>${esc(T.howMany)} <span class="mute small">(${esc(T.buyEach)})</span><input name="n" type="number" inputmode="numeric" min="1" value="5" required></label>
-        <div class="row"><button value="x" class="btn ghost" formnovalidate>${esc(T.cancel)}</button><button value="ok" class="btn">${esc(T.buyGo)}</button></div></form>`;
+        <div class="row"><button value="x" class="btn ghost" formnovalidate>${esc(T.cancel)}</button><button value="ok" class="btn" autofocus>${esc(T.buyGo)}</button></div></form>`;
       document.body.appendChild(d); d.showModal();
       d.addEventListener('close', async () => {
         const n = +new FormData($('form', d)).get('n'); d.remove();
@@ -615,7 +617,7 @@
     function drawBanner() {
       const el = $('#banner'); if (!el || !room) return;
       const reqs = isHost() ? (st().requests || []) : [];
-      if (reqs.length > lastReqs) { PT.sfx.turn(); buzz(80); }
+      if (reqs.length > lastReqs) { PT.sfx.bell(); buzz(80); }
       lastReqs = reqs.length;
       const key = reqs.map((r) => r.id).join(',');
       if (el._key === key) return; el._key = key;
@@ -636,12 +638,13 @@
         B.push(['rb', T.rebuy, 'wide', () => askChips('rebuy')]);
         B.push(['lv', T.leave, 'wide', () => call('leave', { room: id }).catch(fail)]);
       }
+      B.push(['snd', PT.prefs.sound ? '🔊' : '🔇', 'keep icon', () => { PT.setPref('sound', !PT.prefs.sound); if (PT.prefs.sound) PT.sfx.chip(3); $('#rbar')._key = ''; drawBar(); }]);
       B.push(['log', T.log, 'keep' + (drawerTab === 'log' ? ' on' : ''), () => toggle('log')]);
       B.push(['chat', T.chat, 'phoneonly keep' + (drawerTab === 'chat' ? ' on' : ''), () => toggle('chat')]);
       B.push(['ledger', T.ledger, 'wide' + (drawerTab === 'ledger' ? ' on' : ''), () => toggle('ledger')]);
       B.push(['opt', T.settings, 'wide' + (drawerTab === 'opt' ? ' on' : ''), () => toggle('opt')]);
       B.push(['share', T.share, 'gold wide', share]);
-      const key = JSON.stringify([B.map((b) => b[0] + b[1] + b[2]), s.title, g.game, g.sb, g.bb, unread, PT.prefs.bbs, s.pendingSettings || 0]);
+      const key = JSON.stringify([B.map((b) => b[0] + b[1] + b[2]), s.title, g.game, g.sb, g.bb, unread, PT.prefs.bbs, PT.prefs.sound, s.pendingSettings || 0]);
       const bar = $('#rbar');
       if (bar._key !== key) {
         bar._key = key;
@@ -664,7 +667,7 @@
         ${kind === 'sit' ? `<div class="lookrow"><span class="avs" id="lkv">${lookHTML(look)}</span><button type="button" class="btn ghost small" id="lkb">${esc(T.pickLook)}</button></div><label>${esc(T.yourName)}<input name="name" maxlength="20" required value="${esc((() => { try { return localStorage.getItem('barusik.poker.name'); } catch { return ''; } })() || myName())}"></label>` : ''}
         <label>${esc(T.amount)} <span class="mute small n">(${s.minBuy.toLocaleString('en-US')}–${s.maxBuy.toLocaleString('en-US')})</span><input name="amount" type="number" inputmode="numeric" min="${kind === 'sit' ? s.minBuy : s.bb}" max="${s.maxBuy}" value="${kind === 'sit' ? Math.min(s.maxBuy, Math.max(s.minBuy, s.bb * 100)) : s.minBuy}" required></label>
         <p class="mute small" style="margin:0">${esc(T.chipsOnly)}</p>
-        <div class="row"><button value="x" class="btn ghost" formnovalidate>${esc(T.cancel)}</button><button value="ok" class="btn">${esc(kind === 'sit' ? (isHost() || !s.approve ? T.sitGo : T.ask) : T.rebuy)}</button></div></form>`;
+        <div class="row"><button value="x" class="btn ghost" formnovalidate>${esc(T.cancel)}</button><button value="ok" class="btn" autofocus>${esc(kind === 'sit' ? (isHost() || !s.approve ? T.sitGo : T.ask) : T.rebuy)}</button></div></form>`;
       document.body.appendChild(d); d.showModal();
       $('#lkb', d)?.addEventListener('click', () => pickLook(look, (l) => { look = l; $('#lkv', d).innerHTML = lookHTML(l); }));
       d.addEventListener('close', async () => {
@@ -862,11 +865,12 @@
     }
     function drawBar() {
       const bar = $('#rbar');
-      const key = table.seats[0].chips + '|' + drawerTab + '|' + PT.prefs.bbs;
+      const key = table.seats[0].chips + '|' + drawerTab + '|' + PT.prefs.bbs + '|' + PT.prefs.sound;
       if (bar._key === key) return; bar._key = key;
       bar.innerHTML = `<a class="rb-home" href="./" aria-label="${esc(T.title)}">♠</a><div class="rb-title"><b dir="auto">${esc(T.practice)}</b><span class="game" dir="auto"><bdi class="n">10/20</bdi> · ${esc(T.practiceBank)}: ${num(table.seats[0].chips)}</span></div><span class="sp"></span>
-        <div class="rb-btns" dir="ltr"><button type="button" class="rbtn keep" id="ng">${esc(T.newGame)}</button><button type="button" class="rbtn keep${drawerTab === 'log' ? ' on' : ''}" id="lg">${esc(T.log)}</button><button type="button" class="rbtn keep${drawerTab === 'opt' ? ' on' : ''}" id="op">${esc(T.settings)}</button></div>`;
+        <div class="rb-btns" dir="ltr"><button type="button" class="rbtn keep icon" id="snd" aria-label="${esc(T.sounds)}">${PT.prefs.sound ? '🔊' : '🔇'}</button><button type="button" class="rbtn keep" id="ng">${esc(T.newGame)}</button><button type="button" class="rbtn keep${drawerTab === 'log' ? ' on' : ''}" id="lg">${esc(T.log)}</button><button type="button" class="rbtn keep${drawerTab === 'opt' ? ' on' : ''}" id="op">${esc(T.settings)}</button></div>`;
       bar.querySelector('.rb-home').onclick = (e) => { e.preventDefault(); go('./'); };
+      $('#snd').onclick = () => { PT.setPref('sound', !PT.prefs.sound); if (PT.prefs.sound) PT.sfx.chip(3); bar._key = ''; drawBar(); };
       $('#ng').onclick = () => { try { localStorage.setItem('barusik.poker.bank', String(Math.max(table.seats[0].chips, 10000))); } catch {} clearTimeout(timer); alive = false; route(); };
       $('#lg').onclick = () => { if (drawerTab === 'log') closeDrawer(); else openDrawer('log'); drawSide(); drawBar(); };
       $('#op').onclick = () => { if (drawerTab === 'opt') closeDrawer(); else openDrawer('opt'); drawSide(); drawBar(); };

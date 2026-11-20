@@ -39,7 +39,7 @@
       if (!t && !c) delete NOTES[who.uid]; else NOTES[who.uid] = { c, t, name: who.name };
       store(NK, NOTES); close(); done && done();
     };
-    el.querySelector('textarea').focus();
+    if (matchMedia('(hover: hover) and (pointer: fine)').matches) el.querySelector('textarea').focus();
   }
 
   /* ---------- stats from the hand history ---------- */

@@ -38,34 +38,62 @@
     return `<span class="card ${SN[s]} ${cls}" role="img" aria-label="${label(c)}"><b>${RK[r] || r}</b><i>${SU[s]}</i><u>${SU[s]}</u></span>`;
   }
 
-  /* ---------- sounds, made on the spot (no files to load) ---------- */
-  let ac = null;
-  const ctx = () => { try { ac ||= new (root.AudioContext || root.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); return ac; } catch { return null; } };
-  function noise(len, f0, f1, gain, type = 'bandpass', q = 1) {
+  /* ---------- sounds, made on the spot (no files to load) ----------
+     Clay chips clacking, cards flicked and slapped, a knock for a check, a chime for your turn. */
+  let ac = null, out = null;
+  const ctx = () => {
+    try {
+      if (!ac) {
+        ac = new (root.AudioContext || root.webkitAudioContext)();
+        const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+        out = ac.createGain(); out.gain.value = 0.9; out.connect(comp).connect(ac.destination);
+      }
+      if (ac.state === 'suspended') ac.resume();
+      return ac;
+    } catch { return null; }
+  };
+  // browsers keep sound off until the first tap or key
+  const unlock = () => { ctx(); removeEventListener('pointerdown', unlock, true); removeEventListener('keydown', unlock, true); };
+  addEventListener('pointerdown', unlock, true); addEventListener('keydown', unlock, true);
+  function noise(len, f0, f1, gain, type = 'bandpass', q = 1, at = 0, curve = 2.2) {
     const a = ctx(); if (!a) return;
-    const t = a.currentTime, buf = a.createBuffer(1, Math.max(1, a.sampleRate * len), a.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
+    const t = a.currentTime + at, buf = a.createBuffer(1, Math.max(1, Math.floor(a.sampleRate * len)), a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, curve);
     const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
-    s.buffer = buf; f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + len);
-    g.gain.value = gain; s.connect(f).connect(g).connect(a.destination); s.start(t);
+    s.buffer = buf; f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + len);
+    g.gain.value = gain; s.connect(f).connect(g).connect(out); s.start(t);
   }
-  function tone(freq, len, gain, at = 0, type = 'sine') {
+  function tone(freq, len, gain, at = 0, type = 'sine', to = 0) {
     const a = ctx(); if (!a) return;
     const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
-    o.connect(g).connect(a.destination); o.start(t); o.stop(t + len + 0.05);
+    o.type = type; o.frequency.setValueAtTime(freq, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + len);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g).connect(out); o.start(t); o.stop(t + len + 0.05);
   }
+  // one clay chip landing on another: a bright click with a short ring
+  const clack = (at, v = 1) => { const f = 2600 + Math.random() * 1600; noise(0.018, f * 1.6, f, 0.55 * v, 'bandpass', 3, at, 3); tone(f, 0.05, 0.05 * v, at, 'triangle'); noise(0.04, 900, 500, 0.12 * v, 'lowpass', 0.7, at + 0.004); };
+  const on = () => prefs.sound;
   const sfx = {
-    chip() { if (!prefs.sound) return; noise(0.06, 5200, 3000, 0.35, 'bandpass', 4); tone(3100, 0.05, 0.05, 0.01); noise(0.05, 4400, 2600, 0.25, 'bandpass', 4); },
-    check() { if (!prefs.sound) return; noise(0.09, 900, 300, 0.9, 'lowpass', 0.7); setTimeout(() => noise(0.08, 800, 280, 0.7, 'lowpass', 0.7), 110); },
-    fold() { if (!prefs.sound) return; noise(0.16, 2400, 600, 0.22, 'bandpass', 0.8); },
-    deal() { if (!prefs.sound) return; noise(0.07, 3000, 1500, 0.18, 'bandpass', 1.2); },
-    turn() { if (!prefs.sound) return; tone(784, 0.16, 0.12); tone(1175, 0.22, 0.12, 0.12); },
-    tick() { if (!prefs.sound) return; tone(1400, 0.05, 0.05); },
-    win() { if (!prefs.sound) return; [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, 0.08, i * 0.08, 'triangle')); },
-    splat() { if (!prefs.sound) return; noise(0.28, 1600, 220, 0.5, 'lowpass', 0.8); },
-    knock: null,
+    // a bet: a few chips, more for a bigger bet
+    chip(n = 3) { if (!on()) return; const k = Math.max(2, Math.min(7, n)); for (let i = 0; i < k; i++) clack(i * (0.035 + Math.random() * 0.03), 1 - i * 0.07); },
+    // the chips pulled into the middle at the end of a street
+    sweep() { if (!on()) return; noise(0.22, 1800, 700, 0.16, 'bandpass', 0.8); for (let i = 0; i < 6; i++) clack(0.05 + i * 0.03 + Math.random() * 0.02, 0.6); },
+    // the pot pushed to the winner: a long cascade and a little fanfare
+    win() { if (!on()) return; for (let i = 0; i < 12; i++) clack(i * (0.028 + i * 0.004), 0.9); [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.32, 0.07, 0.25 + i * 0.09, 'triangle')); tone(1568, 0.5, 0.03, 0.62, 'sine'); },
+    allin() { if (!on()) return; tone(140, 0.45, 0.35, 0, 'sine', 55); noise(0.35, 400, 120, 0.25, 'lowpass', 0.8); for (let i = 0; i < 8; i++) clack(0.08 + i * 0.03, 0.8); },
+    // a card flicked across the felt
+    deal(n = 1, gap = 0.09) { if (!on()) return; for (let i = 0; i < n; i++) { noise(0.05, 6000, 2400, 0.22, 'highpass', 0.6, i * gap, 2.5); noise(0.03, 1400, 900, 0.1, 'bandpass', 1, i * gap + 0.03); } },
+    // the board turned over: a slap
+    board(n = 1, gap = 0.09) { if (!on()) return; for (let i = 0; i < n; i++) { noise(0.06, 4200, 1500, 0.3, 'bandpass', 0.7, i * gap, 3); tone(170, 0.06, 0.12, i * gap, 'sine', 90); } },
+    check() { if (!on()) return; [0, 0.13].forEach((t) => { tone(190, 0.09, 0.45, t, 'sine', 110); noise(0.05, 1200, 400, 0.35, 'lowpass', 0.8, t); }); },
+    fold() { if (!on()) return; noise(0.2, 2600, 500, 0.2, 'bandpass', 0.9, 0, 1.4); },
+    turn() { if (!on()) return; [[880, 0], [1318.5, 0.11]].forEach(([f, t]) => { tone(f, 0.35, 0.12, t); tone(f * 3, 0.12, 0.02, t); }); },
+    tick() { if (!on()) return; noise(0.012, 5000, 3000, 0.35, 'bandpass', 4); tone(1700, 0.03, 0.04); },
+    bell() { if (!on()) return; tone(988, 0.4, 0.1); tone(784, 0.5, 0.1, 0.18); },
+    pop() { if (!on()) return; tone(700, 0.07, 0.08, 0, 'sine', 1300); },
+    click() { if (!on()) return; noise(0.01, 3000, 2000, 0.12, 'bandpass', 2); },
+    splat() { if (!on()) return; noise(0.32, 1500, 160, 0.6, 'lowpass', 0.9, 0, 1.6); tone(220, 0.18, 0.15, 0, 'sine', 70); noise(0.12, 600, 200, 0.25, 'lowpass', 1, 0.08); },
+    whoosh() { if (!on()) return; noise(0.35, 500, 3000, 0.12, 'bandpass', 0.7, 0, 1); },
   };
   const reduced = () => root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const headSVG = (i) => A.avatarSVG(i).replace('viewBox="0 0 100 110"', 'viewBox="17 8 66 66"');
@@ -277,7 +305,10 @@
         }
         board.innerHTML = [0, 1, 2, 3, 4].map((i) => card(v.board[i] ?? null, delays[i] >= 0 ? 'deal' : '')).join('');
         board.querySelectorAll('.card').forEach((el, i) => { if (delays[i] >= 0) el.style.animationDelay = delays[i] + 'ms'; });
-        if (v.board.length > had && had >= 0) sfx.deal();
+        // a slap for each card as it lands: the flop together, the turn and the river on their own
+        const flop = delays.slice(0, 3).filter((x) => x >= 0);
+        if (flop.length) setTimeout(() => sfx.board(flop.length, 0.09), flop[0]);
+        delays.forEach((x, i) => { if (i >= 3 && x >= 0) setTimeout(() => sfx.board(1), x); });
         last.board = bkey;
       }
       const b2 = (v.board2 || []).join(',');
@@ -322,7 +353,7 @@
       if (bn) { dbtn.style.left = bn.p.dx + '%'; dbtn.style.top = bn.p.dy + '%'; }
 
       /* seats */
-      let wonNow = false;
+      let wonNow = false, swept = false;
       v.seats.forEach((s, i) => {
         const nd = nodes[i]; if (!nd) return;
         const me = i === v.me, k = nd.k;
@@ -361,7 +392,7 @@
           const dealt = !prev || prev.split('|')[1] !== String(v.hand) || prev.split('|')[0] === '';
           const flip = !dealt && prev.startsWith('back') && cards[0] !== 'back';
           nd.cards.innerHTML = cards.map((c, j) => card(c, dealt ? 'deal' : flip ? 'flip' : '')).join('');
-          if (dealt) nd.cards.querySelectorAll('.card').forEach((el, j) => (el.style.animationDelay = (j * 2 + nd.p.k) * 45 + 'ms'));
+          if (dealt) { nd.cards.querySelectorAll('.card').forEach((el, j) => (el.style.animationDelay = (j * 2 + nd.p.k) * 45 + 'ms')); if (me && cards.length) sfx.deal(Math.min(cards.length, 4), 0.09); }
           nd.cards.classList.toggle('four', cards.length > 2);
           nd.cards.classList.toggle('up', cards.length > 0 && cards[0] !== 'back');
           if (prev && cards.length === 0 && prev.split('|')[0] && prev.split('|')[1] === String(v.hand) && s.folded) sfx.fold();
@@ -389,9 +420,10 @@
         const bet = s.bet || 0, was = newHand ? 0 : last.bets[i] || 0;
         nd.bet.classList.toggle('hide', !bet);
         if (bet) nd.bet.innerHTML = `<span class="stk ${bet >= (v.bb || 1) * 10 ? 'big' : ''}"></span>${num(bet)}`;
-        if (bet > was && !newHand) { fly(at(nd.box), pct(nd.p.bx, nd.p.by), 2); sfx.chip(); }
-        else if (bet > was && newHand && v.blindSound) sfx.chip();
-        if (!bet && was && !s.win && !newHand) fly(pct(nd.p.bx, nd.p.by), at(potline.classList.contains('hide') ? board : potline), 2);
+        if (bet > was && !newHand) { fly(at(nd.box), pct(nd.p.bx, nd.p.by), 2); if (s.allIn && !k.allin) sfx.allin(); else sfx.chip(2 + Math.round(Math.log10(Math.max(1, (bet - was) / Math.max(1, v.bb || 1))) * 2)); }
+        else if (bet > was && newHand) sfx.chip(2);
+        k.allin = !!s.allIn;
+        if (!bet && was && !s.win && !newHand) { fly(pct(nd.p.bx, nd.p.by), at(potline.classList.contains('hide') ? board : potline), 2); swept = true; }
 
         // won: the pot comes to her
         const w = s.win || 0;
@@ -408,7 +440,7 @@
         nd.av.classList.toggle('pick', me && !!v.onAvatar);
         k.uid = s.uid;
       });
-      if (wonNow && v.me >= 0 && v.seats[v.me] && v.seats[v.me].win) sfx.win();
+      if (wonNow) setTimeout(() => sfx.win(), 250); else if (swept) setTimeout(() => sfx.sweep(), 120);
       last.hand = v.hand; last.pot = v.pot;
     }
 
@@ -435,6 +467,7 @@
         const t = s / steps, x = p0.x + (p1.x - p0.x) * t, y = p0.y + (p1.y - p0.y) * t - Math.sin(Math.PI * t) * lift, sc = 0.9 + Math.sin(Math.PI * t) * 0.5;
         frames.push({ transform: `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${t * 720}deg) scale(${sc})`, offset: t });
       }
+      if (!opts.quiet) sfx.whoosh();
       const anim = el.animate(frames, { duration: Math.min(850, 380 + dist * 0.8), easing: 'cubic-bezier(.35,.05,.55,1)', fill: 'forwards' });
       anim.onfinish = () => { el.remove(); done(); };
     }
@@ -442,7 +475,7 @@
     /* a chat line over the player's seat for a few seconds, like PokerNow */
     function bubble(i, text) {
       const nd = nodes[i]; if (!nd || nd.pl.classList.contains('hide')) return;
-      nd.bub.textContent = text; nd.bub.classList.remove('hide'); nd.bub.style.animation = 'none'; void nd.bub.offsetWidth; nd.bub.style.animation = '';
+      nd.bub.textContent = text; nd.bub.classList.remove('hide'); sfx.pop(); nd.bub.style.animation = 'none'; void nd.bub.offsetWidth; nd.bub.style.animation = '';
       clearTimeout(nd.bubT); nd.bubT = setTimeout(() => nd.bub.classList.add('hide'), 5000);
     }
 
