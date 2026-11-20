@@ -8,6 +8,8 @@
   // the basket: what it holds and what each costs (the server charges the same)
   const A = window.PokerArt, ITEMS = (window.PokerArt && window.PokerArt.ITEMS) || ['tomato'];
   const PRICES = { tomato: 100, poop: 300, knife: 600, dildo: 1000 }, FULL = { tomato: Infinity, poop: Infinity, knife: Infinity, dildo: Infinity };
+  // what a won hand brings: a straight or a flush poop, a full house a knife, four of a kind or a straight flush a dildo, else a tomato
+  const prizeOf = (cat) => (cat == null ? 'tomato' : cat >= 7 ? 'dildo' : cat === 6 ? 'knife' : cat >= 4 ? 'poop' : 'tomato');
   const itemTag = (k) => `<span class="ii">${A.itemSVG(k || 'tomato')}</span>${esc(T.items[k || 'tomato'])}`;
   const LANGS = ['he', 'en', 'ar', 'ru', 'es', 'fr'], NAMES = { he: 'עברית', en: 'English', ar: 'العربية', ru: 'Русский', es: 'Español', fr: 'Français' };
   const qs = new URLSearchParams(location.search);
@@ -467,7 +469,11 @@
     const st = () => room.state;
     const isHost = () => room && (room.host === USER.id || admin);
     const mySeat = () => (st().seats || []).findIndex((s) => s && s.uid === USER.id);
-    const myBag = () => counts[USER.id] || {};
+    // every game hands each player one of each (the room's kits; no entry yet = the whole set), on top of the basket
+    const KIT = { tomato: 1, poop: 1, knife: 1, dildo: 1 };
+    const kitOf = (uid) => { const s0 = room && room.state; return s0 && s0.kits ? s0.kits[uid] || KIT : null; };
+    const bagFor = (uid) => { const a = counts[uid] || {}, k = kitOf(uid) || {}, o = {}; for (const x of ITEMS) o[x] = (a[x] | 0) + (k[x] | 0); return o; };
+    const myBag = () => bagFor(USER.id);
     // a basket row: tomatoes always; poop, knives and toys once the new columns are in the database
     const bagOf = (x) => ({ tomato: x.tomatoes | 0, poop: x.poop | 0, knife: x.knife | 0, dildo: x.dildo | 0 });
     let itemsReady = true;
@@ -493,7 +499,11 @@
       if (!(myBag()[it] > 0)) { toast(fill(T.noItem, { i: T.items[it] })); return openShop(it); }
       const tid = Math.random().toString(36).slice(2, 10);
       (seenThrows ||= new Set()).add(tid);
-      counts[USER.id] = { ...myBag(), [it]: myBag()[it] - 1 }; pendingThrows++; draw();
+      // the game's set is spent first, as the server does
+      const kit = kitOf(USER.id), mine = counts[USER.id] || {};
+      if (kit && kit[it] > 0) room.state.kits[USER.id] = { ...kit, [it]: kit[it] - 1 };
+      else counts[USER.id] = { ...mine, [it]: Math.max(0, (mine[it] | 0) - 1) };
+      pendingThrows++; draw();
       tbl.throwAt(ms, seat, { item: it });
       try { await call(it === 'tomato' ? 'throw' : 'throwItem', { room: id, seat, tid, item: it }); }
       catch (x) { fail(x.message === 'bad_action' ? new Error('soon') : x); }
@@ -519,7 +529,7 @@
         row.querySelector('[data-buy]').onclick = async (e) => {
           const n = +o.textContent || 1; e.target.disabled = true;
           if (k !== 'tomato' && !itemsReady) { e.target.disabled = false; return fail(new Error('soon')); }
-          try { await call(k === 'tomato' ? 'buy' : 'buyItem', { room: id, n, item: k }); counts[USER.id] = { ...myBag(), [k]: (myBag()[k] | 0) + n }; draw(); PT.sfx.toss(); toast(`🧺 +${n} ${T.items[k]}`); d.close(); }
+          try { await call(k === 'tomato' ? 'buy' : 'buyItem', { room: id, n, item: k }); counts[USER.id] = { ...(counts[USER.id] || {}), [k]: ((counts[USER.id] || {})[k] | 0) + n }; draw(); PT.sfx.toss(); toast(`🧺 +${n} ${T.items[k]}`); d.close(); }
           catch (x) { e.target.disabled = false; fail(x.message === 'bad_action' ? new Error('soon') : x); }
         };
       });
@@ -534,7 +544,8 @@
         const me = mySeat();
         const it = t.it || 'tomato';
         tbl.throwAt(t.fs, t.to, { item: it, onHit: () => { if (t.to === me) { buzz(it === 'knife' ? [60, 30, 20] : [30, 40, 60]); say(fill(T.lthrowI, { n: t.from, i: T.items[it], t: t.name })); } } });
-        const fu = (st().seats[t.fs] || {}).uid; if (fu && counts[fu]) counts[fu] = { ...counts[fu], [it]: Math.max(0, (counts[fu][it] | 0) - 1) };
+        // from the basket (not the game's set, which the room state already shows spent)
+        const fu = (st().seats[t.fs] || {}).uid; if (fu && counts[fu] && !t.fr) counts[fu] = { ...counts[fu], [it]: Math.max(0, (counts[fu][it] | 0) - 1) };
       }
     }
     // new chat lines pop over the speaker's seat
@@ -583,7 +594,12 @@
       draw();
       animateThrows();
       const res = st().hand && st().hand.results;
-      if (res && live && live.stage === 'done' && st().handNo !== wonHand) { const won = res.some((r) => r.seats.includes(ms)); wonHand = st().handNo; if (won) setTimeout(() => toast(T.gotT), 1200); setTimeout(loadCounts, 1500); }
+      if (res && live && live.stage === 'done' && st().handNo !== wonHand) {
+        // the prize, as the server gives it: the best hand she won with decides
+        const mineR = res.filter((r) => r.seats.includes(ms)); wonHand = st().handNo;
+        if (mineR.length) { const it = mineR.map((r) => prizeOf(r.low ? null : r.cat)).sort((x, y) => ITEMS.indexOf(y) - ITEMS.indexOf(x))[0]; setTimeout(() => toast(fill(T.gotI, { i: T.items[it] })), 1200); }
+        setTimeout(loadCounts, 1500);
+      }
     }
     // the clock lives on the server; any open page may nudge it when a deadline passes
     function schedule() {
@@ -613,7 +629,7 @@
         }
         let hand = '', best = null;
         if (showdown && Array.isArray(cards) && board.length === 5 && !p.folded) { hand = handDesc(cards, board); if (winners[i]) best = P.bestFive(cards, board); }
-        return { uid: x.uid, av: x.av || 0, bag: counts[x.uid] || {}, name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
+        return { uid: x.uid, av: x.av || 0, bag: bagFor(x.uid), name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
       });
       const inHandStage = live && live.stage !== 'done' && live.stage !== 'idle';
       const pot = live ? (live.stage === 'done' ? 0 : live.pot - seats.reduce((t, x) => t + (x ? x.bet : 0), 0)) : 0;
@@ -800,6 +816,12 @@
       const mine = s.turn && s.turn.s === v.me && v.me >= 0;
       if (mine && !lastTurnMine) { PT.sfx.turn(); buzz(60); say(T.yourTurn); if (phone() && drawerTab && drawerTab !== 'chat') { closeDrawer(); drawBar(); } }
       lastTurnMine = mine;
+      // first time at this table with the game's set: say so once
+      if (v.me >= 0 && s.kits && !draw.kitSaid) {
+        draw.kitSaid = true;
+        const key = 'barusik.poker.kit.' + id; let seen = false; try { seen = !!localStorage.getItem(key); localStorage.setItem(key, '1'); } catch {}
+        const k = kitOf(USER.id); if (!seen && k && ITEMS.some((x) => k[x] > 0)) setTimeout(() => toast(T.kitGot), 900);
+      }
       const askMe = !!(s.ask && v.me >= 0 && s.ask.seats.includes(v.me));
       if (askMe && !draw.asked) { PT.sfx.bell(); buzz(60); }
       draw.asked = askMe;
