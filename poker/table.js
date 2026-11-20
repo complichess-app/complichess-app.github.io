@@ -125,7 +125,8 @@
       if (b2 !== last.board2) { board2.classList.toggle('hide', !b2); if (b2) board2.innerHTML = v.board2.map((c, i) => card(c, i >= (v.board || []).length - (5 - v.board2.length) ? 'in' : '')).join(''); last.board2 = b2; }
       const win = new Set(); v.seats.forEach((s) => s && s.best && s.best.forEach((c) => win.add(c)));
       board.querySelectorAll('.card').forEach((el, i) => { const c = v.board[i]; el.classList.toggle('hl', win.size > 0 && c != null && win.has(c)); el.classList.toggle('dim', win.size > 0 && c != null && !win.has(c)); });
-      pot.classList.toggle('hide', !v.pot); if (v.pot) pot.innerHTML = `<span class="chip"></span>${esc(T.pot)} ${num(v.pot)}`;
+      const tot = v.pot + v.seats.reduce((t, x) => t + (x && x.bet ? x.bet : 0), 0);
+      pot.classList.toggle('hide', !tot); if (tot) pot.innerHTML = `<span class="chip"></span>` + (v.pot && tot !== v.pot && T.total ? `${esc(T.pot)} ${num(v.pot)} <small>${esc(T.total)} ${num(tot)}</small>` : `${esc(T.pot)} ${num(tot)}`);
       msg.classList.toggle('hide', !v.msg); if (v.msg) msg.innerHTML = v.msg;
       // dealer button
       const bn = v.button != null && v.seats[v.button] ? nodes[v.button] : null;

@@ -203,36 +203,110 @@
 
   /* ---------- the table, drawn from a plain view ---------- */
   // view: { n, me, seats[{name,chips,bet,folded,allIn,cards,away,leaving,win,hand}|null], button, sb, bb, board, pot, toAct, until, turnSec, msg, canSit }
+  // The action bar works like PokerNow: FOLD · CHECK/CALL · RAISE, RAISE opens the sizing panel,
+  // and while others act you can pre-select CHECK/FOLD or CALL ANY. Keys: F, C (or K), R, Enter, Esc.
+  const pre = { v: '', key: '' };
   function drawActions(el, v, o, send) {
-    if (!o) { el.innerHTML = v.under || ''; return; }
     const me = v.seats[v.me];
-    const pot = v.pot;
+    const street = `${v.hand}|${(v.board || []).length}`;
+    if (pre.key && pre.key !== street) pre.v = '';
+    el.classList.toggle('mine', !!o);
+    if (!o) {
+      el._key = '';
+      const waiting = me && Array.isArray(me.cards) && !me.folded && !me.allIn && v.toAct >= 0 && v.toAct !== v.me;
+      const preHTML = waiting ? `<div class="row lt pre">${[['cf', T.checkFold], ['ca', T.callAny]].map(([k, l]) => `<button class="act p${pre.v === k ? ' on' : ''}" data-pre="${k}" aria-pressed="${pre.v === k}">${esc(l)}</button>`).join('')}</div>` : '';
+      const key = 'w|' + street + '|' + pre.v + '|' + (v.under || '') + '|' + !!waiting;
+      if (el._wkey === key) return; el._wkey = key;
+      el.innerHTML = preHTML + (v.under || '');
+      el.querySelectorAll('[data-pre]').forEach((b) => (b.onclick = () => { pre.v = pre.v === b.dataset.pre ? '' : b.dataset.pre; pre.key = street; el._wkey = ''; drawActions(el, v, o, send); }));
+      return;
+    }
+    el._wkey = '';
+    const key = [street, o.toCall, o.minTo, o.maxTo, o.check, o.raise].join('|');
+    if (el._key === key) return; // same decision, keep whatever the player was sliding
+    el._key = key;
+    // a pre-selected action fires the moment the turn arrives
+    if (pre.v && pre.key === street) {
+      const k = pre.v; pre.v = '';
+      el.innerHTML = `<div class="turnlbl">${esc(T.yourTurn)}</div>`;
+      return send(k === 'cf' ? (o.check ? 'check' : 'fold') : (o.check ? 'check' : 'call'), 0);
+    }
+    const pot = v.pot + v.seats.reduce((t, x) => t + (x ? x.bet : 0), 0);
     const clamp = (x) => Math.max(o.minTo, Math.min(o.maxTo, Math.round(x)));
     const cur = me.bet + o.toCall;
     const size = (f) => clamp(cur + (pot + o.toCall) * f);
     const step = Math.max(1, Math.floor((v.bb || 2) / 2));
-    el.innerHTML = `<div class="row"><b style="color:var(--brass-2)">${esc(T.yourTurn)}</b></div>
-      ${o.raise ? `<div class="sizer"><button data-x="${size(0.5)}">${esc(T.half)}</button><button data-x="${size(1)}">${esc(T.potB)}</button><button data-x="${o.maxTo}">${esc(T.allin)}</button>
-        <input type="range" min="${o.minTo}" max="${o.maxTo}" step="${step}" value="${o.minTo}" aria-label="${esc(o.bet ? T.bet : T.raise)}"><input type="number" min="${o.minTo}" max="${o.maxTo}" step="${step}" value="${o.minTo}" inputmode="numeric" aria-label="${esc(T.amount)}"></div>` : ''}
-      <div class="row">${o.fold ? `<button class="act f" data-a="fold">${esc(T.fold)}</button>` : ''}
-        <button class="act c" data-a="${o.check ? 'check' : 'call'}">${o.check ? esc(T.checkB) : fill(esc(T.call), { a: num(o.call) })}${!o.check && o.call >= me.chips ? ' · ' + esc(T.allin) : ''}</button>
-        ${o.raise ? `<button class="act r" data-a="raise"></button>` : ''}</div>`;
-    const range = $('input[type=range]', el), box = $('input[type=number]', el), rb = $('[data-a=raise]', el);
-    const label = () => { const x = clamp(+box.value || o.minTo); rb.innerHTML = x >= o.maxTo ? esc(T.allin) + ' ' + num(x) : fill(esc(o.bet ? T.betA : T.raiseTo), { a: num(x) }); };
-    if (range) { range.oninput = () => { box.value = range.value; label(); }; box.oninput = () => { range.value = box.value; label(); }; el.querySelectorAll('[data-x]').forEach((b) => (b.onclick = () => { box.value = range.value = b.dataset.x; label(); })); label(); }
-    el.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => { el.querySelectorAll('button').forEach((x) => (x.disabled = true)); send(b.dataset.a, b.dataset.a === 'raise' ? clamp(+box.value) : 0); }));
+    const word = o.bet ? T.bet : T.raise;
+    let open = false, sure = false;
+    const presets = o.raise ? [[T.minB, o.minTo], [T.half, size(0.5)], [T.q3, size(0.75)], [T.potB, size(1)], [T.allin, o.maxTo]].filter((x, i, all) => i === 0 || i === all.length - 1 || (x[1] > o.minTo && x[1] < o.maxTo)) : [];
+    const paint = () => {
+      const callTxt = o.check ? esc(T.checkB) : fill(esc(T.call), { a: num(o.call) }) + (o.call >= me.chips ? ' · ' + esc(T.allin) : '');
+      el.innerHTML = `<div class="turnlbl">${esc(T.yourTurn)}</div>` + (open
+        ? `<div class="raisep lt">
+            <div class="row presets">${presets.map(([l, x]) => `<button data-x="${x}">${esc(l)}</button>`).join('')}</div>
+            <div class="row slide"><button class="stepb" data-d="-1" aria-label="−">−</button><input type="range" min="${o.minTo}" max="${o.maxTo}" step="${step}" value="${o.minTo}" aria-label="${esc(word)}"><button class="stepb" data-d="1" aria-label="+">+</button><input type="number" min="${o.minTo}" max="${o.maxTo}" step="${step}" value="${o.minTo}" inputmode="numeric" aria-label="${esc(T.amount)}"></div>
+            <div class="row"><button class="act b" data-k="back">${esc(T.back2)}</button><button class="act r" data-k="go"></button></div></div>`
+        : `<div class="row lt">${o.fold ? `<button class="act f${sure ? ' sure' : ''}" data-k="f">${esc(sure ? T.foldSure : T.fold)}</button>` : ''}<button class="act c" data-k="c">${callTxt}</button>${o.raise ? `<button class="act r" data-k="r">${esc(word)}</button>` : ''}</div>`)
+        + (matchMedia('(hover:hover)').matches ? `<div class="keys">${esc(T.keys)}</div>` : '');
+      const done = (type, to) => { el.querySelectorAll('button,input').forEach((x) => (x.disabled = true)); send(type, to); };
+      const btn = (k) => $(`[data-k=${k}]`, el);
+      if (!open) {
+        btn('f') && (btn('f').onclick = () => { if (o.check && !sure) { sure = true; paint(); return; } done('fold', 0); });
+        btn('c').onclick = () => done(o.check ? 'check' : 'call', 0);
+        btn('r') && (btn('r').onclick = () => { if (o.minTo >= o.maxTo) return done('raise', o.maxTo); open = true; paint(); $('input[type=number]', el).focus({ preventScroll: true }); });
+        return;
+      }
+      const range = $('input[type=range]', el), box = $('input[type=number]', el), go = btn('go');
+      const label = () => { const x = clamp(+box.value || o.minTo); go.innerHTML = x >= o.maxTo ? esc(T.allin) + ' ' + num(x) : fill(esc(o.bet ? T.betA : T.raiseTo), { a: num(x) }); };
+      const setTo = (x) => { box.value = range.value = clamp(x); label(); };
+      range.oninput = () => { box.value = range.value; label(); };
+      box.oninput = () => { range.value = box.value; label(); };
+      box.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); go.click(); } };
+      el.querySelectorAll('[data-x]').forEach((b) => (b.onclick = () => setTo(+b.dataset.x)));
+      el.querySelectorAll('[data-d]').forEach((b) => (b.onclick = () => setTo((+box.value || o.minTo) + (+b.dataset.d) * (v.bb || step))));
+      btn('back').onclick = () => { open = false; paint(); };
+      go.onclick = () => done('raise', clamp(+box.value));
+      label();
+    };
+    paint();
   }
+  addEventListener('keydown', (e) => {
+    const el = $('#acts'); if (!el || !el.classList.contains('mine') || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.type !== 'range' && t.type !== 'number')) || document.querySelector('dialog[open]')) return;
+    const k = e.key.toLowerCase();
+    const hit = (sel) => { const b = $(sel, el); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    if (k === 'f') hit('[data-k=f]'); else if (k === 'c' || k === 'k') hit('[data-k=c]'); else if (k === 'r') hit('[data-k=r]');
+    else if (k === 'escape') hit('[data-k=back]'); else if (k === 'enter' && t.tagName !== 'INPUT') hit('[data-k=go]');
+  });
 
   const handName = (cat) => (cat == null ? '' : T.hands[cat]);
+  // "Two Pair (9,8)": what the player holds right now, PokerNow-style, with the ranks that make it
+  const rk = (r) => RK[r] || String(r);
+  function handDesc(cards, board) {
+    if (!Array.isArray(cards) || cards.length < 2) return '';
+    board = board || [];
+    if (board.length < 3) {
+      if (cards.length !== 2) return '';
+      const [a, b] = cards.map(P.rankOf);
+      return a === b ? `${T.hands[1]} (${rk(a)})` : `${T.hands[0]} (${rk(Math.max(a, b))})`;
+    }
+    const cat = P.category(P.value(cards, board));
+    const five = P.bestFive(cards, board).map(P.rankOf);
+    const cnt = {}; five.forEach((r) => (cnt[r] = (cnt[r] || 0) + 1));
+    const groups = Object.keys(cnt).map(Number).sort((x, y) => cnt[y] - cnt[x] || y - x);
+    const top = (() => { const s = five.slice().sort((x, y) => y - x); return s[0] === 14 && s[1] === 5 ? 5 : s[0]; })();
+    const what = cat === 2 ? `${rk(groups[0])},${rk(groups[1])}` : cat === 6 ? `${rk(groups[0])},${rk(groups[1])}` : cat === 4 || cat === 8 ? `${rk(top - 4 < 1 ? 1 : top - 4).replace('1', 'A')}-${rk(top)}` : cat === 5 ? `${rk(Math.max(...five))}` : rk(groups[0]);
+    return `${T.hands[cat]} (${what})`;
+  }
   function logLine(e) {
     const a = e.a != null ? num(e.a) : '';
-    const n = esc(e.name || ''); const all = e.all ? esc(T.lall) : '';
+    const n = `<bdi>${esc(e.name || '')}</bdi>`; const all = e.all ? esc(T.lall) : '';
     switch (e.k) {
-      case 'hand': return `<div class="hd">${fill(esc(T.lhand), { a: e.n })}</div>`;
+      case 'hand': return `<div class="hd" dir="ltr">${fill(esc(T.lhand), { a: e.n })}</div>`;
       case 'sb': return fill(esc(T.lsb), { n, a }); case 'bb': return fill(esc(T.lbb), { n, a }); case 'ante': return fill(esc(T.lante), { n, a }); case 'straddle': return fill(esc(T.lstraddle), { n, a }); case 'bomb': return fill(esc(T.lbombp), { n, a });
       case 'fold': return fill(esc(T.lfold), { n }); case 'check': return fill(esc(T.lcheck), { n });
       case 'call': return fill(esc(T.lcall), { n, a }) + all; case 'bet': return fill(esc(T.lbet), { n, a }) + all; case 'raise': return fill(esc(T.lraise), { n, a }) + all;
-      case 'board': return fill(esc(T.lboard), { a: `<bdi dir="ltr">${e.b.map(cardLabel).join(' ')}</bdi>` });
+      case 'board': { const b = e.b.map(cardLabel); const st = b.length === 3 ? 'Flop' : b.length === 4 ? 'Turn' : b.length === 5 ? 'River' : 'Board'; return `<bdi dir="ltr">${st}: [${b.slice(0, 3).join(' ')}]${b.length > 3 ? ' [' + b.slice(3).join('] [') + ']' : ''}</bdi>`; }
       case 'back': return fill(esc(T.lback), { n, a });
       case 'board2': return fill(esc(T.lboard2), { a: `<bdi dir="ltr">${e.b.map(cardLabel).join(' ')}</bdi>` });
       case 'b72': return fill(esc(T.l72), { n, a });
@@ -430,8 +504,8 @@
           else if (p.has) cards = 'back';
         }
         let hand = '', best = null;
-        if (showdown && Array.isArray(cards) && cards.length >= 2 && live.stage === 'done' && s.hand.board.length === 5 && !p.folded) { hand = handName(P.category(P.value(cards, s.hand.board))); if (winners[i]) best = P.bestFive(cards, s.hand.board); }
-        else if (i === ms && Array.isArray(cards) && s.hand && s.hand.board.length >= 3 && live.stage !== 'done') hand = handName(P.category(P.value(cards, s.hand.board)));
+        if (showdown && Array.isArray(cards) && cards.length >= 2 && live.stage === 'done' && s.hand.board.length === 5 && !p.folded) { hand = handDesc(cards, s.hand.board); if (winners[i]) best = P.bestFive(cards, s.hand.board); }
+        else if (i === ms && Array.isArray(cards) && s.hand && live.stage !== 'done' && !(p && p.folded)) hand = handDesc(cards, s.hand.board);
         return { uid: x.uid, ph: x.ph || '', av: x.av || 0, tom: counts[x.uid] ?? 0, name: x.name, chips: x.chips, bet: p ? p.bet : 0, folded: p ? p.folded : false, allIn: p ? p.allIn : false, cards, away: x.away, leaving: x.leaving, win: winners[i] || 0, hand, best };
       });
       const pot = live ? (live.stage === 'done' ? 0 : live.pot - seats.reduce((t, x) => t + (x ? x.bet : 0), 0)) : 0;
@@ -462,7 +536,7 @@
     function drawBar() {
       const s = st(), ms = mySeat();
       const hostName = room.host_kind === 'admin' ? T.adminHost : room.host === USER.id ? T.youHost : room.host_kind === 'player' ? fill(T.hostIs, { n: (s.seats.find((x) => x && x.uid === room.host) || {}).name || s.creator }) : '';
-      $('#bar').innerHTML = `<h1>${esc(s.title || room.name || id)}</h1><span class="pill b n">${esc(id)}</span><span class="pill">${esc(T[s.settings.game || 'nlh'])} · ${num(s.settings.sb)}/${num(s.settings.bb)}</span>${hostName ? `<span class="pill ${room.host_kind === 'admin' ? 'g' : ''}">${esc(hostName)}</span>` : ''}
+      $('#bar').innerHTML = `<h1>${esc(s.title || room.name || id)}</h1><span class="pill b n">${esc(id)}</span><span class="pill" dir="ltr">${esc(T[s.settings.game || 'nlh'])} · ${num(s.settings.sb)}/${num(s.settings.bb)}</span>${hostName ? `<span class="pill ${room.host_kind === 'admin' ? 'g' : ''}">${esc(hostName)}</span>` : ''}
         <span style="flex:1"></span>
         <button class="btn small" id="share">${esc(T.share)}</button>
         ${isHost() && (!s.playing || s.paused) ? `<button class="btn small" id="go">${esc(s.paused ? T.resume : T.start)}</button>` : ''}
@@ -507,7 +581,7 @@
       $('#tabs').querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { tab = b.dataset.t; if (tab === 'chat') unread = 0; drawSide(); drawBar(); }));
       $('#sideX').onclick = () => $('#side').classList.remove('open');
       const foot = $('#sidefoot'); foot.innerHTML = '';
-      if (tab === 'log') { pane.innerHTML = (s.log || []).map((e) => { const l = logLine(e); return l.startsWith('<div') ? l : `<div class="li">${l}</div>`; }).join(''); pane.scrollTop = pane.scrollHeight; }
+      if (tab === 'log') { pane.innerHTML = (s.log || []).map((e) => { const l = logLine(e); return l.startsWith('<div') ? l : `<div class="li" dir="${e.k === 'throw' || e.k === 'buy' ? 'auto' : 'ltr'}">${l}</div>`; }).join(''); pane.scrollTop = pane.scrollHeight; }
       else if (tab === 'chat') {
         pane.innerHTML = (s.chat || []).map((m) => `<div class="li"><b${m.admin ? ' style="color:var(--ok)"' : ''}>${esc(m.name)}:</b> <bdi>${esc(m.text)}</bdi></div>`).join('') || '<p class="mute">💬</p>';
         pane.scrollTop = pane.scrollHeight;
@@ -558,9 +632,9 @@
       const myReq = (s.requests || []).find((r) => r.uid === USER.id);
       const canShow = v.me >= 0 && s.live && s.live.stage === 'done' && s.live.players[v.me] && !s.live.players[v.me].out && !s.live.players[v.me].cards && my.cards;
       v.under = myReq ? `<div class="row"><span class="mute">${esc(T.pending)}</span><button class="btn ghost small" id="cx">${esc(T.cancel)}</button></div>` : v.me >= 0 && s.live && !s.live.players[v.me] && s.live.stage !== 'done' ? `<div class="row mute">${esc(T.waitHand)}</div>` : canShow ? `<div class="row"><button class="btn ghost small" id="shw">${esc(T.showCards)}</button></div>` : '';
-      drawActions($('#acts'), v, mine ? s.turn.o : null, (type, to) => call('act', { room: id, type, to }).catch((x) => { fail(x); draw(); }));
-      $('#cx')?.addEventListener('click', () => call('cancel', { room: id }).catch(fail));
-      $('#shw')?.addEventListener('click', () => call('show', { room: id }).catch(fail));
+      drawActions($('#acts'), v, mine ? s.turn.o : null, (type, to) => call('act', { room: id, type, to }).catch((x) => { fail(x); $('#acts')._key = ''; draw(); }));
+      const cx = $('#cx'); if (cx) cx.onclick = () => call('cancel', { room: id }).catch(fail);
+      const shw = $('#shw'); if (shw) shw.onclick = () => call('show', { room: id }).catch(fail);
       if ($('#side').contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // don't wipe what they're typing
       drawSide();
     }
@@ -622,7 +696,7 @@
         const show = i === 0 || (done && p.shown);
         const cards = p.cards.length ? (show ? p.cards : p.folded ? null : 'back') : null;
         let hand = '', best = null;
-        if (Array.isArray(cards) && t.board.length >= 3 && !p.folded) { hand = handName(P.category(P.value(cards, t.board))); if (win[i] && done && t.board.length === 5) best = P.bestFive(cards, t.board); }
+        if (Array.isArray(cards) && !p.folded && (t.board.length >= 3 || i === 0)) { hand = handDesc(cards, t.board); if (win[i] && done && t.board.length === 5) best = P.bestFive(cards, t.board); }
         return { ph: i === 0 ? mine.ph : '', av: i === 0 ? myLook : looks.filter((x) => x !== myLook)[(i - 1) % (PokerArt.count - 1)], name: p.name, chips: p.chips, bet: p.bet, folded: p.folded, allIn: p.allIn, cards, win: win[i] || 0, hand, best };
       });
       const pot = done ? 0 : t.pot() - t.seats.reduce((a, p) => a + p.bet, 0);
@@ -648,7 +722,7 @@
       const broke = table.stage === 'done' && table.seats[0].chips === 0;
       v.under = broke ? `<div class="row"><button class="btn" id="rf">${esc(T.refill)}</button></div>` : '';
       drawActions($('#acts'), v, mine ? table.options(0) : null, (type, to) => { table.act(0, { type, to }); step(); });
-      $('#rf')?.addEventListener('click', () => { table.seats[0].chips = 10000; save(); step(); });
+      const rf = $('#rf'); if (rf) rf.onclick = () => { table.seats[0].chips = 10000; save(); step(); };
       drawLog();
     }
     function botThrow(from, to) {
@@ -657,7 +731,7 @@
       log.push({ k: 'throw', name: table.seats[from].name, to: table.seats[to].name }); drawLog();
     }
     function drawLog() {
-      $('#pane').innerHTML = log.slice(-80).map((e) => { const l = logLine(e); return l.startsWith('<div') ? l : `<div class="li">${l}</div>`; }).join('');
+      $('#pane').innerHTML = log.slice(-80).map((e) => { const l = logLine(e); return l.startsWith('<div') ? l : `<div class="li" dir="${e.k === 'throw' || e.k === 'buy' ? 'auto' : 'ltr'}">${l}</div>`; }).join('');
       $('#pane').scrollTop = 1e9;
     }
     function step() {

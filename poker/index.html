@@ -3,6 +3,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://iktmyrfbejtjsiehcrar.supabase.co; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co wss://iktmyrfbejtjsiehcrar.supabase.co https://cloudflareinsights.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ברוסיק פוקר · Barusik Poker</title>
@@ -162,18 +163,31 @@ button.empty:hover{border-color:var(--brass);color:var(--brass-2)}
 @keyframes splat{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}12%{transform:translate(-50%,-50%) scale(1.15)}20%{transform:translate(-50%,-50%) scale(1)}75%{opacity:.95}100%{opacity:0;transform:translate(-50%,-30%) scale(1)}}
 .dbtn{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;background:#fff;color:#111;font:800 12px var(--fd);display:grid;place-items:center;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.5);transition:left .5s,top .5s}
 
-/* actions */
-.actions{display:flex;flex-direction:column;gap:8px;padding:10px 4px max(10px,env(safe-area-inset-bottom));min-height:64px}
-.actions .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
-.act{min-width:96px;min-height:52px;border-radius:16px;font-weight:800;font-size:16px;padding:0 16px}
-.act.f{background:#2A1A1A;color:#FFB4A8;box-shadow:inset 0 0 0 1px rgba(255,120,100,.3)}
-.act.c{background:#1F3B33;color:var(--ivory);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+/* actions: PokerNow's bar. Big English buttons, always the same order, sizing panel behind RAISE */
+.actions{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 4px max(10px,env(safe-area-inset-bottom));min-height:64px;position:relative}
+.actions .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;width:100%}
+.actions .lt{direction:ltr}
+.turnlbl{font:800 12px/1 var(--fd);letter-spacing:.12em;color:var(--ink);background:var(--brass-2);border-radius:999px;padding:5px 12px;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(241,198,107,.18)}}
+.act{flex:1;max-width:220px;min-width:96px;min-height:56px;border-radius:14px;font:800 16px/1.1 var(--fb);letter-spacing:.04em;padding:0 14px;text-transform:uppercase;transition:transform .1s,filter .15s}
+.act:active{transform:scale(.97)}.act:hover{filter:brightness(1.1)}
+.act.f{background:#5A1F1F;color:#FFE1DA;box-shadow:inset 0 0 0 1.5px rgba(255,140,120,.45)}
+.act.f.sure{background:#C8313A;color:#fff}
+.act.c{background:#1E7A55;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18)}
 .act.r{background:var(--brass);color:var(--ink)}
-.sizer{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
-.sizer button{min-height:36px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.06);font-size:13.5px;font-weight:600}
-.sizer input[type=range]{width:min(260px,50vw);accent-color:var(--brass)}
-.sizer input[type=number]{width:104px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--room);padding:0 8px;text-align:center}
-.pre{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.act.b{background:rgba(255,255,255,.1);color:var(--ivory);max-width:120px}
+.act.p{min-height:44px;font-size:14px;background:rgba(255,255,255,.07);color:var(--ivory);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22)}
+.act.p.on{background:var(--ivory);color:var(--ink);box-shadow:none}
+.act[disabled]{opacity:.5}
+.raisep{display:flex;flex-direction:column;gap:8px;width:min(560px,100%)}
+.raisep .presets button{flex:1;min-height:40px;border-radius:10px;background:rgba(255,255,255,.1);color:var(--ivory);font:700 13px var(--fb);letter-spacing:.03em;white-space:nowrap;padding:0 6px}
+.raisep .presets button:hover{background:rgba(255,255,255,.18)}
+.raisep .slide{flex-wrap:nowrap}
+.raisep input[type=range]{flex:1;min-width:0;accent-color:var(--brass);height:30px}
+.raisep input[type=number]{width:96px;height:44px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:#0B1512;color:#fff;padding:0 6px;text-align:center;font-weight:700;font-size:17px}
+.stepb{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.1);font-size:22px;font-weight:700;flex:none}
+.keys{font-size:12px;color:var(--mute);direction:ltr}
+.potv{direction:ltr}.potv small{font-size:12px;font-weight:600;color:#D8DDD2;margin-inline-start:4px}
 
 /* side */
 .side{background:var(--panel);border:1px solid var(--line);border-radius:22px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
@@ -227,7 +241,15 @@ dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
   header.top .brand span{font-size:15px}
   .bar .btn.small{min-height:34px;padding:0 11px;font-size:13px}
   .watch .co{display:none}
-  .actions{position:sticky;bottom:0;z-index:20;background:linear-gradient(rgba(14,26,23,0),var(--room) 22%);padding-top:18px}
+  .actions{position:sticky;bottom:0;z-index:20;background:linear-gradient(rgba(14,26,23,0),var(--room) 18%);padding-top:14px}
+  .act{max-width:none;min-height:54px;font-size:15px;padding:0 8px}
+  .raisep .presets{flex-wrap:nowrap;gap:5px}.raisep .presets button{font-size:11.5px;padding:0 3px}
+  body.in-room header.top{padding-top:max(6px,env(safe-area-inset-top));padding-bottom:4px}
+  body.in-room .roomwrap{height:calc(100svh - 52px);min-height:0}
+  body.in-room .stage{min-height:0;height:100%}
+  body.in-room .felt{min-height:0}
+  body.in-room .bar{gap:6px;padding:2px 0 4px}
+  body.in-room .bar .watch{display:none}
 }
 
 /* ---------- the seats, v2: a character behind every plate, her basket beside her ---------- */
@@ -264,7 +286,8 @@ dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 .seat.turn .plate{border-color:var(--brass-2)}
 .seat .tag{position:absolute;top:-9px;inset-inline-end:-6px;font-size:10.5px;font-weight:800;border-radius:999px;padding:1px 6px;background:var(--hot);color:#2A0A00}
 .seat .tag.grey{background:#555;color:#eee}
-.seat .hand{font-size:11.5px;color:var(--ok);font-weight:600;min-height:0}
+.seat .hand{font-size:11.5px;color:var(--ok);font-weight:700;min-height:0;direction:ltr;white-space:nowrap}
+.seat.me .hand{font-size:12.5px;color:#8DF5C0;position:absolute;top:50%;inset-inline-end:calc(100% + 6px);transform:translateY(-50%);background:rgba(0,0,0,.6);padding:2px 9px;border-radius:999px;letter-spacing:.02em}
 .seat .hand:empty{display:none}
 .seat .timer{position:absolute;inset-inline:6px;bottom:2px;height:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
 .seat .timer i{display:block;height:100%;background:var(--brass-2);transform-origin:0 50%;transform:scaleX(0)}
@@ -284,7 +307,7 @@ dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 .seat .bkb[disabled]{opacity:1}
 .seat .sit{width:clamp(70px,12vw,100px);height:46px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.22);display:grid;place-items:center;font-size:12.5px;color:var(--mute)}
 .seat .sit:hover{border-color:var(--brass);color:var(--brass-2)}
-.seat .emptyl{width:clamp(70px,12vw,100px);height:46px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.12);display:grid;place-items:center;font-size:12px;color:rgba(157,176,167,.6)}
+.seat .emptyl{width:clamp(70px,12vw,100px);height:46px;border-radius:14px;border:1.5px dashed rgba(255,255,255,.2);display:grid;place-items:center;font-size:12px;color:var(--mute)}
 .felt.aiming .seat:not(.mine):not(.empty-seat) .av{cursor:crosshair}
 .felt.aiming .seat:not(.mine):not(.empty-seat) .av:before{content:"";position:absolute;inset:8% 16% 30%;border-radius:50%;border:2px dashed #FF6A4D;z-index:4;animation:aim 1s linear infinite}
 @keyframes aim{to{transform:rotate(360deg)}}
@@ -335,12 +358,12 @@ dialog.looks{width:min(560px,94vw)}
 <main id="app" tabindex="-1"></main>
 <div id="live" class="sr" aria-live="polite"></div>
 <script src="/lib/supabase.js"></script>
-<script src="i18n.js?v=5"></script>
+<script src="i18n.js?v=6"></script>
 <script src="engine.js?v=4"></script>
 <script src="avatars.js?v=2"></script>
-<script src="table.js?v=2"></script>
-<script src="app.js?v=6"></script>
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.3.0').catch(()=>{}));</script>
+<script src="table.js?v=3"></script>
+<script src="app.js?v=7"></script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.4.0').catch(()=>{}));</script>
 <script src="/lib/app.js?v=2" data-app="po" defer></script>
 </body>
 </html>
