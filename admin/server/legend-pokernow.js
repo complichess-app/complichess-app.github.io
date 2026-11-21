@@ -57,11 +57,13 @@
       return { el, name: name.trim(), stack: num(stackEl && stackEl.innerText), bet: betEl ? num(betEl.innerText) : 0, inHand: hasCards && !folded, folded, me: el.classList.contains('you-player') };
     }).filter((s) => s.name);
   }
+  // PokerNow's own buttons, only inside its decision box: call / raise (opens the amount box) / check / fold
   function buttons() {
-    const bs = $$('.game-decisions-ctn button, .action-buttons button').filter(vis);
-    const find = (re) => bs.find((b) => re.test(b.innerText.trim()) && !/\/|any/i.test(b.innerText) && !b.disabled);
-    return { fold: find(/^fold$/i), check: find(/^check$/i), call: find(/^call\b/i), raise: find(/^(raise|bet)\b/i), all: bs };
+    const bs = $$('.game-decisions-ctn .action-buttons button').filter((b) => vis(b) && !b.disabled);
+    const by = (c, re) => bs.find((b) => b.classList.contains(c) && (!re || re.test(b.innerText.trim())));
+    return { fold: by('fold'), check: by('check'), call: by('call', /^call\b/i), raise: by('raise'), all: bs };
   }
+  const extraTime = () => $$('.game-decisions-ctn .time-bank').some((b) => vis(b) && /activated/i.test(b.innerText));
   // the pot: "total" (when shown) already counts the bets in front of the players; the main number does not
   function potTotal(ss) {
     const add = $('.table-pot-size .add-on-container'), main = $('.table-pot-size .main-value');
@@ -135,7 +137,7 @@
   /* ---------- how long a move takes: the same as the bot on barusik.com ---------- */
   // 3% instantly, 6% a slow 10-18 seconds, otherwise by the spot; the speed slider scales it (an instant move stays instant)
   function thinkMs(t, k, slow) {
-    const cap = 27000, r0 = Math.random();
+    const cap = Math.max(1500, (CFG.turnMs || 15000) - 2500), r0 = Math.random();
     if (r0 < 0.03) return 150 + Math.floor(Math.random() * 350);
     if (r0 < 0.09) return Math.round(Math.min(cap, (10000 + Math.random() * 8000) * slow));
     const o = t.options(k), p = t.seats[k], pot = Math.max(1, t.pot()), street = t.board.length, bb = Math.max(1, t.bb);
@@ -159,15 +161,25 @@
   async function play(move, o) {
     const bt = buttons();
     if (move.type === 'raise' && bt.raise) {
-      bt.raise.click(); await sleep(350);
-      const form = $('.raise-controller-form') || document;
-      const input = $('input[type=number], input.value, input', form);
+      // the amount box: only inside PokerNow's decision box, never anywhere else on the page
+      bt.raise.click();
+      let input = null;
+      for (let i = 0; i < 12 && !input; i++) { await sleep(120); input = $$('.game-decisions-ctn input').find((x) => vis(x) && /number|text|tel/.test(x.type)); }
       if (input) {
-        setVal(input, move.to); await sleep(250);
-        const go = $$('button, input[type=submit]', form).filter(vis).find((x) => /^(bet|raise)\b/i.test((x.innerText || x.value || '').trim()) || x.type === 'submit');
-        if (go) { go.click(); return 'raise ' + move.to; }
+        setVal(input, move.to);
+        const rg = $$('.game-decisions-ctn input[type=range]').find(vis); if (rg) setVal(rg, move.to);
+        await sleep(250);
+        if (num(input.value) !== move.to) { setVal(input, move.to); await sleep(200); }
+        const box = input.closest('form') || $('.game-decisions-ctn');
+        const go = $$('button, input[type=submit]', box).filter(vis).find((x) => /^(bet|raise)$/i.test((x.innerText || x.value || '').trim()) || (x.tagName === 'INPUT' && x.type === 'submit'));
+        if (go) {
+          go.click(); await sleep(900);
+          const me = seats().find((x) => x.me);
+          return 'raise ' + move.to + (me && me.bet && me.bet !== move.to ? ` (on the table: ${me.bet})` : '');
+        }
       }
-      const back = $$('button', form).find((x) => /back|cancel/i.test(x.innerText)); if (back) back.click();
+      const back = $$('.game-decisions-ctn button').filter(vis).find((x) => /^(back|cancel|close|x|×)$/i.test(x.innerText.trim()));
+      if (back) { back.click(); await sleep(250); }
       move = { type: o.check ? 'check' : 'call' };
     }
     const b2 = buttons();
@@ -178,7 +190,6 @@
     if (b2.check) { b2.check.click(); return 'check'; }
     return 'no button';
   }
-
   /* ---------- the strip at the bottom and the red edges ---------- */
   const css = document.createElement('style');
   css.textContent = `
@@ -197,7 +208,8 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
 @keyframes blgalarm{from{opacity:.15}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){body.blg-alarm::after{animation:none;opacity:.8}}`;
   document.head.appendChild(css);
-  const fx = (v) => (Math.round(Math.pow(2, Math.abs(v)) * 10) / 10).toString();
+  const X = 3;   // the sliders go from 3× one way to 3× the other
+  const fx = (v) => (Math.round(Math.pow(X, Math.abs(v)) * 10) / 10).toString();
   const speedTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'מהיר' : 'איטי'} יותר`);
   const sizeTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'גדול' : 'קטן'} יותר`);
   const bar = document.createElement('div');
@@ -267,11 +279,16 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
     S.busy = true; S.sig = sig; S.at = Date.now();
     try {
       status(`הבוט האגדי · ${sp.hole.map(P.cardText).join(' ')} | ${sp.board.map(P.cardText).join(' ') || '—'}`);
-      await sleep(thinkMs(sp.t, sp.seat, Math.pow(2, -(CFG.speed || 0))));
+      // think, but move at once if PokerNow already switched on the extra time (and remember how long the clock is)
+      const until = Date.now() + thinkMs(sp.t, sp.seat, Math.pow(X, -(CFG.speed || 0)));
+      while (Date.now() < until && CFG.on) {
+        if (extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
+        await sleep(200);
+      }
       if (!CFG.on) return;
       const again = snapshot();
       if (!again.t || [again.hole, again.board, again.pot, again.t.currentBet].join('|') !== sig) return;
-      const move = P.legend(again.t, again.seat, 300, Math.pow(2, CFG.size || 0), { ...tableStyle(again.names), noPre: CFG.pre === false });
+      const move = P.legend(again.t, again.seat, 300, Math.pow(X, CFG.size || 0), { ...tableStyle(again.names), noPre: CFG.pre === false });
       moved(await play(move, again.t.options(again.seat)));
     } catch (e) { moved('error: ' + (e && e.message)); }
     finally { setTimeout(() => { S.busy = false; }, 1500); }
