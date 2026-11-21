@@ -17,7 +17,7 @@
 
   /* ---------- settings, kept in this browser ---------- */
   const KEY = 'barusik-legend';
-  const CFG = Object.assign({ on: true, speed: 0, size: 0, pre: true, style: {} }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })());
+  const CFG = Object.assign({ on: true, speed: 0, size: 0, bluff: -0.625, pre: true, style: {} }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })());
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(CFG)); } catch {} };
 
   /* ---------- reading the table ---------- */
@@ -212,13 +212,15 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   const fx = (v) => (Math.round(Math.pow(X, Math.abs(v)) * 10) / 10).toString();
   const speedTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'מהיר' : 'איטי'} יותר`);
   const sizeTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'גדול' : 'קטן'} יותר`);
+  const bluffTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'יותר' : 'פחות'}`);
   const bar = document.createElement('div');
   bar.id = 'blg'; bar.className = 'hide';
   const row = (k, lo, hi, txt, lab) => `<span class="bk2">${lab}</span><span class="bsp" dir="ltr"><small>${lo}</small><input type="range" data-k="${k}" min="-1" max="1" step="0.125" value="${CFG[k] || 0}" aria-label="${lab}"><small>${hi}</small></span><b class="bv" data-v="${k}">${txt(CFG[k] || 0)}</b>`;
   bar.innerHTML = `<button type="button" class="bsw" role="switch" data-on aria-label="הבוט האגדי"><i></i></button>
     <span class="bl" title="הבוט האגדי · אפשר לגרור">🤖</span>${row('speed', 'איטי', 'מהיר', speedTxt, 'מהירות')}
     <span></span><span></span><label class="bpre"><button type="button" class="bsw sm" role="switch" data-pre aria-label="רייזים לפני הפלופ"><i></i></button>רייזים לפני הפלופ</label>
-    <span></span><span></span>${row('size', 'קטן', 'גדול', sizeTxt, 'גודל הימור')}`;
+    <span></span><span></span>${row('size', 'קטן', 'גדול', sizeTxt, 'גודל הימור')}
+    <span></span><span></span>${row('bluff', 'פחות', 'יותר', bluffTxt, 'בלופים')}`;
   document.body.appendChild(bar);
   const paint = () => {
     const a = $('[data-on]', bar), b = $('[data-pre]', bar);
@@ -228,7 +230,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   $('[data-on]', bar).onclick = () => { CFG.on = !CFG.on; save(); paint(); S.sig = ''; };
   $('[data-pre]', bar).onclick = () => { CFG.pre = CFG.pre === false; save(); paint(); };
   $$('input[type=range]', bar).forEach((rg) => {
-    const k = rg.dataset.k, out = $(`[data-v=${k}]`, bar), txt = k === 'speed' ? speedTxt : sizeTxt;
+    const k = rg.dataset.k, out = $(`[data-v=${k}]`, bar), txt = k === 'speed' ? speedTxt : k === 'size' ? sizeTxt : bluffTxt;
     rg.oninput = () => { out.textContent = txt(+rg.value); };
     rg.onchange = () => { CFG[k] = +rg.value; save(); };
   });
@@ -280,11 +282,12 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
     try {
       status(`הבוט האגדי · ${sp.hole.map(P.cardText).join(' ')} | ${sp.board.map(P.cardText).join(' ') || '—'}`);
       // think, but move at once if PokerNow already switched on the extra time (and remember how long the clock is)
+      const lateAlready = extraTime();
       const wait = thinkMs(sp.t, sp.seat, Math.pow(X, -(CFG.speed || 0))), until = Date.now() + wait;
       // decide during the pause: the longer the pause, the more deals it runs (Omaha with 5 cards needs them)
-      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false });
+      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) });
       while (Date.now() < until && CFG.on) {
-        if (extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
+        if (!lateAlready && extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
         await sleep(200);
       }
       if (!CFG.on || S.dead) return;

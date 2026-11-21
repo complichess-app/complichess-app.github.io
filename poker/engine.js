@@ -706,6 +706,7 @@
   // size: its owner's taste in bets, 1/3 (a third of the usual) to 3 (three times); all-in stays all-in.
   // opts.noPre: never raise before the flop (call, check or fold instead).
   // opts.aggr / opts.sizeF: the opponents' own style (1 = ordinary); the bot leans a third of the way toward it, so it plays like the table
+  // opts.bluff: how often it bets or raises without a strong hand, 1 = as designed (0.5 half as often)
   function legend(t, seat, ms = 140, size = 1, opts = {}) {
     const p = t.seats[seat], o = t.options(seat);
     const omaha = p.cards.length > 2, street = t.board.length, bb = Math.max(1, t.bb || 1);
@@ -730,6 +731,7 @@
     const callOrFold = (edge) => (o.check ? { type: 'check' } : eq + edge >= price ? { type: 'call' } : { type: 'fold' });
     const tight = omaha ? 0.82 : 1; // omaha hands run closer together
     const af = 1 + ((Math.max(0.5, Math.min(2, opts.aggr || 1))) - 1) / 3;   // their aggression, a third of it
+    const bf = af * Math.max(0.1, Math.min(3, opts.bluff ?? 1));               // bets and raises without the goods: the owner can ask for fewer or more
     const sz = size * (1 + ((Math.max(0.6, Math.min(1.7, opts.sizeF || 1))) - 1) / 3);
 
     if (street === 0) {
@@ -738,7 +740,7 @@
       const openAt = (opps === 1 ? 1.03 : opps === 2 ? 1.15 : 1.26) * tight;
       if (o.toCall <= bb && t.currentBet <= bb) {                       // nobody has raised yet
         const limpers = t.seats.filter((q) => q !== p && !q.out && !q.folded && q.total >= bb).length - 1;
-        if (strength > openAt || (strength > openAt * 0.88 && r < 0.3)) return raise(to(bb * (opps === 1 ? 2.5 : 2.5 + Math.max(0, limpers)) + (opps > 3 ? bb / 2 : 0)));
+        if (strength > openAt || (strength > openAt * 0.88 && r < 0.3 * Math.min(1, bf))) return raise(to(bb * (opps === 1 ? 2.5 : 2.5 + Math.max(0, limpers)) + (opps > 3 ? bb / 2 : 0)));
         if (o.check) return { type: 'check' };
         return strength > (opps === 1 ? 0.8 : 0.92) * tight ? { type: 'call' } : { type: 'fold' };
       }
@@ -755,15 +757,15 @@
       // nobody has bet: value, a trap now and then, semi-bluffs with draws, the odd stab heads-up, a river bluff
       if (eq > 0.88 && !river && r < 0.22 / af) return { type: 'check' };
       if (eq > valueAt) return raise(potRaise(river && eq > 0.88 ? 0.9 : 0.5 + r * 0.3));
-      if (!river && eq > 0.32 && opps <= 2 && r < 0.4 * af) return raise(potRaise(0.5));
-      if (!river && opps === 1 && r < 0.22 * af) return raise(potRaise(0.45));
-      if (river && opps === 1 && eq < 0.25 && r < 0.24 * af) return raise(potRaise(0.66));
+      if (!river && eq > 0.32 && opps <= 2 && r < 0.4 * bf) return raise(potRaise(0.5));
+      if (!river && opps === 1 && r < 0.22 * bf) return raise(potRaise(0.45));
+      if (river && opps === 1 && eq < 0.25 && r < 0.24 * bf) return raise(potRaise(0.66));
       return { type: 'check' };
     }
     // facing a bet
     const raiseAt = opps === 1 ? 0.76 : Math.max(0.6, fair * 2.4);
     if (eq > raiseAt) return r < Math.min(0.92, 0.7 * af) || committed ? raise(committed ? o.maxTo : to(t.currentBet * 2.8)) : { type: 'call' };
-    if (!river && opps === 1 && eq > 0.4 && eq < 0.58 && r < 0.12 * af && !committed) return raise(to(t.currentBet * 3));
+    if (!river && opps === 1 && eq > 0.4 && eq < 0.58 && r < 0.12 * bf && !committed) return raise(to(t.currentBet * 3));
     if (committed) return callOrFold(0.03);
     // implied odds before the river, a stricter price on the river and against several players
     return callOrFold((river ? -0.02 : 0.04) - (opps > 1 ? 0.03 * (opps - 1) : 0));
