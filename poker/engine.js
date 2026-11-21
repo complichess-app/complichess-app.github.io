@@ -629,6 +629,33 @@
     }
     return PCT[a * 52 + b];
   };
+  // Omaha hands (4, 5 or 6 cards): a rough score (pairs, a suited ace, cards that work together, high cards),
+  // then "beats that share of all hands of this size", from a fixed sample
+  const omahaScore = (h) => {
+    const rs = h.map(rankOf).sort((x, y) => y - x), cnt = {}, su = {};
+    for (const c of h) { const r = rankOf(c), s = suitOf(c); cnt[r] = (cnt[r] || 0) + 1; (su[s] ||= []).push(r); }
+    let v = 0;
+    for (const r in cnt) { if (cnt[r] === 2) v += 0.6 + (r / 14) * 1.6; else if (cnt[r] >= 3) v -= 0.8; }
+    const suits = Object.values(su).filter((x) => x.length >= 2).map((x) => (x.includes(14) ? 1 : 0.45) + Math.max(...x) / 40 - (x.length >= 4 ? 0.4 : 0)).sort((x, y) => y - x);
+    v += (suits[0] || 0) + (suits[1] || 0) * 0.7;
+    const u = [...new Set(rs)];
+    for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) { const g = u[i] - u[j]; if (g <= 4) v += (5 - g) * 0.09 * (u[j] >= 9 ? 1.3 : 1); }
+    for (const r of rs) if (r >= 10) v += (r - 9) * 0.07;
+    if (u.includes(14)) v += 0.15;
+    return v;
+  };
+  const OPCT = {};
+  const pctO = (h) => {
+    const n = h.length;
+    if (!OPCT[n]) {
+      const xs = [], deck = []; for (let c = 0; c < 52; c++) deck.push(c);
+      for (let k = 0; k < 6000; k++) { for (let i = 0; i < n; i++) { const j = i + Math.floor(rand() * (52 - i)); const x = deck[i]; deck[i] = deck[j]; deck[j] = x; } xs.push(omahaScore(deck.slice(0, n))); }
+      OPCT[n] = xs.sort((x, y) => x - y);
+    }
+    const xs = OPCT[n], v = omahaScore(h); let lo = 0, hi = xs.length;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; }
+    return lo / xs.length;
+  };
   // the share of the pot this seat should expect at showdown, against what the others are likely to hold
   function potShare(t, seat, ms) {
     const p = t.seats[seat], hole = p.cards, board = t.board, hl = hiLo(t.game), hc = hole.length;
@@ -640,7 +667,12 @@
     // how wide each opponent's range is: everything for a big blind who only checked, the top few percent after big bets
     const keep = opps.map((q) => Math.max(0.1, Math.min(0.92, 0.92 - 0.16 * Math.log2(Math.max(1, (q.total || 0) / bb)))));
     // after the flop: whoever has put a lot in rarely holds nothing on this board (any game, Omaha too)
-    const fit = (k, cat) => (cat >= 2 ? 1 : cat === 1 ? (k < 0.3 ? 0.4 : k < 0.6 ? 0.75 : 1) : k < 0.3 ? 0.1 : k < 0.6 ? 0.3 : 0.7);
+    const late = board.length === 5;
+    const fit = hc > 2
+      // Omaha: nearly every hand hits something, so chips in mean a strong made hand (draws still count before the river)
+      ? (k, cat) => (cat >= 4 ? 1 : cat === 3 ? (k < 0.3 ? 0.85 : 1) : cat === 2 ? (k < 0.3 ? 0.4 : k < 0.6 ? 0.7 : 1)
+        : cat === 1 ? (k < 0.3 ? (late ? 0.05 : 0.22) : k < 0.6 ? (late ? 0.18 : 0.42) : 0.8) : k < 0.3 ? (late ? 0.02 : 0.14) : k < 0.6 ? (late ? 0.07 : 0.3) : 0.6)
+      : (k, cat) => (cat >= 2 ? 1 : cat === 1 ? (k < 0.3 ? 0.4 : k < 0.6 ? 0.75 : 1) : k < 0.3 ? 0.1 : k < 0.6 ? 0.3 : 0.7);
     const minIt = hc > 2 ? 120 : 300, maxIt = hc > 2 ? 700 : 2500, t0 = Date.now();
     let sum = 0, n = 0, pos = 0;
     const take = () => { const j = pos + Math.floor(rand() * (d.length - pos)); const x = d[j]; d[j] = d[pos]; d[pos] = x; return d[pos++]; };
@@ -652,7 +684,7 @@
         for (let tries = 0; ; tries++) {
           const start = pos; h = []; for (let k = 0; k < hc; k++) h.push(take());
           if (tries >= 12) break;
-          if (board.length >= 3 ? rand() < fit(keep[o], category(value(h, board))) : hc !== 2 || pct2(h[0], h[1]) >= 1 - keep[o]) break;
+          if (board.length >= 3 ? rand() < fit(keep[o], category(value(h, board))) : (hc === 2 ? pct2(h[0], h[1]) : pctO(h)) >= 1 - keep[o]) break;
           pos = start;
         }
         hands.push(h);

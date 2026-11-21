@@ -280,7 +280,9 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
     try {
       status(`הבוט האגדי · ${sp.hole.map(P.cardText).join(' ')} | ${sp.board.map(P.cardText).join(' ') || '—'}`);
       // think, but move at once if PokerNow already switched on the extra time (and remember how long the clock is)
-      const until = Date.now() + thinkMs(sp.t, sp.seat, Math.pow(X, -(CFG.speed || 0)));
+      const wait = thinkMs(sp.t, sp.seat, Math.pow(X, -(CFG.speed || 0))), until = Date.now() + wait;
+      // decide during the pause: the longer the pause, the more deals it runs (Omaha with 5 cards needs them)
+      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false });
       while (Date.now() < until && CFG.on) {
         if (extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
         await sleep(200);
@@ -288,7 +290,6 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
       if (!CFG.on) return;
       const again = snapshot();
       if (!again.t || [again.hole, again.board, again.pot, again.t.currentBet].join('|') !== sig) return;
-      const move = P.legend(again.t, again.seat, 300, Math.pow(X, CFG.size || 0), { ...tableStyle(again.names), noPre: CFG.pre === false });
       moved(await play(move, again.t.options(again.seat)));
     } catch (e) { moved('error: ' + (e && e.message)); }
     finally { setTimeout(() => { S.busy = false; }, 1500); }
