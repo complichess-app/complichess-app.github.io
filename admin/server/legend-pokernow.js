@@ -61,7 +61,7 @@
   function buttons() {
     const bs = $$('.game-decisions-ctn .action-buttons button').filter((b) => vis(b) && !b.disabled);
     const by = (c, re) => bs.find((b) => b.classList.contains(c) && (!re || re.test(b.innerText.trim())));
-    return { fold: by('fold'), check: by('check'), call: by('call', /^call\b/i), raise: by('raise'), all: bs };
+    return { fold: by('fold'), check: by('check'), call: by('call', /^(call\b|all\s*in\b)/i), raise: by('raise'), all: bs };
   }
   const extraTime = () => $$('.game-decisions-ctn .time-bank').some((b) => vis(b) && /activated/i.test(b.innerText));
   // the pot: "total" (when shown) already counts the bets in front of the players; the main number does not

@@ -450,9 +450,9 @@
     }
     roomShell();
     let myBot = null; // the legendary bot, if the admin gave it to me: { on }; only I am told
-    // the bot's own window: on or off, and how fast it plays (twice as slow .. twice as fast)
-    const sizeTxt = (v) => { const f = Math.pow(2, Math.abs(v)); return Math.abs(v) < 0.01 ? T.normalSp : fill(v > 0 ? T.biggerX : T.smallerX, { a: (Math.round(f * 10) / 10).toString() }); };
-    const speedTxt = (v) => { const f = Math.pow(2, Math.abs(v)); return Math.abs(v) < 0.01 ? T.normalSp : fill(v > 0 ? T.fasterX : T.slowerX, { a: (Math.round(f * 10) / 10).toString() }); };
+    // the bot's own window: on or off, and how fast it plays (three times as slow .. three times as fast)
+    const sizeTxt = (v) => { const f = Math.pow(3, Math.abs(v)); return Math.abs(v) < 0.01 ? T.normalSp : fill(v > 0 ? T.biggerX : T.smallerX, { a: (Math.round(f * 10) / 10).toString() }); };
+    const speedTxt = (v) => { const f = Math.pow(3, Math.abs(v)); return Math.abs(v) < 0.01 ? T.normalSp : fill(v > 0 ? T.fasterX : T.slowerX, { a: (Math.round(f * 10) / 10).toString() }); };
     // the bot's strip at the bottom of the screen, for its owner only: on/off and how fast it plays
     function drawBotBar() {
       const el = $('#botbar'); if (!el) return;

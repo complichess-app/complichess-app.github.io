@@ -671,7 +671,7 @@
     }
     return sum / n;
   }
-  // size: its owner's taste in bets, 0.5 (half the usual) to 2 (twice); all-in stays all-in.
+  // size: its owner's taste in bets, 1/3 (a third of the usual) to 3 (three times); all-in stays all-in.
   // opts.noPre: never raise before the flop (call, check or fold instead).
   // opts.aggr / opts.sizeF: the opponents' own style (1 = ordinary); the bot leans a third of the way toward it, so it plays like the table
   function legend(t, seat, ms = 140, size = 1, opts = {}) {
