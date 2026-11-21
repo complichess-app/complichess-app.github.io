@@ -222,6 +222,7 @@
       LOG.lines.push(...fresh);
       if (LOG.lines.length > 6000) LOG.lines.splice(0, LOG.lines.length - 6000);
       digest(fresh);
+      try { calibrate(); } catch (_e) { /* a line it could not read */ }
     } catch (_e) { /* offline for a moment */ }
   }
   function digest(fresh) {
@@ -282,7 +283,76 @@
   // this hand, from the log: what the one opponent did on each street after the flop, turned into limits on how his hand
   // ranks on that street's board (tested against a bot that plays like Yahav: about +200 big blinds per 100 hands)
   const READ = { S: 0.55, B: 0.75, R: 0.85, C: 0.3, K: 0.8 };
+  // the reading tunes itself on each opponent's showdowns: for every street of a hand he showed, where his hand ranked
+  // on that board after a small bet, a big bet, a raise, a call or a check. Thresholds = the low end (the high end for a
+  // check) of what he really held, blended with the defaults until there are enough hands
+  CFG.read ||= {};
+  CFG.calDone ||= [];
+  const CAL = { done: new Set(CFG.calDone) };   // hands already counted, kept across reloads
+  const suitOf = { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
+  const logCards = (s2) => s2.split(',').map((c) => c.trim().replace(/\.$/, '')).filter(Boolean).map((c) => P.parse(c.slice(0, -1).replace('10', 'T') + suitOf[c.slice(-1)]));
+  function rankOn(board, dead, hc) {
+    const out = new Set([...board, ...dead]), deck = []; for (let c = 0; c < 52; c++) if (!out.has(c)) deck.push(c);
+    const xs = [];
+    for (let k = 0; k < 200; k++) { for (let i = 0; i < hc; i++) { const j = i + Math.floor(Math.random() * (deck.length - i)); const x = deck[i]; deck[i] = deck[j]; deck[j] = x; } xs.push(P.value(deck.slice(0, hc), board)); }
+    xs.sort((a, b) => a - b);
+    return (v) => { let lo = 0, hi = xs.length; while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; } let up = lo; while (up < xs.length && xs[up] === v) up++; return (lo + up) / 2 / xs.length; };
+  }
+  function calibrate() {
+    const L = LOG.lines; let h = null;
+    const num = (v) => +String(v).replace(/,/g, ''), sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+    for (const { msg: m, created_at: at } of L) {
+      if (/^-- starting hand #/.test(m)) { h = { key: at + m.slice(0, 30), board: [], n: 0, lvl: {}, before: 0, acts: [], shows: {}, mine: null }; continue; }
+      if (!h) continue;
+      if (/^-- ending hand/.test(m)) {
+        if (!CAL.done.has(h.key) && h.board.length === 5 && Object.keys(h.shows).length) {
+          CAL.done.add(h.key); CFG.calDone.push(h.key); if (CFG.calDone.length > 400) CFG.calDone.splice(0, CFG.calDone.length - 400);
+          for (const [who, cards] of Object.entries(h.shows)) {
+            const R = (CFG.read[who] ||= { S: [], B: [], R: [], C: [], K: [] });
+            for (const k of [3, 4, 5]) {
+              const a = h.acts.filter((x) => x.who === who && x.n === k); if (!a.length) continue;
+              const bet = a.find((x) => x.type === 'bet');
+              const type = a.some((x) => x.type === 'raise') ? 'R' : bet ? (bet.frac <= 0.35 ? 'S' : 'B') : a.some((x) => x.type === 'call') ? 'C' : a.some((x) => x.type === 'check') ? 'K' : null;
+              if (!type) continue;
+              const b = h.board.slice(0, k), rel = rankOn(b, cards.concat(h.mine || []), cards.length)(P.value(cards, b));
+              R[type].push(+rel.toFixed(3)); if (R[type].length > 40) R[type].shift();
+            }
+          }
+          save();
+        }
+        h = null; continue;
+      }
+      if (/^Your hand is /.test(m)) { h.mine = logCards(m.replace('Your hand is ', '')); continue; }
+      if (/^(Flop|Turn|River)/.test(m)) {
+        if (/second run/i.test(m)) continue;
+        h.before += sum(h.lvl); h.lvl = {}; h.n = /^Flop/.test(m) ? 3 : /^Turn/.test(m) ? 4 : 5;
+        const all = (m.match(/\[([^\]]+)\]/g) || []).map((x) => x.slice(1, -1)).join(',');
+        h.board = /^Flop/.test(m) ? logCards(all) : h.board.concat(logCards(all));
+        continue;
+      }
+      const who = nameIn(m); if (!who) continue;
+      let r, type = null, amt = 0;
+      if ((r = m.match(/" shows a (.+)$/))) { h.shows[who] = logCards(r[1]); continue; }
+      if ((r = m.match(/posts an? .*? of (\d[\d,]*)/))) { h.lvl[who] = Math.max(h.lvl[who] || 0, num(r[1])); continue; }
+      if ((r = m.match(/" bets (\d[\d,]*)/))) { type = 'bet'; amt = num(r[1]); }
+      else if ((r = m.match(/" raises to (\d[\d,]*)/))) { type = 'raise'; amt = num(r[1]); }
+      else if ((r = m.match(/" calls (\d[\d,]*)/))) { type = 'call'; amt = num(r[1]); }
+      else if (/" checks/.test(m)) type = 'check';
+      else continue;
+      if (h.n >= 3) h.acts.push({ who, n: h.n, type, frac: type === 'bet' ? amt / Math.max(1, h.before + sum(h.lvl)) : 0 });
+      if (amt) h.lvl[who] = Math.max(h.lvl[who] || 0, amt);
+    }
+  }
+  function readFor(opp) {
+    const R = CFG.read[opp], out = { ...READ };
+    if (!R) return out;
+    const q = (xs, p) => { const a = xs.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(p * a.length)))]; };
+    for (const k of ['S', 'B', 'R', 'C']) if (R[k] && R[k].length) { const n = R[k].length; out[k] = Math.max(0.05, Math.min(0.97, (n * q(R[k], 0.15) + 4 * READ[k]) / (n + 4))); }
+    if (R.K && R.K.length) { const n = R.K.length; out.K = Math.max(0.3, Math.min(1, (n * q(R.K, 0.85) + 4 * READ.K) / (n + 4))); }
+    return out;
+  }
   function handLine(opp, hole) {
+    const RD = readFor(opp);
     const L = LOG.lines; let i = L.length - 1;
     while (i >= 0 && !/^-- starting hand #/.test(L[i].msg)) i--;
     if (i < 0) return null;
@@ -308,10 +378,10 @@
     for (const k of [3, 4, 5]) {
       const a = acts.filter((x) => x.n === k); if (!a.length) continue;
       const c = { n: k }, bet = a.find((x) => x.type === 'bet');
-      if (a.some((x) => x.type === 'raise')) c.min = READ.R;
-      else if (bet) c.min = bet.frac <= 0.35 ? READ.S : READ.B;
-      else if (a.some((x) => x.type === 'call')) c.min = READ.C;
-      if (a.some((x) => x.type === 'check') && !a.some((x) => x.type === 'bet' || x.type === 'raise')) c.max = READ.K;
+      if (a.some((x) => x.type === 'raise')) c.min = RD.R;
+      else if (bet) c.min = bet.frac <= 0.35 ? RD.S : RD.B;
+      else if (a.some((x) => x.type === 'call')) c.min = RD.C;
+      if (a.some((x) => x.type === 'check') && !a.some((x) => x.type === 'bet' || x.type === 'raise')) c.max = RD.K;
       if (c.min != null || c.max != null) line.push(c);
     }
     return line.length ? line : null;
@@ -473,6 +543,6 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   const walk = (el, d = 0) => (!el || d > 7 ? '' : `${' '.repeat(d)}${el.tagName.toLowerCase()}.${(typeof el.className === 'string' ? el.className : '').trim().replace(/\s+/g, '.')}${el.children.length ? '' : ' «' + (el.textContent || '').trim().slice(0, 24) + '»'}\n` + [...el.children].map((c) => walk(c, d + 1)).join(''));
   const dump = () => ['.you-player', '.table-cards', '.table-pot-size', '.game-decisions-ctn', '.action-buttons', '.raise-controller-form'].map((q) => q + '\n' + walk($(q))).join('\n');
-  window.__legend = { S, CFG, LOG, oppBluff, note, dump, snapshot, seats, buttons, blinds, stop() { S.dead = true; clearInterval(iv); mo.disconnect(); bar.remove(); css.remove(); document.body.classList.remove('blg-alarm'); delete window.__legend; } };
+  window.__legend = { S, CFG, LOG, oppBluff, note, readFor, calibrate, dump, snapshot, seats, buttons, blinds, stop() { S.dead = true; clearInterval(iv); mo.disconnect(); bar.remove(); css.remove(); document.body.classList.remove('blg-alarm'); delete window.__legend; } };
   tick();
 })();
