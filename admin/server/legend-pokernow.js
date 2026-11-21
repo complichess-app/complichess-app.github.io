@@ -269,7 +269,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
     const ss = seats();
     alarm(ss);
     try { watch(); } catch {}
-    if (!CFG.on || S.busy) return;
+    if (!CFG.on || S.busy || S.dead) return;
     const bt = buttons();
     if ((!bt.fold && !bt.check && !bt.call && !bt.raise) || !myTurn(ss, bt)) { status('הבוט האגדי · מחכה לתור'); return; }
     const sp = snapshot();
@@ -287,7 +287,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
         if (extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
         await sleep(200);
       }
-      if (!CFG.on) return;
+      if (!CFG.on || S.dead) return;
       const again = snapshot();
       if (!again.t || [again.hole, again.board, again.pot, again.t.currentBet].join('|') !== sig) return;
       moved(await play(move, again.t.options(again.seat)));
@@ -304,6 +304,6 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   const walk = (el, d = 0) => (!el || d > 7 ? '' : `${' '.repeat(d)}${el.tagName.toLowerCase()}.${(typeof el.className === 'string' ? el.className : '').trim().replace(/\s+/g, '.')}${el.children.length ? '' : ' «' + (el.textContent || '').trim().slice(0, 24) + '»'}\n` + [...el.children].map((c) => walk(c, d + 1)).join(''));
   const dump = () => ['.you-player', '.table-cards', '.table-pot-size', '.game-decisions-ctn', '.action-buttons', '.raise-controller-form'].map((q) => q + '\n' + walk($(q))).join('\n');
-  window.__legend = { S, CFG, dump, snapshot, seats, buttons, blinds, stop() { clearInterval(iv); mo.disconnect(); bar.remove(); css.remove(); document.body.classList.remove('blg-alarm'); delete window.__legend; } };
+  window.__legend = { S, CFG, dump, snapshot, seats, buttons, blinds, stop() { S.dead = true; clearInterval(iv); mo.disconnect(); bar.remove(); css.remove(); document.body.classList.remove('blg-alarm'); delete window.__legend; } };
   tick();
 })();
