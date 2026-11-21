@@ -1,0 +1,291 @@
+/* The legendary bot at a PokerNow table: reads the table from the page, asks Barusik's engine (legend) for a move
+   and presses the buttons, after a human-like pause. The extension loads it (after poker-engine.js) on every PokerNow page.
+   Same controls as on barusik.com/poker: a strip (at the top here, it can be dragged) with on/off, speed, bet size and raises before the flop,
+   and the screen's edges blink red when the pot is big. Everything is remembered in this browser. Play chips only.
+   © Bar Lvovski. */
+(async () => {
+  if (window.__legend) window.__legend.stop();
+  if (!window.Poker || !window.Poker.legend) {   // pasted by hand instead of loaded by the extension
+    const code = await (await fetch('https://barusik.com/poker/engine.js?v=' + Date.now())).text();
+    (0, eval)(code);
+  }
+  const P = window.Poker;
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const num = (t) => { const m = String(t || '').replace(/,/g, '').match(/\d+(\.\d+)?/); return m ? +m[0] : 0; };
+  const vis = (el) => !!el && el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* ---------- settings, kept in this browser ---------- */
+  const KEY = 'barusik-legend';
+  const CFG = Object.assign({ on: true, speed: 0, size: 0, pre: true, style: {} }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })());
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(CFG)); } catch {} };
+
+  /* ---------- reading the table ---------- */
+  const SU = { s: 's', h: 'h', d: 'd', c: 'c', '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
+  function readCard(el) {
+    const txt = (el.innerText || el.textContent || '').replace(/\s+/g, '');
+    const cls = [el, ...el.querySelectorAll('*')].map((x) => (typeof x.className === 'string' ? x.className : (x.className && x.className.baseVal) || '')).join(' ');
+    let r = (txt.match(/^(10|[2-9TJQKA])/i) || [])[1];
+    let s = (txt.match(/[♠♥♦♣]/) || [])[0];
+    if (!s) { const m = cls.match(/card-([shdc])(?:\b|-)/) || cls.match(/suit-([shdc])\b/) || txt.match(/^(?:10|[2-9TJQKA])([shdc])$/i); if (m) s = m[1].toLowerCase(); }
+    if (!r) { const m = cls.match(/(?:card|value)-(10|[2-9tjqka])(?:\b|-)/i); if (m) r = m[1]; }
+    if (!r || !s || !SU[s]) return null;
+    r = r === '10' ? 'T' : r.toUpperCase();
+    return P.parse(r + SU[s]);
+  }
+  function cardsIn(root) {
+    if (!root) return [];
+    let els = $$('.card-container', root); if (!els.length) els = $$('.card', root);
+    const out = [];
+    for (const e of els) { const c = readCard(e); if (c != null && !out.includes(c)) out.push(c); }
+    return out;
+  }
+  function blinds() {
+    const ty = (($('.blind-value .current-type') || {}).innerText || 'NLH').toUpperCase();
+    const v = $$('.blind-value .chips-value').map((e) => num(e.innerText));
+    const game = /PLO\s*6/.test(ty) ? 'plo6' : /PLO\s*5/.test(ty) ? 'plo5' : /PLO|OMAHA/.test(ty) ? 'plo' : 'nlh';
+    return { game, sb: v[0] || 10, bb: v[1] || 20 };
+  }
+  function seats() {
+    return $$('.table-player').map((el) => {
+      const name = ($('.table-player-name', el) || {}).innerText || '';
+      const stackEl = $('.table-player-stack', el);
+      const betEl = $('.table-player-bet-value', el) || (el.parentElement && $(`.table-player-bet-value.${[...el.classList].find((c) => /^table-player-\d+$/.test(c))}`, el.parentElement));
+      const cardsEl = $('.table-player-cards', el);
+      const hasCards = !!cardsEl && $$('.card, .card-container', cardsEl).length > 0;
+      const folded = /fold/i.test(el.className) || /fold/i.test((($('.table-player-status-icon', el) || {}).className || ''));
+      return { el, name: name.trim(), stack: num(stackEl && stackEl.innerText), bet: betEl ? num(betEl.innerText) : 0, inHand: hasCards && !folded, folded, me: el.classList.contains('you-player') };
+    }).filter((s) => s.name);
+  }
+  function buttons() {
+    const bs = $$('.game-decisions-ctn button, .action-buttons button').filter(vis);
+    const find = (re) => bs.find((b) => re.test(b.innerText.trim()) && !/\/|any/i.test(b.innerText) && !b.disabled);
+    return { fold: find(/^fold$/i), check: find(/^check$/i), call: find(/^call\b/i), raise: find(/^(raise|bet)\b/i), all: bs };
+  }
+  // the pot: "total" (when shown) already counts the bets in front of the players; the main number does not
+  function potTotal(ss) {
+    const add = $('.table-pot-size .add-on-container'), main = $('.table-pot-size .main-value');
+    if (add && vis(add) && !add.classList.contains('hidden')) return num(add.innerText);
+    return num(main && main.innerText) + ss.reduce((a, s) => a + s.bet, 0);
+  }
+  function myTurn(ss, bt) {
+    const me = ss.find((s) => s.me);
+    if (me && /decision-current|current-player|to-act/.test(me.el.className)) return true;
+    if ($$('.table-player').some((e) => /decision-current/.test(e.className))) return false;   // someone else is on the clock
+    return !!(bt.fold || bt.call) && !bt.all.some((b) => /any/i.test(b.innerText));
+  }
+
+  /* ---------- the engine's view of this spot ---------- */
+  function snapshot() {
+    const b = blinds(), ss = seats(), me = ss.find((s) => s.me);
+    if (!me) return { why: 'not seated' };
+    const hole = cardsIn($('.table-player-cards', me.el));
+    const board = cardsIn($('.table-cards'));
+    const players = ss.filter((s) => s.inHand || s.me);
+    if (hole.length < 2) return { why: 'no cards yet' };
+    if (![0, 3, 4, 5].includes(board.length)) return { why: 'board ' + board.length };
+    const pot = potTotal(ss), bets = players.reduce((a, s) => a + s.bet, 0), rest = Math.max(0, pot - bets);
+    const share = rest / Math.max(1, players.length);
+    const t = Object.create(P.Table.prototype);
+    const sorted = players.map((s) => s.bet).sort((x, y) => y - x);
+    Object.assign(t, {
+      game: b.game, sb: b.sb, bb: b.bb, minOpen: b.bb, board,
+      stage: board.length === 0 ? 'preflop' : board.length === 3 ? 'flop' : board.length === 4 ? 'turn' : 'river',
+      currentBet: sorted[0] || 0, minRaise: Math.max(b.bb, (sorted[0] || 0) - (sorted[1] || 0)), on: () => {},
+      seats: players.map((s) => ({ id: s.name, name: s.name, chips: s.stack, bet: s.bet, total: s.bet + share, cards: s.me ? hole : [], folded: false, out: false, allIn: s.stack === 0, canRaise: true, acted: false })),
+    });
+    t.toAct = t.seats.findIndex((p) => p.cards.length);
+    return { t, seat: t.toAct, hole, board, pot, b, names: players.filter((s) => !s.me).map((s) => s.name) };
+  }
+
+  /* ---------- the opponents' style, for the bot to lean toward (as on barusik.com) ---------- */
+  // every bet or raise we see nudges "aggr" up, every call or check down; the size of their bets is kept too
+  const seen = { street: -1, bets: {}, top: 0, acted: {} };
+  function learn(name, agg, to, pot) {
+    const sv = (CFG.style[name] ||= { aggr: 0.25, size: 0.65 });
+    sv.aggr = sv.aggr * 0.96 + (agg ? 0.04 : 0);
+    if (agg && to) { const frac = to / Math.max(1, pot - to); sv.size = sv.size * 0.92 + Math.max(0.1, Math.min(3, frac)) * 0.08; }
+    save();
+  }
+  function watch() {
+    const ss = seats(), board = cardsIn($('.table-cards')).length, pot = potTotal(ss);
+    const live = ss.filter((s) => s.inHand && !s.me);
+    if (board !== seen.street) {
+      // the street changed: whoever stayed in without putting chips in checked it through
+      if (seen.street >= 0) for (const s of live) if (!seen.acted[s.name] && !seen.bets[s.name]) learn(s.name, false);
+      seen.street = board; seen.bets = {}; seen.top = 0; seen.acted = {};
+    }
+    for (const s of live) {
+      const was = seen.bets[s.name] || 0;
+      if (s.bet > was) {
+        if (s.bet > Math.max(seen.top, board === 0 ? blinds().bb : 0)) learn(s.name, true, s.bet, pot);
+        else if (was || board) learn(s.name, false);
+        seen.acted[s.name] = true;
+      }
+      seen.bets[s.name] = s.bet; seen.top = Math.max(seen.top, s.bet);
+    }
+  }
+  function tableStyle(names) {
+    const xs = names.map((n) => CFG.style[n]).filter(Boolean);
+    if (!xs.length) return { aggr: 1, sizeF: 1 };
+    const avg = (k) => xs.reduce((a, x) => a + x[k], 0) / xs.length;
+    return { aggr: avg('aggr') / 0.25, sizeF: avg('size') / 0.65 };
+  }
+
+  /* ---------- how long a move takes: the same as the bot on barusik.com ---------- */
+  // 3% instantly, 6% a slow 10-18 seconds, otherwise by the spot; the speed slider scales it (an instant move stays instant)
+  function thinkMs(t, k, slow) {
+    const cap = 27000, r0 = Math.random();
+    if (r0 < 0.03) return 150 + Math.floor(Math.random() * 350);
+    if (r0 < 0.09) return Math.round(Math.min(cap, (10000 + Math.random() * 8000) * slow));
+    const o = t.options(k), p = t.seats[k], pot = Math.max(1, t.pot()), street = t.board.length, bb = Math.max(1, t.bb);
+    const allIn = o.toCall > 0 && o.toCall >= p.chips, big = o.toCall / pot;
+    let lo = 2200, hi = 12000;
+    if (street === 0 && o.toCall <= bb) { lo = 900; hi = 6000; }
+    else if (street === 0) { lo = 1800; hi = 10000; }
+    else if (o.check) { lo = 1300; hi = 8000; }
+    else if (allIn) { lo = 5000; hi = 26000; }
+    else if (big >= 0.6) { lo = 3500; hi = 19000; }
+    if (street === 5) { lo *= 1.15; hi *= 1.25; }
+    let ms = lo + (hi - lo) * Math.pow(Math.random(), 1.7);
+    const r = Math.random();
+    if (r < 0.07) ms += 3000 + Math.random() * 7000;
+    else if (r < 0.17 && o.check) ms = 500 + Math.random() * 800;
+    return Math.round(Math.max(400, Math.min(ms * slow, cap)));
+  }
+
+  /* ---------- pressing the buttons ---------- */
+  const setVal = (input, v) => { const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value'); d.set.call(input, String(v)); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); };
+  async function play(move, o) {
+    const bt = buttons();
+    if (move.type === 'raise' && bt.raise) {
+      bt.raise.click(); await sleep(350);
+      const form = $('.raise-controller-form') || document;
+      const input = $('input[type=number], input.value, input', form);
+      if (input) {
+        setVal(input, move.to); await sleep(250);
+        const go = $$('button, input[type=submit]', form).filter(vis).find((x) => /^(bet|raise)\b/i.test((x.innerText || x.value || '').trim()) || x.type === 'submit');
+        if (go) { go.click(); return 'raise ' + move.to; }
+      }
+      const back = $$('button', form).find((x) => /back|cancel/i.test(x.innerText)); if (back) back.click();
+      move = { type: o.check ? 'check' : 'call' };
+    }
+    const b2 = buttons();
+    if (move.type === 'fold' && b2.check) { b2.check.click(); return 'check'; }
+    if (move.type === 'fold' && b2.fold) { b2.fold.click(); return 'fold'; }
+    if (move.type === 'check' && b2.check) { b2.check.click(); return 'check'; }
+    if ((move.type === 'call' || move.type === 'check') && b2.call) { b2.call.click(); return 'call'; }
+    if (b2.check) { b2.check.click(); return 'check'; }
+    return 'no button';
+  }
+
+  /* ---------- the strip at the bottom and the red edges ---------- */
+  const css = document.createElement('style');
+  css.textContent = `
+#blg{position:fixed;left:50%;top:8px;transform:translateX(-50%);touch-action:none;z-index:99998;display:grid;grid-template-columns:auto auto auto minmax(0,1fr) auto;align-items:center;gap:4px 8px;width:min(92vw,400px);padding:7px 12px;border-radius:18px;background:rgba(18,27,30,.92);border:1px solid rgba(241,198,107,.45);color:#f3efe4;font:13px/1.3 system-ui,"Segoe UI",Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.45);direction:rtl}
+#blg.hide{display:none}
+#blg .bsw{flex:none;width:44px;height:26px;border:0;padding:0;border-radius:999px;background:rgba(255,255,255,.14);position:relative;transition:background .2s;cursor:pointer}
+#blg .bsw i{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+#blg .bsw.on{background:#3ddc97}#blg .bsw.on i{transform:translateX(-18px)}
+#blg .bsw.sm{width:34px;height:20px}#blg .bsw.sm i{width:14px;height:14px}#blg .bsw.sm.on i{transform:translateX(-14px)}
+#blg .bl{font-size:16px;white-space:nowrap;cursor:grab}#blg.drag,#blg.drag .bl{cursor:grabbing}#blg .bk2{font-size:11.5px;color:#a9b4ad;white-space:nowrap}
+#blg .bsp{display:flex;align-items:center;gap:6px;min-width:0}#blg .bsp small{font-size:11px;color:#a9b4ad;white-space:nowrap}
+#blg input[type=range]{flex:1;min-width:60px;accent-color:#f1c66b;height:24px;margin:0}
+#blg .bv{font-size:12px;white-space:nowrap;color:#f1c66b;min-width:70px;text-align:center;font-weight:600}
+#blg .bpre{grid-column:span 3;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}
+body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;box-shadow:inset 0 0 0 5px rgba(255,45,45,.95),inset 0 0 46px 6px rgba(255,0,0,.55);animation:blgalarm .8s ease-in-out infinite alternate}
+@keyframes blgalarm{from{opacity:.15}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){body.blg-alarm::after{animation:none;opacity:.8}}`;
+  document.head.appendChild(css);
+  const fx = (v) => (Math.round(Math.pow(2, Math.abs(v)) * 10) / 10).toString();
+  const speedTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'מהיר' : 'איטי'} יותר`);
+  const sizeTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'גדול' : 'קטן'} יותר`);
+  const bar = document.createElement('div');
+  bar.id = 'blg'; bar.className = 'hide';
+  const row = (k, lo, hi, txt, lab) => `<span class="bk2">${lab}</span><span class="bsp" dir="ltr"><small>${lo}</small><input type="range" data-k="${k}" min="-1" max="1" step="0.125" value="${CFG[k] || 0}" aria-label="${lab}"><small>${hi}</small></span><b class="bv" data-v="${k}">${txt(CFG[k] || 0)}</b>`;
+  bar.innerHTML = `<button type="button" class="bsw" role="switch" data-on aria-label="הבוט האגדי"><i></i></button>
+    <span class="bl" title="הבוט האגדי · אפשר לגרור">🤖</span>${row('speed', 'איטי', 'מהיר', speedTxt, 'מהירות')}
+    <span></span><span></span><label class="bpre"><button type="button" class="bsw sm" role="switch" data-pre aria-label="רייזים לפני הפלופ"><i></i></button>רייזים לפני הפלופ</label>
+    <span></span><span></span>${row('size', 'קטן', 'גדול', sizeTxt, 'גודל הימור')}`;
+  document.body.appendChild(bar);
+  const paint = () => {
+    const a = $('[data-on]', bar), b = $('[data-pre]', bar);
+    a.classList.toggle('on', CFG.on); a.setAttribute('aria-checked', String(CFG.on));
+    b.classList.toggle('on', CFG.pre !== false); b.setAttribute('aria-checked', String(CFG.pre !== false));
+  };
+  $('[data-on]', bar).onclick = () => { CFG.on = !CFG.on; save(); paint(); S.sig = ''; };
+  $('[data-pre]', bar).onclick = () => { CFG.pre = CFG.pre === false; save(); paint(); };
+  $$('input[type=range]', bar).forEach((rg) => {
+    const k = rg.dataset.k, out = $(`[data-v=${k}]`, bar), txt = k === 'speed' ? speedTxt : sizeTxt;
+    rg.oninput = () => { out.textContent = txt(+rg.value); };
+    rg.onchange = () => { CFG[k] = +rg.value; save(); };
+  });
+  paint();
+  // PokerNow's bottom is full (chat, the action buttons), so the strip starts at the top; drag it by its empty parts or the 🤖
+  const place = () => {
+    if (!CFG.pos) { bar.style.left = '50%'; bar.style.top = '8px'; bar.style.transform = 'translateX(-50%)'; return; }
+    const w = bar.offsetWidth || 400, h = bar.offsetHeight || 90;
+    bar.style.transform = 'none';
+    bar.style.left = Math.max(0, Math.min(innerWidth - w, CFG.pos.x)) + 'px';
+    bar.style.top = Math.max(0, Math.min(innerHeight - h, CFG.pos.y)) + 'px';
+  };
+  bar.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('input, button, label')) return;
+    const r = bar.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+    bar.setPointerCapture(e.pointerId); bar.classList.add('drag');
+    const mv = (ev) => { CFG.pos = { x: ev.clientX - dx, y: ev.clientY - dy }; place(); };
+    const up = () => { bar.classList.remove('drag'); bar.removeEventListener('pointermove', mv); bar.removeEventListener('pointerup', up); save(); };
+    bar.addEventListener('pointermove', mv); bar.addEventListener('pointerup', up);
+  });
+  bar.addEventListener('dblclick', (e) => { if (!e.target.closest('input, button, label')) { delete CFG.pos; save(); place(); } });
+  addEventListener('resize', place);
+  const status = (t) => { const el = $('.bl', bar); if (el.title !== t) el.title = t; };
+
+  /* ---------- the loop ---------- */
+  const S = { busy: false, sig: '', at: 0, log: [] };
+  const moved = (t) => { S.log.push(new Date().toLocaleTimeString() + ' ' + t); S.log = S.log.slice(-60); };
+  function alarm(ss) {
+    // as on barusik.com: a pot over 10 × players × small blind makes the edges of the screen blink red
+    const dealt = ss.filter((s) => s.inHand || s.folded).length, b = blinds();
+    const on = dealt >= 2 && ss.some((s) => s.me && s.inHand) && potTotal(ss) > 10 * dealt * b.sb;
+    if (document.body.classList.contains('blg-alarm') !== on) document.body.classList.toggle('blg-alarm', on);
+  }
+  async function tick() {
+    const table = !!$('.table-player');
+    if (bar.classList.contains('hide') === table) { bar.classList.toggle('hide', !table); if (table) place(); }
+    if (!table) return;
+    const ss = seats();
+    alarm(ss);
+    try { watch(); } catch {}
+    if (!CFG.on || S.busy) return;
+    const bt = buttons();
+    if ((!bt.fold && !bt.check && !bt.call && !bt.raise) || !myTurn(ss, bt)) { status('הבוט האגדי · מחכה לתור'); return; }
+    const sp = snapshot();
+    if (!sp.t) { status('הבוט האגדי · לא מצליח לקרוא: ' + sp.why); return; }
+    const sig = [sp.hole, sp.board, sp.pot, sp.t.currentBet].join('|');
+    if (sig === S.sig && Date.now() - S.at < 8000) return;   // same spot: try again only if the click did not land
+    S.busy = true; S.sig = sig; S.at = Date.now();
+    try {
+      status(`הבוט האגדי · ${sp.hole.map(P.cardText).join(' ')} | ${sp.board.map(P.cardText).join(' ') || '—'}`);
+      await sleep(thinkMs(sp.t, sp.seat, Math.pow(2, -(CFG.speed || 0))));
+      if (!CFG.on) return;
+      const again = snapshot();
+      if (!again.t || [again.hole, again.board, again.pot, again.t.currentBet].join('|') !== sig) return;
+      const move = P.legend(again.t, again.seat, 300, Math.pow(2, CFG.size || 0), { ...tableStyle(again.names), noPre: CFG.pre === false });
+      moved(await play(move, again.t.options(again.seat)));
+    } catch (e) { moved('error: ' + (e && e.message)); }
+    finally { setTimeout(() => { S.busy = false; }, 1500); }
+  }
+  const iv = setInterval(tick, 500);
+  // a tab in the background gets its timers slowed to once a minute; changes on the table still wake the bot up
+  let woke = 0;
+  const mo = new MutationObserver((list) => {
+    if (list.every((m) => bar.contains(m.target) || m.target === document.body)) return;
+    const n = Date.now(); if (n - woke > 300) { woke = n; tick(); }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  const walk = (el, d = 0) => (!el || d > 7 ? '' : `${' '.repeat(d)}${el.tagName.toLowerCase()}.${(typeof el.className === 'string' ? el.className : '').trim().replace(/\s+/g, '.')}${el.children.length ? '' : ' «' + (el.textContent || '').trim().slice(0, 24) + '»'}\n` + [...el.children].map((c) => walk(c, d + 1)).join(''));
+  const dump = () => ['.you-player', '.table-cards', '.table-pot-size', '.game-decisions-ctn', '.action-buttons', '.raise-controller-form'].map((q) => q + '\n' + walk($(q))).join('\n');
+  window.__legend = { S, CFG, dump, snapshot, seats, buttons, blinds, stop() { clearInterval(iv); mo.disconnect(); bar.remove(); css.remove(); document.body.classList.remove('blg-alarm'); delete window.__legend; } };
+  tick();
+})();
