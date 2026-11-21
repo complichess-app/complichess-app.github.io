@@ -657,7 +657,8 @@
     return lo / xs.length;
   };
   // the share of the pot this seat should expect at showdown, against what the others are likely to hold
-  function potShare(t, seat, ms) {
+  // wide: what is known of the opponents' looseness (1 = as usual, 1.5 = they play many more hands, 0.7 = fewer)
+  function potShare(t, seat, ms, wide = 1) {
     const p = t.seats[seat], hole = p.cards, board = t.board, hl = hiLo(t.game), hc = hole.length;
     const opps = t.inHand().filter((q) => q !== p);
     if (!opps.length) return 1;
@@ -665,9 +666,19 @@
     const d = []; for (let c = 0; c < 52; c++) if (!used.has(c)) d.push(c);
     const need = 5 - board.length, bb = Math.max(1, t.bb || 1);
     // how wide each opponent's range is: everything for a big blind who only checked, the top few percent after big bets
-    const keep = opps.map((q) => Math.max(0.1, Math.min(0.92, 0.92 - 0.16 * Math.log2(Math.max(1, (q.total || 0) / bb)))));
+    const wf = Math.max(0.5, Math.min(2, wide || 1));
+    const keep = opps.map((q) => { const k = Math.max(0.1, Math.min(0.92, 0.92 - 0.16 * Math.log2(Math.max(1, (q.total || 0) / bb)))); return Math.min(0.97, 1 - (1 - k) / wf); });
     // after the flop: whoever has put a lot in rarely holds nothing on this board (any game, Omaha too)
     const late = board.length === 5;
+    // Omaha after the flop: where a hand ranks among all hands on this very board. On a paired or tripled board everyone
+    // has trips, so the kind of hand says little; a raise there means the top of the range (quads, the bigger full house)
+    let rel = null;
+    if (hc > 2 && board.length >= 3) {
+      const xs = [], pool = d.slice();
+      for (let k = 0; k < 160; k++) { for (let i = 0; i < hc; i++) { const j = i + Math.floor(rand() * (pool.length - i)); const x = pool[i]; pool[i] = pool[j]; pool[j] = x; } xs.push(value(pool.slice(0, hc), board)); }
+      xs.sort((x, y) => x - y);
+      rel = (v) => { let lo = 0, hi = xs.length; while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; } let up = lo; while (up < xs.length && xs[up] === v) up++; return (lo + up) / 2 / xs.length; };
+    }
     const fit = hc > 2
       // Omaha: nearly every hand hits something, so chips in mean a strong made hand (draws still count before the river)
       ? (k, cat) => (cat >= 4 ? 1 : cat === 3 ? (k < 0.3 ? 0.85 : 1) : cat === 2 ? (k < 0.3 ? 0.4 : k < 0.6 ? 0.7 : 1)
@@ -683,8 +694,9 @@
         let h;
         for (let tries = 0; ; tries++) {
           const start = pos; h = []; for (let k = 0; k < hc; k++) h.push(take());
-          if (tries >= 12) break;
-          if (board.length >= 3 ? rand() < fit(keep[o], category(value(h, board))) : (hc === 2 ? pct2(h[0], h[1]) : pctO(h)) >= 1 - keep[o]) break;
+          if (tries >= (rel ? 20 : 12)) break;
+          if (rel) { if (rel(value(h, board)) >= 1 - keep[o] || rand() < (late ? 0.04 : 0.18)) break; } // draws still count before the river
+          else if (board.length >= 3 ? rand() < fit(keep[o], category(value(h, board))) : (hc === 2 ? pct2(h[0], h[1]) : pctO(h)) >= 1 - keep[o]) break;
           pos = start;
         }
         hands.push(h);
@@ -712,7 +724,9 @@
     const omaha = p.cards.length > 2, street = t.board.length, bb = Math.max(1, t.bb || 1);
     const opps = t.inHand().length - 1;
     const pot = t.pot(), after = pot + o.toCall;
-    const eq = potShare(t, seat, ms);
+    // opts.wide / opts.wideVsBet: how wide the opponents' range is, from what was learned about them (1 = as usual);
+    // wideVsBet is used when they bet or raised into us (a passive player who suddenly bets has it)
+    const eq = potShare(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1));
     const fair = 1 / (opps + 1), strength = eq / fair;
     const price = o.toCall / (after || 1);
     const r = rand();

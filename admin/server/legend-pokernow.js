@@ -18,6 +18,12 @@
   /* ---------- settings, kept in this browser ---------- */
   const KEY = 'barusik-legend';
   const CFG = Object.assign({ on: true, speed: 0, size: 0, bluff: -0.625, pre: true, style: {} }, (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } })());
+  // what the game logs taught about each opponent: after the flop, how often they folded when bet into
+  const TAL = { fold: 16, seen: 66 };
+  CFG.opp ||= {};
+  for (const n of ['טל', 'טל האוטיסטית']) CFG.opp[n] ||= { ...TAL };
+  CFG.lastOpp ||= { ...TAL };
+  CFG.notes ||= [];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(CFG)); } catch {} };
 
   /* ---------- reading the table ---------- */
@@ -190,6 +196,88 @@
     if (b2.check) { b2.check.click(); return 'check'; }
     return 'no button';
   }
+  /* ---------- the game's log: how the opponents play, and chips that moved without a hand being played ---------- */
+  const gameId = (location.pathname.match(/\/games\/([\w-]+)/) || [])[1];
+  const LOG = { seen: new Set(), lines: [], next: 0, told: new Set(), prior: JSON.parse(JSON.stringify(CFG.opp)) };
+  const nameIn = (m) => { const r = m.match(/"(.+?) @ [\w-]+"/); return r ? r[1] : null; };
+  async function pullLog() {
+    if (!gameId || Date.now() < LOG.next || S.dead) return;
+    LOG.next = Date.now() + 8000;   // one small request every 8 seconds; PokerNow answers 429 when asked faster
+    try {
+      const r = await fetch(`/games/${gameId}/log`, { credentials: 'include' });
+      if (r.status === 429) { LOG.next = Date.now() + 45000; return; }
+      if (!r.ok) return;
+      const fresh = ((await r.json()).logs || []).slice().reverse().filter((x) => { const k = x.created_at + x.msg; if (LOG.seen.has(k)) return false; LOG.seen.add(k); return true; });
+      if (!fresh.length) return;
+      LOG.lines.push(...fresh);
+      if (LOG.lines.length > 6000) LOG.lines.splice(0, LOG.lines.length - 6000);
+      digest(fresh);
+    } catch (_e) { /* offline for a moment */ }
+  }
+  function digest(fresh) {
+    // an admin touching stacks, said in so many words
+    for (const x of fresh) {
+      if (!/admin/i.test(x.msg) || !/stack|chips/i.test(x.msg) || /approved the player|participation/i.test(x.msg)) continue;
+      const names = [...x.msg.matchAll(/"(.+?) @ [\w-]+"/g)].map((r) => r[1]), v = x.msg.match(/from (\d[\d,]*) to (\d[\d,]*)/);
+      note(v && names.length >= 2 ? `⚠️ ${names[0]} (המנהל) שינה את הצ'יפים של ${names[1]}: ${v[1]} → ${v[2]}` : '⚠️ ' + x.msg.replace(/ @ [\w-]+/g, ''));
+    }
+    // hands, money and habits, rebuilt from the lines kept
+    const hands = []; let h = null, gap = [];
+    for (const { msg: m } of LOG.lines) {
+      if (/^-- starting hand #\d+/.test(m)) { h = { n: +m.match(/#(\d+)/)[1], gap, stacks: {}, lvl: {}, put: {}, won: {}, st: 0, acts: [] }; hands.push(h); gap = []; continue; }
+      if (!h) { gap.push(m); continue; }
+      if (/^-- ending hand/.test(m)) { for (const [k, v] of Object.entries(h.lvl)) h.put[k] = (h.put[k] || 0) + v; h.done = true; h = null; continue; }
+      if (/^Player stacks:/.test(m)) { for (const x of m.split('|')) { const n = nameIn(x), v = x.match(/\((\d[\d,]*)\)\s*$/); if (n && v) h.stacks[n] = +v[1].replace(/,/g, ''); } continue; }
+      if (/^(Flop|Turn|River)/.test(m)) { if (!/second run/i.test(m)) { for (const [k, v] of Object.entries(h.lvl)) h.put[k] = (h.put[k] || 0) + v; h.lvl = {}; h.st++; } continue; }
+      const who = nameIn(m); if (!who) continue;
+      let r;
+      if ((r = m.match(/(?:posts an? (?:missing |missed )?(?:small blind|big blind|straddle) of|raises to|bets|calls) (\d[\d,]*)/))) { const v = +r[1].replace(/,/g, ''); h.lvl[who] = Math.max(h.lvl[who] || 0, v); }
+      else if ((r = m.match(/posts an ante of (\d[\d,]*)/))) h.put[who] = (h.put[who] || 0) + +r[1].replace(/,/g, '');
+      else if ((r = m.match(/collected (\d[\d,]*) from pot/))) h.won[who] = (h.won[who] || 0) + +r[1].replace(/,/g, '');
+      else if ((r = m.match(/^Uncalled bet of (\d[\d,]*) returned to/))) h.won[who] = (h.won[who] || 0) + +r[1].replace(/,/g, '');
+      if (h.st > 0) h.acts.push({ who, type: /" bets /.test(m) ? 'bet' : /" raises /.test(m) ? 'raise' : /" calls /.test(m) ? 'call' : /" folds/.test(m) ? 'fold' : /" checks/.test(m) ? 'check' : '', st: h.st });
+    }
+    // chips that moved between two hands without being won or lost
+    for (let i = 1; i < hands.length; i++) {
+      const a = hands[i - 1], b = hands[i]; if (!a.done) continue;
+      for (const k of Object.keys(b.stacks)) {
+        if (!(k in a.stacks)) continue;
+        const want = a.stacks[k] - (a.put[k] || 0) + (a.won[k] || 0), got = b.stacks[k], key = b.n + k;
+        if (Math.abs(got - want) < 1 || LOG.told.has(key)) continue;
+        LOG.told.add(key);
+        const why = b.gap.map((m) => m.replace(/ @ [\w-]+/g, '')).filter((m) => /admin|stack|quits|joined|approved/i.test(m)).slice(0, 2).join(' · ');
+        if (/admin/i.test(why) && /stack|chips/i.test(why) && !/approved|participation/i.test(why)) continue;   // already told, in the admin's own words
+        const fmt = (v) => Math.round(v).toLocaleString('en-US');
+        note(`${/approved|joined/i.test(why) ? 'ℹ️' : '⚠️'} יד #${b.n}: הצ'יפים של ${k} השתנו בלי יד, ${fmt(want)} → ${fmt(got)} (${got > want ? '+' : ''}${fmt(got - want)})${why ? ' — ' + why : ''}`);
+      }
+    }
+    // habits: each time an opponent faced a bet after the flop, did he fold?
+    const me = (seats().find((x) => x.me) || {}).name, sess = {};
+    for (const x of hands) {
+      let facing = { 1: false, 2: false, 3: false };
+      for (const a of x.acts) {
+        if (a.type === 'bet' || a.type === 'raise') { facing[a.st] = true; continue; }
+        if (!facing[a.st] || a.who === me || !['fold', 'call'].includes(a.type)) continue;
+        const o = (sess[a.who] ||= { fold: 0, seen: 0 }); o.seen++; if (a.type === 'fold') o.fold++;
+      }
+    }
+    for (const [n, o] of Object.entries(sess)) {
+      const p = LOG.prior[n] || { fold: 0, seen: 0 };
+      CFG.opp[n] = { fold: p.fold + o.fold, seen: p.seen + o.seen };
+    }
+    const others = seats().filter((x) => !x.me).map((x) => x.name);
+    if (others.length === 1 && CFG.opp[others[0]]) CFG.lastOpp = CFG.opp[others[0]];
+    save();
+  }
+  // bluffing into someone who never folds only pays him; the bot bluffs as often as the opponents give it a reason to
+  function oppBluff(names) {
+    let f = 0, n = 0;
+    for (const x of names) { const o = CFG.opp[x]; if (o) { f += o.fold; n += o.seen; } }
+    if (n < 10 && CFG.lastOpp && names.length === 1) { f += CFG.lastOpp.fold; n += CFG.lastOpp.seen; }
+    if (n < 10) return 1;
+    return Math.max(0.15, Math.min(1.3, Math.pow(Math.max(0, f / n - 0.1) / 0.35, 1.5)));
+  }
+
   /* ---------- the strip at the bottom and the red edges ---------- */
   const css = document.createElement('style');
   css.textContent = `
@@ -204,6 +292,9 @@
 #blg input[type=range]{flex:1;min-width:60px;accent-color:#f1c66b;height:24px;margin:0}
 #blg .bv{font-size:12px;white-space:nowrap;color:#f1c66b;min-width:70px;text-align:center;font-weight:600}
 #blg .bpre{grid-column:span 3;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}
+#blg .bnotes{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;margin-top:2px}#blg .bnotes:empty{display:none}
+#blg .bnote{display:flex;gap:6px;align-items:flex-start;background:rgba(255,120,60,.16);border:1px solid rgba(255,140,80,.5);border-radius:10px;padding:5px 8px;font-size:12px;line-height:1.35}
+#blg .bnote small{color:#a9b4ad;white-space:nowrap}#blg .bnote span{flex:1}#blg .bnote button{border:0;background:none;color:#f3efe4;cursor:pointer;font-size:14px;padding:0 2px}
 body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;box-shadow:inset 0 0 0 5px rgba(255,45,45,.95),inset 0 0 46px 6px rgba(255,0,0,.55);animation:blgalarm .8s ease-in-out infinite alternate}
 @keyframes blgalarm{from{opacity:.15}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){body.blg-alarm::after{animation:none;opacity:.8}}`;
@@ -220,8 +311,21 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
     <span class="bl" title="הבוט האגדי · אפשר לגרור">🤖</span>${row('speed', 'איטי', 'מהיר', speedTxt, 'מהירות')}
     <span></span><span></span><label class="bpre"><button type="button" class="bsw sm" role="switch" data-pre aria-label="רייזים לפני הפלופ"><i></i></button>רייזים לפני הפלופ</label>
     <span></span><span></span>${row('size', 'קטן', 'גדול', sizeTxt, 'גודל הימור')}
-    <span></span><span></span>${row('bluff', 'פחות', 'יותר', bluffTxt, 'בלופים')}`;
+    <span></span><span></span>${row('bluff', 'פחות', 'יותר', bluffTxt, 'בלופים')}
+    <div class="bnotes" aria-live="polite"></div>`;
   document.body.appendChild(bar);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function drawNotes() {
+    const box = $('.bnotes', bar);
+    box.innerHTML = CFG.notes.slice(-5).map((x, i, all) => `<div class="bnote"><span dir="auto">${esc(x.t)}</span><small>${esc(x.at)}</small><button type="button" data-x="${CFG.notes.length - all.length + i}" aria-label="סגור">×</button></div>`).join('');
+    $$('[data-x]', box).forEach((b) => { b.onclick = () => { CFG.notes.splice(+b.dataset.x, 1); save(); drawNotes(); }; });
+  }
+  function note(t) {
+    if (CFG.notes.some((x) => x.t === t)) return;
+    CFG.notes.push({ t, at: new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) });
+    CFG.notes = CFG.notes.slice(-10); save(); drawNotes();
+  }
+  drawNotes();
   const paint = () => {
     const a = $('[data-on]', bar), b = $('[data-pre]', bar);
     a.classList.toggle('on', CFG.on); a.setAttribute('aria-checked', String(CFG.on));
@@ -270,6 +374,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
     if (!table) return;
     const ss = seats();
     alarm(ss);
+    pullLog();
     try { watch(); } catch {}
     if (!CFG.on || S.busy || S.dead) return;
     const bt = buttons();
@@ -285,7 +390,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
       const lateAlready = extraTime();
       const wait = thinkMs(sp.t, sp.seat, Math.pow(X, -(CFG.speed || 0))), until = Date.now() + wait;
       // decide during the pause: the longer the pause, the more deals it runs (Omaha with 5 cards needs them)
-      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) });
+      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) * oppBluff(sp.names) });
       while (Date.now() < until && CFG.on) {
         if (!lateAlready && extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
         await sleep(200);
@@ -307,6 +412,6 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   const walk = (el, d = 0) => (!el || d > 7 ? '' : `${' '.repeat(d)}${el.tagName.toLowerCase()}.${(typeof el.className === 'string' ? el.className : '').trim().replace(/\s+/g, '.')}${el.children.length ? '' : ' «' + (el.textContent || '').trim().slice(0, 24) + '»'}\n` + [...el.children].map((c) => walk(c, d + 1)).join(''));
   const dump = () => ['.you-player', '.table-cards', '.table-pot-size', '.game-decisions-ctn', '.action-buttons', '.raise-controller-form'].map((q) => q + '\n' + walk($(q))).join('\n');
-  window.__legend = { S, CFG, dump, snapshot, seats, buttons, blinds, stop() { S.dead = true; clearInterval(iv); mo.disconnect(); bar.remove(); css.remove(); document.body.classList.remove('blg-alarm'); delete window.__legend; } };
+  window.__legend = { S, CFG, LOG, oppBluff, note, dump, snapshot, seats, buttons, blinds, stop() { S.dead = true; clearInterval(iv); mo.disconnect(); bar.remove(); css.remove(); document.body.classList.remove('blg-alarm'); delete window.__legend; } };
   tick();
 })();
