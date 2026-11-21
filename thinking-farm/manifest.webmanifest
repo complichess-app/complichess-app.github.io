@@ -1,0 +1,17 @@
+{
+  "name": "חוות חשיבה",
+  "short_name": "חוות חשיבה",
+  "description": "משחק החשיבה היומי של ברוסיק: עשר שאלות בכל יום.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/thinking-farm/",
+  "scope": "/thinking-farm/",
+  "display": "standalone",
+  "background_color": "#07041a",
+  "theme_color": "#07041a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

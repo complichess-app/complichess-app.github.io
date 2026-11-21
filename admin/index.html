@@ -91,7 +91,7 @@ const wa=p=>{let x=String(p||'').replace(/\D/g,'');if(x.startsWith('0'))x='972'+
 function toast(t,ms=2600){const e=document.getElementById('toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,ms)}
 const copy=async t=>{try{await navigator.clipboard.writeText(t);toast('הועתק');return true}catch{toast('לא הצלחתי להעתיק: '+t,6000);return false}};
 
-const TABS=[['home','בית'],['apps','אפליקציות'],['travel','נסיעות'],['penina','פנינה'],['pay','תשלומים ושוברים'],['cx','קומפליצס'],['poker','פוקר'],['users','משתמשים'],['pk','פלטפורמיקה'],['links','קישורים']];
+const TABS=[['home','בית'],['apps','אפליקציות'],['travel','נסיעות'],['penina','פנינה'],['pay','תשלומים ושוברים'],['cx','קומפליצס'],['poker','פוקר'],['tf','חוות חשיבה'],['users','משתמשים'],['pk','פלטפורמיקה'],['links','קישורים']];
 let VIEW=TABS.some(t=>t[0]===location.hash.slice(1))?location.hash.slice(1):'home';
 let CG=null,CGT='ads',CGQ='';
 let APPST=null,EMAIL='',DATA=null,TRQ=[],TRF='open',REP=null,PNR=null,PNERR='',PNS=null,BILL=null,SRV=null,PAY=null,LIVE=[];
@@ -182,7 +182,7 @@ function listen(){
   setInterval(async()=>{if(document.hidden)return;const was=SRV&&SRV.online;await loadSrv();if((SRV&&SRV.online)!==was)draw()},10000);
 }
 // ---------- data ----------
-const APPN=[['tr','Bar Lvovski Travel','/travel/'],['pk','פלטפורמיקה','/platformika/'],['cx','קומפליצס','/complichess/'],['cr','Barusik Crypto','/crypto/'],['lr','LearnLume','/#ch-lr'],['pn','מה פנינה חושבת','/penina/'],['po','ברוסיק פוקר','/poker/']];
+const APPN=[['tr','Bar Lvovski Travel','/travel/'],['pk','פלטפורמיקה','/platformika/'],['cx','קומפליצס','/complichess/'],['cr','Barusik Crypto','/crypto/'],['lr','LearnLume','/#ch-lr'],['pn','מה פנינה חושבת','/penina/'],['po','ברוסיק פוקר','/poker/'],['tf','חוות חשיבה','/thinking-farm/']];
 async function loadApps(){try{const{data,error}=await sb.from('app_status').select('*');APPST=error?{err:error.message}:Object.fromEntries((data||[]).map(r=>[r.id,r]))}catch(e){APPST={err:String(e&&e.message||e)}}}
 function appsHTML(){
   if(!APPST||APPST.err)return`<section class="panel"><h2>אפליקציות <span class="pill n">לא מותקן</span></h2><p>הטבלה של הנעילה לשיפוצים עוד לא קיימת ב־Supabase.</p>
@@ -390,7 +390,7 @@ function linksHTML(){
     ['Cloudflare',[['DNS',CF+'/dns/records',''],['כותרות אבטחה וכללים',CF+'/rules',''],['ניתוב מייל',CF+'/email/routing/overview','']]],
     ['נסיעות',[['BeAgent לסוכן','https://travel.beagent.online/he','חיפוש והזמנה'],['לוח הבקרה של BeAgent','https://dashboard.beagent.online/','עמלות והגדרות'],['האתר ללקוחות שלך','/travel/','']]],
     ['סליקה ועסק',[['פתיחת חשבון ב־Allpay','https://www.allpay.co.il/en/signup',''],['מחירון Allpay','https://www.allpay.co.il/en/pricing',''],['Grow','https://grow.business/price-offer/',''],['Hyp','https://hyp.co.il/online-payments/',''],['מייל העסק','https://mail.google.com/mail/u/?authuser=barusik.official@gmail.com','']]],
-    ['האתרים שלך',[['barusik.com','/he/',''],['פנינה','/penina/',''],['פוקר','/poker/',''],['ניהול הפוקר','/admin/poker/','קלפים, סיכויים, צ׳יפים'],['פלטפורמיקה','/platformika/',''],['קומפליצס','/complichess/',''],['קריפטו','/crypto/',''],['תנאי שימוש','/he/terms/','']]],
+    ['האתרים שלך',[['barusik.com','/he/',''],['פנינה','/penina/',''],['פוקר','/poker/',''],['ניהול הפוקר','/admin/poker/','קלפים, סיכויים, צ׳יפים'],['חוות חשיבה','/thinking-farm/',''],['ניהול חוות חשיבה','/admin/thinking-farm/','דיווחים, משחקים, גיבויים'],['פלטפורמיקה','/platformika/',''],['קומפליצס','/complichess/',''],['קריפטו','/crypto/',''],['תנאי שימוש','/he/terms/','']]],
   ];
   return`<section class="links">${groups.map(([h,l])=>`<div class="panel"><h3>${esc(h)}</h3>${l.map(([t,u,sub])=>`<a href="${esc(u)}" ${u.startsWith('http')?'target="_blank" rel="noopener"':''}><span>${esc(t)}</span><small>${esc(sub)}</small></a>`).join('')}</div>`).join('')}</section>`;
 }
@@ -536,9 +536,27 @@ function pokerHTML(){
   return`<section><h2>חדרים פתוחים <span class="pill ${PQ.length?'n':'y'}">${PQ.length}</span><span class="sp"></span><a class="btn" href="/admin/poker/">ניהול מלא: קלפים, סיכויים וצ׳יפים</a></h2>
   <div class="panel rows">${PQ.map(r=>`<div class="rowx"><b>${esc(r.name||r.id)}</b><span class="pill" dir="ltr">${esc(r.id)}</span><span class="grow">${esc(r.creator||'')} · ${r.seated} יושבים · יד ${r.hand}${r.requests?` · ${r.requests} בקשות`:''}</span>${r.host_kind==='waiting'?`<span class="pill w">מחכה לך</span><button data-a="pqtake" data-id="${esc(r.id)}">לקחת ניהול</button>`:`<span class="pill ${r.host_kind==='admin'?'y':''}">${r.host_kind==='admin'?'אתה מנהל':'שחקן מנהל'}</span>`}<a class="btn ghost" href="/admin/poker/?r=${esc(r.id)}">ניהול מלא</a></div>`).join('')||'<p class="mute">אין חדרים פתוחים כרגע.</p>'}</div>
   <p class="mute small" style="margin-top:8px;line-height:1.7">מי שפותח חדר מנהל אותו: מאשר שחקנים, בוחר סוג משחק, בליינדים ומינ׳ רייז. אתה יכול לעשות את כל זה בכל חדר, ובדף הניהול המלא גם לראות את כל הקלפים, הסיכויים והקלפים הבאים, לקבוע צ׳יפים, להוציא ולהשהות.</p></section>`}
+// ---------- Thinking Farm: the daily word game. Full page: /admin/thinking-farm/ ----------
+let TFO=null;
+async function loadTf(){try{const r=await sb.rpc('tf_admin_overview');TFO=r.error?{err:r.error.message}:r.data}catch(e){TFO={err:String(e)}}if(VIEW==='tf'||VIEW==='home')draw()}
+function tfHTML(){
+  if(!TFO){return`<section class="panel"><p class="mute">טוען…</p></section>`}
+  if(TFO.err)return`<section class="panel"><h2>חוות חשיבה <span class="pill n">לא מותקן</span></h2><p>ב־<a href="https://supabase.com/dashboard/project/${REF}/sql/new" target="_blank" rel="noopener">עורך ה־SQL</a> מריצים את <b dir="ltr">supabase/run-2026-11-21-thinking-farm.sql</b> ואחריו את קובץ המפתח ששלחתי לך בצ׳אט.</p></section>`;
+  const t=TFO.today,g=(TFO.games||[]),td=g.find(x=>x.day===t),tm=g.find(x=>x.day>t),al=(TFO.alerts||[]).filter(a=>!a.seen);
+  return`<section class="panel"><h2>היום והמחר<span class="sp"></span><a class="btn" href="/admin/thinking-farm/">ניהול מלא</a></h2>
+  <div class="rows"><div class="rowx"><b>היום</b><span class="grow">${td?`${esc(td.title||'')} · ${td.source==='claude'?'נכתב בערב':'גיבוי'} · ${td.players} שחקנים, ${td.finished} סיימו`:'<span class="pill w">אין משחק</span>'}</span></div>
+  <div class="rowx"><b>מחר</b><span class="grow">${tm?`${esc(tm.title||'')} · מוכן`:'<span class="pill n">עוד לא הגיע</span> (נכתב בכל ערב ב־22:30)'}</span></div>
+  <div class="rowx"><b>תלונות פתוחות</b><span class="grow">${TFO.complaints_open||0}</span></div>
+  <div class="rowx"><b>מילים שדווחו</b><span class="grow">${TFO.reports_open||0}</span></div>
+  <div class="rowx"><b>גיבויים</b><span class="grow">${TFO.backups?TFO.backups.unused:0} לא בשימוש</span></div>
+  ${al.length?`<div class="rowx"><b>התראות</b><span class="grow">${al.slice(0,3).map(a=>esc(a.message)).join('<br>')}</span></div>`:''}
+  ${!TFO.key?`<div class="rowx"><span class="pill w">חסר מפתח</span><span class="grow">בלי המפתח המשחקים של כל ערב לא נפתחים. מריצים את קובץ המפתח ששלחתי בצ׳אט.</span></div>`:''}
+  ${!TFO.cron?`<div class="rowx"><span class="pill w">pg_cron כבוי</span><span class="grow">Database → Extensions → pg_cron ו־pg_net, ואז מריצים שוב את הקובץ.</span></div>`:''}
+  </div></section>`}
 function draw(){
-  const c=counts(),badge={penina:c.pn,travel:c.tr,pk:c.pk,cx:cgOpen(),poker:(PQ||[]).filter(r=>r.host_kind==='waiting'||r.requests).length};
-  const body={home:homeHTML,apps:appsHTML,travel:travelHTML,penina:peninaHTML,pay:payHTML,cx:cxHTML,users:usersHTML,pk:pkHTML,links:linksHTML,poker:pokerHTML}[VIEW]();
+  if(TFO===null&&(VIEW==='tf'||VIEW==='home')){TFO=undefined;loadTf()}
+  const c=counts(),badge={penina:c.pn,travel:c.tr,pk:c.pk,cx:cgOpen(),poker:(PQ||[]).filter(r=>r.host_kind==='waiting'||r.requests).length,tf:TFO&&!TFO.err?(TFO.reports_open||0)+(TFO.complaints_open||0)+((TFO.alerts||[]).filter(a=>!a.seen).length):0};
+  const body={home:homeHTML,apps:appsHTML,travel:travelHTML,penina:peninaHTML,pay:payHTML,cx:cxHTML,users:usersHTML,pk:pkHTML,links:linksHTML,poker:pokerHTML,tf:tfHTML}[VIEW]();
   const title=(TABS.find(t=>t[0]===VIEW)||[])[1];
   const y=scrollY;
   app.innerHTML=`<div class="frame"><nav class="rail" aria-label="ניווט"><div class="logo">Barusik</div>

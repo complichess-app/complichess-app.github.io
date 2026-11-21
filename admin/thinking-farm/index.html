@@ -1,0 +1,215 @@
+<!doctype html>
+<!-- Barusik admin · Thinking Farm. © 2026 Bar Lvovski. All rights reserved. -->
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co https://cloudflareinsights.com http://localhost:*; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>חוות חשיבה · ניהול ברוסיק</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/fonts/rubik.css">
+<style>
+:root{--bg:#090B1F;--panel:#10143A;--raise:#171C49;--line:rgba(255,255,255,.1);--ink:#EEEAF8;--mute:#A3A5CB;--acc:#FF4FD8;--ok:#3DDC97;--bad:#FF7A7A;--warn:#F5B45B}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Rubik,system-ui,sans-serif}
+a{color:#7FD8FF}h1,h2,h3,p{margin:0}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:0 16px;min-height:38px;background:var(--acc);color:#fff;font-weight:700}
+button.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+button.ok{background:var(--ok);color:#06261a}button.bad{background:var(--bad);color:#2a0606}
+button.small{min-height:32px;padding:0 12px;font-size:13.5px}button[disabled]{opacity:.45;pointer-events:none}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+textarea{min-height:70px}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 60px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.top h1{font-size:22px}.sp{flex:1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.panel h2{font-size:18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,.07);color:var(--mute)}
+.pill.w{background:rgba(245,180,91,.18);color:var(--warn)}.pill.y{background:rgba(61,220,151,.15);color:var(--ok)}.pill.r{background:rgba(255,122,122,.15);color:var(--bad)}
+.mute{color:var(--mute)}.small{font-size:13px}.n{direction:ltr;unicode-bidi:isolate}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--mute)}.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg)}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--raise);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.item .w{font-size:20px;font-weight:800}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.kv div{background:var(--raise);border-radius:12px;padding:10px}.kv b{display:block;font-size:20px}
+.qs{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.q{background:var(--raise);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px}
+.q b{font-size:18px}
+details summary{cursor:pointer;font-weight:700}
+label{display:grid;gap:4px;font-size:13.5px;font-weight:600}label.row{display:flex}
+.toast{position:fixed;inset-inline:0;bottom:20px;margin:auto;width:max-content;max-width:92vw;background:#1d1150;border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-weight:600;z-index:9}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="mute">טוען…</p></div>
+<script src="/lib/supabase.js"></script>
+<script>
+(() => {
+  'use strict';
+  if (window.top !== window.self) return;
+  let SB = 'https://iktmyrfbejtjsiehcrar.supabase.co', KEY = 'sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a';
+  const qs = new URLSearchParams(location.search);
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && qs.get('sb')) SB = qs.get('sb');
+  const sb = window.supabase.createClient(SB, KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'complichess-auth' } });
+  const app = document.getElementById('app');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const d = (x) => (x ? new Date(x).toLocaleString('he-IL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—');
+  const toast = (t) => { document.querySelectorAll('.toast').forEach((x) => x.remove()); const e = document.createElement('div'); e.className = 'toast'; e.setAttribute('role', 'status'); e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 3200); };
+  const CATS = ['', 'מילה עברית תקנית', 'מקצועית או מדעית', 'נישתית', 'סלנג מוכר', 'צורת נטייה', 'וריאציית כתיב', 'מונח לועזי', 'אחר'];
+  const KIND = { backup: 'גיבוי', no_game: 'אין משחק', bad_drop: 'משחק נפסל', bad_backup: 'גיבוי נפסל' };
+  const LV = { easy: 'קלה', medium: 'בינונית', hard: 'קשה', niche: 'נישתית' };
+  const rpc = async (fn, args = {}) => { const r = await sb.rpc(fn, args); if (r.error) throw r.error; return r.data; };
+
+  let O = null, REP = [], RT = 'open', GAME = null, EXTRA = null, CMP = [], CT = 'open', EDIT = null;
+  const CK = { answer: 'תשובה שלא התקבלה', score: 'ניקוד לא הוגן', unclear: 'שאלה לא ברורה', other: 'אחר' };
+  // answers as text, one line per score: "88: טרריום, פרליט"
+  const toText = (near) => { const by = {}; for (const [w, v] of Object.entries(near || {})) (by[v] = by[v] || []).push(w); return Object.keys(by).map(Number).sort((a, b) => b - a).map((v) => `${v}: ${by[v].sort().join(', ')}`).join('\n'); };
+  const fromText = (t) => { const o = {}; for (const line of t.split('\n')) { const m = line.match(/^\s*(\d{1,2})\s*:\s*(.+)$/); if (!m) continue; for (const w of m[2].split(/[,،]/)) { const x = w.trim(); if (x) o[x] = Math.max(o[x] || 0, +m[1]); } } return o; };
+  async function load() {
+    try { O = await rpc('tf_admin_overview'); } catch (e) {
+      app.innerHTML = /forbidden/.test(e.message) ? `<div class="panel"><h2>רק למנהל</h2><p>נכנסים קודם ל־<a href="/admin/">דף הניהול</a> עם הקוד הדו־שלבי, ואז חוזרים לכאן.</p></div>`
+        : `<div class="panel"><h2>חוות חשיבה עוד לא מותקנת</h2><p>ב־Supabase → SQL Editor מריצים את <b class="n">supabase/run-2026-11-21-thinking-farm.sql</b>, ואחריו את קובץ המפתח.</p><p class="mute small">${esc(e.message)}</p></div>`;
+      return;
+    }
+    REP = await rpc('tf_admin_reports', { p_status: RT }).catch(() => []);
+    CMP = await rpc('tf_admin_complaints', { p_status: CT }).catch(() => []);
+    if (!GAME) { const t = (O.games || []).find((x) => x.day === O.today); if (t) GAME = await rpc('tf_admin_game', { p_day: t.day }).catch(() => null); }
+    draw();
+  }
+  function draw() {
+    const g = O.games || [], t = O.today, td = g.find((x) => x.day === t), tm = g.find((x) => x.day > t);
+    const al = O.alerts || [], fresh = al.filter((a) => !a.seen);
+    app.innerHTML = `
+      <div class="top"><a href="/admin/#tf" class="mute">← ניהול</a><h1>חוות חשיבה</h1><span class="sp"></span><a href="/thinking-farm/" target="_blank" rel="noopener">למשחק</a><button class="ghost small" data-a="tick">לבדוק עכשיו אם הגיע משחק</button></div>
+      ${!O.key ? `<div class="panel"><h2><span class="pill w">חסר מפתח</span></h2><p>בלי המפתח אי אפשר לפתוח את המשחקים שנכתבים בכל ערב. מריצים ב־SQL Editor את קובץ המפתח ששלחתי בצ׳אט (thinking-farm-key.sql).</p></div>` : ''}
+      ${!O.cron ? `<div class="panel"><h2><span class="pill w">pg_cron כבוי</span></h2><p>Supabase → Database → Extensions: מדליקים את <b class="n">pg_cron</b> ואת <b class="n">pg_net</b>, ומריצים שוב את <b class="n">thinking_farm.sql</b>. בלי זה המשחק של מחר לא נאסף לבד.</p></div>` : ''}
+      <div class="kv">
+        <div><span class="mute small">היום</span><b>${td ? esc(td.title || td.day) : '—'}</b><span class="small">${td ? `${td.source === 'claude' ? 'נכתב בערב' : td.source === 'backup' ? 'גיבוי' : 'הודבק ידנית'} · ${td.players} שחקנים · ${td.finished} סיימו` : '<span class="pill w">אין משחק להיום</span>'}</span></div>
+        <div><span class="mute small">מחר</span><b>${tm ? esc(tm.title || tm.day) : 'עוד לא הגיע'}</b><span class="small mute">${tm ? 'מוכן, ייפתח בחצות' : 'נכתב בכל ערב ב־22:30 ונאסף אחרי 21:00 כל 10 דקות'}</span></div>
+        <div><span class="mute small">גיבויים</span><b>${O.backups ? O.backups.unused : 0}</b><span class="small mute">לא בשימוש, מתוך ${O.backups ? O.backups.total : 0}</span></div>
+        <div><span class="mute small">דיווחים פתוחים</span><b>${O.reports_open || 0}</b><span class="small mute">מילים שונות</span></div>
+      </div>
+      ${al.length ? `<div class="panel"><h2>התראות ${fresh.length ? `<span class="pill w">${fresh.length} חדשות</span>` : ''}<span class="sp"></span>${fresh.length ? '<button class="ghost small" data-a="seen">סימון כנקרא</button>' : ''}</h2>
+        ${al.slice(0, 10).map((a) => `<div class="row small"><span class="pill ${a.kind === 'backup' ? 'w' : a.kind === 'no_game' || a.kind === 'bad_drop' ? 'r' : ''}">${esc(KIND[a.kind] || a.kind)}</span><span>${esc(a.message)}</span><span class="mute">${d(a.at)}</span></div>`).join('')}</div>` : ''}
+      <div class="panel"><h2>תלונות של שחקנים ${O.complaints_open ? `<span class="pill w">${O.complaints_open} פתוחות</span>` : ''}</h2>
+        <div class="tabs" role="tablist">${[['open', 'פתוחות'], ['done', 'טופלו'], ['all', 'הכל']].map(([k, l]) => `<button role="tab" aria-selected="${CT === k}" data-a="ct" data-k="${k}">${l}</button>`).join('')}</div>
+        <div class="list">${CMP.length ? CMP.map(cmpHTML).join('') : '<p class="mute">אין תלונות כאן.</p>'}</div>
+      </div>
+      <div class="panel"><h2>דיווחים על מילים שנדחו</h2>
+        <div class="tabs" role="tablist">${[['open', 'פתוחים'], ['approved', 'אושרו'], ['rejected', 'נדחו'], ['all', 'הכל']].map(([k, l]) => `<button role="tab" aria-selected="${RT === k}" data-a="rt" data-k="${k}">${l}</button>`).join('')}</div>
+        <div class="list">${REP.length ? REP.map(repHTML).join('') : '<p class="mute">אין דיווחים כאן.</p>'}</div>
+      </div>
+      <div class="panel"><h2>משחקים<span class="sp"></span></h2>
+        <div class="row">${g.map((x) => `<button class="ghost small" data-a="game" data-d="${x.day}">${x.day.slice(8, 10)}.${x.day.slice(5, 7)} ${x.source === 'backup' ? '· גיבוי' : ''}${x.day === t ? ' · היום' : x.day > t ? ' · מחר' : ''}</button>`).join('') || '<span class="mute">אין עדיין משחקים.</span>'}</div>
+        ${GAME ? gameHTML(GAME) : ''}
+      </div>
+      <div class="panel"><h2>מילים שאושרו<span class="sp"></span><button class="ghost small" data-a="extra">הצגה</button></h2>
+        ${EXTRA ? `<p class="small mute">הן כבר מתקבלות במשחק. כדאי להעתיק אותן גם לרשימה הקבועה (tools/thinking-farm/extra-words.txt) כשמעדכנים את האתר.</p>
+        <textarea readonly rows="6">${esc(EXTRA.map((x) => x.word + (x.senses ? '  # ' + x.senses : '')).join('\n'))}</textarea>` : ''}
+      </div>
+      <details class="panel"><summary>הדבקה ידנית של משחק (רק אם האיסוף האוטומטי נכשל)</summary>
+        <p class="small mute">מדביקים את תוכן הקובץ <span class="n">thinking-farm/drops/&lt;day&gt;.asc</span>. המשחק נבדק ונשמר רק אם אין עדיין משחק לאותו יום.</p>
+        <div class="row"><input type="date" id="mDay" style="max-width:200px"><button class="small" data-a="paste">שמירה</button></div>
+        <textarea id="mArm" rows="5" placeholder="-----BEGIN PGP MESSAGE-----" dir="ltr"></textarea>
+      </details>
+      <p class="small mute">המשחק נכתב מחדש בכל ערב ב־22:30 (שעון ישראל) על ידי משימה מתוזמנת של Claude, מוצפן, ונאסף לכאן אוטומטית. אם לא הגיע עד חצות, נפתח משחק גיבוי ונשלחת התראה.</p>`;
+    wire();
+  }
+  function cmpHTML(c) {
+    const pts = c.points && c.points.score != null ? `<span class="pill y">כבר מתקבלת: ${c.points.score}</span>` : c.word ? '<span class="pill r">לא ברשימה</span>' : '';
+    return `<div class="item" data-id="${c.id}" data-day="${c.day}" data-q="${c.q}" data-word="${esc(c.word)}">
+      <div class="row"><span class="pill">${esc(CK[c.kind] || c.kind)}</span><b>${esc(c.day.slice(8, 10) + '.' + c.day.slice(5, 7))} · שאלה ${c.q}</b><span class="mute small">${esc(c.question || '')}</span><span class="mute small">${d(c.at)}</span></div>
+      ${c.word ? `<div class="row"><span class="w">${esc(c.word)}</span>${pts}</div>` : ''}
+      ${c.message ? `<div class="small">${esc(c.message)}</div>` : ''}
+      ${c.status === 'done' ? `<div class="small mute">טופלה${c.note ? ': ' + esc(c.note) : ''}</div>` : `<div class="row">
+        ${c.word ? `<input class="pts" type="number" min="1" max="99" value="50" style="width:90px" aria-label="נקודות"><button class="ok small" data-a="addans">להוסיף כתשובה</button>` : ''}
+        <input class="note" placeholder="הערה (לא חובה)" style="flex:1;min-width:160px"><button class="ghost small" data-a="cdone">טופלה</button></div>`}
+    </div>`;
+  }
+  function repHTML(r) {
+    const cats = [...new Set(r.categories || [])].map((c) => CATS[c]).join(', ');
+    const hist = (r.history || []).map((h) => `${h.decision === 'approved' ? 'אושר' : h.decision === 'rejected' ? 'נדחה' : 'נפתח מחדש'}${h.reason ? ': ' + esc(h.reason) : ''} (${d(h.at)})`).join(' · ');
+    return `<div class="item" data-norm="${esc(r.norm)}">
+      <div class="row"><span class="w">${esc(r.norm)}</span><span class="pill ${r.count > 2 ? 'w' : ''}">${r.count} ${r.count === 1 ? 'מדווח' : 'מדווחים'}</span>
+        <span class="pill ${r.status === 'approved' ? 'y' : r.status === 'rejected' ? 'r' : ''}">${r.status === 'approved' ? 'אושרה' : r.status === 'rejected' ? 'נדחתה' : 'פתוח'}</span>
+        <span class="mute small">${d(r.first)}${r.last !== r.first ? ' – ' + d(r.last) : ''}</span></div>
+      ${(r.typed || []).some((x) => x !== r.norm) ? `<div class="small">כפי שהוקלד: ${(r.typed || []).map(esc).join(' · ')}</div>` : ''}
+      <div class="small">סוג: ${esc(cats)}</div>
+      ${(r.reasons || []).length ? `<div class="small">למה: ${(r.reasons || []).map(esc).join(' · ')}</div>` : ''}
+      ${(r.sources || []).length ? `<div class="small">מקור: ${(r.sources || []).map(esc).join(' · ')}</div>` : ''}
+      ${(r.notes || []).length ? `<div class="small mute">הערות: ${(r.notes || []).map(esc).join(' · ')}</div>` : ''}
+      ${hist ? `<div class="small mute">היסטוריה: ${hist}</div>` : ''}
+      <div class="row">
+        ${r.status !== 'approved' ? `<input class="sen" placeholder="משמעויות (לא חובה), למשל: בנק = מוסד כספי; ספסל" style="flex:1;min-width:200px"><button class="ok small" data-a="ok">אישור והוספה למאגר</button>` : ''}
+        ${r.status !== 'rejected' ? `<input class="why" placeholder="סיבת דחייה" style="flex:1;min-width:160px"><button class="bad small" data-a="no">דחייה</button>` : ''}
+        ${r.status !== 'open' ? `<button class="ghost small" data-a="reopen">פתיחה מחדש</button>` : ''}
+      </div></div>`;
+  }
+  function gameHTML(G) {
+    const ed = EDIT && EDIT.day === G.day ? (G.questions || []).find((q) => q.q === EDIT.q) : null;
+    return `<div class="row"><b>${esc(G.day)}</b><span class="pill">${G.source === 'claude' ? 'נכתב בערב' : G.source === 'backup' ? 'גיבוי' : 'ידני'}</span><span class="mute small">פורטל: ${esc((G.portal || {}).name || '')}</span></div>
+      <div class="qs">${(G.questions || []).map((q) => `<div class="q"><div class="row"><b>${q.q}. ${esc(q.kind === 'list' ? q.prompt : q.word)}</b><span class="pill">${q.kind === 'list' ? (q.complete ? 'רשימה מלאה' : 'רשימה') : 'מילה סודית'}</span><span class="pill">${LV[q.level] || q.level}</span></div>
+        <span class="small mute">${esc(q.category)} · ${q.near_count} ${q.kind === 'list' ? 'תשובות' : 'מילים קרובות'}</span>
+        <span class="small">${(q.top || []).slice(0, 8).map(esc).join(', ')}</span>
+        <span class="small">${q.kind === 'list' ? `ענו ${q.solved}` : `נמצאה ${q.solved} · ויתרו ${q.gave}${q.avg_guesses ? ' · ממוצע ' + q.avg_guesses + ' ניחושים' : ''}`}</span>
+        <button class="ghost small" data-a="edit" data-q="${q.q}">עריכת השאלה והתשובות</button></div>`).join('')}</div>
+      ${ed ? `<div class="panel" id="editor"><h2>עריכת שאלה ${ed.q}<span class="sp"></span><button class="ghost small" data-a="close">סגירה</button></h2>
+        ${ed.kind === 'list' ? `<label>השאלה (הסבר בסוגריים אם צריך)<input id="eP" value="${esc(ed.prompt)}"></label>
+          <label>דוגמאות שמוצגות (מופרדות בפסיק, אפשר להשאיר ריק)<input id="eX" value="${esc((ed.examples || []).join(', '))}"></label>
+          <label class="row"><input type="checkbox" id="eC" ${ed.complete ? 'checked' : ''} style="width:auto"> רשימה מלאה (כל תשובה נכונה ברשימה)</label>`
+        : `<label>המילה הסודית<input id="eW" value="${esc(ed.word)}"></label><label>צורות שנחשבות כמציאה (בפסיק)<input id="eF" value="${esc((ed.forms || []).join(', '))}"></label>`}
+        <div class="row"><label style="flex:1">תחום<input id="eT" value="${esc(ed.category)}"></label>
+          <label>רמה<select id="eL">${Object.entries(LV).map(([k, v]) => `<option value="${k}" ${ed.level === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
+        <label>${ed.kind === 'list' ? 'התשובות והנקודות' : 'המילים הקרובות והקרבה'} — שורה לכל ציון: <span class="n">88: מילה, מילה</span>
+          <textarea id="eN" rows="16" style="min-height:300px">${esc(toText(ed.near))}</textarea></label>
+        <p class="small mute">ניחושים שכבר נעשו שומרים את הנקודות שקיבלו. מהשמירה והלאה כל ניחוש חדש נבדק מול הרשימה החדשה. השחקנים לא רואים את הרשימה.</p>
+        <div class="row"><button data-a="save">שמירה</button></div></div>` : ''}`;
+  }
+  function wire() {
+    app.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', async () => {
+      const a = b.dataset.a, it = b.closest('.item'), norm = it && it.dataset.norm;
+      if (a === 'edit') { EDIT = { day: GAME.day, q: +b.dataset.q }; draw(); document.getElementById('editor')?.scrollIntoView({ behavior: 'smooth' }); return; }
+      b.disabled = true;
+      try {
+        if (a === 'rt') { RT = b.dataset.k; REP = await rpc('tf_admin_reports', { p_status: RT }); }
+        else if (a === 'ok') { const r = await rpc('tf_admin_decide', { p_norm: norm, p_approve: true, p_reason: '', p_senses: it.querySelector('.sen').value }); if (r.error) throw new Error(r.error); toast('אושרה ונוספה למאגר'); O = await rpc('tf_admin_overview'); REP = await rpc('tf_admin_reports', { p_status: RT }); EXTRA = null; }
+        else if (a === 'no') { const why = it.querySelector('.why').value.trim(); if (!why) { toast('צריך לכתוב סיבה'); b.disabled = false; return; } const r = await rpc('tf_admin_decide', { p_norm: norm, p_approve: false, p_reason: why, p_senses: '' }); if (r.error) throw new Error(r.error); toast('נדחתה'); O = await rpc('tf_admin_overview'); REP = await rpc('tf_admin_reports', { p_status: RT }); }
+        else if (a === 'reopen') { await rpc('tf_admin_decide', { p_norm: norm, p_approve: null, p_reason: '', p_senses: '' }); REP = await rpc('tf_admin_reports', { p_status: RT }); }
+        else if (a === 'game') { GAME = await rpc('tf_admin_game', { p_day: b.dataset.d }); EDIT = null; }
+        else if (a === 'edit') { EDIT = { day: GAME.day, q: +b.dataset.q }; draw(); document.getElementById('editor')?.scrollIntoView({ behavior: 'smooth' }); return; }
+        else if (a === 'close') { EDIT = null; }
+        else if (a === 'save') {
+          const ed = GAME.questions.find((q) => q.q === EDIT.q), v = (id) => document.getElementById(id)?.value;
+          const body = { near: fromText(v('eN')), category: v('eT'), level: v('eL') };
+          if (ed.kind === 'list') { body.prompt = v('eP'); body.examples = v('eX').split(/[,،]/).map((x) => x.trim()).filter(Boolean); body.complete = document.getElementById('eC').checked; }
+          else { body.word = v('eW'); body.forms = v('eF').split(/[,،]/).map((x) => x.trim()).filter(Boolean); }
+          const r = await rpc('tf_admin_set_question', { p_day: GAME.day, p_q: EDIT.q, p: body });
+          if (r.error) throw new Error(r.error);
+          GAME = await rpc('tf_admin_game', { p_day: GAME.day }); toast('נשמר');
+        }
+        else if (a === 'ct') { CT = b.dataset.k; CMP = await rpc('tf_admin_complaints', { p_status: CT }); }
+        else if (a === 'cdone') { await rpc('tf_admin_complaint_done', { p_id: +it.dataset.id, p_note: it.querySelector('.note').value }); O = await rpc('tf_admin_overview'); CMP = await rpc('tf_admin_complaints', { p_status: CT }); }
+        else if (a === 'addans') {
+          const day = it.dataset.day, qn = +it.dataset.q, pts = Math.max(1, Math.min(99, +it.querySelector('.pts').value || 50));
+          const G = await rpc('tf_admin_game', { p_day: day }), q = G.questions.find((x) => x.q === qn);
+          const near = { ...q.near, [it.dataset.word]: pts };
+          const r = await rpc('tf_admin_set_question', { p_day: day, p_q: qn, p: { near } }); if (r.error) throw new Error(r.error);
+          await rpc('tf_admin_complaint_done', { p_id: +it.dataset.id, p_note: 'נוספה כתשובה (' + pts + ')' });
+          if (GAME && GAME.day === day) GAME = await rpc('tf_admin_game', { p_day: day });
+          O = await rpc('tf_admin_overview'); CMP = await rpc('tf_admin_complaints', { p_status: CT }); toast('נוספה לתשובות');
+        }
+        else if (a === 'extra') { EXTRA = await rpc('tf_admin_extra'); }
+        else if (a === 'seen') { await rpc('tf_admin_seen'); O = await rpc('tf_admin_overview'); }
+        else if (a === 'tick') { const r = await rpc('tf_admin_tick'); toast('נבדק: ' + (r || 'אין שינוי')); setTimeout(load, 4000); }
+        else if (a === 'paste') { const day = document.getElementById('mDay').value, arm = document.getElementById('mArm').value.trim(); if (!day || !arm) { toast('צריך תאריך ותוכן'); b.disabled = false; return; } const r = await rpc('tf_admin_ingest', { p_day: day, p_armored: arm }); toast(r === 'stored' ? 'נשמר' : r); O = await rpc('tf_admin_overview'); }
+      } catch (e) { toast('שגיאה: ' + (e.message || e)); }
+      draw();
+    }));
+  }
+  load();
+})();
+</script>
+</body>
+</html>
