@@ -21,7 +21,7 @@
   // what the game logs taught about each opponent: after the flop, how often they folded when bet into
   const TAL = { fold: 16, seen: 66 };
   CFG.opp ||= {};
-  for (const n of ['טל', 'טל האוטיסטית']) CFG.opp[n] ||= { ...TAL };
+  for (const n of ['טל', 'טל האוטיסטית', 'יהב']) CFG.opp[n] ||= { ...TAL };   // יהב: Tal's bot under another name
   CFG.lastOpp ||= { ...TAL };
   CFG.notes ||= [];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(CFG)); } catch {} };
@@ -200,12 +200,22 @@
   const gameId = (location.pathname.match(/\/games\/([\w-]+)/) || [])[1];
   const LOG = { seen: new Set(), lines: [], next: 0, told: new Set(), prior: JSON.parse(JSON.stringify(CFG.opp)) };
   const nameIn = (m) => { const r = m.match(/"(.+?) @ [\w-]+"/); return r ? r[1] : null; };
-  async function pullLog() {
-    if (!gameId || Date.now() < LOG.next || S.dead) return;
-    LOG.next = Date.now() + 8000;   // one small request every 8 seconds; PokerNow answers 429 when asked faster
+  // every 8 seconds, and at our turn a fresh copy (asked after the turn began, never sooner than 1.5 s after the last one):
+  // PokerNow answers 429 when asked faster, and then the bot waits 45 s and plays without the reading
+  async function pullLog(since = 0) {
+    if (LOG.pending) await LOG.pending;
+    if (!gameId || S.dead || Date.now() < (LOG.block || 0)) return;
+    if (since) { if ((LOG.last || 0) >= since) return; const w = 1500 - (Date.now() - (LOG.last || 0)); if (w > 0) await sleep(w); }
+    else if (Date.now() < LOG.next) return;
+    if (LOG.pending) return LOG.pending;
+    LOG.last = Date.now(); LOG.next = Date.now() + 8000;
+    LOG.pending = fetchLog().finally(() => { LOG.pending = null; });
+    return LOG.pending;
+  }
+  async function fetchLog() {
     try {
       const r = await fetch(`/games/${gameId}/log`, { credentials: 'include' });
-      if (r.status === 429) { LOG.next = Date.now() + 45000; return; }
+      if (r.status === 429) { LOG.block = Date.now() + 45000; return; }
       if (!r.ok) return;
       const fresh = ((await r.json()).logs || []).slice().reverse().filter((x) => { const k = x.created_at + x.msg; if (LOG.seen.has(k)) return false; LOG.seen.add(k); return true; });
       if (!fresh.length) return;
@@ -269,6 +279,50 @@
     if (others.length === 1 && CFG.opp[others[0]]) CFG.lastOpp = CFG.opp[others[0]];
     save();
   }
+  // this hand, from the log: what the one opponent did on each street after the flop, turned into limits on how his hand
+  // ranks on that street's board (tested against a bot that plays like Yahav: about +200 big blinds per 100 hands)
+  const READ = { S: 0.55, B: 0.75, R: 0.85, C: 0.3, K: 0.8 };
+  function handLine(opp, hole) {
+    const L = LOG.lines; let i = L.length - 1;
+    while (i >= 0 && !/^-- starting hand #/.test(L[i].msg)) i--;
+    if (i < 0) return null;
+    const mine = L.slice(i).find((x) => /^Your hand is /.test(x.msg));
+    const want = hole.map(P.cardText).sort().join(), got = mine ? mine.msg.replace('Your hand is ', '').split(',').map((c) => { c = c.trim(); return P.cardText(P.parse(c.slice(0, -1).replace('10', 'T') + { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' }[c.slice(-1)])); }).sort().join() : '';
+    if (want !== got) return null;   // the log has not caught up with this hand yet
+    const num = (v) => +String(v).replace(/,/g, ''), sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+    const acts = []; let n = 0, lvl = {}, before = 0;
+    for (const { msg: m } of L.slice(i)) {
+      if (/^(Flop|Turn|River)/.test(m)) { if (/second run/i.test(m)) continue; before += sum(lvl); lvl = {}; n = /^Flop/.test(m) ? 3 : /^Turn/.test(m) ? 4 : 5; continue; }
+      const who = nameIn(m); if (!who) continue;
+      let r, type = null, amt = 0;
+      if ((r = m.match(/posts an? .*? of (\d[\d,]*)/))) { lvl[who] = Math.max(lvl[who] || 0, num(r[1])); continue; }
+      if ((r = m.match(/" bets (\d[\d,]*)/))) { type = 'bet'; amt = num(r[1]); }
+      else if ((r = m.match(/" raises to (\d[\d,]*)/))) { type = 'raise'; amt = num(r[1]); }
+      else if ((r = m.match(/" calls (\d[\d,]*)/))) { type = 'call'; amt = num(r[1]); }
+      else if (/" checks/.test(m)) type = 'check';
+      else continue;
+      if (n >= 3 && who === opp) acts.push({ n, type, frac: type === 'bet' ? amt / Math.max(1, before + sum(lvl)) : 0 });
+      if (amt) lvl[who] = Math.max(lvl[who] || 0, amt);
+    }
+    const line = [];
+    for (const k of [3, 4, 5]) {
+      const a = acts.filter((x) => x.n === k); if (!a.length) continue;
+      const c = { n: k }, bet = a.find((x) => x.type === 'bet');
+      if (a.some((x) => x.type === 'raise')) c.min = READ.R;
+      else if (bet) c.min = bet.frac <= 0.35 ? READ.S : READ.B;
+      else if (a.some((x) => x.type === 'call')) c.min = READ.C;
+      if (a.some((x) => x.type === 'check') && !a.some((x) => x.type === 'bet' || x.type === 'raise')) c.max = READ.K;
+      if (c.min != null || c.max != null) line.push(c);
+    }
+    return line.length ? line : null;
+  }
+  // at the end of a hand PokerNow offers to show the cards; with the switch on, the bot always does (once a hand)
+  function showCards(ss) {
+    const me = ss.find((x) => x.me); if (!me) return;
+    const key = cardsIn($('.table-player-cards', me.el)).join(','); if (!key || S.shown === key) return;
+    const b = $$('button, input[type=button]').filter((x) => vis(x) && !bar.contains(x)).find((x) => /^show( (my )?(cards|hand)| all)?$/i.test((x.innerText || x.value || '').trim()));
+    if (b) { b.click(); S.shown = key; moved('show cards'); }
+  }
   // bluffing into someone who never folds only pays him; the bot bluffs as often as the opponents give it a reason to
   function oppBluff(names) {
     let f = 0, n = 0;
@@ -309,7 +363,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   const row = (k, lo, hi, txt, lab) => `<span class="bk2">${lab}</span><span class="bsp" dir="ltr"><small>${lo}</small><input type="range" data-k="${k}" min="-1" max="1" step="0.125" value="${CFG[k] || 0}" aria-label="${lab}"><small>${hi}</small></span><b class="bv" data-v="${k}">${txt(CFG[k] || 0)}</b>`;
   bar.innerHTML = `<button type="button" class="bsw" role="switch" data-on aria-label="הבוט האגדי"><i></i></button>
     <span class="bl" title="הבוט האגדי · אפשר לגרור">🤖</span>${row('speed', 'איטי', 'מהיר', speedTxt, 'מהירות')}
-    <span></span><span></span><label class="bpre"><button type="button" class="bsw sm" role="switch" data-pre aria-label="רייזים לפני הפלופ"><i></i></button>רייזים לפני הפלופ</label>
+    <span></span><span></span><div class="bpre"><button type="button" class="bsw sm" role="switch" data-pre aria-label="רייזים לפני הפלופ"><i></i></button>רייזים לפני הפלופ<button type="button" class="bsw sm" role="switch" data-show aria-label="להראות קלפים בסוף יד" style="margin-inline-start:10px"><i></i></button>להראות קלפים</div>
     <span></span><span></span>${row('size', 'קטן', 'גדול', sizeTxt, 'גודל הימור')}
     <span></span><span></span>${row('bluff', 'פחות', 'יותר', bluffTxt, 'בלופים')}
     <div class="bnotes" aria-live="polite"></div>`;
@@ -327,12 +381,14 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   }
   drawNotes();
   const paint = () => {
-    const a = $('[data-on]', bar), b = $('[data-pre]', bar);
+    const a = $('[data-on]', bar), b = $('[data-pre]', bar), c = $('[data-show]', bar);
+    c.classList.toggle('on', !!CFG.show); c.setAttribute('aria-checked', String(!!CFG.show));
     a.classList.toggle('on', CFG.on); a.setAttribute('aria-checked', String(CFG.on));
     b.classList.toggle('on', CFG.pre !== false); b.setAttribute('aria-checked', String(CFG.pre !== false));
   };
   $('[data-on]', bar).onclick = () => { CFG.on = !CFG.on; save(); paint(); S.sig = ''; };
-  $('[data-pre]', bar).onclick = () => { CFG.pre = CFG.pre === false; save(); paint(); };
+  $('[data-pre]', bar).onclick = (e) => { e.preventDefault(); CFG.pre = CFG.pre === false; save(); paint(); };
+  $('[data-show]', bar).onclick = (e) => { e.preventDefault(); CFG.show = !CFG.show; save(); paint(); };
   $$('input[type=range]', bar).forEach((rg) => {
     const k = rg.dataset.k, out = $(`[data-v=${k}]`, bar), txt = k === 'speed' ? speedTxt : k === 'size' ? sizeTxt : bluffTxt;
     rg.oninput = () => { out.textContent = txt(+rg.value); };
@@ -375,6 +431,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
     const ss = seats();
     alarm(ss);
     pullLog();
+    if (CFG.show) showCards(ss);
     try { watch(); } catch {}
     if (!CFG.on || S.busy || S.dead) return;
     const bt = buttons();
@@ -389,8 +446,11 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
       // think, but move at once if PokerNow already switched on the extra time (and remember how long the clock is)
       const lateAlready = extraTime();
       const wait = thinkMs(sp.t, sp.seat, Math.pow(X, -(CFG.speed || 0))), until = Date.now() + wait;
+      let line = null;
+      if (sp.board.length >= 3 && sp.names.length === 1) { await pullLog(S.at); try { line = handLine(sp.names[0], sp.hole); } catch (_e) { line = null; } }
+      S.line = line;
       // decide during the pause: the longer the pause, the more deals it runs (Omaha with 5 cards needs them)
-      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) * oppBluff(sp.names) });
+      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) * oppBluff(sp.names), line });
       while (Date.now() < until && CFG.on) {
         if (!lateAlready && extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
         await sleep(200);

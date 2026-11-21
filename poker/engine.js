@@ -658,7 +658,9 @@
   };
   // the share of the pot this seat should expect at showdown, against what the others are likely to hold
   // wide: what is known of the opponents' looseness (1 = as usual, 1.5 = they play many more hands, 0.7 = fewer)
-  function potShare(t, seat, ms, wide = 1) {
+  // line (heads-up Omaha): what the opponent did on each street, as limits on where his hand ranked among all hands on that
+  // street's board, e.g. [{ n: 3, min: 0.55 }, { n: 4, max: 0.8 }] = bet the flop, checked the turn
+  function potShare(t, seat, ms, wide = 1, line = null) {
     const p = t.seats[seat], hole = p.cards, board = t.board, hl = hiLo(t.game), hc = hole.length;
     const opps = t.inHand().filter((q) => q !== p);
     if (!opps.length) return 1;
@@ -672,12 +674,27 @@
     const late = board.length === 5;
     // Omaha after the flop: where a hand ranks among all hands on this very board. On a paired or tripled board everyone
     // has trips, so the kind of hand says little; a raise there means the top of the range (quads, the bigger full house)
-    let rel = null;
-    if (hc > 2 && board.length >= 3) {
-      const xs = [], pool = d.slice();
-      for (let k = 0; k < 160; k++) { for (let i = 0; i < hc; i++) { const j = i + Math.floor(rand() * (pool.length - i)); const x = pool[i]; pool[i] = pool[j]; pool[j] = x; } xs.push(value(pool.slice(0, hc), board)); }
+    const randHand = (src) => { for (let i = 0; i < hc; i++) { const j = i + Math.floor(rand() * (src.length - i)); const x = src[i]; src[i] = src[j]; src[j] = x; } return src.slice(0, hc); };
+    const ranker = (b) => {
+      const xs = [], src = d.slice();
+      for (let k = 0; k < 160; k++) xs.push(value(randHand(src), b));
       xs.sort((x, y) => x - y);
-      rel = (v) => { let lo = 0, hi = xs.length; while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; } let up = lo; while (up < xs.length && xs[up] === v) up++; return (lo + up) / 2 / xs.length; };
+      return (v) => { let lo = 0, hi = xs.length; while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; } let up = lo; while (up < xs.length && xs[up] === v) up++; return (lo + up) / 2 / xs.length; };
+    };
+    const rel = hc > 2 && board.length >= 3 ? ranker(board) : null;
+    // the hands that fit everything the one opponent did this hand (Omaha, heads-up); too few means the reading is off: not used
+    let fits = null;
+    if (line && line.length && rel && opps.length === 1 && !hl) {
+      const rk = {};
+      for (const L of line) if (L.n >= 3 && L.n <= board.length && !rk[L.n]) rk[L.n] = L.n === board.length ? rel : ranker(board.slice(0, L.n));
+      const cand = [], src = d.slice();
+      for (let k = 0; k < 900 && cand.length < 200; k++) {
+        const h = randHand(src);
+        let ok = true;
+        for (const L of line) { const f = rk[L.n]; if (!f) continue; const r = f(value(h, board.slice(0, L.n))); if ((L.min != null && r < L.min) || (L.max != null && r > L.max)) { ok = false; break; } }
+        if (ok) cand.push(h);
+      }
+      if (cand.length >= 15) fits = cand;
     }
     const fit = hc > 2
       // Omaha: nearly every hand hits something, so chips in mean a strong made hand (draws still count before the river)
@@ -690,6 +707,13 @@
     while (n < maxIt && (n < minIt || Date.now() - t0 < ms)) {
       pos = 0;
       const hands = [];
+      if (fits) {
+        const h = fits[Math.floor(rand() * fits.length)], full = board.slice();
+        while (full.length < 5) { const c = take(); if (!h.includes(c)) full.push(c); }
+        const a = value(hole, full), b = value(h, full);
+        sum += a > b ? 1 : a === b ? 0.5 : 0; n++;
+        continue;
+      }
       for (let o = 0; o < opps.length; o++) {
         let h;
         for (let tries = 0; ; tries++) {
@@ -726,7 +750,7 @@
     const pot = t.pot(), after = pot + o.toCall;
     // opts.wide / opts.wideVsBet: how wide the opponents' range is, from what was learned about them (1 = as usual);
     // wideVsBet is used when they bet or raised into us (a passive player who suddenly bets has it)
-    const eq = potShare(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1));
+    const eq = potShare(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1), opts.line);
     const fair = 1 / (opps + 1), strength = eq / fair;
     const price = o.toCall / (after || 1);
     const r = rand();
