@@ -320,7 +320,8 @@
   function showCards(ss) {
     const me = ss.find((x) => x.me); if (!me) return;
     const key = cardsIn($('.table-player-cards', me.el)).join(','); if (!key || S.shown === key) return;
-    const b = $$('button, input[type=button]').filter((x) => vis(x) && !bar.contains(x)).find((x) => /^show( (my )?(cards|hand)| all)?$/i.test((x.innerText || x.value || '').trim()));
+    // PokerNow: "SHOW ALL CARDS" (.show-hand-buttons .all-cards-button), beside one button per card
+    const b = $$('.show-hand-buttons .all-cards-button').find(vis) || $$('button, input[type=button]').filter((x) => vis(x) && !bar.contains(x)).find((x) => /^show( all)?( (my )?(cards|hand))?$/i.test((x.innerText || x.value || '').trim().split('\n')[0]));
     if (b) { b.click(); S.shown = key; moved('show cards'); }
   }
   // bluffing into someone who never folds only pays him; the bot bluffs as often as the opponents give it a reason to
