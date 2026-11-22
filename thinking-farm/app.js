@@ -107,16 +107,18 @@
   };
   const tier = (s) => (s == null ? 'לא ברשימה' : s >= 80 ? 'אגדי' : s >= 55 ? 'נדיר' : s >= 30 ? 'לא שגרתי' : 'נפוץ');
   const isList = (q) => q.kind === 'list';
-  const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / 150) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
+  const timed = (q) => isList(q) && q.secs != null;          // topic questions against the clock (older servers: 3 answers)
+  const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / (timed(q) ? 300 : 150)) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
   const label = (s) => (s == null ? 'רחוק' : s >= 100 ? 'מצאת!' : s >= 90 ? 'בוער' : s >= 75 ? 'חם מאוד' : s >= 55 ? 'חם' : s >= 35 ? 'פושר' : 'קריר');
 
   /* ---------------------------------------------------------------- portal (optional, loaded later) */
   let portal = null;
   const motionPref = () => store.get('tf.motion', 'auto');
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SND = (n, a) => { try { window.TFS && window.TFS.play(n, a); } catch {} };
   const P = {
-    heat(h) { try { portal && portal.setHeat(h); } catch {} },
-    question(i, h) { try { portal && portal.setQuestion(i, h); } catch {} },
+    heat(h) { try { window.TFS && window.TFS.heat(h); portal && portal.setHeat(h); } catch {} },
+    question(i, h) { try { window.TFS && window.TFS.heat(h); portal && portal.setQuestion(i, h); } catch {} },
     solve() { try { portal && portal.solve(); } catch {} },
     fail() { try { portal && portal.fail(); } catch {} },
     finale(n) { try { portal && portal.finale(n); } catch {} },
@@ -183,6 +185,7 @@
   }
   // a topic question: name things that belong; each right answer adds its points, rarer is worth more
   function drawList(q) {
+    if (timed(q)) return drawTimed(q);
     const left = q.left ?? 3, done = q.status !== 'open';
     app.innerHTML = `
       <section class="stage" aria-label="המצב בשאלה">
@@ -207,6 +210,133 @@
       <p class="foot-note">המשחק נכתב מחדש בכל ערב · משחק חדש בחצות שעון ישראל</p>`;
     wireCard(q);
   }
+  // Wazari style: start the clock, then as many answers as you can; a rarer answer is worth more
+  const secsLeft = (i) => { const end = clocks.get(i); return end == null ? null : Math.max(0, Math.ceil((end - Date.now()) / 1000)); };
+  function listRows(q, newestFirst) {
+    const gs = newestFirst ? [...(q.guesses || [])].reverse() : (q.guesses || []);
+    return `<ul class="list" aria-label="התשובות שלך">${gs.map((g) => `<li class="g ${g.pending ? 'pend' : g.s == null ? 'far' : ''} ${g.w === lastWord ? 'last' : ''}">
+      <span class="w">${esc(g.w)}${g.f ? `<small>התכוונת ל${esc(g.f)}</small>` : ''}${g.s != null ? `<small>${tier(g.s)}</small>` : ''}</span>
+      <span class="s" style="color:${color(g.s)}">${g.pending ? '…' : g.s == null ? 'לא ברשימה' : `<bdi dir="ltr">+${g.s}</bdi>`}</span>
+      <span class="bar" aria-hidden="true"><i style="--w:${g.s == null ? 2 : g.s}%;--c:${color(g.s)}"></i></span></li>`).join('')}</ul>`;
+  }
+  function drawTimed(q) {
+    const done = q.status !== 'open', running = !done && q.started, left = secsLeft(cur) ?? q.secs;
+    const right = (q.guesses || []).filter((g) => g.s != null).length;
+    app.innerHTML = `
+      <section class="stage" aria-label="המצב בשאלה">
+        <div class="qnum">שאלה <b>${cur + 1}</b> מתוך 10</div>
+        ${running ? `<div class="heat clock ${left <= 10 ? 'low' : ''}" id="clock" role="timer" aria-label="שניות שנותרו">${left}</div>
+          <div class="tbar" aria-hidden="true"><i id="tbar" style="--w:${(100 * left) / q.secs}%"></i></div>
+          <div class="heatlab"><bdi dir="ltr">+${q.best || 0}</bdi> נקודות · ${right} ${right === 1 ? 'תשובה נכונה' : 'תשובות נכונות'}</div>`
+        : done ? `<div class="heat" style="color:${color(Math.min(99, (q.best || 0) / 3) || null)}">${q.best ? `<bdi dir="ltr">+${q.best}</bdi>` : '0'}</div><div class="heatlab">${right} ${right === 1 ? 'תשובה נכונה' : 'תשובות נכונות'} · השאלה נסגרה</div>`
+        : `<div class="heat" style="color:var(--cy)">⏱ ${q.secs}</div><div class="heatlab">שניות לשאלה הזאת</div>`}
+      </section>
+      ${pathHTML()}
+      <section class="card" aria-labelledby="qh">
+        <div class="qhead"><span class="lvl ${q.level}">שאלת נושא · ${LEVEL[q.level] || ''}</span>
+          <span class="qact">${done ? nextBtn() : running ? `<button class="btn ghost" type="button" id="giveBtn">סיימתי</button>` : ''}</span></div>
+        ${!done && !running ? `<h2 id="qh">מוכנים?</h2>
+          <p class="cat">כשתתחילו, יופיע נושא ויהיו לכם <b>${q.secs} שניות</b> לכתוב כמה שיותר תשובות. כל תשובה נכונה מוסיפה נקודות, ותשובה נדירה שווה הרבה יותר. שגיאת כתיב קטנה או מילה שלא נגמרה נחשבות.</p>
+          <p class="cat">השעון ממשיך לרוץ גם אם עוברים לשאלה אחרת.</p>
+          <div class="row"><button class="btn main big" type="button" id="startBtn">▶ מתחילים</button></div>`
+        : `<h2 class="prompt" id="qh">${esc(q.prompt || '')}</h2>
+          ${q.examples && q.examples.length ? `<p class="cat">למשל: <b>${q.examples.map(esc).join(', ')}</b></p>` : ''}
+          ${q.complete ? `<p class="cat">✓ רשימה מלאה: כל תשובה נכונה מתקבלת.</p>` : ''}
+          ${(q.guesses || []).length ? listRows(q, running) : `<p class="empty">${running ? 'כתבו תשובה ולחצו Enter. מהר!' : 'לא נכתבו תשובות.'}</p>`}`}
+      </section>
+      ${complainLink()}
+      <p class="foot-note">המשחק נכתב מחדש בכל ערב · משחק חדש בחצות שעון ישראל</p>`;
+    wireCard(q);
+    $('#startBtn')?.addEventListener('click', startList);
+  }
+
+  /* ---------------------------------------------------------------- the clock of topic questions */
+  const clocks = new Map();      // question index -> when its clock ends (ms, this device's time)
+  let clockTimer = 0, chain = Promise.resolve();
+  function setClock(i, endsIn) { clocks.set(i, Date.now() + Math.max(0, endsIn) * 1000); runClock(); }
+  function runClock() {
+    if (clockTimer) return;
+    clockTimer = setInterval(() => {
+      if (!S || !S.questions) return;
+      for (const [i, end] of [...clocks]) {
+        const q = S.questions[i];
+        if (!q || q.status !== 'open') { clocks.delete(i); continue; }
+        const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+        if (i === cur) {
+          const c = $('#clock'), b = $('#tbar');
+          if (c && c.textContent !== String(left)) { c.textContent = left; c.classList.toggle('low', left <= 10); if (left <= 10 && left > 0) SND('tick', left); }
+          if (b) b.style.setProperty('--w', (100 * Math.max(0, end - Date.now())) / (q.secs * 1000) + '%');
+        }
+        if (end <= Date.now()) { clocks.delete(i); chain = chain.then(() => timeUp(i)); }
+      }
+      const l = secsLeft(cur);
+      try { window.TFS && window.TFS.clock(l != null && S.questions[cur].status === 'open', l ?? 99); } catch {}
+      if (!clocks.size) { clearInterval(clockTimer); clockTimer = 0; try { window.TFS && window.TFS.clock(false); } catch {} }
+    }, 200);
+  }
+  async function timeUp(i) {
+    try {
+      const r = await rpc('tf_timeup', { p_day: S.day, p_q: i + 1 });
+      if (!r.done) { setClock(i, r.ends_in || 1); return; }
+      closeList(i, r.total, r.result, true);
+    } catch (e) { onErr(e); }
+  }
+  function closeList(i, total, result, byClock) {
+    const q = S.questions[i]; if (!q) return;
+    clocks.delete(i);
+    q.status = 'solved'; if (total != null) q.best = total; if (result) S.result = result;
+    if (byClock) SND('timeup');
+    if (i === cur && !S.finished) { draw(); msg(`<div class="info">${byClock ? 'נגמר הזמן! ' : ''}צברת <bdi dir="ltr">+${q.best || 0}</bdi> נקודות בשאלה הזאת.</div>`); shout(`נגמר הזמן. ${q.best || 0} נקודות`); }
+    else if (byClock) toast(`נגמר הזמן בשאלה ${i + 1}`);
+    if (result) setTimeout(finish, 2400);
+  }
+  async function startList() {
+    if (busy) return;
+    const q = Q(), i = cur;
+    q._starting = true; drawDock(q); $('#guess')?.focus({ preventScroll: true });   // inside the tap, so phones open the keyboard
+    busy = true;
+    try {
+      const r = await rpc('tf_open', { p_day: S.day, p_q: i + 1 });
+      Object.assign(q, { prompt: r.prompt, examples: r.examples || [], complete: r.complete, started: true });
+      SND('start'); setClock(i, r.ends_in);
+      if (i === cur) { draw(); $('#guess')?.focus({ preventScroll: true }); }
+    } catch (e) { q._starting = false; onErr(e); draw(); } finally { busy = false; }
+  }
+  function listAnswer(q, raw, w, input) {
+    const i = cur;
+    if (q.guesses.some((g) => g.w === w)) { msg(`<div class="info">כבר כתבת "${esc(w)}".</div>`); SND('dup'); input.value = ''; return; }
+    input.value = '';
+    const g = { w, s: null, pending: true, n: q.guesses.length + 1 };
+    q.guesses.push(g); lastWord = w; draw(); input.focus({ preventScroll: true });
+    chain = chain.then(async () => {
+      try {
+        const r = await rpc('tf_guess', { p_day: S.day, p_q: i + 1, p_word: w });
+        if (r.dup) {
+          q.guesses.splice(q.guesses.indexOf(g), 1); SND('dup');
+          if (i === cur) { draw(); msg(`<div class="info">${r.same ? `"${esc(w)}" זו אותה תשובה כמו ${r.fix ? `"${esc(r.fix)}"` : 'קודם'}.` : `כבר כתבת "${esc(w)}".`}</div>`); }
+          return;
+        }
+        Object.assign(g, { w: r.w, s: r.s, r: r.r, n: r.n, f: r.fix || null, pending: false });
+        q.best = r.total;
+        if (r.ends_in != null) { const end = Date.now() + r.ends_in * 1000, mine = clocks.get(i); if (mine != null && Math.abs(mine - end) > 1500) clocks.set(i, end); }
+        if (r.s != null) { SND(r.fix ? 'fix' : 'good', r.s); P.heat(heatOf(q)); if (r.s >= 55) { P.solve(); flash(); } } else SND('bad');
+        if (i === cur && q.status === 'open') {
+          draw();
+          if (r.s == null) {
+            rejected = { raw: raw.trim(), w, q: i + 1 };
+            msg(`<div class="bad"><span>"${esc(w)}" לא ברשימה.</span><button type="button" id="repBtn">זו תשובה נכונה? דווחו</button></div>`);
+            $('#repBtn')?.addEventListener('click', openReport);
+          } else msg(`<div class="info"><bdi dir="ltr">+${r.s}</bdi> · ${tier(r.s)}${r.fix ? ` · התכוונת ל"${esc(r.fix)}"? נחשב` : ''}</div>`);
+        }
+        say(r.s == null ? `${w}: לא ברשימה` : `${w}: פלוס ${r.s}, ${tier(r.s)}`);
+      } catch (e) {
+        const k = q.guesses.indexOf(g); if (k >= 0 && g.pending) q.guesses.splice(k, 1);
+        if (e.code === 'time_up') closeList(i, e.data && e.data.total, e.data && e.data.result, true);
+        else { if (i === cur) draw(); onErr(e); }
+      }
+    });
+  }
+
   function wireCard(q) {
     drawDock(q);
     app.querySelectorAll('.stop').forEach((b) => b.addEventListener('click', () => go(+b.dataset.q)));
@@ -238,16 +368,19 @@
   function drawDock(q) {
     let dock = $('#dock');
     if (!dock) { dock = document.createElement('div'); dock.id = 'dock'; dock.className = 'dock'; document.body.appendChild(dock); }
-    if (!S.ready || S.finished || q.status !== 'open') { dock.innerHTML = ''; dock.hidden = true; return; }
+    if (!S.ready || S.finished || q.status !== 'open' || (timed(q) && !q.started && !q._starting)) { dock.innerHTML = ''; dock.hidden = true; return; }
     dock.hidden = false;
     if (!$('#guessForm')) {
       dock.innerHTML = `<div class="msg" id="msg" role="status"></div>
         <form id="guessForm" autocomplete="off">
           <label class="sr" for="guess">הניחוש שלך</label>
-          <input id="guess" name="guess" dir="rtl" lang="he" inputmode="text" enterkeyhint="send" autocapitalize="off" spellcheck="false" maxlength="40" placeholder="נחשו מילה…" required>
-          <button class="btn main" type="submit">נחש</button>
+          <input id="guess" name="guess" dir="rtl" lang="he" inputmode="text" enterkeyhint="send" autocapitalize="off" spellcheck="false" maxlength="40" placeholder="${isList(q) ? 'כתבו תשובה…' : 'נחשו מילה…'}" required>
+          <button class="btn main" type="submit">${isList(q) ? 'שלח' : 'נחש'}</button>
         </form>`;
       $('#guessForm').addEventListener('submit', (e) => { e.preventDefault(); guess(); });
+    } else {
+      $('#guess').placeholder = isList(q) ? 'כתבו תשובה…' : 'נחשו מילה…';
+      $('#guessForm .btn').textContent = isList(q) ? 'שלח' : 'נחש';
     }
   }
   const msg = (html) => { const m = $('#msg'); if (m) m.innerHTML = html; };
@@ -302,7 +435,7 @@
 
   /* ---------------------------------------------------------------- actions */
   function go(i) {
-    cur = Math.max(0, Math.min(9, i)); lastWord = null; draw();
+    cur = Math.max(0, Math.min(9, i)); lastWord = null; draw(); SND('nav');
     const q = Q(); P.question(cur, heatOf(q));
     if (q.status === 'open') $('#guess')?.focus({ preventScroll: true });
   }
@@ -312,7 +445,8 @@
     if (busy) return;
     const input = $('#guess'), raw = input.value, w = norm(raw), q = Q();
     if (!w) return;
-    if (!validShape(w)) { msg('<div class="bad">רק אותיות בעברית, בלי מספרים או סימנים.</div>'); shake(); return; }
+    if (!validShape(w)) { msg('<div class="bad">רק אותיות בעברית, בלי מספרים או סימנים.</div>'); shake(); SND('bad'); return; }
+    if (timed(q)) { if (q.started && q.status === 'open') listAnswer(q, raw, w, input); return; }
     if (q.guesses.some((g) => g.w === w)) { lastWord = w; draw(); msg(`<div class="info">כבר ניחשת "${esc(w)}".</div>`); input.value = ''; input.focus(); return; }
     busy = true;
     if (isList(q)) {
@@ -323,7 +457,7 @@
         q.guesses.push({ w: r.w, s: r.s, r: r.r, h: false, n: r.n }); lastWord = r.w;
         q.best = r.total; q.left = r.left;
         if (r.done) { q.status = 'solved'; if (r.result) S.result = r.result; }
-        if (r.s != null) { P.heat(heatOf(q)); if (r.s >= 55) { P.solve(); flash(); } }
+        if (r.s != null) { SND('good', r.s); P.heat(heatOf(q)); if (r.s >= 55) { P.solve(); flash(); } } else SND('bad');
         draw();
         if (r.s == null) {
           rejected = { raw: raw.trim(), w, q: cur + 1 };
@@ -343,7 +477,7 @@
         const done = store.get('tf.reported', []).includes(w);
         msg(`<div class="bad"><span>המילה "${esc(w)}" אינה ברשימה.</span>${done ? '<span class="cat">כבר דיווחת עליה, תודה.</span>' : '<button type="button" id="repBtn">סליחה, המילה הזאת כן קיימת? דווח לנו</button>'}</div>`);
         $('#repBtn')?.addEventListener('click', openReport);
-        shout(`המילה ${w} אינה ברשימה`); shake(); return;
+        shout(`המילה ${w} אינה ברשימה`); shake(); SND('bad'); return;
       }
       const r = await rpc('tf_guess', { p_day: S.day, p_q: cur + 1, p_word: w });
       input.value = '';
@@ -353,13 +487,13 @@
       if (r.solved) {
         q.status = 'solved'; q.word = r.word; q.category = r.category; q.best = 100;
         if (r.result) { S.result = r.result; }
-        P.solve(); flash(); shout(`מצאת! המילה היא ${r.word}`);
+        P.solve(); flash(); SND('solve'); shout(`מצאת! המילה היא ${r.word}`);
         draw();
         if (r.result) setTimeout(finish, 2600);
         return;
       }
       q.best = Math.max(q.best || 0, r.s || 0);
-      P.heat(q.best / 100);
+      P.heat(q.best / 100); SND('near', r.s);
       draw(); say(`${r.w}: ${r.s == null ? 'רחוק' : 'קרבה ' + r.s + ', ' + label(r.s)}`);
       $('#guess')?.focus({ preventScroll: true });
     } catch (e) { onErr(e); } finally { busy = false; }
@@ -368,7 +502,7 @@
     if (busy) return; busy = true;
     try {
       const q = Q(), r = await rpc('tf_hint', { p_day: S.day, p_q: cur + 1 });
-      q.hints = r.hints;
+      q.hints = r.hints; SND('hint');
       if (r.kind === 'category') { q.category = r.category; draw(); msg(`<div class="info">רמז: התחום הוא <b>${esc(r.category)}</b></div>`); say('רמז: התחום הוא ' + r.category); }
       else if (r.kind === 'word') { q.guesses.push({ w: r.w, s: r.s, r: r.r, h: true, n: r.n }); q.best = Math.max(q.best || 0, r.s || 0); lastWord = r.w; P.heat(q.best / 100); draw(); msg(`<div class="info">רמז: "${esc(r.w)}" קרובה ${r.s}</div>`); say(`רמז: ${r.w}, קרבה ${r.s}`); }
       else { draw(); }
@@ -376,20 +510,20 @@
   }
   async function giveUp() {
     if (busy) return;
-    if (isList(Q())) { if (!confirmBox('לסיים את השאלה הזאת? הנקודות שצברת נשמרות.')) return; }
+    if (isList(Q())) { if (!confirmBox(timed(Q()) ? 'לסיים עכשיו, לפני שהזמן נגמר? הנקודות שצברת נשמרות.' : 'לסיים את השאלה הזאת? הנקודות שצברת נשמרות.')) return; }
     else if (!confirmBox('לוותר על המילה הזאת? המילה תיחשף ולא תוכלו לחזור אליה.')) return;
     busy = true;
     try {
       const q = Q(), r = await rpc('tf_giveup', { p_day: S.day, p_q: cur + 1 });
-      if (r.list) { q.status = 'solved'; q.best = r.total ?? q.best; if (r.result) S.result = r.result; draw(); say('השאלה נסגרה'); if (r.result) setTimeout(finish, 1500); return; }
+      if (r.list) { clocks.delete(cur); q.status = 'solved'; q.best = r.total ?? q.best; if (r.result) S.result = r.result; draw(); say('השאלה נסגרה'); if (r.result) setTimeout(finish, 1500); return; }
       q.status = 'gave'; q.word = r.word; q.category = r.category;
       if (r.result) S.result = r.result;
-      P.fail(); draw(); shout('המילה הייתה ' + r.word);
+      P.fail(); SND('give'); draw(); shout('המילה הייתה ' + r.word);
       if (r.result) setTimeout(finish, 2200);
     } catch (e) { onErr(e); } finally { busy = false; }
   }
   const confirmBox = (t) => window.confirm(t);
-  function finish() { S.finished = true; P.finale((S.result && S.result.solved) || 0); draw(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  function finish() { if (S.finished) return; S.finished = true; P.finale((S.result && S.result.solved) || 0); SND('finale', (S.result && S.result.solved) || 0); draw(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   function onErr(e) {
     if (e.code === 'new_day') { toast(ERR.new_day); boot(); return; }
     if (e.code === 'done') { boot(); return; }
@@ -402,7 +536,7 @@
   async function share() {
     const r = S.result || {};
     const [y, m, d] = S.day.split('-');
-    const line = S.questions.map((q) => (isList(q) ? ((q.best || 0) >= 120 ? '🟪' : (q.best || 0) > 0 ? '🟦' : '⬛') : q.status === 'solved' ? '🟨' : '⬛')).join('');
+    const line = S.questions.map((q) => (isList(q) ? ((q.best || 0) >= (timed(q) ? 200 : 120) ? '🟪' : (q.best || 0) > 0 ? '🟦' : '⬛') : q.status === 'solved' ? '🟨' : '⬛')).join('');
     const text = `חוות חשיבה · ${+d}.${+m}\n🌀 ${r.points} נקודות\n${line}\nbarusik.com/thinking-farm`;
     try { if (navigator.share) { await navigator.share({ text }); return; } } catch { return; }
     try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); } catch { toast(text); }
@@ -471,7 +605,7 @@
   function openHelp() {
     dialog(`<div class="help"><h2>איך משחקים</h2>
       <ol><li>בכל יום יש <b>עשר שאלות</b>, אותן שאלות לכל השחקנים.</li>
-      <li><b>שאלת רשימה</b>: נושא, ולפעמים דוגמאות או הסבר בסוגריים. יש 3 תשובות, וכל תשובה נכונה מוסיפה נקודות. ככל שהתשובה <b>נדירה</b> יותר, היא שווה יותר.</li>
+      <li><b>שאלת נושא</b>: לוחצים "מתחילים", מופיע נושא, ויש <b>דקה</b> לכתוב כמה שיותר תשובות. כל תשובה נכונה מוסיפה נקודות, וככל שהתשובה <b>נדירה</b> יותר, היא שווה יותר. שגיאת כתיב קטנה או מילה שלא נגמרה נחשבות.</li>
       <li><b>מילה סודית</b>: כתבו מילה אחת בעברית ונגיד כמה היא <b>קרובה במשמעות</b> למילה הסודית, לא באותיות. ככל שמתקרבים, הפורטל נפתח. יש עד 3 רמזים, ואפשר לוותר.</li>
       <li>אפשר לעבור בין השאלות בכל רגע.</li>
       <li>משחקים פעם אחת ביום. בחצות שעון ישראל מחכה משחק חדש.</li></ol></div>
@@ -488,14 +622,31 @@
       <div><p style="margin-bottom:8px">אנימציית הפורטל</p>
       <div class="seg" id="mot">${[['auto', 'אוטומטי'], ['full', 'מלאה'], ['lite', 'קלה'], ['off', 'כבויה']].map(([k, t]) => `<button type="button" data-m="${k}" aria-pressed="${m === k}">${t}</button>`).join('')}</div>
       <p style="margin-top:8px;font-size:13.5px">"אוטומטי" בוחר גרסה קלה במכשירים חלשים ועוצר כשהמכשיר מבקש פחות תנועה.</p></div>
+      <div><p style="margin-bottom:8px">מוזיקה</p><div class="seg" id="mus">${[[true, 'פועלת'], [false, 'כבויה']].map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${!!(window.TFS && window.TFS.music) === k}">${t}</button>`).join('')}</div></div>
+      <div><p style="margin-bottom:8px">צלילים</p><div class="seg" id="sfx">${[[true, 'פועלים'], [false, 'כבויים']].map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${!!(window.TFS && window.TFS.sfx) === k}">${t}</button>`).join('')}</div></div>
       <div class="foot"><button class="btn main" value="ok">סגירה</button></div>`, (d) => {
       d.querySelectorAll('#mot button').forEach((b) => b.addEventListener('click', () => {
         store.set('tf.motion', b.dataset.m);
         d.querySelectorAll('#mot button').forEach((x) => x.setAttribute('aria-pressed', x === b));
         try { portal && portal.destroy(); } catch {} portal = null; loadPortal();
       }));
+      for (const id of ['mus', 'sfx']) d.querySelectorAll(`#${id} button`).forEach((b) => b.addEventListener('click', () => {
+        if (window.TFS) window.TFS[id === 'mus' ? 'music' : 'sfx'] = b.dataset.v === 'true';
+        d.querySelectorAll(`#${id} button`).forEach((x) => x.setAttribute('aria-pressed', x === b));
+        sndIcon();
+      }));
     });
   }
+  // the speaker in the header: everything on or everything off
+  const sndBtn = $('#sndBtn');
+  function sndIcon() {
+    if (!sndBtn) return;
+    const on = !!(window.TFS && window.TFS.any);
+    sndBtn.setAttribute('aria-pressed', on); sndBtn.setAttribute('aria-label', on ? 'השתקת המוזיקה והצלילים' : 'הפעלת מוזיקה וצלילים');
+    sndBtn.textContent = on ? '🔊' : '🔇';
+  }
+  sndBtn?.addEventListener('click', () => { if (!window.TFS) return; const on = !window.TFS.any; window.TFS.music = on; window.TFS.sfx = on; sndIcon(); });
+  sndIcon();
   $('#helpBtn').addEventListener('click', openHelp);
   $('#setBtn').addEventListener('click', openSettings);
 
@@ -508,8 +659,16 @@
       extra = new Set((ex || []).map((x) => (typeof x === 'string' ? x : x.tf_extra)));
       const first = !S;
       S = st;
-      if (S.ready) { cur = S.finished ? cur : firstOpen(); }
+      if (S.ready) {
+        cur = S.finished ? cur : firstOpen();
+        clocks.clear();
+        S.questions.forEach((q, i) => { if (timed(q) && q.started && q.status === 'open') setClock(i, q.ends_in ?? 0); });
+      }
       draw();
+      if (S.ready && !S.finished && S.questions.every((q) => q.status !== 'open')) {
+        const i = S.questions.findIndex(timed);
+        if (i >= 0) rpc('tf_timeup', { p_day: S.day, p_q: i + 1 }).then((r) => { if (r && r.result) { S.result = r.result; finish(); } }).catch(() => {});
+      }
       if (first) { idle(loadPortal); if (!store.get('tf.seenHelp', false) && S.ready && !S.finished) setTimeout(openHelp, 700); }
       else if (portal && S.ready) P.question(cur, heatOf(Q()));
     } catch (e) {
