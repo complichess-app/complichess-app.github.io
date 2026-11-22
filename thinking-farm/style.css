@@ -23,7 +23,7 @@ body.still #portal { background: radial-gradient(40% 30% at 50% 24%, #ff4fd8 0%,
 .top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; padding: max(10px, env(safe-area-inset-top)) 14px 10px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
 .brand svg { width: 34px; height: 34px; filter: drop-shadow(0 0 12px rgba(255, 79, 216, .6)); }
-.brand b { display: block; font: 22px/1.05 var(--display); letter-spacing: .2px; }
+.brand b { display: block; white-space: nowrap; font: 22px/1.05 var(--display); letter-spacing: .2px; }
 .brand small { display: block; color: var(--mute); font-size: 12.5px; }
 .sp { flex: 1; }
 .chip { min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); backdrop-filter: blur(10px); font-size: 14px; font-weight: 600; }
@@ -193,3 +193,10 @@ body.play .qnum { background: rgba(7, 4, 26, .4); }
   body.play .card { padding: 8px 10px; }
   body.play .msg { margin-bottom: 4px; font-size: 13.5px; } body.play .msg .info, body.play .msg .bad { padding: 5px 10px; }
 }
+
+/* past games */
+.days { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; max-height: 50vh; overflow-y: auto; }
+.dayb { display: grid; gap: 2px; padding: 10px; min-height: 64px; text-align: center; }
+.dayb b { font: 18px var(--display); }
+.dayb small { color: var(--mute); font-weight: 500; font-size: 12px; }
+@media (max-width: 420px) { .top .chip:not(.icon) { padding: 0 10px; font-size: 13px; } }

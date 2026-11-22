@@ -151,12 +151,12 @@
     if (!S.ready) return drawNotReady();
     if (S.finished) return drawDone();
     const q = Q();
-    $('#dayLabel').textContent = dayText(S.day);
+    $('#dayLabel').textContent = (S.practice ? 'אימון · ' : '') + dayText(S.day);
     const best = q.best || 0;
     if (isList(q)) return drawList(q);
     app.innerHTML = `
       <section class="stage" aria-label="המצב בשאלה">
-        <div class="qnum">שאלה <b>${cur + 1}</b> מתוך 10</div>
+        <div class="qnum">${S.practice ? 'אימון · ' : ''}שאלה <b>${cur + 1}</b> מתוך ${S.questions.length}</div>
         ${q.status === 'solved' ? `<div class="solvedword">${esc(q.word)}</div><div class="heatlab">מצאת!</div>`
           : q.status === 'gave' ? `<div class="solvedword" style="color:var(--mute);text-shadow:none">${esc(q.word)}</div><div class="heatlab">ויתרת על המילה הזאת</div>`
           : `<div class="heat" style="color:${color(best || null)}">${best ? best : '·'}</div><div class="heatlab">${best ? 'הכי קרוב עד עכשיו: ' + label(best) : 'עוד לא ניחשת'}</div>`}
@@ -190,7 +190,7 @@
     const left = q.left ?? 3, done = q.status !== 'open';
     app.innerHTML = `
       <section class="stage" aria-label="המצב בשאלה">
-        <div class="qnum">שאלה <b>${cur + 1}</b> מתוך 10</div>
+        <div class="qnum">${S.practice ? 'אימון · ' : ''}שאלה <b>${cur + 1}</b> מתוך ${S.questions.length}</div>
         <div class="heat" style="color:${color(Math.min(99, (q.best || 0) / 1.5) || null)}">${q.best ? `<bdi dir="ltr">+${q.best}</bdi>` : '·'}</div>
         <div class="heatlab">${done ? 'סיימת את השאלה הזאת' : q.best ? 'נקודות בשאלה הזאת' : 'תשובה נדירה שווה יותר'}</div>
       </section>
@@ -225,7 +225,7 @@
     const right = (q.guesses || []).filter((g) => g.s != null).length;
     app.innerHTML = `
       <section class="stage" aria-label="המצב בשאלה">
-        <div class="qnum">שאלה <b>${cur + 1}</b> מתוך 10</div>
+        <div class="qnum">${S.practice ? 'אימון · ' : ''}שאלה <b>${cur + 1}</b> מתוך ${S.questions.length}</div>
         ${running ? `<div class="heat clock ${left <= 10 ? 'low' : ''}" id="clock" role="timer" aria-label="שניות שנותרו">${left}</div>
           <div class="tbar" aria-hidden="true"><i id="tbar" style="--w:${(100 * left) / q.secs}%"></i></div>
           <div class="heatlab"><bdi dir="ltr">+${q.best || 0}</bdi> נקודות · ${right} ${right === 1 ? 'תשובה נכונה' : 'תשובות נכונות'}</div>`
@@ -276,6 +276,7 @@
     }, 200);
   }
   async function timeUp(i) {
+    if (S.practice) { closeList(i, S.questions[i].best, null, true); return; }
     try {
       const r = await rpc('tf_timeup', { p_day: S.day, p_q: i + 1 });
       if (!r.done) { setClock(i, r.ends_in || 1); return; }
@@ -290,6 +291,7 @@
     if (i === cur && !S.finished) { draw(); msg(`<div class="info">${byClock ? 'נגמר הזמן! ' : ''}צברת <bdi dir="ltr">+${q.best || 0}</bdi> נקודות בשאלה הזאת.</div>`); shout(`נגמר הזמן. ${q.best || 0} נקודות`); }
     else if (byClock) toast(`נגמר הזמן בשאלה ${i + 1}`);
     if (result) setTimeout(finish, 2400);
+    if (S.practice && S.questions.every((x) => x.status !== 'open')) setTimeout(practiceDone, 2200);
   }
   async function startList() {
     if (busy) return;
@@ -297,7 +299,7 @@
     q._starting = true; drawDock(q); $('#guess')?.focus({ preventScroll: true });   // inside the tap, so phones open the keyboard
     busy = true;
     try {
-      const r = await rpc('tf_open', { p_day: S.day, p_q: i + 1 });
+      const r = S.practice ? { ...q, ends_in: q.secs } : await rpc('tf_open', { p_day: S.day, p_q: i + 1 });
       Object.assign(q, { prompt: r.prompt, examples: r.examples || [], complete: r.complete, started: true });
       SND('start'); setClock(i, r.ends_in);
       if (i === cur) { draw(); $('#guess')?.focus({ preventScroll: true }); }
@@ -311,7 +313,13 @@
     q.guesses.push(g); lastWord = w; draw(); input.focus({ preventScroll: true });
     chain = chain.then(async () => {
       try {
-        const r = await rpc('tf_guess', { p_day: S.day, p_q: i + 1, p_word: w });
+        let r;
+        if (S.practice) {           // a past game: scored on the server, kept only on this screen
+          r = await rpc('tf_practice_guess', { p_day: S.day, p_q: q.q, p_word: w });
+          q._hits = q._hits || new Set();
+          if (r.hit && q._hits.has(r.hit)) r = { dup: true, same: true, fix: r.hit };
+          else { if (r.hit) q._hits.add(r.hit); r.n = q.guesses.length; r.total = (q.best || 0) + (r.s || 0); }
+        } else r = await rpc('tf_guess', { p_day: S.day, p_q: i + 1, p_word: w });
         if (r.dup) {
           q.guesses.splice(q.guesses.indexOf(g), 1); SND('dup');
           if (i === cur) { draw(); msg(`<div class="info">${r.same ? `"${esc(w)}" זו אותה תשובה כמו ${r.fix ? `"${esc(r.fix)}"` : 'קודם'}.` : `כבר כתבת "${esc(w)}".`}</div>`); }
@@ -346,7 +354,7 @@
     $('#giveBtn')?.addEventListener('click', giveUp);
     $('#nextBtn')?.addEventListener('click', () => go(nextIndex()));
   }
-  const nextIndex = () => { for (let k = 1; k <= 10; k++) { const i = (cur + k) % 10; if (S.questions[i].status === 'open') return i; } return cur; };
+  const nextIndex = () => { const N = S.questions.length; for (let k = 1; k <= N; k++) { const i = (cur + k) % N; if (S.questions[i].status === 'open') return i; } return cur; };
   const nextBtn = () => (S.questions.some((x) => x.status === 'open') ? '<button class="btn main" type="button" id="nextBtn">לשאלה הבאה ←</button>' : '');
 
   function guessList(q) {
@@ -399,22 +407,68 @@
   function drawDone() {
     document.getElementById('dock')?.remove(); document.body.classList.remove('play');
     const r = S.result || {}, grid = r.grid || [];
-    $('#dayLabel').textContent = dayText(S.day);
+    $('#dayLabel').textContent = (S.practice ? 'אימון · ' : '') + dayText(S.day);
     app.innerHTML = `
       <section class="stage"><div class="solvedword">${r.points || 0} נקודות</div><div class="heatlab">סיימת את המשחק של היום</div></section>
       <section class="card done">
         <h2>הפורטל של היום</h2>
         <div class="kv"><div><b>${S.questions.filter((q) => !isList(q) && q.status === 'solved').length}/${S.questions.filter((q) => !isList(q)).length}</b><small>מילים סודיות שמצאת</small></div><div><b>${r.guesses ?? 0}</b><small>ניחושים</small></div><div><b>${r.points ?? 0}</b><small>נקודות</small></div></div>
         <div class="grid10">${S.questions.map((q, i) => `<button type="button" class="cell ${q.status}" data-q="${i}"><b>${isList(q) ? `<bdi dir="ltr">+${q.best || 0}</bdi>` : esc(q.word || '?')}</b><small>${isList(q) ? esc(shortPrompt(q.prompt)) : q.status === 'solved' ? guessesText(grid[i]?.guesses) : 'ויתרת'}</small></button>`).join('')}</div>
-        <div class="row"><button class="btn main" type="button" id="shareBtn">שיתוף התוצאה</button><span id="stats" class="cat"></span></div>
+        <div class="row"><button class="btn main" type="button" id="shareBtn">שיתוף התוצאה</button><button class="btn" type="button" id="archBtn">משחקים קודמים</button><span id="stats" class="cat"></span></div>
       </section>
       <section class="card"><h2>המשחק הבא בעוד</h2><div class="count" id="count">--:--:--</div><p class="cat">בחצות שעון ישראל נפתח משחק חדש, עם עשר מילים חדשות ופורטל חדש.</p></section>
       <p class="foot-note">התוצאות נשמרות בחשבון. בקרוב הן יעזרו גם בחווה.</p>`;
     app.querySelectorAll('.cell').forEach((b) => b.addEventListener('click', () => review(+b.dataset.q)));
     $('#shareBtn').addEventListener('click', share);
+    $('#archBtn').addEventListener('click', openArchive);
     rpc('tf_stats').then((s) => { if (s && s.finished > 1 && $('#stats')) $('#stats').textContent = `היום סיימו ${s.finished} שחקנים.`; }).catch(() => {});
     tick();
   }
+  /* ---------------------------------------------------------------- past games, again and again (like Wazari) */
+  let TODAY = null;              // today's state while a past game is played
+  async function openArchive() {
+    let days = [];
+    try { days = await rpc('tf_archive'); } catch (e) { toast(ERR.net); return; }
+    const best = store.get('tf.practice', {});
+    dialog(`<h2>משחקים קודמים</h2>
+      <p>שחקו שוב בכל משחק מהימים הקודמים, כמה פעמים שרוצים. זה אימון: הנקודות לא נספרות. המשחק היומי נשאר פעם אחת ביום.</p>
+      ${days.length ? `<div class="days">${days.map((d) => `<button type="button" class="btn dayb" data-day="${d.day}"><b>${dayText(d.day).replace('המשחק של ', '')}</b>${d.title ? `<small>${esc(d.title)}</small>` : ''}<small>${best[d.day] ? `השיא שלך: ${best[d.day]}` : `${d.n} שאלות`}</small></button>`).join('')}</div>` : '<p>עוד אין משחקים קודמים. מחר כבר יהיה.</p>'}
+      <div class="foot"><button class="btn ghost" value="cancel">סגירה</button></div>`, (d) => {
+      d.querySelectorAll('.dayb').forEach((b) => b.addEventListener('click', () => { d.close(); startPractice(b.dataset.day); }));
+    });
+  }
+  async function startPractice(day) {
+    try {
+      const g = await rpc('tf_practice_open', { p_day: day });
+      if (!TODAY) TODAY = { S, cur };
+      clocks.clear(); chain = Promise.resolve();
+      S = { practice: true, ready: true, finished: false, day: g.day, title: g.title, portal: g.portal,
+        questions: (g.questions || []).map((x) => ({ ...x, status: 'open', started: false, best: 0, hints: 0, guesses: [] })) };
+      if (!S.questions.length) { toast('אין במשחק הזה שאלות נושא'); return backToToday(); }
+      cur = 0; lastWord = null; draw(); P.question(0, 0);
+      $('#dayLabel').textContent = 'אימון · ' + dayText(g.day).replace('המשחק של ', '');
+    } catch (e) { onErr(e); }
+  }
+  function practiceDone() {
+    if (!S.practice) return;
+    const total = S.questions.reduce((a, q) => a + (q.best || 0), 0), best = store.get('tf.practice', {});
+    const record = total > (best[S.day] || 0); if (record) { best[S.day] = total; store.set('tf.practice', best); }
+    clocks.clear(); document.getElementById('dock')?.remove(); document.body.classList.remove('play');
+    SND('finale', 3); P.finale(3);
+    app.innerHTML = `<section class="stage"><div class="solvedword">${total} נקודות</div><div class="heatlab">${record ? 'שיא חדש למשחק הזה!' : `השיא שלך במשחק הזה: ${best[S.day]}`}</div></section>
+      <section class="card done"><h2>סיימת את המשחק של ${dayText(S.day).replace('המשחק של ', '')}</h2>
+        <div class="grid10">${S.questions.map((q) => `<div class="cell solved"><b><bdi dir="ltr">+${q.best || 0}</bdi></b><small>${esc(shortPrompt(q.prompt))}</small></div>`).join('')}</div>
+        <div class="row"><button class="btn main" type="button" id="againBtn">שוב!</button><button class="btn" type="button" id="archBtn">משחק אחר</button><button class="btn ghost" type="button" id="todayBtn">למשחק היומי</button></div></section>`;
+    $('#againBtn').addEventListener('click', () => startPractice(S.day));
+    $('#archBtn').addEventListener('click', openArchive);
+    $('#todayBtn').addEventListener('click', backToToday);
+  }
+  function backToToday() {
+    clocks.clear(); chain = Promise.resolve();
+    if (TODAY) { S = TODAY.S; cur = TODAY.cur; TODAY = null; } else S = null;
+    boot();
+  }
+
   function review(i) {
     cur = i; S.finished = false; draw(); S.finished = true;
     $('#nextBtn')?.remove();
@@ -438,7 +492,7 @@
 
   /* ---------------------------------------------------------------- actions */
   function go(i) {
-    cur = Math.max(0, Math.min(9, i)); lastWord = null; draw(); SND('nav');
+    cur = Math.max(0, Math.min(S.questions.length - 1, i)); lastWord = null; draw(); SND('nav');
     const q = Q(); P.question(cur, heatOf(q));
     if (q.status === 'open') $('#guess')?.focus({ preventScroll: true });
   }
@@ -513,6 +567,7 @@
   }
   async function giveUp() {
     if (busy) return;
+    if (S.practice) { if (!confirmBox('לסיים את השאלה הזאת עכשיו?')) return; closeList(cur, Q().best, null, false); return; }
     if (isList(Q())) { if (!confirmBox(timed(Q()) ? 'לסיים עכשיו, לפני שהזמן נגמר? הנקודות שצברת נשמרות.' : 'לסיים את השאלה הזאת? הנקודות שצברת נשמרות.')) return; }
     else if (!confirmBox('לוותר על המילה הזאת? המילה תיחשף ולא תוכלו לחזור אליה.')) return;
     busy = true;
@@ -582,7 +637,7 @@
   }
 
   /* ---------------------------------------------------------------- a complaint about the question on screen */
-  const complainLink = () => `<p class="acct"><button type="button" class="linkish" id="cmpBtn">משהו לא בסדר בשאלה הזאת? כתבו לנו</button></p>`;
+  const complainLink = () => S && S.practice ? '' : `<p class="acct"><button type="button" class="linkish" id="cmpBtn">משהו לא בסדר בשאלה הזאת? כתבו לנו</button></p>`;
   const KINDS = [['answer', 'תשובה נכונה שלא התקבלה'], ['score', 'הניקוד לא הוגן'], ['unclear', 'השאלה לא ברורה'], ['other', 'אחר']];
   function openComplaint() {
     const n = cur + 1, last = (Q().guesses || []).slice(-1)[0];
@@ -651,10 +706,12 @@
   sndBtn?.addEventListener('click', () => { if (!window.TFS) return; const on = !window.TFS.any; window.TFS.music = on; window.TFS.sfx = on; sndIcon(); });
   sndIcon();
   $('#helpBtn').addEventListener('click', openHelp);
+  $('#archTop')?.addEventListener('click', () => (S && S.practice ? backToToday() : openArchive()));
   $('#setBtn').addEventListener('click', openSettings);
 
   /* ---------------------------------------------------------------- start */
   async function boot() {
+    if (S && S.practice) return;
     if (!sb) { app.innerHTML = '<section class="card"><h2>לא הצלחנו להתחבר</h2><p class="cat">נסו לרענן את הדף.</p></section>'; return; }
     try {
       await ensureUser();
