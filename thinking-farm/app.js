@@ -108,7 +108,7 @@
   const tier = (s) => (s == null ? 'לא ברשימה' : s >= 80 ? 'אגדי' : s >= 55 ? 'נדיר' : s >= 30 ? 'לא שגרתי' : 'נפוץ');
   const isList = (q) => q.kind === 'list';
   const timed = (q) => isList(q) && q.secs != null;          // topic questions against the clock (older servers: 3 answers)
-  const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / (timed(q) ? 300 : 150)) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
+  const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / (timed(q) ? 99 : 150)) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
   const label = (s) => (s == null ? 'רחוק' : s >= 100 ? 'מצאת!' : s >= 90 ? 'בוער' : s >= 75 ? 'חם מאוד' : s >= 55 ? 'חם' : s >= 35 ? 'פושר' : 'קריר');
 
   /* ---------------------------------------------------------------- portal (optional, loaded later) */
@@ -228,27 +228,28 @@
         <div class="qnum">${S.practice ? 'אימון · ' : ''}שאלה <b>${cur + 1}</b> מתוך ${S.questions.length}</div>
         ${running ? `<div class="heat clock ${left <= 10 ? 'low' : ''}" id="clock" role="timer" aria-label="שניות שנותרו">${left}</div>
           <div class="tbar" aria-hidden="true"><i id="tbar" style="--w:${(100 * left) / q.secs}%"></i></div>
-          <div class="heatlab"><bdi dir="ltr">+${q.best || 0}</bdi> נקודות · ${right} ${right === 1 ? 'תשובה נכונה' : 'תשובות נכונות'}</div>`
-        : done ? `<div class="heat" style="color:${color(Math.min(99, (q.best || 0) / 3) || null)}">${q.best ? `<bdi dir="ltr">+${q.best}</bdi>` : '0'}</div><div class="heatlab">${right} ${right === 1 ? 'תשובה נכונה' : 'תשובות נכונות'} · השאלה נסגרה</div>`
+          <div class="heatlab">תשובה אחת · נדירה שווה יותר</div>`
+        : done ? `<div class="heat" style="color:${color(Math.min(99, (q.best || 0) / 3) || null)}">${q.best ? `<bdi dir="ltr">+${q.best}</bdi>` : '0'}</div><div class="heatlab">${(q.guesses || []).length ? (right ? tier((q.guesses.find((g) => g.s != null) || {}).s) : 'לא ברשימה') : 'הזמן נגמר'}</div>`
         : `<div class="heat" style="color:var(--cy)">⏱ ${q.secs}</div><div class="heatlab">שניות לשאלה הזאת</div>`}
       </section>
       ${pathHTML()}
       <section class="card" aria-labelledby="qh">
         <div class="qhead"><span class="lvl ${q.level}">שאלת נושא · ${LEVEL[q.level] || ''}</span>
-          <span class="qact">${done ? nextBtn() : running ? `<button class="btn ghost" type="button" id="giveBtn">סיימתי</button>` : ''}</span></div>
+          <span class="qact">${done ? nextBtn() : ''}</span></div>
         ${!done && !running ? `<h2 id="qh">מוכנים?</h2>
-          <p class="cat">כשתתחילו, יופיע נושא ויהיו לכם <b>${q.secs} שניות</b> לכתוב כמה שיותר תשובות. כל תשובה נכונה מוסיפה נקודות, ותשובה נדירה שווה הרבה יותר. שגיאת כתיב קטנה או מילה שלא נגמרה נחשבות.</p>
-          <p class="cat">השעון ממשיך לרוץ גם אם עוברים לשאלה אחרת.</p>
+          <p class="cat">כשתתחילו יופיע נושא, ויהיו לכם <b>${q.secs} שניות</b> לתשובה <b>אחת</b>. תשובה נכונה ונדירה שווה הרבה יותר מתשובה שכולם חושבים עליה. שגיאת כתיב קטנה נסלחת.</p>
           <div class="row"><button class="btn main big" type="button" id="startBtn">▶ מתחילים</button></div>`
         : `<h2 class="prompt" id="qh">${esc(q.prompt || '')}</h2>
           ${q.examples && q.examples.length ? `<p class="cat">למשל: <b>${q.examples.map(esc).join(', ')}</b></p>` : ''}
           ${q.complete ? `<p class="cat">✓ רשימה מלאה: כל תשובה נכונה מתקבלת.</p>` : ''}
-          ${(q.guesses || []).length ? listRows(q, running) : `<p class="empty">${running ? 'כתבו תשובה ולחצו Enter. מהר!' : 'לא נכתבו תשובות.'}</p>`}`}
+          ${(q.guesses || []).length ? listRows(q, running) : `<p class="empty">${running ? 'תשובה אחת בלבד. כתבו ולחצו שלח!' : 'לא נכתבה תשובה בזמן.'}</p>`}
+          ${done && !S.practice && (q.guesses || []).length && q.guesses[0].s == null ? `<p class="acct"><button type="button" class="linkish" id="repLate">חושבים ש"${esc(q.guesses[0].w)}" נכונה? דווחו לנו</button></p>` : ''}`}
       </section>
       ${complainLink()}
       <p class="foot-note">המשחק נכתב מחדש בכל ערב · משחק חדש בחצות שעון ישראל</p>`;
     wireCard(q);
     $('#startBtn')?.addEventListener('click', startList);
+    $('#repLate')?.addEventListener('click', () => { rejected = { raw: q.guesses[0].w, w: q.guesses[0].w, q: cur + 1 }; openReport(); });
   }
 
   /* ---------------------------------------------------------------- the clock of topic questions */
@@ -288,7 +289,7 @@
     clocks.delete(i);
     q.status = 'solved'; if (total != null) q.best = total; if (result) S.result = result;
     if (byClock) SND('timeup');
-    if (i === cur && !S.finished) { draw(); msg(`<div class="info">${byClock ? 'נגמר הזמן! ' : ''}צברת <bdi dir="ltr">+${q.best || 0}</bdi> נקודות בשאלה הזאת.</div>`); shout(`נגמר הזמן. ${q.best || 0} נקודות`); }
+    if (i === cur && !S.finished) { draw(); if (byClock) { msg(`<div class="info">נגמר הזמן!</div>`); shout('נגמר הזמן'); } }
     else if (byClock) toast(`נגמר הזמן בשאלה ${i + 1}`);
     if (result) setTimeout(finish, 2400);
     if (S.practice && S.questions.every((x) => x.status !== 'open')) setTimeout(practiceDone, 2200);
@@ -307,7 +308,7 @@
   }
   function listAnswer(q, raw, w, input) {
     const i = cur;
-    if (q.guesses.some((g) => g.w === w)) { msg(`<div class="info">כבר כתבת "${esc(w)}".</div>`); SND('dup'); input.value = ''; return; }
+    if (q.guesses.length) return;                 // one answer per question
     input.value = '';
     const g = { w, s: null, pending: true, n: q.guesses.length + 1 };
     q.guesses.push(g); lastWord = w; draw(); input.focus({ preventScroll: true });
@@ -318,7 +319,7 @@
           r = await rpc('tf_practice_guess', { p_day: S.day, p_q: q.q, p_word: w });
           q._hits = q._hits || new Set();
           if (r.hit && q._hits.has(r.hit)) r = { dup: true, same: true, fix: r.hit };
-          else { if (r.hit) q._hits.add(r.hit); r.n = q.guesses.length; r.total = (q.best || 0) + (r.s || 0); }
+          else { if (r.hit) q._hits.add(r.hit); r.n = q.guesses.length; r.total = r.s || 0; }
         } else r = await rpc('tf_guess', { p_day: S.day, p_q: i + 1, p_word: w });
         if (r.dup) {
           q.guesses.splice(q.guesses.indexOf(g), 1); SND('dup');
@@ -326,7 +327,7 @@
           return;
         }
         Object.assign(g, { w: r.w, s: r.s, r: r.r, n: r.n, f: r.fix || null, pending: false });
-        q.best = r.total;
+        q.best = r.s || 0;
         if (r.ends_in != null) { const end = Date.now() + r.ends_in * 1000, mine = clocks.get(i); if (mine != null && Math.abs(mine - end) > 1500) clocks.set(i, end); }
         if (r.s != null) { SND(r.fix ? 'fix' : 'good', r.s); P.heat(heatOf(q)); if (r.s >= 55) { P.solve(); flash(); } } else SND('bad');
         if (i === cur && q.status === 'open') {
@@ -338,6 +339,9 @@
           } else msg(`<div class="info"><bdi dir="ltr">+${r.s}</bdi> · ${tier(r.s)}${r.fix ? ` · התכוונת ל"${esc(r.fix)}"? נחשב` : ''}</div>`);
         }
         say(r.s == null ? `${w}: לא ברשימה` : `${w}: פלוס ${r.s}, ${tier(r.s)}`);
+        const msgNow = $('#msg') ? $('#msg').innerHTML : '';
+        closeList(i, q.best, r.result || null, false);
+        if (i === cur && msgNow) msg(msgNow);
       } catch (e) {
         const k = q.guesses.indexOf(g); if (k >= 0 && g.pending) q.guesses.splice(k, 1);
         if (e.code === 'time_up') closeList(i, e.data && e.data.total, e.data && e.data.result, true);
@@ -377,7 +381,7 @@
   function drawDock(q) {
     let dock = $('#dock');
     if (!dock) { dock = document.createElement('div'); dock.id = 'dock'; dock.className = 'dock'; document.body.appendChild(dock); }
-    if (!S.ready || S.finished || q.status !== 'open' || (timed(q) && !q.started && !q._starting)) { dock.innerHTML = ''; dock.hidden = true; return; }
+    if (!S.ready || S.finished || q.status !== 'open' || (timed(q) && ((!q.started && !q._starting) || q.guesses.length))) { dock.innerHTML = ''; dock.hidden = true; return; }
     dock.hidden = false;
     if (!$('#guessForm')) {
       dock.innerHTML = `<div class="msg" id="msg" role="status"></div>
@@ -594,7 +598,7 @@
   async function share() {
     const r = S.result || {};
     const [y, m, d] = S.day.split('-');
-    const line = S.questions.map((q) => (isList(q) ? ((q.best || 0) >= (timed(q) ? 200 : 120) ? '🟪' : (q.best || 0) > 0 ? '🟦' : '⬛') : q.status === 'solved' ? '🟨' : '⬛')).join('');
+    const line = S.questions.map((q) => (isList(q) ? ((q.best || 0) >= (timed(q) ? 55 : 120) ? '🟪' : (q.best || 0) > 0 ? '🟦' : '⬛') : q.status === 'solved' ? '🟨' : '⬛')).join('');
     const text = `חוות חשיבה · ${+d}.${+m}\n🌀 ${r.points} נקודות\n${line}\nbarusik.com/thinking-farm`;
     try { if (navigator.share) { await navigator.share({ text }); return; } } catch { return; }
     try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); } catch { toast(text); }
@@ -663,7 +667,7 @@
   function openHelp() {
     dialog(`<div class="help"><h2>איך משחקים</h2>
       <ol><li>בכל יום יש <b>עשר שאלות</b>, אותן שאלות לכל השחקנים.</li>
-      <li><b>שאלת נושא</b>: לוחצים "מתחילים", מופיע נושא, ויש <b>דקה</b> לכתוב כמה שיותר תשובות. כל תשובה נכונה מוסיפה נקודות, וככל שהתשובה <b>נדירה</b> יותר, היא שווה יותר. שגיאת כתיב קטנה או מילה שלא נגמרה נחשבות.</li>
+      <li><b>שאלת נושא</b>: לוחצים "מתחילים", מופיע נושא, ויש <b>כמה שניות</b> לתשובה <b>אחת</b>. ככל שהתשובה <b>נדירה</b> יותר, היא שווה יותר. שגיאת כתיב קטנה או מילה שלא נגמרה נחשבות.</li>
       <li><b>מילה סודית</b>: כתבו מילה אחת בעברית ונגיד כמה היא <b>קרובה במשמעות</b> למילה הסודית, לא באותיות. ככל שמתקרבים, הפורטל נפתח. יש עד 3 רמזים, ואפשר לוותר.</li>
       <li>אפשר לעבור בין השאלות בכל רגע.</li>
       <li>משחקים פעם אחת ביום. בחצות שעון ישראל מחכה משחק חדש.</li></ol></div>
