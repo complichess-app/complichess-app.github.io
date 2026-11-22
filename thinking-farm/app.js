@@ -147,6 +147,7 @@
   /* ---------------------------------------------------------------- drawing */
   function draw() {
     if (!S) return;
+    document.body.classList.toggle('play', !!(S.ready && !S.finished));
     if (!S.ready) return drawNotReady();
     if (S.finished) return drawDone();
     const q = Q();
@@ -378,6 +379,8 @@
           <button class="btn main" type="submit">${isList(q) ? 'שלח' : 'נחש'}</button>
         </form>`;
       $('#guessForm').addEventListener('submit', (e) => { e.preventDefault(); guess(); });
+      // phones scroll the page to show the input; the play screen never scrolls
+      $('#guess').addEventListener('focus', () => { setTimeout(() => window.scrollTo(0, 0), 60); setTimeout(() => window.scrollTo(0, 0), 350); });
     } else {
       $('#guess').placeholder = isList(q) ? 'כתבו תשובה…' : 'נחשו מילה…';
       $('#guessForm .btn').textContent = isList(q) ? 'שלח' : 'נחש';
@@ -394,7 +397,7 @@
 
   let countdownTimer = 0;
   function drawDone() {
-    document.getElementById('dock')?.remove();
+    document.getElementById('dock')?.remove(); document.body.classList.remove('play');
     const r = S.result || {}, grid = r.grid || [];
     $('#dayLabel').textContent = dayText(S.day);
     app.innerHTML = `

@@ -164,3 +164,32 @@ body.less *, body.less *::before, body.less *::after { animation: none !importan
 .btn.big { height: 56px; padding: 0 30px; font-size: 19px; border-radius: 18px; }
 @media (prefers-reduced-motion: reduce) { .clock.low { animation: none; } }
 body.less .clock.low { animation: none; }
+
+/* playing a question: one screen, no page scroll, the portal stays in view; the keyboard shrinks the screen, not the page */
+body.play { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+body.play .top { position: relative; flex: none; padding-bottom: 4px; }
+body.play main { flex: 1; min-height: 0; width: 100%; padding: 0 14px 6px; display: flex; flex-direction: column; }
+body.play .stage { min-height: 0; flex: 1 1 auto; justify-content: center; padding: 0; }
+body.play .path { flex: none; margin: 4px 0 8px; }
+body.play .stop { height: 34px; background: rgba(16, 10, 44, .35); }
+body.play .card { flex: 0 1 auto; min-height: 96px; max-height: 58%; overflow-y: auto; overscroll-behavior: contain; padding: 12px;
+  background: rgba(10, 6, 30, .32); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-color: rgba(255, 255, 255, .08); box-shadow: none; }
+body.play .prompt { font-size: 21px; margin: 8px 0 2px; text-shadow: 0 2px 12px #000; }
+body.play .g { background: rgba(255, 255, 255, .06); padding: 7px 11px; }
+body.play .acct, body.play .foot-note { display: none; }
+body.play .dock { position: relative; flex: none; padding-top: 6px; background: linear-gradient(180deg, rgba(7, 4, 26, 0), rgba(7, 4, 26, .6)); }
+body.play .veil { background: linear-gradient(180deg, rgba(7, 4, 26, 0) 0%, rgba(7, 4, 26, 0) 55%, rgba(7, 4, 26, .5) 85%, rgba(7, 4, 26, .7) 100%); }
+body.play .qnum { background: rgba(7, 4, 26, .4); }
+@media (max-height: 620px) {
+  body.play .brand small, body.play .qnum, body.play .tbar { display: none; }
+  body.play .top { padding-top: 6px; }
+  body.play .chip { min-height: 32px; } body.play .chip.icon { width: 32px; }
+  body.play .clock { font-size: 40px; min-height: 40px; }
+  body.play .heat { margin-top: 0; }
+  body.play .path { gap: 4px; margin: 2px 0 6px; } body.play .stop { height: 28px; font-size: 12.5px; }
+  body.play .card { max-height: 64%; }
+  body.play .prompt { font-size: 17px; margin-top: 0; }
+  body.play .card .qhead, body.play .card .cat, body.play #helpBtn { display: none; }
+  body.play .card { padding: 8px 10px; }
+  body.play .msg { margin-bottom: 4px; font-size: 13.5px; } body.play .msg .info, body.play .msg .bad { padding: 5px 10px; }
+}
