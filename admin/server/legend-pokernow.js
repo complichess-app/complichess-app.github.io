@@ -282,19 +282,19 @@
   }
   // this hand, from the log: what the one opponent did on each street after the flop, turned into limits on how his hand
   // ranks on that street's board (tested against a bot that plays like Yahav: about +200 big blinds per 100 hands)
-  const READ = { S: 0.55, B: 0.75, R: 0.85, C: 0.3, K: 0.8 };
+  const READ = { S: 0.55, B: 0.72, M: 0.46, R: 0.85, C: 0.3, K: 0.8 };
   // the reading tunes itself on each opponent's showdowns: for every street of a hand he showed, where his hand ranked
-  // on that board after a small bet, a big bet, a raise, a call or a check. Thresholds = the low end (the high end for a
-  // check) of what he really held, blended with the defaults until there are enough hands
+  // on that board after a small bet, a big bet, a min-raise (2x), a big raise, a call or a check. Thresholds = the low end
+  // (the high end for a check) of what he really held, blended with the defaults until there are enough hands
   CFG.read ||= {};
-  CFG.pat ||= {};     // multi-street similar-hand memory: CFG.pat[who]['k>k>b200'] = [rel, ...]
-  CFG.time ||= {};    // timing-tell psychology: CFG.time[who]['k'|'b200'|'bPot'|'c'|'r'] = [[dtMs, rel], ...]
+  CFG.pat ||= {};     // multi-street similar-hand memory: CFG.pat[who]['k>r2>bPot'] = [rel, ...]
+  CFG.time ||= {};    // timing-tell psychology: CFG.time[who]['k'|'b200'|'bPot'|'c'|'r2'|'r'] = [[dtMs, rel], ...]
   CFG.calDone ||= [];
-  if (!Object.keys(CFG.pat).length && CFG.calDone.length) CFG.calDone = [];
+  if ((!Object.keys(CFG.pat).length || !Object.values(CFG.read).some((r) => r && r.M)) && CFG.calDone.length) CFG.calDone = [];
   const CAL = { done: new Set(CFG.calDone) };   // hands already counted, kept across reloads
   const suitOf = { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
   const logCards = (s2) => s2.split(',').map((c) => c.trim().replace(/\.$/, '')).filter(Boolean).map((c) => P.parse(c.slice(0, -1).replace('10', 'T') + suitOf[c.slice(-1)]));
-  const actTag = (a) => (a.type === 'raise' ? 'r' : a.type === 'bet' ? (a.frac <= 0.15 ? 'b200' : a.frac <= 0.35 ? 'bS' : 'bPot') : a.type === 'call' ? 'c' : a.type === 'check' ? 'k' : null);
+  const actTag = (a) => (a.type === 'raise' ? (a.minRaise ? 'r2' : 'r') : a.type === 'bet' ? (a.frac <= 0.15 ? 'b200' : a.frac <= 0.35 ? 'bS' : 'bPot') : a.type === 'call' ? 'c' : a.type === 'check' ? 'k' : null);
   function rankOn(board, dead, hc) {
     const out = new Set([...board, ...dead]), deck = []; for (let c = 0; c < 52; c++) if (!out.has(c)) deck.push(c);
     const xs = [];
@@ -313,14 +313,15 @@
         if (!CAL.done.has(h.key) && h.board.length === 5 && Object.keys(h.shows).length) {
           CAL.done.add(h.key); CFG.calDone.push(h.key); if (CFG.calDone.length > 400) CFG.calDone.splice(0, CFG.calDone.length - 400);
           for (const [who, cards] of Object.entries(h.shows)) {
-            const R = (CFG.read[who] ||= { S: [], B: [], R: [], C: [], K: [] });
+            const R = (CFG.read[who] ||= { S: [], B: [], M: [], R: [], C: [], K: [] });
+            R.M ||= [];
             const PT = (CFG.pat[who] ||= {});
             const TM = (CFG.time[who] ||= {});
             const seq = [];
             for (const k of [3, 4, 5]) {
               const a = h.acts.filter((x) => x.who === who && x.n === k); if (!a.length) continue;
-              const bet = a.find((x) => x.type === 'bet');
-              const type = a.some((x) => x.type === 'raise') ? 'R' : bet ? (bet.frac <= 0.35 ? 'S' : 'B') : a.some((x) => x.type === 'call') ? 'C' : a.some((x) => x.type === 'check') ? 'K' : null;
+              const bet = a.find((x) => x.type === 'bet'), raises = a.filter((x) => x.type === 'raise');
+              const type = raises.length ? (raises.every((x) => x.minRaise) ? 'M' : 'R') : bet ? (bet.frac <= 0.35 ? 'S' : 'B') : a.some((x) => x.type === 'call') ? 'C' : a.some((x) => x.type === 'check') ? 'K' : null;
               if (!type) continue;
               const b = h.board.slice(0, k), rel = +rankOn(b, cards.concat(h.mine || []), cards.length)(P.value(cards, b)).toFixed(3);
               R[type].push(rel); if (R[type].length > 40) R[type].shift();
@@ -355,7 +356,8 @@
       else if ((r = m.match(/" calls (\d[\d,]*)/))) { type = 'call'; amt = num(r[1]); }
       else if (/" checks/.test(m)) type = 'check';
       else continue;
-      if (h.n >= 3) h.acts.push({ who, n: h.n, type, frac: type === 'bet' ? amt / Math.max(1, h.before + sum(h.lvl)) : 0, dt });
+      const prevBet = Math.max(0, ...Object.values(h.lvl));
+      if (h.n >= 3) h.acts.push({ who, n: h.n, type, frac: type === 'bet' ? amt / Math.max(1, h.before + sum(h.lvl)) : 0, minRaise: type === 'raise' && prevBet > 0 && amt <= prevBet * 2.25, dt });
       if (amt) h.lvl[who] = Math.max(h.lvl[who] || 0, amt);
     }
   }
@@ -363,10 +365,10 @@
     const R = CFG.read[opp], out = { ...READ };
     if (!R) return out;
     const q = (xs, p) => { const a = xs.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(p * a.length)))]; };
-    for (const k of ['S', 'B', 'R', 'C']) if (R[k] && R[k].length) { const n = R[k].length; out[k] = Math.max(0.05, Math.min(0.97, (n * q(R[k], 0.15) + 4 * READ[k]) / (n + 4))); }
+    for (const k of ['S', 'B', 'M', 'R', 'C']) if (R[k] && R[k].length) { const n = R[k].length; out[k] = Math.max(0.05, Math.min(0.97, (n * q(R[k], 0.15) + 4 * READ[k]) / (n + 4))); }
     if (R.K && R.K.length) { const n = R.K.length; out.K = Math.max(0.3, Math.min(1, (n * q(R.K, 0.85) + 4 * READ.K) / (n + 4))); }
-    // showdowns only show the hands that were called down, never the bluffs that took the pot: don't let them make every bet look strong
-    out.S = Math.min(out.S, READ.S); out.B = Math.min(out.B, 0.8); out.C = Math.min(out.C, 0.45);
+    // showdowns only show the hands that were called down, never the bluffs that took the pot: don't let them make every bet/min-raise look strong
+    out.S = Math.min(out.S, READ.S); out.B = Math.min(out.B, 0.78); out.M = Math.min(out.M, 0.6); out.C = Math.min(out.C, 0.45);
     return out;
   }
   function handLine(opp, hole) {
@@ -391,15 +393,15 @@
       else if ((r = m.match(/" calls (\d[\d,]*)/))) { type = 'call'; amt = num(r[1]); }
       else if (/" checks/.test(m)) type = 'check';
       else continue;
-      const potNow = before + sum(lvl), toCall = type === 'call' ? Math.max(0, amt - (lvl[who] || 0)) : 0;
-      if (n >= 3 && who === opp) acts.push({ n, type, frac: type === 'bet' ? amt / Math.max(1, potNow) : type === 'call' ? toCall / Math.max(1, potNow - toCall) : 0, dt });
+      const potNow = before + sum(lvl), prevBet = Math.max(0, ...Object.values(lvl)), toCall = type === 'call' ? Math.max(0, amt - (lvl[who] || 0)) : 0;
+      if (n >= 3 && who === opp) acts.push({ n, type, frac: type === 'bet' ? amt / Math.max(1, potNow) : type === 'call' ? toCall / Math.max(1, potNow - toCall) : 0, minRaise: type === 'raise' && prevBet > 0 && amt <= prevBet * 2.25, dt });
       if (amt) lvl[who] = Math.max(lvl[who] || 0, amt);
     }
     const line = [];
     for (const k of [3, 4, 5]) {
       const a = acts.filter((x) => x.n === k); if (!a.length) continue;
-      const c = { n: k }, bet = a.find((x) => x.type === 'bet'), call = a.find((x) => x.type === 'call');
-      if (a.some((x) => x.type === 'raise')) c.min = RD.R;
+      const c = { n: k }, bet = a.find((x) => x.type === 'bet'), call = a.find((x) => x.type === 'call'), raises = a.filter((x) => x.type === 'raise');
+      if (raises.length) c.min = raises.every((x) => x.minRaise) ? RD.M : RD.R;
       else if (bet) c.min = bet.frac <= 0.15 ? RD.C : bet.frac <= 0.35 ? RD.S : RD.B;   // a 1-big-blind poke into a big pot proves nothing
       else if (call) c.min = call.frac >= 0.7 ? Math.max(RD.C, 0.52) : RD.C;             // calling a pot-sized bet means a real hand, not any bottom pair
       if (a.some((x) => x.type === 'check') && !a.some((x) => x.type === 'bet' || x.type === 'raise')) c.max = RD.K;

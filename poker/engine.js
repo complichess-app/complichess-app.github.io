@@ -742,8 +742,8 @@
     return sum / n;
   }
   // Smart Mode (heads-up postflop): deeper Monte Carlo that tracks opponent hand rank on every sample so we can compute
-  // the exact Expected Value of check / half-pot / pot / call / raise against the opponent's line & fold tendencies.
-  function smartEval(t, seat, ms, wide, line, foldRate, reraised) {
+  // the exact Expected Value of check / half-pot / pot / call / raise against the opponent's conditional range & fold tendencies.
+  function smartEval(t, seat, ms, wide, line, foldRate, bigRaised) {
     const p = t.seats[seat], hole = p.cards, board = t.board, hc = hole.length;
     const opps = t.inHand().filter((q) => q !== p);
     if (opps.length !== 1 || board.length < 3 || hiLo(t.game)) return null;
@@ -774,14 +774,9 @@
       }
       if (cand.length >= 15) fits = cand;
     }
-    // Opponent calling cutoffs on current street's board rank, calibrated from observed foldRate
-    const bf = Math.max(0.15, Math.min(0.65, foldRate ?? 0.38));
-    const cut50 = Math.max(0.15, Math.min(0.55, bf * 0.85));
-    const cut100 = Math.max(0.25, Math.min(0.68, bf * 1.25));
-    const cutR = reraised ? 0.86 : Math.max(0.45, Math.min(0.82, bf * 1.55));
     const minIt = hc > 2 ? 260 : 500, maxIt = hc > 2 ? 1400 : 3500, t0 = Date.now();
+    const samples = [];
     let n = 0, sum = 0, pos = 0;
-    let c50 = 0, w50 = 0, c100 = 0, w100 = 0, cR = 0, wR = 0;
     const take = () => { const j = pos + Math.floor(rand() * (d.length - pos)); const x = d[j]; d[j] = d[pos]; d[pos] = x; return d[pos++]; };
     while (n < maxIt && (n < minIt || Date.now() - t0 < ms)) {
       pos = 0;
@@ -802,15 +797,27 @@
       const a = value(hole, full), b = value(h, full);
       const win = a > b ? 1 : a === b ? 0.5 : 0;
       sum += win; n++;
-      if (hr >= cut50) { c50++; w50 += win; }
-      if (hr >= cut100) { c100++; w100 += win; }
-      if (hr >= cutR) { cR++; wR += win; }
+      samples.push([hr, win]);
     }
+    // Conditional fold equity: sort opponent's ACTUAL current range by board rank so checking/calling ranges never inflate fold equity
+    samples.sort((u, v) => u[0] - v[0]);
+    const avgTop = (dropFrac) => {
+      const start = Math.min(n - 1, Math.max(0, Math.floor(n * dropFrac)));
+      let s = 0, c = 0;
+      for (let i = start; i < n; i++) { s += samples[i][1]; c++; }
+      return c ? s / c : 1;
+    };
+    const bf = Math.max(0.15, Math.min(0.55, foldRate ?? 0.38));
+    // Conditional fold equity: capped below pot-bluff break-even on flop/turn so pure air never spams pot bets
+    const f50 = late ? Math.min(0.42, bf * 0.85) : Math.min(0.36, bf * 0.78);
+    const f100 = late ? Math.min(0.52, bf * 1.12) : Math.min(0.44, bf * 0.92);
+    const fR = bigRaised ? 0.14 : late ? Math.min(0.50, bf * 1.15) : Math.min(0.42, bf * 0.95);
     return {
       eq: sum / n,
-      f50: 1 - c50 / n, eq50: c50 ? w50 / c50 : 1,
-      f100: 1 - c100 / n, eq100: c100 ? w100 / c100 : 1,
-      fR: 1 - cR / n, eqR: cR ? wR / cR : 1,
+      f50, eq50: avgTop(f50),
+      f100, eq100: avgTop(f100),
+      fR, eqR: avgTop(fR),
+      eqTop: avgTop(0.75), // equity vs opponent's raising range (top 25% of his current range)
     };
   }
   // size: its owner's taste in bets, 1/3 (a third of the usual) to 3 (three times); all-in stays all-in.
@@ -837,46 +844,62 @@
     // wideVsBet is used when they bet or raised into us (a passive player who suddenly bets has it)
     // Smart Mode: ignore size/bluff sliders and choose the mathematically highest-EV action
     if (opts.smart && street >= 3 && opps === 1 && !hiLo(t.game)) {
-      const river = street === 5, foldRate = opts.fold ?? 0.38;
+      const river = street === 5, foldRate = opts.fold ?? 0.35;
       const betFrac = o.toCall / Math.max(1, pot - o.toCall);
       const small = o.toCall > 0 && betFrac <= 0.35, tiny = o.toCall > 0 && betFrac <= 0.2;
       const reraised = (p.bet || 0) > 0 && o.toCall > 0;
-      const ev = smartEval(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1), opts.line, foldRate, reraised);
+      const minRaised = reraised && betFrac <= 0.45;
+      const bigRaised = reraised && !minRaised;
+      const ev = smartEval(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1), opts.line, foldRate, bigRaised);
       if (ev) {
         const sRaise = (x) => (!o.raise ? (o.check ? { type: 'check' } : { type: 'call' }) : { type: 'raise', to: Math.max(o.minTo, Math.min(o.maxTo, x)) });
         if (o.check) {
-          const evCheck = ev.eq * pot * (river ? 1.0 : 0.97);
+          // Checking on flop/turn gives free cards in Omaha (losing ~10% equity realization), while on the river showdown is immediate
+          const evCheck = ev.eq * pot * (river ? 1.0 : 0.90);
           let bestAct = { type: 'check' }, bestEV = evCheck;
           if (o.raise) {
-            const to50 = potRaise(0.55), b50 = Math.max(1, to50 - t.currentBet);
-            const ev50 = ev.f50 * pot + (1 - ev.f50) * (ev.eq50 * (pot + 2 * b50) - b50);
-            const to100 = potRaise(0.95), b100 = Math.max(1, to100 - t.currentBet);
-            const ev100 = ev.f100 * pot + (1 - ev.f100) * (ev.eq100 * (pot + 2 * b100) - b100);
-            // require a small edge (+2% pot) to bet over checking to avoid spewing on noise
-            if (ev50 > bestEV + pot * 0.02) { bestEV = ev50; bestAct = sRaise(to50); }
-            if (ev100 > bestEV + pot * 0.01) { bestEV = ev100; bestAct = sRaise(to100); }
+            // Account for opponent check-raise risk on flop/turn especially when betting weak hands
+            const xr = river ? 0.04 : (ev.eq < 0.45 ? 0.12 : 0.05);
+            const betEV = (b, f, eqC) => {
+              const rP = Math.min(xr, (1 - f) * 0.28), cP = Math.max(0, 1 - f - rP);
+              const vsRaise = ev.eqTop >= 0.38 ? (ev.eqTop * (pot + 4 * b) - 2 * b) : -b;
+              return f * pot + cP * (eqC * (pot + 2 * b) - b) + rP * vsRaise;
+            };
+            const to50 = potRaise(0.50), b50 = Math.max(1, to50 - t.currentBet);
+            const ev50 = betEV(b50, ev.f50, ev.eq50);
+            // On flop/turn keep big bets at 72% pot (95% only with monsters or on the river) to avoid bloating pots into 2x check-raises
+            const bigFrac = river || ev.eq >= 0.84 ? 0.95 : 0.72;
+            const to100 = potRaise(bigFrac), b100 = Math.max(1, to100 - t.currentBet);
+            const ev100 = betEV(b100, river ? ev.f100 : (ev.f50 + ev.f100) / 2, river ? ev.eq100 : (ev.eq50 + ev.eq100) / 2);
+            const margin = river ? pot * 0.015 : pot * 0.025;
+            if (ev50 > bestEV + margin) { bestEV = ev50; bestAct = sRaise(to50); }
+            if (ev100 > bestEV + pot * 0.02) { bestEV = ev100; bestAct = sRaise(to100); }
           }
           return bestAct;
         }
         // facing a bet or raise
         let eqC = ev.eq;
-        if (small && opts.line) eqC = Math.max(ev.eq, 0.5 * ev.eq + 0.5 * potShare(t, seat, Math.max(50, ms * 0.25), opts.wide ?? 1, null));
-        const callEdge = small ? (tiny ? 0.14 : 0.06) : river ? (reraised ? -0.07 : -0.01) : 0.03;
+        if ((small || minRaised) && opts.line) eqC = Math.max(ev.eq, 0.55 * ev.eq + 0.45 * potShare(t, seat, Math.max(50, ms * 0.25), opts.wide ?? 1, null));
+        const callEdge = small && !reraised ? (tiny ? 0.14 : 0.06)
+          : minRaised ? (river ? 0.02 : 0.07)
+          : river ? (bigRaised ? -0.06 : -0.01) : 0.02;
         const evFold = 0;
         const evCall = (eqC + callEdge) * after - o.toCall;
         let bestAct = evCall >= evFold ? { type: 'call' } : { type: 'fold' };
         let bestEV = Math.max(evFold, evCall);
         if (o.raise) {
-          const rTo = committed ? o.maxTo : to(Math.max(t.currentBet * 2.8, t.currentBet + after * 0.95));
+          const rFrac = river || ev.eqR >= 0.85 || tiny ? 0.95 : 0.75;
+          const rTo = committed ? o.maxTo : to(Math.max(t.currentBet * 2.8, t.currentBet + after * rFrac));
           const rAdd = Math.max(1, rTo - p.bet);
           const extra = Math.max(0, rAdd - o.toCall);
           // on the river with the nuts / near-nuts, never just call when we can raise for free value
-          if (river && (ev.eqR >= 0.88 || (!reraised && ev.eq >= 0.95))) return sRaise(rTo);
-          // when already re-raised or facing a river pot-bet, only re-raise with genuine edge vs his calling range
-          const safeRaise = (!reraised || ev.eqR > 0.72) && (!(river && betFrac >= 0.75) || ev.eqR > 0.68);
+          if (river && (ev.eqR >= 0.86 || (!bigRaised && ev.eq >= 0.94))) return sRaise(rTo);
+          // only 3-bet raises with genuine monsters (call medium hands to trap loose 2x-raises); only raise real bets with strong hands
+          const minEqR = bigRaised ? 0.88 : minRaised ? 0.82 : small ? 0.62 : (river ? 0.78 : 0.72);
+          const safeRaise = ev.eqR >= minEqR || (river && tiny && !reraised && ev.eq < 0.22 && foldRate > 0.30);
           if (safeRaise) {
             const evRaise = ev.fR * pot + (1 - ev.fR) * (ev.eqR * (after + 2 * extra) - rAdd);
-            const margin = river && ev.eqR >= 0.72 ? 0 : pot * 0.025;
+            const margin = river && ev.eqR >= 0.78 ? 0 : pot * 0.035;
             if (evRaise > bestEV + margin) { bestEV = evRaise; bestAct = sRaise(rTo); }
           }
         }
@@ -935,18 +958,20 @@
     const facing = (edge) => (eqC + edge >= price ? { type: 'call' } : { type: 'fold' });
     // re-raises: respect raises and river pot-bets (don't stack off with an underfull); punish tiny bets with pot-sized raises
     const reraised = (p.bet || 0) > 0;   // it already bet or raised on this street and was raised
-    const raiseAt = opps === 1 ? (reraised ? 0.9 : (river && bigBet) ? 0.88 : small ? 0.64 : 0.74) : Math.max(0.6, fair * 2.4);
+    const minRaised = reraised && betFrac <= 0.45, bigRaised = reraised && !minRaised;
+    const raiseAt = opps === 1 ? (bigRaised ? 0.9 : minRaised ? 0.78 : (river && bigBet) ? 0.88 : small ? 0.64 : 0.74) : Math.max(0.6, fair * 2.4);
     const raiseTo = (k) => to(Math.max(t.currentBet * 2.8, t.currentBet + after * k));
     if (eqC > raiseAt) return r < Math.min(0.95, (small ? 0.9 : 0.75) * af) || committed ? raise(committed ? o.maxTo : raiseTo(eqC > 0.88 || tiny ? 0.95 : 0.7)) : { type: 'call' };
     // a semi-bluff raise with a draw, more often against a small bet
     if (!river && opps === 1 && !reraised && eqC > 0.38 && eqC < 0.6 && r < (small ? 0.18 : 0.12) * bf && !committed) return raise(raiseTo(0.75));
     // punish river min-bets with a pot-sized bluff raise against opponents who fold to raises
     if (river && opps === 1 && tiny && !reraised && eqC < 0.22 && foldRate > 0.25 && r < 0.25 * bf && !committed) return raise(raiseTo(0.95));
-    if (committed) return facing(reraised ? -0.02 : 0.03);
-    // small bets: defend wide, folding only what can't win (they bet small exactly to take the pot from a folder)
-    if (small && opps === 1) return facing(tiny ? 0.14 : 0.07);
-    // facing a river raise: opponents rarely bluff-raise the river
-    if (river && reraised) return facing(-0.08);
+    if (committed) return facing(bigRaised ? -0.02 : 0.03);
+    // small bets & 2x min-raises: defend wide, folding only what can't win
+    if (small && !reraised && opps === 1) return facing(tiny ? 0.14 : 0.07);
+    if (minRaised && opps === 1) return facing(river ? 0.01 : 0.06);
+    // facing a big river raise: opponents rarely bluff-raise the river
+    if (river && bigRaised) return facing(-0.08);
     // implied odds before the river, a stricter price on the river and against several players
     return facing((river ? -0.02 : 0.04) - (opps > 1 ? 0.03 * (opps - 1) : 0));
   }
