@@ -683,10 +683,12 @@
     };
     const rel = hc > 2 && board.length >= 3 ? ranker(board) : null;
     // the hands that fit everything the one opponent did this hand (Omaha, heads-up); too few means the reading is off: not used
+    // (hold'em too: the same reading of the opponent's line, ranked among two-card hands)
     let fits = null;
-    if (line && line.length && rel && opps.length === 1 && !hl) {
+    const lr = rel || (line && line.length && opps.length === 1 && board.length >= 3 ? ranker(board) : null);
+    if (line && line.length && lr && opps.length === 1 && !hl) {
       const rk = {};
-      for (const L of line) if (L.n >= 3 && L.n <= board.length && !rk[L.n]) rk[L.n] = L.n === board.length ? rel : ranker(board.slice(0, L.n));
+      for (const L of line) if (L.n >= 3 && L.n <= board.length && !rk[L.n]) rk[L.n] = L.n === board.length ? lr : ranker(board.slice(0, L.n));
       const cand = [], src = d.slice();
       for (let k = 0; k < 900 && cand.length < 200; k++) {
         const h = randHand(src);
@@ -790,23 +792,40 @@
     }
 
     const river = street === 5;
-    const valueAt = opps === 1 ? 0.6 : Math.max(0.36, fair * 1.7);
+    // opts.fold: how often the opponents fold when bet into after the flop (from the log); a calling station gets thinner, bigger value bets
+    const foldRate = opts.fold ?? 0.3, station = foldRate < 0.25;
+    const valueAt = opps === 1 ? (station ? 0.56 : 0.6) : Math.max(0.36, fair * 1.7);
     if (o.check) {
       // nobody has bet: value, a trap now and then, semi-bluffs with draws, the odd stab heads-up, a river bluff
-      if (eq > 0.88 && !river && r < 0.22 / af) return { type: 'check' };
-      if (eq > valueAt) return raise(potRaise(river && eq > 0.88 ? 0.9 : 0.5 + r * 0.3));
+      if (eq > 0.88 && !river && r < (station ? 0.1 : 0.22) / af) return { type: 'check' };
+      if (eq > valueAt) return raise(potRaise(river && eq > 0.88 ? 0.9 : station ? 0.65 + r * 0.25 : 0.5 + r * 0.3));
       if (!river && eq > 0.32 && opps <= 2 && r < 0.4 * bf) return raise(potRaise(0.5));
       if (!river && opps === 1 && r < 0.22 * bf) return raise(potRaise(0.45));
       if (river && opps === 1 && eq < 0.25 && r < 0.24 * bf) return raise(potRaise(0.66));
       return { type: 'check' };
     }
     // facing a bet
-    const raiseAt = opps === 1 ? 0.76 : Math.max(0.6, fair * 2.4);
-    if (eq > raiseAt) return r < Math.min(0.92, 0.7 * af) || committed ? raise(committed ? o.maxTo : to(t.currentBet * 2.8)) : { type: 'call' };
-    if (!river && opps === 1 && eq > 0.4 && eq < 0.58 && r < 0.12 * bf && !committed) return raise(to(t.currentBet * 3));
-    if (committed) return callOrFold(0.03);
+    const betFrac = o.toCall / Math.max(1, pot - o.toCall);   // the bet, against the pot before it
+    const small = betFrac <= 0.35, tiny = betFrac <= 0.2;
+    // a small bet into a big pot says little about the hand and asks a small price: the reading of the opponent's line
+    // must not talk the bot out of a pot it can still win (a 1-big-blind river bet used to make it fold far too often)
+    let eqC = eq;
+    if (small && opts.line) eqC = Math.max(eq, 0.5 * eq + 0.5 * potShare(t, seat, Math.max(40, ms * 0.35), opts.wide ?? 1, null));
+    const facing = (edge) => (eqC + edge >= price ? { type: 'call' } : { type: 'fold' });
+    // re-raises: for value, sized to the pot (a raise of a min-bet must not be another min-raise); after a re-raise only the top
+    const reraised = (p.bet || 0) > 0;   // it already bet or raised on this street and was raised
+    const raiseAt = opps === 1 ? (reraised ? 0.82 : small ? 0.64 : 0.74) : Math.max(0.6, fair * 2.4);
+    const raiseTo = (k) => to(Math.max(t.currentBet * 2.8, t.currentBet + after * k));
+    if (eqC > raiseAt) return r < Math.min(0.95, (small ? 0.9 : 0.75) * af) || committed ? raise(committed ? o.maxTo : raiseTo(eqC > 0.88 ? 0.9 : 0.7)) : { type: 'call' };
+    // a semi-bluff raise with a draw, more often against a small bet
+    if (!river && opps === 1 && !reraised && eqC > 0.38 && eqC < 0.6 && r < (small ? 0.18 : 0.12) * bf && !committed) return raise(raiseTo(0.75));
+    // now and then raise a river min-bet as a bluff, against a player who folds
+    if (river && opps === 1 && tiny && !reraised && eqC < 0.2 && foldRate > 0.3 && r < 0.12 * bf && !committed) return raise(raiseTo(0.8));
+    if (committed) return facing(0.03);
+    // small bets: defend wide, folding only what can't win (they bet small exactly to take the pot from a folder)
+    if (small && opps === 1) return facing(tiny ? 0.12 : 0.07);
     // implied odds before the river, a stricter price on the river and against several players
-    return callOrFold((river ? -0.02 : 0.04) - (opps > 1 ? 0.03 * (opps - 1) : 0));
+    return facing((river ? -0.02 : 0.04) - (opps > 1 ? 0.03 * (opps - 1) : 0));
   }
   const roundChips = (v, bb) => { const u = bb >= 100 ? bb / 4 : bb / 2; return Math.max(u, Math.round(v / u) * u); };
 

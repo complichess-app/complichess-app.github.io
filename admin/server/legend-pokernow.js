@@ -349,6 +349,8 @@
     const q = (xs, p) => { const a = xs.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(p * a.length)))]; };
     for (const k of ['S', 'B', 'R', 'C']) if (R[k] && R[k].length) { const n = R[k].length; out[k] = Math.max(0.05, Math.min(0.97, (n * q(R[k], 0.15) + 4 * READ[k]) / (n + 4))); }
     if (R.K && R.K.length) { const n = R.K.length; out.K = Math.max(0.3, Math.min(1, (n * q(R.K, 0.85) + 4 * READ.K) / (n + 4))); }
+    // showdowns only show the hands that were called down, never the bluffs that took the pot: don't let them make every bet look strong
+    out.S = Math.min(out.S, READ.S); out.B = Math.min(out.B, 0.8); out.C = Math.min(out.C, 0.45);
     return out;
   }
   function handLine(opp, hole) {
@@ -379,7 +381,7 @@
       const a = acts.filter((x) => x.n === k); if (!a.length) continue;
       const c = { n: k }, bet = a.find((x) => x.type === 'bet');
       if (a.some((x) => x.type === 'raise')) c.min = RD.R;
-      else if (bet) c.min = bet.frac <= 0.35 ? RD.S : RD.B;
+      else if (bet) c.min = bet.frac <= 0.15 ? RD.C : bet.frac <= 0.35 ? RD.S : RD.B;   // a 1-big-blind poke into a big pot proves nothing
       else if (a.some((x) => x.type === 'call')) c.min = RD.C;
       if (a.some((x) => x.type === 'check') && !a.some((x) => x.type === 'bet' || x.type === 'raise')) c.max = RD.K;
       if (c.min != null || c.max != null) line.push(c);
@@ -393,6 +395,12 @@
     // PokerNow: "SHOW ALL CARDS" (.show-hand-buttons .all-cards-button), beside one button per card
     const b = $$('.show-hand-buttons .all-cards-button').find(vis) || $$('button, input[type=button]').filter((x) => vis(x) && !bar.contains(x)).find((x) => /^show( all)?( (my )?(cards|hand))?$/i.test((x.innerText || x.value || '').trim().split('\n')[0]));
     if (b) { b.click(); S.shown = key; moved('show cards'); }
+  }
+  // how often the opponents fold when bet into after the flop (undefined until there are enough hands)
+  function foldRate(names) {
+    let f = 0, n = 0;
+    for (const x of names) { const o = CFG.opp[x]; if (o) { f += o.fold; n += o.seen; } }
+    return n >= 10 ? f / n : undefined;
   }
   // bluffing into someone who never folds only pays him; the bot bluffs as often as the opponents give it a reason to
   function oppBluff(names) {
@@ -521,7 +529,7 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
       if (sp.board.length >= 3 && sp.names.length === 1) { await pullLog(S.at); try { line = handLine(sp.names[0], sp.hole); } catch (_e) { line = null; } }
       S.line = line;
       // decide during the pause: the longer the pause, the more deals it runs (Omaha with 5 cards needs them)
-      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) * oppBluff(sp.names), line });
+      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) * oppBluff(sp.names), fold: foldRate(sp.names), line });
       while (Date.now() < until && CFG.on) {
         if (!lateAlready && extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
         await sleep(200);
