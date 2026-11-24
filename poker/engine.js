@@ -801,29 +801,31 @@
       if (eq > valueAt) return raise(potRaise(river && eq > 0.88 ? 0.9 : station ? 0.65 + r * 0.25 : 0.5 + r * 0.3));
       if (!river && eq > 0.32 && opps <= 2 && r < 0.4 * bf) return raise(potRaise(0.5));
       if (!river && opps === 1 && r < 0.22 * bf) return raise(potRaise(0.45));
-      if (river && opps === 1 && eq < 0.25 && r < 0.24 * bf) return raise(potRaise(0.66));
+      if (river && opps === 1 && eq < 0.25 && r < 0.28 * bf) return raise(potRaise(0.95));
       return { type: 'check' };
     }
     // facing a bet
     const betFrac = o.toCall / Math.max(1, pot - o.toCall);   // the bet, against the pot before it
-    const small = betFrac <= 0.35, tiny = betFrac <= 0.2;
+    const small = betFrac <= 0.35, tiny = betFrac <= 0.2, bigBet = betFrac >= 0.75;
     // a small bet into a big pot says little about the hand and asks a small price: the reading of the opponent's line
     // must not talk the bot out of a pot it can still win (a 1-big-blind river bet used to make it fold far too often)
     let eqC = eq;
     if (small && opts.line) eqC = Math.max(eq, 0.5 * eq + 0.5 * potShare(t, seat, Math.max(40, ms * 0.35), opts.wide ?? 1, null));
     const facing = (edge) => (eqC + edge >= price ? { type: 'call' } : { type: 'fold' });
-    // re-raises: for value, sized to the pot (a raise of a min-bet must not be another min-raise); after a re-raise only the top
+    // re-raises: respect raises and river pot-bets (don't stack off with an underfull); punish tiny bets with pot-sized raises
     const reraised = (p.bet || 0) > 0;   // it already bet or raised on this street and was raised
-    const raiseAt = opps === 1 ? (reraised ? 0.82 : small ? 0.64 : 0.74) : Math.max(0.6, fair * 2.4);
+    const raiseAt = opps === 1 ? (reraised ? 0.9 : (river && bigBet) ? 0.88 : small ? 0.64 : 0.74) : Math.max(0.6, fair * 2.4);
     const raiseTo = (k) => to(Math.max(t.currentBet * 2.8, t.currentBet + after * k));
-    if (eqC > raiseAt) return r < Math.min(0.95, (small ? 0.9 : 0.75) * af) || committed ? raise(committed ? o.maxTo : raiseTo(eqC > 0.88 ? 0.9 : 0.7)) : { type: 'call' };
+    if (eqC > raiseAt) return r < Math.min(0.95, (small ? 0.9 : 0.75) * af) || committed ? raise(committed ? o.maxTo : raiseTo(eqC > 0.88 || tiny ? 0.95 : 0.7)) : { type: 'call' };
     // a semi-bluff raise with a draw, more often against a small bet
     if (!river && opps === 1 && !reraised && eqC > 0.38 && eqC < 0.6 && r < (small ? 0.18 : 0.12) * bf && !committed) return raise(raiseTo(0.75));
-    // now and then raise a river min-bet as a bluff, against a player who folds
-    if (river && opps === 1 && tiny && !reraised && eqC < 0.2 && foldRate > 0.3 && r < 0.12 * bf && !committed) return raise(raiseTo(0.8));
-    if (committed) return facing(0.03);
+    // punish river min-bets with a pot-sized bluff raise against opponents who fold to raises
+    if (river && opps === 1 && tiny && !reraised && eqC < 0.22 && foldRate > 0.25 && r < 0.25 * bf && !committed) return raise(raiseTo(0.95));
+    if (committed) return facing(reraised ? -0.02 : 0.03);
     // small bets: defend wide, folding only what can't win (they bet small exactly to take the pot from a folder)
-    if (small && opps === 1) return facing(tiny ? 0.12 : 0.07);
+    if (small && opps === 1) return facing(tiny ? 0.14 : 0.07);
+    // facing a river raise: opponents rarely bluff-raise the river
+    if (river && reraised) return facing(-0.08);
     // implied odds before the river, a stricter price on the river and against several players
     return facing((river ? -0.02 : 0.04) - (opps > 1 ? 0.03 * (opps - 1) : 0));
   }

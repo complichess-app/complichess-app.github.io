@@ -373,16 +373,17 @@
       else if ((r = m.match(/" calls (\d[\d,]*)/))) { type = 'call'; amt = num(r[1]); }
       else if (/" checks/.test(m)) type = 'check';
       else continue;
-      if (n >= 3 && who === opp) acts.push({ n, type, frac: type === 'bet' ? amt / Math.max(1, before + sum(lvl)) : 0 });
+      const potNow = before + sum(lvl), toCall = type === 'call' ? Math.max(0, amt - (lvl[who] || 0)) : 0;
+      if (n >= 3 && who === opp) acts.push({ n, type, frac: type === 'bet' ? amt / Math.max(1, potNow) : type === 'call' ? toCall / Math.max(1, potNow - toCall) : 0 });
       if (amt) lvl[who] = Math.max(lvl[who] || 0, amt);
     }
     const line = [];
     for (const k of [3, 4, 5]) {
       const a = acts.filter((x) => x.n === k); if (!a.length) continue;
-      const c = { n: k }, bet = a.find((x) => x.type === 'bet');
+      const c = { n: k }, bet = a.find((x) => x.type === 'bet'), call = a.find((x) => x.type === 'call');
       if (a.some((x) => x.type === 'raise')) c.min = RD.R;
       else if (bet) c.min = bet.frac <= 0.15 ? RD.C : bet.frac <= 0.35 ? RD.S : RD.B;   // a 1-big-blind poke into a big pot proves nothing
-      else if (a.some((x) => x.type === 'call')) c.min = RD.C;
+      else if (call) c.min = call.frac >= 0.7 ? Math.max(RD.C, 0.52) : RD.C;             // calling a pot-sized bet means a real hand, not any bottom pair
       if (a.some((x) => x.type === 'check') && !a.some((x) => x.type === 'bet' || x.type === 'raise')) c.max = RD.K;
       if (c.min != null || c.max != null) line.push(c);
     }
