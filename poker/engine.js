@@ -870,11 +870,14 @@
           const rTo = committed ? o.maxTo : to(Math.max(t.currentBet * 2.8, t.currentBet + after * 0.95));
           const rAdd = Math.max(1, rTo - p.bet);
           const extra = Math.max(0, rAdd - o.toCall);
+          // on the river with the nuts / near-nuts, never just call when we can raise for free value
+          if (river && (ev.eqR >= 0.88 || (!reraised && ev.eq >= 0.95))) return sRaise(rTo);
           // when already re-raised or facing a river pot-bet, only re-raise with genuine edge vs his calling range
           const safeRaise = (!reraised || ev.eqR > 0.72) && (!(river && betFrac >= 0.75) || ev.eqR > 0.68);
           if (safeRaise) {
             const evRaise = ev.fR * pot + (1 - ev.fR) * (ev.eqR * (after + 2 * extra) - rAdd);
-            if (evRaise > bestEV + pot * 0.03) { bestEV = evRaise; bestAct = sRaise(rTo); }
+            const margin = river && ev.eqR >= 0.72 ? 0 : pot * 0.025;
+            if (evRaise > bestEV + margin) { bestEV = evRaise; bestAct = sRaise(rTo); }
           }
         }
         return bestAct;

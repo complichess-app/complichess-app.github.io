@@ -287,10 +287,14 @@
   // on that board after a small bet, a big bet, a raise, a call or a check. Thresholds = the low end (the high end for a
   // check) of what he really held, blended with the defaults until there are enough hands
   CFG.read ||= {};
+  CFG.pat ||= {};     // multi-street similar-hand memory: CFG.pat[who]['k>k>b200'] = [rel, ...]
+  CFG.time ||= {};    // timing-tell psychology: CFG.time[who]['k'|'b200'|'bPot'|'c'|'r'] = [[dtMs, rel], ...]
   CFG.calDone ||= [];
+  if (!Object.keys(CFG.pat).length && CFG.calDone.length) CFG.calDone = [];
   const CAL = { done: new Set(CFG.calDone) };   // hands already counted, kept across reloads
   const suitOf = { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
   const logCards = (s2) => s2.split(',').map((c) => c.trim().replace(/\.$/, '')).filter(Boolean).map((c) => P.parse(c.slice(0, -1).replace('10', 'T') + suitOf[c.slice(-1)]));
+  const actTag = (a) => (a.type === 'raise' ? 'r' : a.type === 'bet' ? (a.frac <= 0.15 ? 'b200' : a.frac <= 0.35 ? 'bS' : 'bPot') : a.type === 'call' ? 'c' : a.type === 'check' ? 'k' : null);
   function rankOn(board, dead, hc) {
     const out = new Set([...board, ...dead]), deck = []; for (let c = 0; c < 52; c++) if (!out.has(c)) deck.push(c);
     const xs = [];
@@ -302,20 +306,31 @@
     const L = LOG.lines; let h = null;
     const num = (v) => +String(v).replace(/,/g, ''), sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
     for (const { msg: m, created_at: at } of L) {
-      if (/^-- starting hand #/.test(m)) { h = { key: at + m.slice(0, 30), board: [], n: 0, lvl: {}, before: 0, acts: [], shows: {}, mine: null }; continue; }
+      const ts = Date.parse(at) || 0;
+      if (/^-- starting hand #/.test(m)) { h = { key: at + m.slice(0, 30), board: [], n: 0, lvl: {}, before: 0, acts: [], shows: {}, mine: null, lastTs: ts }; continue; }
       if (!h) continue;
       if (/^-- ending hand/.test(m)) {
         if (!CAL.done.has(h.key) && h.board.length === 5 && Object.keys(h.shows).length) {
           CAL.done.add(h.key); CFG.calDone.push(h.key); if (CFG.calDone.length > 400) CFG.calDone.splice(0, CFG.calDone.length - 400);
           for (const [who, cards] of Object.entries(h.shows)) {
             const R = (CFG.read[who] ||= { S: [], B: [], R: [], C: [], K: [] });
+            const PT = (CFG.pat[who] ||= {});
+            const TM = (CFG.time[who] ||= {});
+            const seq = [];
             for (const k of [3, 4, 5]) {
               const a = h.acts.filter((x) => x.who === who && x.n === k); if (!a.length) continue;
               const bet = a.find((x) => x.type === 'bet');
               const type = a.some((x) => x.type === 'raise') ? 'R' : bet ? (bet.frac <= 0.35 ? 'S' : 'B') : a.some((x) => x.type === 'call') ? 'C' : a.some((x) => x.type === 'check') ? 'K' : null;
               if (!type) continue;
-              const b = h.board.slice(0, k), rel = rankOn(b, cards.concat(h.mine || []), cards.length)(P.value(cards, b));
-              R[type].push(+rel.toFixed(3)); if (R[type].length > 40) R[type].shift();
+              const b = h.board.slice(0, k), rel = +rankOn(b, cards.concat(h.mine || []), cards.length)(P.value(cards, b)).toFixed(3);
+              R[type].push(rel); if (R[type].length > 40) R[type].shift();
+              // record multi-street pattern memory & timing tells
+              for (const x of a) {
+                const tg = actTag(x); if (!tg) continue;
+                seq.push(tg);
+                if (x.dt > 0 && x.dt < 30000) { const arr = (TM[tg] ||= []); arr.push([x.dt, rel]); if (arr.length > 45) arr.shift(); }
+              }
+              if (seq.length >= 2) { const key = seq.slice(-3).join('>'); const pa = (PT[key] ||= []); pa.push(rel); if (pa.length > 30) pa.shift(); }
             }
           }
           save();
@@ -325,7 +340,7 @@
       if (/^Your hand is /.test(m)) { h.mine = logCards(m.replace('Your hand is ', '')); continue; }
       if (/^(Flop|Turn|River)/.test(m)) {
         if (/second run/i.test(m)) continue;
-        h.before += sum(h.lvl); h.lvl = {}; h.n = /^Flop/.test(m) ? 3 : /^Turn/.test(m) ? 4 : 5;
+        h.before += sum(h.lvl); h.lvl = {}; h.n = /^Flop/.test(m) ? 3 : /^Turn/.test(m) ? 4 : 5; h.lastTs = ts;
         const all = (m.match(/\[([^\]]+)\]/g) || []).map((x) => x.slice(1, -1)).join(',');
         h.board = /^Flop/.test(m) ? logCards(all) : h.board.concat(logCards(all));
         continue;
@@ -333,13 +348,14 @@
       const who = nameIn(m); if (!who) continue;
       let r, type = null, amt = 0;
       if ((r = m.match(/" shows a (.+)$/))) { h.shows[who] = logCards(r[1]); continue; }
+      const dt = ts && h.lastTs ? Math.max(0, ts - h.lastTs) : 0; h.lastTs = ts;
       if ((r = m.match(/posts an? .*? of (\d[\d,]*)/))) { h.lvl[who] = Math.max(h.lvl[who] || 0, num(r[1])); continue; }
       if ((r = m.match(/" bets (\d[\d,]*)/))) { type = 'bet'; amt = num(r[1]); }
       else if ((r = m.match(/" raises to (\d[\d,]*)/))) { type = 'raise'; amt = num(r[1]); }
       else if ((r = m.match(/" calls (\d[\d,]*)/))) { type = 'call'; amt = num(r[1]); }
       else if (/" checks/.test(m)) type = 'check';
       else continue;
-      if (h.n >= 3) h.acts.push({ who, n: h.n, type, frac: type === 'bet' ? amt / Math.max(1, h.before + sum(h.lvl)) : 0 });
+      if (h.n >= 3) h.acts.push({ who, n: h.n, type, frac: type === 'bet' ? amt / Math.max(1, h.before + sum(h.lvl)) : 0, dt });
       if (amt) h.lvl[who] = Math.max(h.lvl[who] || 0, amt);
     }
   }
@@ -362,10 +378,12 @@
     const want = hole.map(P.cardText).sort().join(), got = mine ? mine.msg.replace('Your hand is ', '').split(',').map((c) => { c = c.trim(); return P.cardText(P.parse(c.slice(0, -1).replace('10', 'T') + { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' }[c.slice(-1)])); }).sort().join() : '';
     if (want !== got) return null;   // the log has not caught up with this hand yet
     const num = (v) => +String(v).replace(/,/g, ''), sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
-    const acts = []; let n = 0, lvl = {}, before = 0;
-    for (const { msg: m } of L.slice(i)) {
-      if (/^(Flop|Turn|River)/.test(m)) { if (/second run/i.test(m)) continue; before += sum(lvl); lvl = {}; n = /^Flop/.test(m) ? 3 : /^Turn/.test(m) ? 4 : 5; continue; }
+    const acts = []; let n = 0, lvl = {}, before = 0, lastTs = Date.parse(L[i].created_at) || 0;
+    for (const { msg: m, created_at: at } of L.slice(i)) {
+      const ts = Date.parse(at) || 0;
+      if (/^(Flop|Turn|River)/.test(m)) { if (/second run/i.test(m)) continue; before += sum(lvl); lvl = {}; n = /^Flop/.test(m) ? 3 : /^Turn/.test(m) ? 4 : 5; lastTs = ts; continue; }
       const who = nameIn(m); if (!who) continue;
+      const dt = ts && lastTs ? Math.max(0, ts - lastTs) : 0; lastTs = ts;
       let r, type = null, amt = 0;
       if ((r = m.match(/posts an? .*? of (\d[\d,]*)/))) { lvl[who] = Math.max(lvl[who] || 0, num(r[1])); continue; }
       if ((r = m.match(/" bets (\d[\d,]*)/))) { type = 'bet'; amt = num(r[1]); }
@@ -374,7 +392,7 @@
       else if (/" checks/.test(m)) type = 'check';
       else continue;
       const potNow = before + sum(lvl), toCall = type === 'call' ? Math.max(0, amt - (lvl[who] || 0)) : 0;
-      if (n >= 3 && who === opp) acts.push({ n, type, frac: type === 'bet' ? amt / Math.max(1, potNow) : type === 'call' ? toCall / Math.max(1, potNow - toCall) : 0 });
+      if (n >= 3 && who === opp) acts.push({ n, type, frac: type === 'bet' ? amt / Math.max(1, potNow) : type === 'call' ? toCall / Math.max(1, potNow - toCall) : 0, dt });
       if (amt) lvl[who] = Math.max(lvl[who] || 0, amt);
     }
     const line = [];
@@ -386,6 +404,32 @@
       else if (call) c.min = call.frac >= 0.7 ? Math.max(RD.C, 0.52) : RD.C;             // calling a pot-sized bet means a real hand, not any bottom pair
       if (a.some((x) => x.type === 'check') && !a.some((x) => x.type === 'bet' || x.type === 'raise')) c.max = RD.K;
       if (c.min != null || c.max != null) line.push(c);
+    }
+    // Smart psychology: apply learned multi-street pattern memory & timing tells to the latest street
+    if (line.length && acts.length) {
+      const lastC = line[line.length - 1], seq = acts.map(actTag).filter(Boolean);
+      const patKey = seq.length >= 2 ? seq.slice(-3).join('>') : null;
+      const hist = patKey && CFG.pat[opp] && CFG.pat[opp][patKey];
+      if (hist && hist.length >= 3) {
+        const s = hist.slice().sort((u, v) => u - v);
+        const p15 = s[Math.floor(0.15 * s.length)], p85 = s[Math.min(s.length - 1, Math.floor(0.85 * s.length))];
+        const w = Math.min(0.7, hist.length / (hist.length + 4));
+        if (lastC.min != null) lastC.min = Math.max(0.05, Math.min(0.95, lastC.min * (1 - w) + p15 * w));
+        lastC.max = lastC.max != null ? Math.max(0.25, Math.min(1, lastC.max * (1 - w) + p85 * w)) : (p85 < 0.75 ? p85 + 0.08 : undefined);
+      }
+      const lastAct = acts[acts.length - 1], tg = actTag(lastAct);
+      const tArr = tg && CFG.time[opp] && CFG.time[opp][tg];
+      if (tArr && tArr.length >= 6 && lastAct.dt > 0 && lastAct.dt < 30000) {
+        const dts = tArr.map((x) => x[0]).sort((u, v) => u - v), med = dts[Math.floor(dts.length / 2)];
+        const fast = tArr.filter((x) => x[0] < med), slow = tArr.filter((x) => x[0] >= med);
+        if (fast.length >= 2 && slow.length >= 2) {
+          const fAvg = fast.reduce((u, x) => u + x[1], 0) / fast.length, sAvg = slow.reduce((u, x) => u + x[1], 0) / slow.length;
+          const shift = Math.max(-0.14, Math.min(0.14, (lastAct.dt < med ? fAvg - sAvg : sAvg - fAvg) * 0.6));
+          if (lastC.min != null) lastC.min = Math.max(0.05, Math.min(0.95, lastC.min + shift));
+          if (lastC.max != null) lastC.max = Math.max(0.25, Math.min(1, lastC.max + shift));
+        }
+      }
+      if (lastC.min != null && lastC.max != null && lastC.min > lastC.max - 0.1) lastC.min = Math.max(0.05, lastC.max - 0.1);
     }
     return line.length ? line : null;
   }
