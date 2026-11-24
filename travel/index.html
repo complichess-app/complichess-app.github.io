@@ -5,97 +5,648 @@
 <meta name="color-scheme" content="only light">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self' https://iktmyrfbejtjsiehcrar.supabase.co wss://iktmyrfbejtjsiehcrar.supabase.co https://nominatim.openstreetmap.org https://cloudflareinsights.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bar Lvovski Travel · טיסות, מלונות וחופשות</title>
-<meta name="description" content="Bar Lvovski Travel — חיפוש טיסות, מלונות, רכבים, חבילות נופש, טיולים מאורגנים וכרטיסים. שולחים בקשה באתר, בר בודק זמינות וחוזר אליכם אישית.">
+<title>Bar Lvovski Travel · סוכנות נסיעות בוטיק · מחירי סוכן והשוואת בוקינג</title>
+<meta name="description" content="Bar Lvovski Travel — סוכנות נסיעות אישית במחירי סוכן סיטונאיים. מצאתם מלון בבוקינג? שלחו לינק ונבדוק מחיר סוכן זול יותר. טיסות, מלונות, חבילות, רכבים וכרטיסים בליווי אישי בוואטסאפ.">
 <link rel="canonical" href="https://barusik.com/travel/">
-<meta name="theme-color" content="#0A66E8">
+<meta name="theme-color" content="#081426">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Barusik Platforms"><meta property="og:locale" content="he_IL">
 <meta property="og:url" content="https://barusik.com/travel/">
-<meta property="og:title" content="Bar Lvovski Travel · טיסות, מלונות וחופשות">
-<meta property="og:description" content="מחפשים טיסה, מלון, רכב, חבילה, טיול מאורגן או כרטיסים ושולחים בקשה. בר בודק זמינות וחוזר אליכם אישית.">
+<meta property="og:title" content="Bar Lvovski Travel · טסים חכם יותר, משלמים פחות מבוקינג">
+<meta property="og:description" content="סוכנות נסיעות בוטיק: בדיקת מחיר סוכן מול בוקינג חינם, התאמת חופשה ב-30 שניות, טיסות, מלונות, חבילות וכרטיסים עם ליווי אישי של בר.">
 <meta property="og:image" content="https://barusik.com/og.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg">
 <link rel="stylesheet" href="/fonts/rubik.css">
 <script src="/lib/supabase.js" defer id="sbjs"></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"TravelAgency","name":"Bar Lvovski Travel","url":"https://barusik.com/travel/","telephone":"+972-55-663-0709","email":"barusik.official@gmail.com","areaServed":"IL","priceRange":"₪₪","description":"סוכנות נסיעות אישית לחיפוש והזמנת מלונות, טיסות, חבילות נופש, השכרת רכב, טיולים מאורגנים וכרטיסים במחירי סוכן."},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"האם להזמין דרך סוכן עולה יותר מבוקינג או סקייסקנר?","acceptedAnswer":{"@type":"Answer","text":"לא. לסוכני נסיעות יש גישה למערכות סיטונאיות שמציגות לעיתים מחירים נמוכים משמעותית ממחירי האתרים הציבוריים, במיוחד במלונות 4-5 כוכבים, ריזורטים והזמנות מרובות חדרים. הבדיקה עצמה חינם וללא התחייבות."}},{"@type":"Question","name":"למי משלמים והאם האשראי עובר דרך האתר?","acceptedAnswer":{"@type":"Answer","text":"התשלום אינו מתבצע באתר. לאחר שבר מאשר זמינות ומחיר סופי, התשלום נעשה ישירות ומאובטח מול ספק ההזמנות."}},{"@type":"Question","name":"איך עובד שובר בוקינג?","acceptedAnswer":{"@type":"Answer","text":"שולחים קישור למלון שמצאתם בבוקינג או באגודה יחד עם התאריכים והמחיר שראיתם. בר בודק במערכות הסוכנים: אם יש מחיר נמוך יותר הרווחתם, ואם לא — נאמר לכם בכנות להזמין שם."}}]}]}
+</script>
 <style>
-:root{--bg:#F4F8FC;--ink:#0B1B33;--mute:#5B6B82;--line:#DCE5F0;--card:#fff;--pri:#0A66E8;--pri2:#0752BD;--sky:#38BDF8;--ok:#0E9F6E;--bad:#C02929;--wa:#0F7A36}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,sans-serif}
-a{color:inherit}button,input,select,textarea{font:inherit}
-.skip{position:absolute;inset-inline-start:-999px;top:8px;background:#000;color:#fff;padding:12px 16px;border-radius:8px;z-index:9}.skip:focus{inset-inline-start:8px}
-:focus-visible{outline:3px solid #F59E0B;outline-offset:2px}
-header.top{display:flex;align-items:center;gap:12px;padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 12px max(16px,env(safe-area-inset-left));background:#fff;border-bottom:1px solid var(--line)}
-.logo{font-weight:800;letter-spacing:.06em;color:var(--pri);text-decoration:none;font-size:17px;display:inline-flex;align-items:center;min-height:44px;white-space:nowrap}@media(max-width:400px){.logo{font-size:14px;letter-spacing:.03em}.wa{padding:9px 12px}}.sp{flex:1}
-.wa{white-space:nowrap;direction:ltr;display:inline-flex;align-items:center;gap:8px;background:var(--wa);color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:9px 16px;font-size:15px;min-height:44px}
-.hero{background:linear-gradient(160deg,#0A5BCF 0%,#0B72D6 60%,#1597DE 100%);padding:28px 16px 90px;color:#fff}
-.hero h1{margin:0 auto;max-width:1100px;font-size:clamp(26px,4.5vw,40px);font-weight:800}.hero p{margin:6px auto 0;max-width:1100px;opacity:.92}
-main{max-width:1100px;margin:-70px auto 40px;padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:16px}
-.box{background:var(--card);border-radius:20px;box-shadow:0 12px 40px -12px rgba(10,40,90,.25);overflow:hidden}
-.tabs{display:flex;overflow-x:auto;background:#EAF2FC;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
-.tabs button{flex:1 0 auto;border:0;background:transparent;padding:14px 18px;min-height:48px;font-weight:700;color:#35507A;cursor:pointer;white-space:nowrap;font-size:16px}
-.tabs button[aria-selected=true]{background:#fff;color:var(--pri);border-radius:14px 14px 0 0}
-form.s{padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end}
-label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--mute);font-weight:500;position:relative;min-width:0}
-.wide{grid-column:span 2}@media(max-width:600px){.wide{grid-column:1/-1}}
-input,select,textarea{border:1px solid var(--line);background:#F7FAFE;border-radius:12px;padding:12px;color:var(--ink);font-size:16px;width:100%;min-width:0;min-height:48px}
-input[type=date],input[type=month]{-webkit-appearance:none;appearance:none;display:block;text-align:start}input::-webkit-date-and-time-value{text-align:start}
-input:disabled,select:disabled{color:var(--mute);opacity:1}
-textarea{min-height:80px;resize:vertical}
-.go{border:0;border-radius:12px;background:var(--pri);color:#fff;font-weight:800;padding:13px 20px;min-height:48px;cursor:pointer;font-size:16px}.go:hover{background:var(--pri2)}.go:disabled{opacity:.6;cursor:wait}
-.row2{display:flex;gap:14px;align-items:center;grid-column:1/-1;flex-wrap:wrap;font-size:15px}.row2 label{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:16px;min-height:44px;cursor:pointer}.row2 input{width:22px;height:22px;min-height:0;margin:0;accent-color:var(--pri)}
-.note{grid-column:1/-1;margin:0;color:var(--mute);font-size:14px}
-.sug{position:absolute;top:100%;inset-inline:0;z-index:5;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px -10px rgba(0,0,0,.25);margin-top:4px;max-height:280px;overflow:auto;padding:4px;list-style:none}
-.sug li{padding:11px 12px;min-height:44px;border-radius:8px;cursor:pointer;color:var(--ink);font-size:15px}.sug li[aria-selected=true],.sug li:hover{background:#EAF2FC}
+:root{
+  --navy:#081426;
+  --navy2:#0F2342;
+  --pri:#0C5CE6;
+  --pri2:#0847B8;
+  --sky:#38BDF8;
+  --gold:#D99B26;
+  --gold-bg:#FFF8E7;
+  --gold-line:#F1D18A;
+  --bg:#F6F8FC;
+  --card:#FFFFFF;
+  --ink:#0C1A2E;
+  --mute:#56667D;
+  --line:#DDE5F0;
+  --ok:#0D8F5E;
+  --ok-bg:#ECFDF5;
+  --bad:#C02929;
+  --wa:#128C43;
+  --wa2:#0D7336;
+  --r:20px;
+  --sh:0 16px 44px -18px rgba(8,20,38,.22);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip}
+a{color:inherit}
+button,input,select,textarea{font:inherit}
+.skip{position:fixed;inset-inline-start:12px;top:-120px;background:#000;color:#fff;padding:12px 16px;border-radius:8px;z-index:50;transition:top .15s}
+.skip:focus{top:10px}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Header */
+header.top{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:12px;
+  padding:max(10px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) 10px max(18px,env(safe-area-inset-left));
+  background:rgba(255,255,255,.94);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;min-height:44px}
+.brand-mark{
+  width:36px;height:36px;border-radius:11px;
+  background:linear-gradient(135deg,var(--navy) 0%,var(--pri) 100%);
+  color:#fff;display:grid;place-items:center;flex:0 0 auto;
+  box-shadow:0 6px 16px -6px rgba(12,92,230,.55);
+}
+.brand-txt{display:flex;flex-direction:column;line-height:1.1}
+.brand-name{font-weight:800;letter-spacing:.04em;color:var(--navy);font-size:15px;white-space:nowrap}
+.brand-sub{font-size:11px;color:var(--mute);font-weight:500}
+.nav{display:flex;align-items:center;gap:4px;margin-inline-start:12px}
+.nav a{text-decoration:none;font-size:14px;font-weight:600;color:#334766;padding:8px 11px;border-radius:10px;white-space:nowrap;transition:background .15s,color .15s}
+.nav a:hover{background:#EEF4FC;color:var(--pri)}
+.nav a.nav-gold{color:#8A5A00;background:var(--gold-bg);border:1px solid var(--gold-line)}
+.nav a.nav-gold:hover{background:#FEF0C7}
+.sp{flex:1}
+.live-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;padding:6px 11px;border-radius:999px;
+  background:#EEF4FC;color:#274472;white-space:nowrap;
+}
+.live-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.live-pill.on{background:var(--ok-bg);color:#065F46}
+.live-pill.on .dot{background:#10B981;box-shadow:0 0 0 4px rgba(16,185,129,.2)}
+.wa{
+  white-space:nowrap;direction:ltr;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  background:var(--wa);color:#fff;text-decoration:none;font-weight:700;
+  border-radius:999px;padding:9px 16px;font-size:14px;min-height:42px;
+  transition:background .15s,transform .15s;
+}
+.wa:hover{background:var(--wa2)}
+@media(max-width:960px){.nav{display:none}}
+@media(max-width:560px){
+  header.top{gap:8px;padding:max(8px,env(safe-area-inset-top)) 12px 8px}
+  .live-pill,.brand-sub{display:none}
+  .brand{gap:8px;min-width:0}
+  .brand-mark{width:32px;height:32px;border-radius:9px}
+  .brand-name{font-size:12.5px;letter-spacing:.02em}
+  .wa{padding:7px 11px;font-size:12.5px;gap:5px;min-height:38px}
+}
+
+/* Hero */
+.hero{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(900px 420px at 15% 0%,rgba(56,189,248,.22),transparent 65%),
+    radial-gradient(700px 360px at 85% 15%,rgba(217,155,38,.18),transparent 65%),
+    linear-gradient(155deg,#071122 0%,#0B2247 52%,#0D3C7A 100%);
+  color:#fff;
+  padding:34px 16px 104px;
+}
+.hero-art{position:absolute;inset:0;pointer-events:none;opacity:.16}
+.hero-in{position:relative;max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+  padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;color:#F8E3B4;
+}
+.hero h1{margin:0;font-size:clamp(28px,4.8vw,46px);font-weight:800;line-height:1.14;letter-spacing:-.01em;max-width:780px}
+.hero h1 em{font-style:normal;color:#F8C957}
+.hero p.lead{margin:0;max-width:680px;font-size:clamp(15px,2vw,18px);line-height:1.58;color:rgba(240,246,255,.9)}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.hbtn{
+  border:0;border-radius:999px;padding:11px 18px;min-height:44px;font-weight:700;font-size:14.5px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;transition:transform .15s,background .15s;
+}
+.hbtn.gold{background:linear-gradient(135deg,#F3BC42,#D9941E);color:#1B1200;box-shadow:0 10px 26px -10px rgba(243,188,66,.7)}
+.hbtn.gold:hover{transform:translateY(-1px);filter:brightness(1.04)}
+.hbtn.ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.24)}
+.hbtn.ghost:hover{background:rgba(255,255,255,.2)}
+.trust-row{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:4px;font-size:13px;color:rgba(226,238,255,.85)}
+.trust-row span{display:inline-flex;align-items:center;gap:6px}
+
+/* Main container */
+main{
+  max-width:1120px;margin:-76px auto 54px;
+  padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));
+  display:flex;flex-direction:column;gap:28px;
+  position:relative;z-index:5;
+}
+
+/* Search Box */
+.box{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);border:1px solid rgba(12,26,46,.06);overflow:hidden}
+.tabs{display:flex;overflow-x:auto;background:#ECF2FA;scrollbar-width:none;padding:6px 6px 0;gap:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  flex:1 0 auto;border:0;background:transparent;padding:12px 15px;min-height:48px;
+  font-weight:700;color:#38527A;cursor:pointer;white-space:nowrap;font-size:14.5px;
+  border-radius:14px 14px 0 0;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  transition:background .15s,color .15s;
+}
+.tabs button:hover{background:rgba(255,255,255,.55);color:var(--navy)}
+.tabs button[aria-selected=true]{background:#fff;color:var(--pri);box-shadow:0 -2px 10px -4px rgba(8,20,38,.12)}
+.tabs button.tab-beat{color:#8B5A00}
+.tabs button.tab-beat[aria-selected=true]{background:#fff;color:#9A6200;box-shadow:inset 0 3px 0 var(--gold)}
+.tabs button svg{width:17px;height:17px;flex:0 0 auto}
+
+form.s{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;align-items:end}
+label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:var(--mute);font-weight:600;position:relative;min-width:0}
+.wide{grid-column:span 2}@media(max-width:640px){.wide{grid-column:1/-1}}
+.full{grid-column:1/-1}
+input,select,textarea{
+  border:1px solid var(--line);background:#F8FAFE;border-radius:12px;
+  padding:11px 12px;color:var(--ink);font-size:15.5px;width:100%;min-width:0;min-height:46px;
+  transition:border-color .15s,background .15s,box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{background:#fff;border-color:var(--pri);box-shadow:0 0 0 3px rgba(12,92,230,.12);outline:none}
+input[type=date],input[type=month]{-webkit-appearance:none;appearance:none;display:block;text-align:start}
+input::-webkit-date-and-time-value{text-align:start}
+input:disabled,select:disabled{color:var(--mute);opacity:.75;background:#F1F5FA}
+textarea{min-height:84px;resize:vertical}
+.go{
+  border:0;border-radius:12px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;
+  font-weight:800;padding:12px 20px;min-height:46px;cursor:pointer;font-size:15.5px;
+  box-shadow:0 10px 24px -12px rgba(12,92,230,.65);transition:filter .15s,transform .15s;
+}
+.go:hover{filter:brightness(1.06)}
+.go:disabled{opacity:.6;cursor:wait}
+.go.gold-btn{background:linear-gradient(135deg,#EBA92A,#C98412);color:#1B1200;box-shadow:0 10px 24px -12px rgba(201,132,18,.6)}
+.row2{display:flex;gap:14px;align-items:center;grid-column:1/-1;flex-wrap:wrap;font-size:15px}
+.row2 label{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:15px;min-height:40px;cursor:pointer}
+.row2 input{width:20px;height:20px;min-height:0;margin:0;accent-color:var(--pri)}
+.swap-wrap{display:flex;align-items:flex-end;gap:8px;grid-column:span 2}
+.swap-wrap>label{flex:1}
+.swap-btn{
+  border:1px solid var(--line);background:#F2F6FC;color:var(--navy);border-radius:12px;
+  width:44px;height:46px;flex:0 0 auto;cursor:pointer;font-size:18px;font-weight:700;
+  display:grid;place-items:center;transition:background .15s,transform .15s;
+}
+.swap-btn:hover{background:#E3EEFC}
+@media(max-width:640px){.swap-wrap{grid-column:1/-1;flex-direction:column;align-items:stretch}.swap-btn{width:100%;height:36px}}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1;align-items:center}
+.chips small{font-size:12.5px;color:var(--mute);margin-inline-end:4px}
+.chip{
+  border:1px solid var(--line);background:#F7FAFE;color:#274472;border-radius:999px;
+  padding:5px 11px;font-size:13px;font-weight:600;cursor:pointer;min-height:32px;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.chip:hover,.chip.on{background:#E7F0FD;border-color:#9EC2F8;color:var(--pri)}
+
+.concierge-bar{
+  grid-column:1/-1;display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+  background:linear-gradient(90deg,#F2F7FF,#FFFBF0);
+  border:1px solid #D8E6FA;border-radius:14px;padding:12px 15px;font-size:14px;color:#1D3557;
+}
+.concierge-bar b{color:var(--navy)}
+.beat-banner{
+  grid-column:1/-1;display:flex;gap:12px;align-items:flex-start;
+  background:var(--gold-bg);border:1px solid var(--gold-line);border-radius:14px;padding:13px 15px;
+  font-size:14px;color:#6E4700;line-height:1.5;
+}
+.beat-detected{
+  grid-column:1/-1;background:var(--ok-bg);border:1px solid #A7F3D0;color:#065F46;
+  border-radius:11px;padding:8px 12px;font-size:13.5px;font-weight:600;display:none;
+}
+.beat-detected.show{display:block}
+.note{grid-column:1/-1;margin:0;color:var(--mute);font-size:13.5px;line-height:1.5}
+.sug{
+  position:absolute;top:100%;inset-inline:0;z-index:15;background:#fff;
+  border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px -12px rgba(8,20,38,.28);
+  margin-top:4px;max-height:280px;overflow:auto;padding:4px;list-style:none;
+}
+.sug li{padding:10px 12px;min-height:42px;border-radius:8px;cursor:pointer;color:var(--ink);font-size:14.5px}
+.sug li[aria-selected=true],.sug li:hover{background:#EAF2FC}
 .sug small{color:var(--mute)}
-.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#FFF4E5;border:1px solid #F5C77E;color:#7A4A00;border-radius:16px;padding:14px 16px;font-weight:500}
-.status{color:var(--mute);text-align:center;padding:20px}
-.spin{width:34px;height:34px;border:4px solid #CFE0F6;border-top-color:var(--pri);border-radius:50%;animation:r 1s linear infinite;margin:0 auto 10px}@keyframes r{to{transform:rotate(360deg)}}
+
+/* Results */
+.status{color:var(--mute);text-align:center;padding:24px}
+.spin{width:34px;height:34px;border:4px solid #CFE0F6;border-top-color:var(--pri);border-radius:50%;animation:r 1s linear infinite;margin:0 auto 10px}
+@keyframes r{to{transform:rotate(360deg)}}
+.res-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 12px}
+.res-bar h2{margin:0;font-size:19px;flex:1 1 260px}
+.res-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.res-tools input{min-height:38px;padding:7px 12px;font-size:14px;width:190px;background:#fff}
+.sort-btn{
+  border:1px solid var(--line);background:#fff;color:#274472;border-radius:10px;
+  padding:7px 12px;min-height:38px;font-size:13.5px;font-weight:600;cursor:pointer;
+}
+.sort-btn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .res{display:flex;flex-direction:column;gap:12px}
-.item{display:flex;gap:16px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;align-items:stretch}
+.item{
+  display:flex;gap:16px;background:#fff;border:1px solid var(--line);border-radius:18px;
+  padding:14px;align-items:stretch;transition:border-color .15s,box-shadow .15s;
+}
+.item.saved{border-color:var(--gold);box-shadow:0 0 0 2px rgba(217,155,38,.2)}
 .item .pic{width:210px;flex:0 0 auto;border-radius:12px;object-fit:cover;background:#E5EEF8;min-height:140px}
 .item .logos{display:flex;gap:6px;flex-direction:column}.item .logos img{width:40px;height:40px;object-fit:contain}
-.item .body{flex:1;display:flex;flex-wrap:wrap;gap:4px 10px;align-content:flex-start;font-size:15px;line-height:1.5}
-.item .body{min-width:0}.item .body span{overflow-wrap:anywhere}.item .body b{width:100%;font-size:17px}
-.item .buy{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:6px;min-width:160px;border-inline-start:1px solid var(--line);padding-inline-start:14px;text-align:center}
-.price{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}.price small{display:block;font-size:12px;color:var(--mute);font-weight:500}
-@media(max-width:700px){.item{flex-direction:column}.item .pic{width:100%;height:170px}.item .buy{border:0;border-top:1px solid var(--line);padding:12px 0 0}.item .logos{flex-direction:row}}
-dialog{border:0;border-radius:20px;padding:0;max-width:min(520px,94vw);width:100%;max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}dialog::backdrop{background:rgba(5,20,45,.55)}
-dialog form{padding:20px;display:flex;flex-direction:column;gap:10px}dialog h2{margin:0;font-size:20px}
-.sum{background:#F2F7FD;border-radius:12px;padding:10px 12px;font-size:14px;color:#2B4466}
-.x{position:absolute;top:10px;inset-inline-end:10px;border:0;background:#EEF3FA;border-radius:999px;width:44px;height:44px;cursor:pointer;font-size:18px;z-index:1}
-.err{color:var(--bad);font-size:14px;margin:0}.okmsg{text-align:center;padding:24px 20px}
-.more{align-self:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 20px;min-height:44px;font-weight:700;cursor:pointer;color:var(--ink)}
-.lnk{border:0;background:none;padding:0;color:var(--pri);text-decoration:underline;cursor:pointer;font:inherit}
-footer{text-align:center;color:var(--mute);font-size:13px;line-height:1.7;padding:10px 16px max(40px,calc(env(safe-area-inset-bottom) + 24px))}footer a{color:var(--pri)}
-.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media(prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.item .body{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:4px 10px;align-content:flex-start;font-size:14.5px;line-height:1.5}
+.item .body span{overflow-wrap:anywhere}.item .body b{width:100%;font-size:17px;color:var(--navy)}
+.item .buy{
+  display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:7px;
+  min-width:170px;border-inline-start:1px solid var(--line);padding-inline-start:14px;text-align:center;
+}
+.price{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--navy)}
+.price small{display:block;font-size:12px;color:var(--mute);font-weight:500}
+.save-btn{
+  border:1px solid var(--line);background:#F8FAFE;color:#334766;border-radius:10px;
+  padding:7px 10px;font-size:13px;font-weight:600;cursor:pointer;min-height:36px;
+}
+.save-btn.on{background:var(--gold-bg);border-color:var(--gold-line);color:#8A5A00}
+@media(max-width:700px){
+  .item{flex-direction:column}.item .pic{width:100%;height:175px}
+  .item .buy{border:0;border-top:1px solid var(--line);padding:12px 0 0}.item .logos{flex-direction:row}
+}
+.shortlist-dock{
+  position:fixed;bottom:16px;inset-inline:16px;max-width:680px;margin:0 auto;z-index:35;
+  background:var(--navy);color:#fff;border-radius:16px;padding:12px 16px;
+  display:none;align-items:center;gap:12px;flex-wrap:wrap;
+  box-shadow:0 20px 50px -12px rgba(8,20,38,.55);border:1px solid rgba(255,255,255,.14);
+}
+.shortlist-dock.show{display:flex}
+.shortlist-dock .sp{flex:1}
+.shortlist-dock button.clr{background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px}
+
+/* Sections */
+.sec{display:flex;flex-direction:column;gap:16px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.sec-head h2{margin:0;font-size:clamp(22px,3vw,30px);font-weight:800;color:var(--navy);line-height:1.2}
+.sec-head p{margin:4px 0 0;color:var(--mute);font-size:15px;max-width:660px}
+.sec-kicker{font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--pri);text-transform:uppercase;margin-bottom:4px;display:block}
+
+/* Vacation Matcher */
+.matcher{
+  background:var(--card);border-radius:var(--r);border:1px solid var(--line);
+  box-shadow:var(--sh);padding:24px;display:grid;grid-template-columns:1.05fr 1fr;gap:24px;
+}
+@media(max-width:860px){.matcher{grid-template-columns:1fr;padding:18px}}
+.m-groups{display:flex;flex-direction:column;gap:16px}
+.m-group h3{margin:0 0 8px;font-size:14.5px;color:var(--navy);font-weight:700}
+.m-pills{display:flex;flex-wrap:wrap;gap:7px}
+.mpill{
+  border:1px solid var(--line);background:#F8FAFE;color:#243B5A;border-radius:12px;
+  padding:8px 13px;font-size:13.5px;font-weight:600;cursor:pointer;min-height:40px;
+  transition:all .15s;
+}
+.mpill:hover{border-color:#9EC2F8;background:#EDF4FF}
+.mpill[aria-pressed=true]{background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:0 6px 16px -8px rgba(8,20,38,.5)}
+.m-out{
+  background:linear-gradient(160deg,#0A1B36 0%,#102C56 100%);
+  color:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;
+}
+.m-out-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.m-out-head b{font-size:16px;color:#F8C957}
+.m-out-head small{font-size:12.5px;color:rgba(255,255,255,.72)}
+.m-card{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:6px;
+}
+.m-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.m-card-top b{font-size:16px}
+.m-badge{background:rgba(248,201,87,.2);color:#F8C957;border:1px solid rgba(248,201,87,.35);font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.m-meta{font-size:13px;color:rgba(230,240,255,.82)}
+.m-tip{font-size:12.5px;color:#BCE3FF;line-height:1.45}
+.m-card-act{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.m-card-act button{
+  border:0;border-radius:10px;padding:8px 13px;min-height:36px;font-size:13px;font-weight:700;cursor:pointer;
+}
+.m-card-act .m-pri{background:#F3BC42;color:#1A1100}
+.m-card-act .m-sec{background:rgba(255,255,255,.14);color:#fff}
+
+/* Destinations Grid */
+.dest-filters{display:flex;flex-wrap:wrap;gap:7px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.dcard{
+  background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 8px 26px -18px rgba(8,20,38,.25);
+  transition:transform .18s,box-shadow .18s;
+}
+.dcard:hover{transform:translateY(-2px);box-shadow:0 16px 36px -18px rgba(8,20,38,.32)}
+.dcard-top{
+  padding:16px;color:#fff;position:relative;min-height:112px;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.dcard-top .dtag{
+  align-self:flex-start;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:999px;
+  background:rgba(8,20,38,.42);backdrop-filter:blur(4px);
+}
+.dcard-top h3{margin:8px 0 0;font-size:19px;font-weight:800;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.dcard-top h3 small{font-size:12.5px;font-weight:500;opacity:.9;white-space:nowrap;flex:0 0 auto}
+.dcard-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:9px;flex:1}
+.dcard-why{font-size:13.5px;color:#273B57;line-height:1.5;margin:0}
+.dcard-insider{
+  background:#F4F8FE;border-inline-start:3px solid var(--gold);border-radius:0 8px 8px 0;
+  padding:8px 10px;font-size:12.5px;color:#354C6C;line-height:1.45;
+}
+.dcard-foot{display:flex;gap:8px;margin-top:auto;padding-top:6px}
+.dcard-foot button{flex:1;min-height:40px;border-radius:10px;font-weight:700;font-size:13.5px;cursor:pointer;padding:8px 10px}
+.dcard-foot .b1{border:0;background:var(--navy);color:#fff}
+.dcard-foot .b2{border:1px solid var(--line);background:#fff;color:var(--navy)}
+.dcard-foot .b2:hover{background:#F2F6FC}
+
+/* Why Bar Comparison + Steps */
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:740px){.steps3{grid-template-columns:1fr}}
+.step-card{
+  background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.step-num{
+  width:34px;height:34px;border-radius:10px;background:#EAF2FC;color:var(--pri);
+  font-weight:800;display:grid;place-items:center;font-size:16px;
+}
+.step-card h3{margin:0;font-size:17px;color:var(--navy)}
+.step-card p{margin:0;font-size:14px;color:var(--mute);line-height:1.55}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:740px){.cmp{grid-template-columns:1fr}}
+.cmp-col{border-radius:18px;padding:20px;border:1px solid var(--line);background:#fff}
+.cmp-col.bar-col{background:linear-gradient(160deg,#081426 0%,#102B54 100%);color:#fff;border-color:transparent;box-shadow:var(--sh)}
+.cmp-col h3{margin:0 0 12px;font-size:18px;display:flex;align-items:center;gap:8px}
+.cmp-col ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14.5px;line-height:1.5}
+.cmp-col li{display:flex;gap:9px;align-items:flex-start}
+.cmp-col.bar-col li{color:rgba(240,247,255,.94)}
+
+/* VIP Deals CTA */
+.vip{
+  background:linear-gradient(135deg,#0B1F3F 0%,#11376B 65%,#0E538C 100%);
+  color:#fff;border-radius:22px;padding:26px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  box-shadow:var(--sh);
+}
+.vip h2{margin:0 0 6px;font-size:22px;font-weight:800}
+.vip p{margin:0;color:rgba(235,244,255,.88);font-size:15px;max-width:620px;line-height:1.5}
+
+/* FAQ */
+.faq{display:flex;flex-direction:column;gap:10px}
+.faq details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.faq summary{font-weight:700;font-size:15.5px;color:var(--navy);cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';font-size:20px;color:var(--pri);font-weight:700;flex:0 0 auto}
+.faq details[open] summary::after{content:'−'}
+.faq details p{margin:10px 0 2px;font-size:14.5px;color:var(--mute);line-height:1.6}
+
+/* Dialog */
+dialog{
+  border:0;border-radius:20px;padding:0;max-width:min(540px,94vw);width:100%;
+  max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;
+  box-shadow:0 30px 80px -20px rgba(8,20,38,.55);
+}
+dialog::backdrop{background:rgba(5,16,36,.6);backdrop-filter:blur(3px)}
+dialog form{padding:22px;display:flex;flex-direction:column;gap:11px}
+dialog h2{margin:0;font-size:20px;color:var(--navy)}
+.sum{background:#F2F7FD;border:1px solid #D9E6F7;border-radius:12px;padding:11px 13px;font-size:14px;color:#223B5E;line-height:1.5}
+.x{position:absolute;top:12px;inset-inline-end:12px;border:0;background:#EEF3FA;border-radius:999px;width:40px;height:40px;cursor:pointer;font-size:17px;z-index:1;color:var(--navy)}
+.err{color:var(--bad);font-size:14px;margin:0;font-weight:600}
+.okmsg{text-align:center;padding:28px 22px}
+.more{align-self:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 22px;min-height:44px;font-weight:700;cursor:pointer;color:var(--ink)}
+.lnk{border:0;background:none;padding:0;color:var(--pri);text-decoration:underline;cursor:pointer;font:inherit;font-weight:600}
+
+/* Sticky Mobile Bar */
+.mob-bar{
+  display:none;position:fixed;bottom:0;inset-inline:0;z-index:25;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:8px 12px max(8px,env(safe-area-inset-bottom));
+  gap:8px;
+}
+.mob-bar a,.mob-bar button{
+  flex:1;min-height:42px;border-radius:11px;font-size:13px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;cursor:pointer;
+}
+.mob-bar .mb-beat{border:1px solid var(--gold-line);background:var(--gold-bg);color:#8A5A00}
+.mob-bar .mb-match{border:1px solid var(--line);background:#F2F6FC;color:var(--navy)}
+.mob-bar .mb-wa{border:0;background:var(--wa);color:#fff}
+@media(max-width:720px){.mob-bar{display:flex}footer{padding-bottom:84px}}
+
+footer{
+  text-align:center;color:var(--mute);font-size:13px;line-height:1.75;
+  padding:16px 16px max(42px,calc(env(safe-area-inset-bottom) + 26px));
+  border-top:1px solid var(--line);background:#fff;
+}
+footer a{color:var(--pri);text-decoration:none;font-weight:600}
+footer a:hover{text-decoration:underline}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.spin{animation-duration:3s}.dcard:hover,.hbtn:hover{transform:none}}
 </style>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Travel">
 </head>
 <body>
 <a class="skip" href="#main">דילוג לתוכן</a>
-<header class="top"><a class="logo" href="/travel/" lang="en" dir="ltr">BAR LVOVSKI TRAVEL</a><span class="sp"></span>
-<a class="wa" href="https://wa.me/972556630709" target="_blank" rel="noopener" aria-label="וואטסאפ לבר: 055-6630709"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>055-6630709</a></header>
-<section class="hero"><h1>לאן טסים?</h1><p>טיסות, מלונות, רכבים, חבילות, טיולים וכרטיסים. מחפשים כאן ושולחים בקשה — בר בודק זמינות וחוזר אליכם אישית.</p></section>
+
+<header class="top">
+  <a class="brand" href="/travel/">
+    <span class="brand-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </span>
+    <span class="brand-txt">
+      <span class="brand-name" lang="en" dir="ltr">BAR LVOVSKI TRAVEL</span>
+      <span class="brand-sub">סוכנות נסיעות בוטיק · מחירי סוכן</span>
+    </span>
+  </a>
+  <nav class="nav" aria-label="ניווט בדף">
+    <a href="#beat" class="nav-gold" id="nav-beat">שובר בוקינג</a>
+    <a href="#matcher">התאמת חופשה</a>
+    <a href="#destinations">יעדים מבוקשים</a>
+    <a href="#why">למה סוכן?</a>
+    <a href="#faq">שאלות</a>
+  </nav>
+  <span class="sp"></span>
+  <span class="live-pill" id="live-pill"><span class="dot" aria-hidden="true"></span><span id="live-pill-t">ייעוץ אישי זמין</span></span>
+  <a class="wa" href="https://wa.me/972556630709?text=%D7%94%D7%99%D7%99%20%D7%91%D7%A8%2C%20%D7%94%D7%92%D7%A2%D7%AA%D7%99%20%D7%9E%D7%94%D7%90%D7%AA%D7%A8%20Bar%20Lvovski%20Travel%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%94%D7%A6%D7%A2%D7%AA%20%D7%9E%D7%97%D7%99%D7%A8%20%D7%9C%D7%97%D7%95%D7%A4%D7%A9%D7%94" target="_blank" rel="noopener" aria-label="וואטסאפ לבר: 055-6630709">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>
+    055-6630709
+  </a>
+</header>
+
+<section class="hero">
+  <svg class="hero-art" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M-50 260 Q 320 60 660 170 T 1260 70" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="6 8"/>
+    <circle cx="320" cy="130" r="140" fill="none" stroke="#fff" stroke-width="1" opacity=".45"/>
+    <circle cx="960" cy="110" r="190" fill="none" stroke="#F8C957" stroke-width="1" opacity=".5"/>
+  </svg>
+  <div class="hero-in">
+    <span class="eyebrow">✦ מחירי סוכן סיטונאיים · בדיקת מחיר חינם ללא התחייבות</span>
+    <h1>טסים חכם יותר. <em>משלמים פחות מבוקינג.</em></h1>
+    <p class="lead">חיפוש טיסות, מלונות, חבילות נופש, רכבים וכרטיסים למשחקים והופעות — או שלחו קישור למלון שמצאתם בבוקינג ובר יבדוק עבורכם מחיר סוכן מאחורי הקלעים.</p>
+    <div class="hero-actions">
+      <button type="button" class="hbtn gold" id="hero-beat">🔥 מצאתי מלון בבוקינג — תבדוק לי מחיר</button>
+      <a class="hbtn ghost" href="#matcher">🧭 לא יודעים לאן? התאמת חופשה ב-30 שניות</a>
+    </div>
+    <div class="trust-row">
+      <span>✓ 0₪ עלות בדיקה</span>
+      <span>✓ תשלום ישיר ומאובטח מול הספק</span>
+      <span>✓ בנאדם אמיתי בוואטסאפ גם כשאתם בחו"ל</span>
+      <span>✓ גישה למחירי סיטונאים ב-2M+ מלונות</span>
+    </div>
+  </div>
+</section>
+
 <main id="main">
-  <div id="banner"></div>
-  <div class="box">
+  <div class="box" id="search-box">
     <div class="tabs" role="tablist" aria-label="סוג החיפוש" id="tabs"></div>
     <div id="panel" role="tabpanel"></div>
   </div>
+
   <p id="live" class="vh" aria-live="polite" aria-atomic="true"></p>
   <section id="out" aria-label="תוצאות החיפוש" tabindex="-1"></section>
+
+  <!-- Smart Vacation Matcher -->
+  <section class="sec" id="matcher" aria-labelledby="matcher-h">
+    <div class="sec-head">
+      <div>
+        <span class="sec-kicker">מנוע התאמה חכם</span>
+        <h2 id="matcher-h">לא יודעים לאן לטוס? נמצא לכם יעד ב-30 שניות</h2>
+        <p>סמנו 4 פרטים קצרים — וקבלו מיד 3 יעדים מותאמים עם יתרון המחיר האמיתי של סוכן בכל יעד.</p>
+      </div>
+    </div>
+    <div class="matcher">
+      <div class="m-groups" id="m-groups"></div>
+      <div class="m-out" id="m-out" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Curated Destinations -->
+  <section class="sec" id="destinations" aria-labelledby="dest-h">
+    <div class="sec-head">
+      <div>
+        <span class="sec-kicker">בחירות הסוכנות מישראל</span>
+        <h2 id="dest-h">יעדים שבהם מחיר סוכן באמת עושה הבדל</h2>
+        <p>לחצו על יעד כדי להזין אותו מיד בחיפוש, או בקשו הצעה אישית מבר תוך שניות.</p>
+      </div>
+      <div class="dest-filters" id="dest-filters" role="group" aria-label="סינון יעדים"></div>
+    </div>
+    <div class="dgrid" id="dgrid"></div>
+  </section>
+
+  <!-- How it works + Comparison -->
+  <section class="sec" id="why" aria-labelledby="why-h">
+    <div class="sec-head">
+      <div>
+        <span class="sec-kicker">שקיפות מלאה</span>
+        <h2 id="why-h">איך זה עובד ולמה להזמין דרך בר ולא לבד?</h2>
+        <p>בלי אותיות קטנות ובלי התחייבות: בודקים מחיר, משווים, ומזמינים רק אם זה משתלם לכם.</p>
+      </div>
+    </div>
+    <div class="steps3">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>שולחים פרטים או לינק מבוקינג</h3>
+        <p>מחפשים באתר, בוחרים יעד מהתאמת החופשה, או פשוט מדביקים לינק למלון שכבר ראיתם בבוקינג או אגודה.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>בר משווה במערכות הסוכנים</h3>
+        <p>בר בודק זמינות אמיתית ומחירי סיטונאים סגורים (B2B) וחוזר אליכם בוואטסאפ עם הצעה ברורה בשקלים.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>מאשרים ומשלמים ישירות לספק</h3>
+        <p>אהבתם את ההצעה? התשלום נעשה מאובטח ישירות מול ספק ההזמנות (לא באתר), ואתם מקבלים ליווי אישי עד החזרה ארצה.</p>
+      </div>
+    </div>
+    <div class="cmp">
+      <div class="cmp-col bar-col">
+        <h3>✦ להזמין עם Bar Lvovski Travel</h3>
+        <ul>
+          <li><span>✓</span><span>גישה למחירי סיטונאים סגורים — פעמים רבות זולים מבוקינג במלונות 4–5★, ריזורטים וכמה חדרים.</span></li>
+          <li><span>✓</span><span>בדיקת מחיר חינם לפני שמזמינים: אם האתר שמצאתם זול יותר — נגיד לכם בכנות להזמין שם.</span></li>
+          <li><span>✓</span><span>בנאדם אמיתי בוואטסאפ (055-6630709) אם יש שינוי, ביטול טיסה או תקלה בצ'ק-אין.</span></li>
+          <li><span>✓</span><span>פתרון אחד לחופשות מורכבות: משפחות, חדרים מחוברים, כרטיסי כדורגל/הופעות מאומתים והעברות.</span></li>
+          <li><span>✓</span><span>תשלום ישיר ומאובטח מול ספק ההזמנות — בלי להזין אשראי באתר.</span></li>
+        </ul>
+      </div>
+      <div class="cmp-col">
+        <h3>אתרי הזמנות רגילים (לבד)</h3>
+        <ul>
+          <li><span>•</span><span>מחירי קמעונאות קבועים עם עמלות פלטפורמה גבוהות שמגולמות במחיר המלון.</span></li>
+          <li><span>•</span><span>כשיש תקלה בחו"ל או שינוי טיסה — נתקעים מול צ'אטבוט או מוקד טלפוני בחו"ל.</span></li>
+          <li><span>•</span><span>הזמנת כמה חדרים למשפחה, כבודה או כרטיסים למשחק בחו"ל דורשת שעות של בדיקות וסיכון לטעויות.</span></li>
+          <li><span>•</span><span>אין מי שמוודא שהמלון באמת במיקום טוב או שמתריע על עמלות נסתרות (מיסי עיר/ריזורט).</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIP Deals -->
+  <section class="vip" aria-labelledby="vip-h">
+    <div>
+      <h2 id="vip-h">רוצים לתפוס דילים סיטונאיים לפני כולם?</h2>
+      <p>שלחו לבר הודעה קצרה בוואטסאפ ("היי בר, אשמח להצטרף לדילים") וקבלו מדי שבוע מציאות אמיתיות של מלונות 5★, סופ"שים באירופה וחבילות ספורט.</p>
+    </div>
+    <a class="wa" style="padding:12px 22px;font-size:15px" href="https://wa.me/972556630709?text=%D7%94%D7%99%D7%99%20%D7%91%D7%A8%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A7%D7%91%D7%9C%20%D7%93%D7%99%D7%9C%D7%99%D7%9D%20%D7%97%D7%9E%D7%99%D7%9D%20%D7%91%D7%95%D7%95%D7%90%D7%98%D7%A1%D7%90%D7%A4" target="_blank" rel="noopener">הצטרפות בוואטסאפ</a>
+  </section>
+
+  <!-- FAQ -->
+  <section class="sec" id="faq" aria-labelledby="faq-h">
+    <div class="sec-head">
+      <div>
+        <span class="sec-kicker">שאלות נפוצות</span>
+        <h2 id="faq-h">כל מה שכדאי לדעת לפני ששולחים בקשה</h2>
+      </div>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>האם להזמין דרך סוכן עולה יותר מבוקינג או סקייסקנר?</summary>
+        <p>ממש לא בהכרח — והרבה פעמים להפך. לסוכנים יש גישה למחירי סיטונאים (B2B) שבמלונות 4–5 כוכבים, ריזורטים, דובאי, יוון וחופשות משפחתיות יכולים להיות זולים משמעותית מבוקינג. הבדיקה אצל בר היא חינם וללא שום התחייבות.</p>
+      </details>
+      <details>
+        <summary>למי משלמים? האם פרטי האשראי עוברים דרך האתר?</summary>
+        <p>לא. האתר אינו סולק כרטיסי אשראי ואינו שומר פרטי תשלום. לאחר שבר בודק זמינות ומציג לכם הצעה סופית ואתם מאשרים, התשלום מתבצע ישירות ומאובטח מול ספק ההזמנות.</p>
+      </details>
+      <details>
+        <summary>איך עובד "שובר בוקינג"?</summary>
+        <p>מצאתם מלון שאהבתם בבוקינג, אגודה או Hotels.com? העתיקו את הקישור ללשונית "שובר בוקינג" למעלה עם התאריכים והמחיר שראיתם. בר בודק את אותו המלון במערכות הסוכנים: אם יש מחיר נמוך יותר — חסכתם כסף. אם לא — תקבלו תשובה כנה שעדיף להזמין שם.</p>
+      </details>
+      <details>
+        <summary>כמה זמן לוקח לקבל הצעת מחיר?</summary>
+        <p>בדרך כלל בר חוזר בוואטסאפ תוך זמן קצר בשעות הפעילות עם 1–3 אפשרויות מדויקות לפי התקציב והתאריכים שביקשתם. למקרים דחופים אפשר תמיד ללחוץ על כפתור הוואטסאפ הישיר.</p>
+      </details>
+      <details>
+        <summary>אפשר להזמין כמה חדרים, משפחה גדולה או כרטיסים למשחקים והופעות?</summary>
+        <p>כן — ואלו בדיוק ההזמנות שבהן סוכן חוסך הכי הרבה זמן וכסף. אפשר לשלוח בקשה למספר חדרים, חדרים עם דלת מקשרת, חבילות כדורגל (ליגת האלופות, ליגה ספרדית/אנגלית) והופעות בחו"ל עם כרטיסים מאומתים.</p>
+      </details>
+      <details>
+        <summary>האם שליחת בקשה באתר מחייבת אותי למשהו?</summary>
+        <p>לא. שליחת בקשה היא רק בקשה לבדיקת זמינות והצעת מחיר. שום דבר אינו מוזמן ושום דבר אינו מחויב עד שאתם מאשרים ומשלמים בעצמכם מול הספק.</p>
+      </details>
+    </div>
+  </section>
 </main>
-<footer>Bar Lvovski Travel · המחירים בש"ח, לפי זמן החיפוש · שליחת בקשה אינה הזמנה ואינה מחייבת לבצע אותה · התשלום מתבצע ישירות מול ספק ההזמנות, לא דרך האתר · <a href="/he/accessibility/">הצהרת נגישות</a> · <a href="/">Barusik Platforms</a></footer>
+
+<div class="shortlist-dock" id="sldock" role="region" aria-label="רשימת השוואה">
+  <span id="sltxt"><b>0</b> אפשרויות שמורות להשוואה</span>
+  <span class="sp"></span>
+  <button type="button" class="clr" id="slclr">ניקוי</button>
+  <button type="button" class="go gold-btn" id="slsend" style="min-height:40px;padding:8px 16px;font-size:14px">שלח הכל לבר</button>
+</div>
+
+<div class="mob-bar" role="navigation" aria-label="פעולות מהירות">
+  <button type="button" class="mb-beat" id="mb-beat">🔥 שובר בוקינג</button>
+  <a class="mb-match" href="#matcher">🧭 התאמת חופשה</a>
+  <a class="mb-wa" href="https://wa.me/972556630709" target="_blank" rel="noopener">וואטסאפ</a>
+</div>
+
+<footer>
+  <b>Bar Lvovski Travel</b> · המחירים בש"ח, לפי זמן החיפוש · שליחת בקשה אינה הזמנה ואינה מחייבת לבצע אותה · התשלום מתבצע ישירות מול ספק ההזמנות, לא דרך האתר<br>
+  <a href="/he/accessibility/">הצהרת נגישות</a> · <a href="/he/privacy/">מדיניות פרטיות</a> · <a href="/">Barusik Platforms</a>
+</footer>
 
 <dialog id="dlg" aria-labelledby="dlgh"><div style="position:relative"><button class="x" type="button" aria-label="סגירה" id="dlgx">✕</button><div id="dlgc"></div></div></dialog>
 
 <script>
 (()=>{
 const WA='972556630709';
-const OFFLINE='החיפוש בזמן אמת לא זמין כרגע, אבל אפשר לשלוח בקשה בכל שעה: ממלאים פרטים ובר חוזר אליכם עם הצעה.';
 const WAT='055-6630709';
 const $=s=>document.querySelector(s);
-// supabase.js is deferred so the page paints first; everything that talks to it waits here
 const SBP=new Promise(res=>{let done=false;const ok=()=>{if(done)return;done=true;try{res(window.supabase?window.supabase.createClient('https://iktmyrfbejtjsiehcrar.supabase.co','sb_publishable_vEUqQPQSE0EG7YRnwNeAbg_PzViDO1a',{auth:{persistSession:false,autoRefreshToken:false,storageKey:'bar-travel-anon'}}):null)}catch{res(null)}};
   if(window.supabase)ok();else{const t=$('#sbjs');t&&t.addEventListener('load',ok);t&&t.addEventListener('error',ok);addEventListener('DOMContentLoaded',ok)}});
 const client=async()=>{const c=await SBP;if(!c)throw new Error('nosb');return c};
@@ -130,7 +681,7 @@ FLR|פירנצה|Florence
 PSA|פיזה|Pisa
 BLQ|בולוניה|Bologna
 CTA|קטניה · סיציליה|Catania Sicily
-PMO|פלרמו · סיציליה|Palermo
+PMO|פלרמו · סיציליה|Palermo Sicily
 OLB|אולביה · סרדיניה|Olbia Sardinia
 BRI|בארי|Bari
 ATH|אתונה|Athens
@@ -269,61 +820,193 @@ MEL|מלבורן|Melbourne
 AKL|אוקלנד|Auckland`.split('\n').map(l=>{const[c,h,e]=l.split('|');return{c,h,e}});
 const airName=c=>(AIR.find(a=>a.c===c)||{h:c}).h;
 
-const TABS=[{k:'flights',l:'טיסות'},{k:'hotels',l:'מלונות'},{k:'cars',l:'השכרת רכב'},{k:'packages',l:'חבילות נופש'},{k:'tours',l:'טיולים מאורגנים'},{k:'tickets',l:'כרטיסים'}];
-const KINDNAME=Object.fromEntries(TABS.map(t=>[t.k,t.l]));
-let TAB=(location.hash.slice(1)&&TABS.some(t=>t.k===location.hash.slice(1)))?location.hash.slice(1):'flights';
+const ICONS={
+  beat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>',
+  flights:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
+  hotels:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9h.01M9 13h.01M9 17h.01"/></svg>',
+  packages:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  cars:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-5l-2-5H7l-2 5v5z"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>',
+  tours:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M16.2 7.8l-2 6.3-6.4 2.1 2-6.3z"/></svg>',
+  tickets:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9z"/></svg>'
+};
+const TABS=[
+  {k:'beat',l:'שובר בוקינג',cls:'tab-beat'},
+  {k:'hotels',l:'מלונות'},
+  {k:'flights',l:'טיסות'},
+  {k:'packages',l:'חבילות נופש'},
+  {k:'cars',l:'השכרת רכב'},
+  {k:'tours',l:'טיולים מאורגנים'},
+  {k:'tickets',l:'כרטיסים'}
+];
+const KINDNAME={beat:'שובר בוקינג (מלונות)',flights:'טיסות',hotels:'מלונות',cars:'השכרת רכב',packages:'חבילות נופש',tours:'טיולים מאורגנים',tickets:'כרטיסים'};
+let TAB=(location.hash.slice(1)&&TABS.some(t=>t.k===location.hash.slice(1)))?location.hash.slice(1):'beat';
 const D21=iso(add(new Date(),21)),D26=iso(add(new Date(),26));
 const STATE={
+  beat:{url:'',hotel:'',city:'',in:D21,out:D26,guests:2,rooms:1,board:'ארוחת בוקר',price:'',cur:'₪',freeCancel:true},
   flights:{from:'TLV',fromT:'',to:'',toT:'',dep:D21,ret:D26,round:true,pax:2,cls:1},
   hotels:{place:null,in:D21,out:D26,guests:2},
   cars:{country:'',city:'',station:'',stationName:'',from:D21,to:D26,fromTime:'10:00',toTime:'10:00',age:30},
   packages:{code:'',name:'',dep:'',ret:'',adults:2},
   tours:{code:'',name:'',month:TODAY.slice(0,7)},
-  tickets:{target:'',name:'',sub:'',from:iso(add(new Date(),1)),to:iso(add(new Date(),60))}};
+  tickets:{target:'',name:'',sub:'',from:iso(add(new Date(),1)),to:iso(add(new Date(),60))}
+};
 
-function tabs(){
-  $('#tabs').innerHTML=TABS.map(t=>`<button role="tab" id="t-${t.k}" aria-selected="${TAB===t.k}" aria-controls="panel" tabindex="${TAB===t.k?0:-1}" data-k="${t.k}">${t.l}</button>`).join('');
-  const go=k=>{TAB=k;history.replaceState(null,'','#'+TAB);tabs();panel();$('#out').innerHTML=''};
-  $('#tabs').querySelectorAll('button').forEach(b=>{b.onclick=()=>go(b.dataset.k);
-    b.onkeydown=e=>{const i=TABS.findIndex(t=>t.k===TAB);let j=null;if(e.key==='ArrowLeft')j=(i+1)%TABS.length;if(e.key==='ArrowRight')j=(i+TABS.length-1)%TABS.length;
-      if(e.key==='Home')j=0;if(e.key==='End')j=TABS.length-1;
-      if(j!==null){e.preventDefault();go(TABS[j].k);$('#t-'+TAB).focus()}}});
-  $('#panel').setAttribute('aria-labelledby','t-'+TAB);
-  const cur=$('#t-'+TAB),bar=$('#tabs');if(cur&&bar.scrollWidth>bar.clientWidth){const r=cur.getBoundingClientRect(),q=bar.getBoundingClientRect();if(r.left<q.left||r.right>q.right)bar.scrollLeft+=r.left<q.left?r.left-q.left-12:r.right-q.right+12}
+function goTab(k,scroll){
+  TAB=k;history.replaceState(null,'','#'+TAB);tabs();panel();
+  if(k==='beat')$('#out').innerHTML='';
+  if(scroll)$('#search-box').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
 }
+function tabs(){
+  $('#tabs').innerHTML=TABS.map(t=>`<button role="tab" class="${t.cls||''}" id="t-${t.k}" aria-selected="${TAB===t.k}" aria-controls="panel" tabindex="${TAB===t.k?0:-1}" data-k="${t.k}">${ICONS[t.k]||''}<span>${t.l}</span></button>`).join('');
+  $('#tabs').querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>goTab(b.dataset.k);
+    b.onkeydown=e=>{
+      const i=TABS.findIndex(t=>t.k===TAB);let j=null;
+      if(e.key==='ArrowLeft')j=(i+1)%TABS.length;
+      if(e.key==='ArrowRight')j=(i+TABS.length-1)%TABS.length;
+      if(e.key==='Home')j=0;if(e.key==='End')j=TABS.length-1;
+      if(j!==null){e.preventDefault();goTab(TABS[j].k);$('#t-'+TAB).focus()}
+    };
+  });
+  $('#panel').setAttribute('aria-labelledby','t-'+TAB);
+  const cur=$('#t-'+TAB),bar=$('#tabs');
+  if(cur&&bar.scrollWidth>bar.clientWidth){
+    const r=cur.getBoundingClientRect(),q=bar.getBoundingClientRect();
+    if(r.left<q.left||r.right>q.right)bar.scrollLeft+=r.left<q.left?r.left-q.left-12:r.right-q.right+12;
+  }
+}
+
 function panel(){
   SHOWN_MODE=ONLINE;
-  if(ONLINE===null){$('#panel').innerHTML='<div class="status" role="status"><div class="spin" aria-hidden="true"></div>טוען…</div>';return}
+  if(TAB==='beat'){beatForm();return}
+  if(ONLINE===null){$('#panel').innerHTML='<div class="status" role="status"><div class="spin" aria-hidden="true"></div>בודק חיבור למערכת הסוכנים…</div>';return}
   if(ONLINE===false){requestForm();return}
   ({flights:flightsForm,hotels:hotelsForm,cars:carsForm,packages:packagesForm,tours:toursForm,tickets:ticketsForm})[TAB]();
-  const ask=document.createElement('p');ask.className='note';ask.style.cssText='padding:0 18px 16px;margin:0';
-  ask.innerHTML=`לא מוצאים מה שחיפשתם? <button type="button" class="lnk" id="askbar">שלחו לבר בקשה אישית</button> והוא יחפש בשבילכם.`;$('#panel').appendChild(ask);
+  const ask=document.createElement('p');ask.className='note';ask.style.cssText='padding:0 20px 18px;margin:0';
+  ask.innerHTML=`רוצים שבר ירכיב לכם חופשה מלאה או כמה חדרים? <button type="button" class="lnk" id="askbar">שלחו בקשה אישית</button> והוא יחזור אליכם בוואטסאפ.`;
+  $('#panel').appendChild(ask);
   $('#askbar').onclick=()=>{book({kind:TAB,title:'בקשה אישית · '+KINDNAME[TAB],search:'',lines:[],price:null,free:true})};
 }
-function offlineBox(){return`<div class="banner" role="status" style="grid-column:1/-1"><span style="flex:1">${OFFLINE}</span><a class="wa" href="https://wa.me/${WA}" target="_blank" rel="noopener">לוואטסאפ</a></div>`}
+
 const waA=t=>`<a href="https://wa.me/${WA}" target="_blank" rel="noopener" dir="ltr">${t||WAT}</a>`;
-// While the live search is off every tab still takes an order: the same questions, no live prices, and the request reaches Bar on /admin/.
+const field=(label,inner,span)=>`<label${span?' class="'+(span===2?'full':'wide')+'"':''}>${label}${inner}</label>`;
+const opts=(arr,cur)=>arr.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(cur)?'selected':''}>${esc(l)}</option>`).join('');
+const nums=(a,b)=>Array.from({length:b-a+1},(_,i)=>[a+i,a+i]);
+const formShell=(id,inner,btn,btnCls='')=>`<form class="s" id="${id}" novalidate>${inner}<button class="go ${btnCls}">${btn}</button><p class="err full" id="${id}-e" role="alert"></p></form>`;
+const follow=(a,b,days,strict)=>{const x=$('#'+a).value,y=$('#'+b);if(x&&(!y.value||(strict?y.value<=x:y.value<x)))y.value=iso(add(pd(x),days))};
+function guard(id,msg){$('#'+id+'-e').textContent=msg||'';return !msg}
+
+// ---------- Beat-My-Booking (works 24/7) ----------
+function parseBookingUrl(u){
+  try{
+    const url=new URL(u.trim());
+    const h=url.hostname.toLowerCase();
+    let hotel='',city='';
+    if(h.includes('booking.com')){
+      const m=url.pathname.match(/\/hotel\/([a-z]{2})\/([^/.]+)/i);
+      if(m){hotel=decodeURIComponent(m[2]).replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
+      const ci=url.searchParams.get('checkin'),co=url.searchParams.get('checkout');
+      return{hotel,city,ci,co,site:'Booking.com'};
+    }
+    if(h.includes('agoda.com')){
+      const m=url.pathname.match(/\/([^/]+)\/hotel\/([^/.]+)/i);
+      if(m){hotel=decodeURIComponent(m[1]).replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());city=decodeURIComponent(m[2]).replace(/[-_]+/g,' ')}
+      return{hotel,city,site:'Agoda'};
+    }
+    if(h.includes('hotels.com')||h.includes('expedia')){
+      const m=url.pathname.match(/\/ho\d+\/([^/]+)/i)||url.pathname.match(/Hotel-Information[^/]*\/([^/]+)/i);
+      if(m)hotel=decodeURIComponent(m[1]).replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      return{hotel,city,site:'Hotels / Expedia'};
+    }
+  }catch{}
+  return null;
+}
+function beatForm(){
+  const S=STATE.beat;
+  $('#panel').innerHTML=formShell('bf-beat',`
+    <div class="beat-banner">
+      <span style="font-size:20px" aria-hidden="true">🔥</span>
+      <div><b>שובר בוקינג · בדיקת מחיר סוכן חינם:</b> מצאתם מלון בבוקינג, אגודה או Hotels.com? הדביקו קישור או כתבו שם מלון והמחיר שראיתם. בר יבדוק במערכות הסיטונאים — אם יש לנו מחיר זול יותר, חסכתם כסף. אם לא, נאמר לכם בכנות להזמין שם.</div>
+    </div>
+    ${field('קישור למלון (מבוקינג / אגודה — לא חובה)',`<input id="burl" type="url" dir="ltr" value="${esc(S.url)}" placeholder="https://www.booking.com/hotel/..." maxlength="500">`,2)}
+    <div class="beat-detected" id="bdet"></div>
+    ${field('שם המלון',`<input id="bhotel" value="${esc(S.hotel)}" placeholder="למשל: Electra Metropolis / Atlantis The Palm" maxlength="100">`,1)}
+    ${field('עיר / יעד',`<input id="bcity" value="${esc(S.city)}" placeholder="למשל: אתונה, דובאי, רומא" maxlength="60">`)}
+    ${field("צ'ק-אין",`<input type="date" id="bcin" min="${TODAY}" value="${S.in}">`)}
+    ${field("צ'ק-אאוט",`<input type="date" id="bcout" min="${TODAY}" value="${S.out}">`)}
+    ${field('אורחים',`<select id="bgs">${opts(nums(1,12),S.guests)}</select>`)}
+    ${field('חדרים',`<select id="brm">${opts([[1,'חדר 1'],[2,'2 חדרים'],[3,'3 חדרים'],[4,'4+ חדרים']],S.rooms)}</select>`)}
+    ${field('בסיס אירוח',`<select id="bbrd">${opts([['לינה בלבד','לינה בלבד'],['ארוחת בוקר','ארוחת בוקר'],['חצי פנסיון','חצי פנסיון'],['הכל כלול','הכל כלול']],S.board)}</select>`)}
+    ${field('המחיר שראיתם באתר האחר',`<div style="display:flex;gap:6px"><input id="bpr" type="number" min="100" max="200000" value="${esc(S.price)}" placeholder="למשל 4200" style="flex:1"><select id="bcur" style="width:74px;flex:0 0 auto">${opts([['₪','₪'],['$','$'],['€','€']],S.cur)}</select></div>`)}
+    <div class="row2"><label><input type="checkbox" id="bfc" ${S.freeCancel?'checked':''}> חשוב לי ביטול חינם</label></div>`,'בדוק לי מחיר סוכן חינם ←','gold-btn');
+
+  const checkUrl=()=>{
+    const p=parseBookingUrl($('#burl').value);
+    const det=$('#bdet');
+    if(p&&(p.hotel||p.site)){
+      if(p.hotel&&!$('#bhotel').value.trim())$('#bhotel').value=p.hotel;
+      if(p.city&&!$('#bcity').value.trim())$('#bcity').value=p.city;
+      if(p.ci&&/^\d{4}-\d\d-\d\d$/.test(p.ci)&&p.ci>=TODAY)$('#bcin').value=p.ci;
+      if(p.co&&/^\d{4}-\d\d-\d\d$/.test(p.co)&&p.co>$('#bcin').value)$('#bcout').value=p.co;
+      det.textContent=`✓ זוהה קישור מ-${p.site}${p.hotel?' · מלון: '+p.hotel:''}`;
+      det.classList.add('show');
+    }else det.classList.remove('show');
+  };
+  $('#burl').addEventListener('input',checkUrl);
+  $('#bcin').onchange=()=>follow('bcin','bcout',3,true);
+  $('#bf-beat').onsubmit=e=>{
+    e.preventDefault();
+    Object.assign(S,{
+      url:$('#burl').value.trim(),hotel:$('#bhotel').value.trim(),city:$('#bcity').value.trim(),
+      in:$('#bcin').value,out:$('#bcout').value,guests:+$('#bgs').value,rooms:+$('#brm').value,
+      board:$('#bbrd').value,price:$('#bpr').value.trim(),cur:$('#bcur').value,freeCancel:$('#bfc').checked
+    });
+    const er=!S.hotel&&!S.url?'הדביקו קישור למלון או כתבו את שם המלון':!S.in||S.in<TODAY?"בחרו תאריך צ'ק-אין":!S.out||S.out<=S.in?"הצ'ק-אאוט צריך להיות אחרי הצ'ק-אין":'';
+    if(!guard('bf-beat',er))return;
+    const nights=Math.round((pd(S.out)-pd(S.in))/864e5);
+    const title=`שובר בוקינג · ${S.hotel||'מלון מקישור'}${S.city?' ('+S.city+')':''}`;
+    const search=`${heD(S.in)}–${heD(S.out)} (${nights} לילות) · ${S.guests} אורחים · ${S.rooms} חדרים · ${S.board}`;
+    const lines=[
+      'מקור: שובר בוקינג',
+      S.price?`מחיר שהלקוח ראה באתר אחר: ${S.cur}${nf(+S.price)}`:'מחיר באתר אחר: לא צוין',
+      S.freeCancel?'דרישה: ביטול חינם':'ביטול: גמיש',
+      S.url?`קישור: ${S.url}`:''
+    ].filter(Boolean);
+    book({kind:'hotels',title,search,lines,price:null,badge:'🔥 בדיקת שובר בוקינג חינם'});
+  };
+}
+
+// ---------- Concierge Fallback Form (when Bar's PC is offline) ----------
 const RQ={from:'תל אביב',to:'',dep:D21,ret:D26,round:true,pax:2,cls:1,dest:'',cin:D21,cout:D26,guests:2,place:'',cfrom:D21,cto:D26,age:30,pdest:'',pfrom:D21,pto:D26,adults:2,tdest:'',month:TODAY.slice(0,7),what:'',kfrom:iso(add(new Date(),1)),kto:iso(add(new Date(),60))};
+function conciergeBar(){
+  return`<div class="concierge-bar" role="status"><span style="font-size:19px" aria-hidden="true">🧭</span><span style="flex:1"><b>מצב סוכן אישי פעיל:</b> ממלאים את הפרטים ב-20 שניות — בר בודק עבורכם במערכות הסיטונאים וחוזר בוואטסאפ עם ההצעות המשתלמות ביותר.</span><button type="button" class="chip" id="try-beat-btn" style="background:var(--gold-bg);border-color:var(--gold-line);color:#8A5A00">🔥 יש לי לינק מבוקינג</button></div>`;
+}
 function requestForm(){
   const S=RQ,dl=`<datalist id="airs">${AIR.map(a=>`<option value="${esc(a.h)}"></option>`).join('')}</datalist>`;
   const text=(id,val,ph,list)=>`<input id="${id}" value="${esc(val)}" placeholder="${esc(ph)}" maxlength="80" ${list?'list="airs"':''}>`;
   const date=(id,val)=>`<input type="date" id="${id}" min="${TODAY}" value="${val}">`;
+  const quickCities=['דובאי','אתונה','רומא','פראג','בודפשט','לונדון','רודוס','תאילנד'];
+  const chipsHtml=id=>`<div class="chips"><small>יעדים חמים:</small>${quickCities.map(c=>`<button type="button" class="chip" data-fill="${id}" data-val="${c}">${c}</button>`).join('')}</div>`;
   const parts={
     flights:[`<div class="row2" role="radiogroup" aria-label="סוג טיסה"><label><input type="radio" name="rt" value="1" ${S.round?'checked':''}> הלוך ושוב</label><label><input type="radio" name="rt" value="0" ${S.round?'':'checked'}> כיוון אחד</label></div>
       ${field('מאיפה',text('rfrom',S.from,'עיר או שדה תעופה',true))}${field('לאן',text('rto',S.to,'לאן טסים?',true))}
       ${field('תאריך הלוך',date('rdep',S.dep))}<label id="rretl" ${S.round?'':'hidden'}>תאריך חזור${date('rret',S.ret)}</label>
-      ${field('נוסעים',`<select id="rpax">${opts(nums(1,9),S.pax)}</select>`)}${field('מחלקה',`<select id="rcls">${opts([[1,'תיירים'],[2,'פרימיום'],[3,'עסקים'],[4,'ראשונה']],S.cls)}</select>`)}`,'בקשת הצעה לטיסה'],
-    hotels:[`${field('יעד',text('rdest',S.dest,'עיר, אזור או מלון'),1)}${field("צ'ק-אין",date('rcin',S.cin))}${field("צ'ק-אאוט",date('rcout',S.cout))}${field('אורחים',`<select id="rgs">${opts(nums(1,12),S.guests)}</select>`)}`,'בקשת הצעה למלון'],
-    cars:[`${field('איפה אוספים',text('rplace',S.place,'עיר או שדה תעופה',true),1)}${field('איסוף',date('rcf',S.cfrom))}${field('החזרה',date('rct',S.cto))}${field('גיל הנהג',`<select id="rage">${opts(nums(18,85),S.age)}</select>`)}`,'בקשת הצעה לרכב'],
-    packages:[`${field('יעד',text('rpd',S.pdest,'למשל: אתונה, דובאי, פראג',true),1)}${field('יציאה',date('rpf',S.pfrom))}${field('חזרה',date('rpt',S.pto))}${field('נוסעים',`<select id="rpa">${opts(nums(1,12),S.adults)}</select>`)}`,'בקשת הצעה לחבילה'],
-    tours:[`${field('לאן',text('rtd',S.tdest,'למשל: רומא, יוון, תאילנד',true),1)}${field('חודש',`<input type="month" id="rtm" min="${TODAY.slice(0,7)}" value="${S.month}">`)}`,'בקשת הצעה לטיול'],
-    tickets:[`${field('קבוצה, אמן, ספורט או מקום',text('rw',S.what,'למשל: מכבי תל אביב, ריאל מדריד, קולדפליי'),1)}${field('מתאריך',date('rkf',S.kfrom))}${field('עד תאריך',date('rkt',S.kto))}`,'בקשת הצעה לכרטיסים'],
+      ${field('נוסעים',`<select id="rpax">${opts(nums(1,9),S.pax)}</select>`)}${field('מחלקה',`<select id="rcls">${opts([[1,'תיירים'],[2,'פרימיום'],[3,'עסקים'],[4,'ראשונה']],S.cls)}</select>`)}
+      ${chipsHtml('rto')}`,'קבלת הצעת מחיר לטיסה'],
+    hotels:[`${field('יעד או שם מלון',text('rdest',S.dest,'עיר, אזור או מלון'),1)}${field("צ'ק-אין",date('rcin',S.cin))}${field("צ'ק-אאוט",date('rcout',S.cout))}${field('אורחים',`<select id="rgs">${opts(nums(1,12),S.guests)}</select>`)}${chipsHtml('rdest')}`,'קבלת מחיר סוכן למלון'],
+    cars:[`${field('איפה אוספים',text('rplace',S.place,'עיר או שדה תעופה',true),1)}${field('איסוף',date('rcf',S.cfrom))}${field('החזרה',date('rct',S.cto))}${field('גיל הנהג',`<select id="rage">${opts(nums(18,85),S.age)}</select>`)}`,'קבלת הצעה לרכב'],
+    packages:[`${field('יעד',text('rpd',S.pdest,'למשל: אתונה, דובאי, פראג',true),1)}${field('יציאה',date('rpf',S.pfrom))}${field('חזרה',date('rpt',S.pto))}${field('נוסעים',`<select id="rpa">${opts(nums(1,12),S.adults)}</select>`)}${chipsHtml('rpd')}`,'קבלת הצעה לחבילה'],
+    tours:[`${field('לאן',text('rtd',S.tdest,'למשל: רומא, יוון, תאילנד',true),1)}${field('חודש',`<input type="month" id="rtm" min="${TODAY.slice(0,7)}" value="${S.month}">`)}`,'קבלת הצעה לטיול'],
+    tickets:[`${field('קבוצה, אמן, ספורט או מקום',text('rw',S.what,'למשל: ריאל מדריד, ליגת האלופות, קולדפליי'),1)}${field('מתאריך',date('rkf',S.kfrom))}${field('עד תאריך',date('rkt',S.kto))}`,'קבלת הצעה לכרטיסים']
   };
   const[inner,btn]=parts[TAB];
-  $('#panel').innerHTML=dl+formShell('rf',offlineBox()+inner,btn);
+  $('#panel').innerHTML=dl+formShell('rf',conciergeBar()+inner,btn);
+  const tb=$('#try-beat-btn');if(tb)tb.onclick=()=>goTab('beat');
+  $('#panel').querySelectorAll('[data-fill]').forEach(b=>b.onclick=()=>{const el=$('#'+b.dataset.fill);if(el){el.value=b.dataset.val;el.focus()}});
   const v=id=>$('#'+id).value.trim();
   document.querySelectorAll('[name=rt]').forEach(r=>r.onchange=()=>{S.round=document.querySelector('[name=rt]:checked').value==='1';$('#rretl').hidden=!S.round});
-  $('#rf').onsubmit=e=>{e.preventDefault();let er='',title='',search='';
+  $('#rf').onsubmit=e=>{
+    e.preventDefault();let er='',title='',search='';
     if(TAB==='flights'){Object.assign(S,{from:v('rfrom'),to:v('rto'),dep:v('rdep'),ret:v('rret'),pax:+v('rpax'),cls:+v('rcls')});
       er=!S.from?'כתבו מאיפה טסים':!S.to?'כתבו לאן טסים':!S.dep||S.dep<TODAY?'בחרו תאריך הלוך':S.round&&(!S.ret||S.ret<S.dep)?'תאריך החזור לפני ההלוך':'';
       title=`${S.from} ← ${S.to}`;search=`${heD(S.dep)}${S.round?'–'+heD(S.ret):' (כיוון אחד)'} · ${S.pax} נוסעים · ${$('#rcls').selectedOptions[0].textContent}`}
@@ -343,25 +1026,29 @@ function requestForm(){
       er=!S.what?'כתבו למה מחפשים כרטיסים':!S.kfrom||S.kfrom<TODAY?'בחרו מתאריך':!S.kto||S.kto<S.kfrom?'טווח התאריכים לא תקין':'';
       title=`כרטיסים · ${S.what}`;search=`${heD(S.kfrom)}–${heD(S.kto)}`}
     if(!guard('rf',er))return;
-    book({kind:TAB,title,search,lines:[],price:null})};
+    book({kind:TAB,title,search,lines:[],price:null});
+  };
 }
-// Every search runs on Bar's own computer: we leave a job, his server page answers it.
+
+// ---------- Live Search RPC ----------
 const strs=o=>Object.fromEntries(Object.entries(o).filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=>[k,String(v)]));
 async function job(kind,params,ms){
   const sb=await client();
-  const{data:id,error}=await sb.rpc('travel_submit',{p_kind:kind,p_params:strs(params)});if(error||!id)throw new Error(/busy/.test(error&&error.message||'')?'busy':'submit');
+  const{data:id,error}=await sb.rpc('travel_submit',{p_kind:kind,p_params:strs(params)});
+  if(error||!id)throw new Error(/busy/.test(error&&error.message||'')?'busy':'submit');
   const end=Date.now()+ms;let wait=350;
-  while(Date.now()<end){const{data}=await sb.rpc('travel_job',{p_id:id});
-    if(data&&data.status==='done')return data.result;if(data&&data.status==='failed')throw new Error(data.error||'failed');
-    await new Promise(r=>setTimeout(r,wait));wait=Math.min(1500,wait+150)}
+  while(Date.now()<end){
+    const{data}=await sb.rpc('travel_job',{p_id:id});
+    if(data&&data.status==='done')return data.result;
+    if(data&&data.status==='failed')throw new Error(data.error||'failed');
+    await new Promise(r=>setTimeout(r,wait));wait=Math.min(1500,wait+150);
+  }
   throw new Error('timeout');
 }
 async function online(){try{const sb=await client();const{data}=await sb.rpc('travel_status');return!!(data&&data.online)}catch{return false}}
 const sug=async(kind,q,extra={})=>{if(ONLINE===false)return[];try{return((await job('suggest',{kind,q,...extra},15000))||{}).data||[]}catch{return[]}};
 const get=async(path,params)=>({data:((await job('pkgdates',params,25000))||{}).data||[]});
 
-// ---------- one picker for every "type and choose" field ----------
-// source(q) → [{title,value,sub}] ; onPick(item) ; chosen() → true when a real choice is set
 function picker(input,{source,onPick,chosen,min=1,delay=250}){
   let list=null,sel=-1,items=[],timer=0,seq=0;
   const id=input.id+'-list';
@@ -382,29 +1069,29 @@ function picker(input,{source,onPick,chosen,min=1,delay=250}){
     if(e.key==='Enter'){e.preventDefault();pick(items[Math.max(sel,0)])}if(e.key==='Escape')close()});
   input.addEventListener('blur',()=>setTimeout(()=>{if(list&&!chosen()&&items[0])pick(items[0]);close()},150));
 }
-const field=(label,inner,span)=>`<label${span?' class="wide"':''}>${label}${inner}</label>`;
-const opts=(arr,cur)=>arr.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(cur)?'selected':''}>${esc(l)}</option>`).join('');
-const nums=(a,b)=>Array.from({length:b-a+1},(_,i)=>[a+i,a+i]);
-const formShell=(id,inner,btn)=>`<form class="s" id="${id}" novalidate>${inner}<button class="go">${btn}</button><p class="err" id="${id}-e" role="alert"></p></form>`;
-// moves the second date along with the first; a cleared date field gives '' and is left alone
-const follow=(a,b,days,strict)=>{const x=$('#'+a).value,y=$('#'+b);if(x&&(!y.value||(strict?y.value<=x:y.value<x)))y.value=iso(add(pd(x),days))};
-function guard(id,msg){$('#'+id+'-e').textContent=msg||'';return !msg}
 
-// ---------- flights ----------
+// ---------- Live Forms ----------
 function flightsForm(){
   const S=STATE.flights;
+  const qAir=[['ATH','אתונה'],['DXB','דובאי'],['ROM','רומא'],['LON','לונדון'],['PRG','פראג'],['BUD','בודפשט'],['BCN','ברצלונה'],['NYC','ניו יורק'],['BKK','בנגקוק']];
   $('#panel').innerHTML=formShell('ff',`
     <div class="row2" role="radiogroup" aria-label="סוג טיסה"><label><input type="radio" name="rt" value="1" ${S.round?'checked':''}> הלוך ושוב</label><label><input type="radio" name="rt" value="0" ${S.round?'':'checked'}> כיוון אחד</label></div>
-    ${field('מאיפה',`<input id="from" value="${esc(S.fromT||(S.from?airName(S.from)+' ('+S.from+')':''))}" placeholder="עיר או שדה תעופה">`)}
-    ${field('לאן',`<input id="to" value="${esc(S.toT)}" placeholder="לאן טסים?">`)}
+    <div class="swap-wrap">
+      ${field('מאיפה',`<input id="from" value="${esc(S.fromT||(S.from?airName(S.from)+' ('+S.from+')':''))}" placeholder="עיר או שדה תעופה">`)}
+      <button type="button" class="swap-btn" id="swapair" aria-label="החלפת מוצא ויעד" title="החלפת מוצא ויעד">⇄</button>
+      ${field('לאן',`<input id="to" value="${esc(S.toT)}" placeholder="לאן טסים?">`)}
+    </div>
     ${field('תאריך הלוך',`<input type="date" id="dep" min="${TODAY}" value="${S.dep}">`)}
     <label id="retl" ${S.round?'':'hidden'}>תאריך חזור<input type="date" id="ret" min="${TODAY}" value="${S.ret}"></label>
     ${field('נוסעים',`<select id="pax">${opts(nums(1,9),S.pax)}</select>`)}
-    ${field('מחלקה',`<select id="cls">${opts([[1,'תיירים'],[2,'פרימיום'],[3,'עסקים'],[4,'ראשונה']],S.cls)}</select>`)}`,'חיפוש טיסות');
+    ${field('מחלקה',`<select id="cls">${opts([[1,'תיירים'],[2,'פרימיום'],[3,'עסקים'],[4,'ראשונה']],S.cls)}</select>`)}
+    <div class="chips"><small>יעדים מבוקשים:</small>${qAir.map(([c,l])=>`<button type="button" class="chip" data-air="${c}">${l}</button>`).join('')}</div>`,'חיפוש טיסות');
   const air=async q=>{const ql=q.toLowerCase();let r=AIR.filter(a=>a.c.toLowerCase()===ql||a.h.toLowerCase().includes(ql)||a.e.toLowerCase().includes(ql)).slice(0,8).map(a=>({title:`${a.h} (${a.c})`,value:a.c,sub:a.e}));
     if(r.length<4&&q.length>=2){const more=await sug('flights',q);for(const m of more)if(!r.some(x=>x.value===m.value))r.push({title:m.title,value:m.value,sub:m.sub})}return r};
   picker($('#from'),{source:air,chosen:()=>!!S.from,onPick:it=>{S.from=it?it.value:'';S.fromT=it?it.title:''}});
   picker($('#to'),{source:air,chosen:()=>!!S.to,onPick:it=>{S.to=it?it.value:'';S.toT=it?it.title:''}});
+  $('#swapair').onclick=()=>{[S.from,S.to]=[S.to,S.from];[S.fromT,S.toT]=[S.toT,S.fromT];$('#from').value=S.fromT||(S.from?airName(S.from)+' ('+S.from+')':'');$('#to').value=S.toT||(S.to?airName(S.to)+' ('+S.to+')':'')};
+  $('#panel').querySelectorAll('[data-air]').forEach(b=>b.onclick=()=>{const c=b.dataset.air;S.to=c;S.toT=`${airName(c)} (${c})`;$('#to').value=S.toT});
   document.querySelectorAll('[name=rt]').forEach(r=>r.onchange=()=>{S.round=document.querySelector('[name=rt]:checked').value==='1';$('#retl').hidden=!S.round});
   $('#dep').onchange=()=>follow('dep','ret',5);
   $('#ff').onsubmit=e=>{e.preventDefault();Object.assign(S,{dep:$('#dep').value,ret:$('#ret').value,pax:+$('#pax').value,cls:+$('#cls').value});
@@ -414,15 +1101,23 @@ function flightsForm(){
     search(p,`${title} · ${heD(S.dep)}${S.round?'–'+heD(S.ret):' (כיוון אחד)'} · ${S.pax} נוסעים`,title)};
 }
 
-// ---------- hotels ----------
 function hotelsForm(){
   const S=STATE.hotels;
+  const qHot=[
+    {name:'דובאי',lat:25.2048,lng:55.2708,type:'city'},{name:'אתונה',lat:37.9838,lng:23.7275,type:'city'},
+    {name:'רומא',lat:41.9028,lng:12.4964,type:'city'},{name:'פראג',lat:50.0755,lng:14.4378,type:'city'},
+    {name:'בודפשט',lat:47.4979,lng:19.0402,type:'city'},{name:'לונדון',lat:51.5074,lng:-0.1278,type:'city'},
+    {name:'אילת',lat:29.5577,lng:34.9519,type:'city'},{name:'פוקט',lat:7.8804,lng:98.3923,type:'city'}
+  ];
   $('#panel').innerHTML=formShell('hf',`
     ${field('יעד',`<input id="dest" value="${esc(S.place?.name||'')}" placeholder="עיר, אזור או מלון">`,1)}
     ${field("צ'ק-אין",`<input type="date" id="cin" min="${TODAY}" value="${S.in}">`)}
     ${field("צ'ק-אאוט",`<input type="date" id="cout" min="${TODAY}" value="${S.out}">`)}
     ${field('אורחים (חדר אחד)',`<select id="gs">${opts(nums(1,6),S.guests)}</select>`)}
-    <p class="note">צריכים כמה חדרים או ילדים? כתבו לבר בהערות כשמזמינים.</p>`,'חיפוש מלונות');
+    <div class="chips"><small>ערים מבוקשות:</small>${qHot.map((h,i)=>`<button type="button" class="chip" data-qh="${i}">${h.name}</button>`).join('')}</div>
+    <p class="note">צריכים כמה חדרים, ילדים או השוואה מול בוקינג? עברו ללשונית <button type="button" class="lnk" id="go-beat-h">שובר בוקינג</button>.</p>`,'חיפוש מלונות');
+  $('#go-beat-h').onclick=()=>goTab('beat');
+  $('#panel').querySelectorAll('[data-qh]').forEach(b=>b.onclick=()=>{S.place=qHot[+b.dataset.qh];$('#dest').value=S.place.name});
   picker($('#dest'),{min:2,delay:400,chosen:()=>!!S.place,onPick:it=>{S.place=it?it.value:null},source:async q=>{
     try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=he&q='+encodeURIComponent(q));
       return(await r.json()).map(x=>{const name=x.display_name.split(',').slice(0,3).join(',');return{title:name,value:{name,lat:+x.lat,lng:+x.lon,type:x.addresstype||x.type}}})}catch{return[]}}});
@@ -434,7 +1129,6 @@ function hotelsForm(){
       `${S.place.name} · ${heD(S.in)}–${heD(S.out)} (${nights} לילות) · ${S.guests} אורחים`,S.place.name)};
 }
 
-// ---------- cars ----------
 const LISTS={};
 async function listOf(kind,extra={}){const k=kind+JSON.stringify(extra);if(!LISTS[k])LISTS[k]=sug(kind,'',extra).then(r=>{if(!r.length)delete LISTS[k];return r});return LISTS[k]}
 const filt=(arr,q)=>{const ql=q.toLowerCase();return arr.filter(x=>x.title.toLowerCase().includes(ql)).sort((a,b)=>a.title.toLowerCase().indexOf(ql)-b.title.toLowerCase().indexOf(ql))};
@@ -467,7 +1161,6 @@ function carsForm(){
       `${S.stationName||S.city} · ${heD(S.from)} ${S.fromTime} – ${heD(S.to)} ${S.toTime} (${days} ימים) · נהג בן ${S.age}`,`רכב ב${S.city}`)};
 }
 
-// ---------- packages ----------
 function packagesForm(){
   const S=STATE.packages;
   $('#panel').innerHTML=formShell('pf',`
@@ -493,7 +1186,6 @@ function packagesForm(){
     search({kind:'packages',code:S.code,from:S.dep,to:S.ret,adults:S.adults},`${S.name} · ${heD(S.dep)}–${heD(S.ret)} · ${S.adults} נוסעים`,`חבילה ל${S.name}`)};
 }
 
-// ---------- tours ----------
 function toursForm(){
   const S=STATE.tours;const months=[];const d0=new Date();d0.setDate(1);
   for(let i=0;i<14;i++){const d=new Date(d0.getFullYear(),d0.getMonth()+i,1);months.push([`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,d.toLocaleDateString('he-IL',{month:'long',year:'numeric'})])}
@@ -507,11 +1199,10 @@ function toursForm(){
     search({kind:'tours',code:S.code,month:S.month},`${S.name} · ${$('#tm').selectedOptions[0].textContent}`,`טיול מאורגן ל${S.name}`)};
 }
 
-// ---------- tickets ----------
 function ticketsForm(){
   const S=STATE.tickets;
   $('#panel').innerHTML=formShell('kf',`
-    ${field('קבוצה, אמן, ספורט או מקום',`<input id="kq" value="${esc(S.name)}" placeholder="למשל: מכבי תל אביב, ריאל מדריד, קולדפליי">`,1)}
+    ${field('קבוצה, אמן, ספורט או מקום',`<input id="kq" value="${esc(S.name)}" placeholder="למשל: ריאל מדריד, ליגת האלופות, קולדפליי">`,1)}
     ${field('מתאריך',`<input type="date" id="kfd" min="${TODAY}" value="${S.from}">`)}
     ${field('עד תאריך',`<input type="date" id="ktd" min="${TODAY}" value="${S.to}">`)}`,'חיפוש כרטיסים');
   picker($('#kq'),{min:2,chosen:()=>!!S.target,source:q=>sug('tickets',q),onPick:it=>{S.target=it?it.value:'';S.name=it?it.title:'';S.sub=it?it.sub:''}});
@@ -521,99 +1212,327 @@ function ticketsForm(){
     search({kind:'tickets',target:S.target,from:S.from,to:S.to},`${S.name}${S.sub?' ('+S.sub+')':''} · ${heD(S.from)}–${heD(S.to)}`,`כרטיסים · ${S.name}`)};
 }
 
-// ---------- search + results ----------
+// ---------- Live Results + Sort/Filter + Shortlist ----------
 const PRICE_NOTE={flights:'סה"כ לכל הנוסעים',hotels:'החל מ־ · לכל השהייה',cars:'לכל תקופת ההשכרה',packages:'מחיר החבילה',tours:'החל מ־ · לאדם בחדר זוגי',tickets:'לכרטיס'};
 const SINGLE={flights:false,hotels:true,cars:true,packages:true,tours:true,tickets:true};
-let RES=[],SHOWN=0,CUR=null;
+let RAW=[],RES=[],SHOWN=0,CUR=null,RSORT='orig',RQRY='',SAVED=[];
+
+function updateDock(){
+  const dock=$('#sldock');
+  if(!SAVED.length){dock.classList.remove('show');return}
+  $('#sltxt').innerHTML=`<b>${SAVED.length}</b> ${SAVED.length===1?'אפשרות שמורה':'אפשרויות שמורות'} להשוואה (עד 3)`;
+  dock.classList.add('show');
+}
+$('#slclr').onclick=()=>{SAVED=[];updateDock();document.querySelectorAll('.item.saved').forEach(e=>e.classList.remove('saved'));document.querySelectorAll('.save-btn.on').forEach(b=>{b.classList.remove('on');b.textContent='☆ השווה'})};
+$('#slsend').onclick=()=>{
+  if(!SAVED.length||!CUR)return;
+  const lines=SAVED.map((s,idx)=>`אפשרות ${idx+1}: ${s.name||'הצעה'} · ₪${nf(s.price)} · ${s.lines.slice(0,3).join(' | ')}`);
+  book({kind:CUR.kind,title:`השוואת ${SAVED.length} אפשרויות · ${CUR.title}`,search:CUR.label,lines,price:null,link:CUR.link,badge:'★ השוואת אפשרויות שמורות'});
+};
+
 async function search(params,label,title){
-  const out=$('#out');
+  const out=$('#out');SAVED=[];updateDock();RSORT='orig';RQRY='';
   const wait=params.kind==='tickets'?'עד שתי דקות':'בדרך כלל 15–40 שניות';
-  out.innerHTML=`<div class="box status"><div class="spin" aria-hidden="true"></div>מחפשים את כל ההצעות… זה לוקח ${wait}</div>`;out.setAttribute('aria-busy','true');say('מחפשים, זה לוקח '+wait);
+  out.innerHTML=`<div class="box status"><div class="spin" aria-hidden="true"></div>מחפשים הצעות במערכת הסוכנים… זה לוקח ${wait}</div>`;
+  out.setAttribute('aria-busy','true');say('מחפשים, זה לוקח '+wait);
   out.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
   const b=document.querySelector('#panel .go');b&&(b.disabled=true);
   try{
     let d;
     try{d=await job('search',params,115000)}
     catch(e){
-      if(e.message==='busy'){out.innerHTML=`<div class="box status">היו הרבה חיפושים בדקות האחרונות. חכו כמה דקות ונסו שוב, או שלחו לבר בוואטסאפ: ${waA()}</div>`;say('היו הרבה חיפושים בדקות האחרונות. נסו שוב בעוד כמה דקות.');return}
+      if(e.message==='busy'){out.innerHTML=`<div class="box status">היו הרבה חיפושים בדקות האחרונות. חכו כמה דקות ונסו שוב, או שלחו לבר בוואטסאפ: ${waA()}</div>`;say('היו הרבה חיפושים בדקות האחרונות.');return}
       if(!(await online())||/no-login|expired/.test(e.message))throw e;
-      out.innerHTML=`<div class="box status">החיפוש לא הצליח הפעם. נסו שוב, או שלחו לבר בוואטסאפ: ${waA()}</div>`;say('החיפוש לא הצליח הפעם. נסו שוב.');return}
-    d=d||{};CUR={params,label,title,kind:params.kind,link:d.link};RES=(Array.isArray(d.results)?d.results:[]).filter(x=>x&&typeof x==='object');SHOWN=0;
-    if(!RES.length){out.innerHTML=`<div class="box status">לא נמצאו תוצאות לחיפוש הזה. נסו תאריכים אחרים או <button type="button" class="lnk" id="askbar2">שלחו לבר בקשה</button>.</div>`;say('לא נמצאו תוצאות לחיפוש הזה.');
-      $('#askbar2').onclick=()=>{book({kind:params.kind,title,search:label,lines:[],price:null})};return}
-    out.innerHTML=`<h2 style="margin:6px 0 10px;font-size:19px">${nf(RES.length)} תוצאות · <span style="font-weight:500;color:var(--mute)">${esc(label)}</span></h2><p class="note" style="margin:0 0 10px">המחירים לפי רגע החיפוש. בחירה באפשרות שולחת לבר בקשה — הוא בודק זמינות וחוזר אליכם.</p><div class="res" id="list"></div>`;
-    more();say(`נמצאו ${nf(RES.length)} תוצאות`);
-  }catch(e){ONLINE=false;panel();out.innerHTML='';say('');book({kind:params.kind,title,search:label,lines:[],price:null})}
+      out.innerHTML=`<div class="box status">החיפוש לא הצליח הפעם. נסו שוב, או שלחו לבר בוואטסאפ: ${waA()}</div>`;say('החיפוש לא הצליח הפעם.');return}
+    d=d||{};CUR={params,label,title,kind:params.kind,link:d.link};
+    RAW=(Array.isArray(d.results)?d.results:[]).filter(x=>x&&typeof x==='object').map((x,idx)=>({...x,_id:idx}));
+    if(!RAW.length){
+      out.innerHTML=`<div class="box status">לא נמצאו תוצאות לחיפוש הזה. נסו תאריכים אחרים או <button type="button" class="lnk" id="askbar2">שלחו לבר בקשה אישית</button>.</div>`;
+      say('לא נמצאו תוצאות.');$('#askbar2').onclick=()=>{book({kind:params.kind,title,search:label,lines:[],price:null})};return;
+    }
+    renderResultsShell();applyResultFilter();say(`נמצאו ${nf(RAW.length)} תוצאות`);
+  }catch(e){ONLINE=false;updatePill();panel();out.innerHTML='';say('');book({kind:params.kind,title,search:label,lines:[],price:null})}
   finally{out.removeAttribute('aria-busy');const b2=document.querySelector('#panel .go');b2&&(b2.disabled=false)}
 }
+
+function renderResultsShell(){
+  $('#out').innerHTML=`
+    <div class="res-bar">
+      <h2><span id="rcnt">${nf(RAW.length)}</span> תוצאות · <span style="font-weight:500;color:var(--mute)">${esc(CUR.label)}</span></h2>
+      <div class="res-tools">
+        <input id="rq" placeholder="סינון לפי שם / חברה…" aria-label="סינון תוצאות">
+        <button type="button" class="sort-btn on" data-s="orig">מומלץ</button>
+        <button type="button" class="sort-btn" data-s="asc">הזול ביותר</button>
+        <button type="button" class="sort-btn" data-s="desc">היקר ביותר</button>
+      </div>
+    </div>
+    <p class="note" style="margin:0 0 12px">המחירים לפי רגע החיפוש. אפשר לבחור אפשרות או לסמן עד 3 אפשרויות להשוואה ולשלוח לבר ביחד.</p>
+    <div class="res" id="list"></div>`;
+  $('#rq').oninput=e=>{RQRY=e.target.value.trim().toLowerCase();applyResultFilter()};
+  $('#out').querySelectorAll('.sort-btn').forEach(b=>b.onclick=()=>{
+    RSORT=b.dataset.s;$('#out').querySelectorAll('.sort-btn').forEach(x=>x.classList.toggle('on',x===b));applyResultFilter();
+  });
+}
+
+function applyResultFilter(){
+  RES=RAW.filter(x=>{
+    if(!RQRY)return true;
+    const txt=[...(x.head||[]),...(x.lines||[])].join(' ').toLowerCase();
+    return txt.includes(RQRY);
+  });
+  if(RSORT==='asc')RES=[...RES].sort((a,b)=>(+a.price||0)-(+b.price||0));
+  if(RSORT==='desc')RES=[...RES].sort((a,b)=>(+b.price||0)-(+a.price||0));
+  SHOWN=0;$('#list').innerHTML='';$('#moreb')&&$('#moreb').remove();
+  $('#rcnt').textContent=nf(RES.length);
+  if(!RES.length){$('#list').innerHTML='<div class="box status">אין תוצאות התואמות לסינון.</div>';return}
+  more();
+}
+
 function view(x){
-  const k=CUR.kind;const head=(Array.isArray(x.head)?x.head:[]).map(String);x.lines=(Array.isArray(x.lines)?x.lines:[]).map(String);
+  const k=CUR.kind;const head=(Array.isArray(x.head)?x.head:[]).map(String);const xl=(Array.isArray(x.lines)?x.lines:[]).map(String);
   const NOTNAME=/^(מעולה|מצוין|טוב|טוב מאד|נהדר|כמעט|מחיר|החל|טיסה|יום|יציאה|חזרה|לא |אישור|נדרש|ביטול|\d)/;
-  const name=SINGLE[k]?([...head,...x.lines].find(l=>l.length>3&&!/₪/.test(l)&&!/\d+\s?(מ'|ק"מ)/.test(l)&&!NOTNAME.test(l))||head[0]||''):'';
-  const lines=[...head.filter(l=>l!==name),...x.lines].filter(l=>!/^₪[\d,]+$/.test(l)&&!/^(סה.?כ לתשלום|החל מ-?)$/.test(l));
+  const name=SINGLE[k]?([...head,...xl].find(l=>l.length>3&&!/₪/.test(l)&&!/\d+\s?(מ'|ק"מ)/.test(l)&&!NOTNAME.test(l))||head[0]||''):'';
+  const lines=[...head.filter(l=>l!==name),...xl].filter(l=>!/^₪[\d,]+$/.test(l)&&!/^(סה.?כ לתשלום|החל מ-?)$/.test(l));
   const url=u=>typeof u==='string'&&/^https:\/\//i.test(u)?u:null;const logos=(Array.isArray(x.logos)?x.logos:[]).map(url).filter(Boolean);const img=url(x.img);
   const pic=SINGLE[k]?(img||((k==='hotels')&&logos[0])||null):null;
   return{name,lines,pic,logos:SINGLE[k]?(pic===img?logos:[]).slice(0,1):logos.slice(0,2)};
 }
+
 function more(){
   const list=$('#list');const part=RES.slice(SHOWN,SHOWN+10);
-  list.insertAdjacentHTML('beforeend',part.map((x,j)=>{const i=SHOWN+j;const v=view(x);
-    return`<article class="item" tabindex="-1" id="r-${i}" aria-label="${esc(v.name||'אפשרות '+(i+1))}">
+  list.insertAdjacentHTML('beforeend',part.map((x,j)=>{
+    const i=SHOWN+j;const v=view(x);const isSaved=SAVED.some(s=>s._id===x._id);
+    return`<article class="item${isSaved?' saved':''}" tabindex="-1" id="r-${i}" aria-label="${esc(v.name||'אפשרות '+(i+1))}">
       ${v.pic?`<img class="pic" src="${esc(v.pic)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}
       ${!v.pic&&v.logos.length?`<div class="logos">${v.logos.map(s=>`<img src="${esc(s)}" alt="" loading="lazy" referrerpolicy="no-referrer">`).join('')}</div>`:''}
       <div class="body">${v.name?`<b>${esc(v.name)}</b>`:''}${v.lines.map(l=>`<span>${esc(l)}</span>`).join('<span aria-hidden="true" style="color:#B9C6D8">·</span>')}</div>
-      <div class="buy"><div class="price">₪${nf(+x.price||0)}<small>${PRICE_NOTE[CUR.kind]||''}</small></div><button class="go" data-i="${i}" aria-label="שליחת בקשה לבר: ${esc(v.name||'אפשרות '+(i+1))}, ₪${nf(+x.price||0)}">שליחת בקשה</button></div></article>`}).join(''));
+      <div class="buy">
+        <div class="price">₪${nf(+x.price||0)}<small>${PRICE_NOTE[CUR.kind]||''}</small></div>
+        <button class="go" data-i="${i}" aria-label="שליחת בקשה לבר: ${esc(v.name||'אפשרות '+(i+1))}, ₪${nf(+x.price||0)}">שליחת בקשה</button>
+        <button type="button" class="save-btn${isSaved?' on':''}" data-sv="${i}">${isSaved?'★ שמור להשוואה':'☆ השווה'}</button>
+      </div>
+    </article>`;
+  }).join(''));
   SHOWN+=part.length;
-  list.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const x=RES[+b.dataset.i];const v=view(x);
-    book({kind:CUR.kind,title:CUR.title,search:CUR.label,lines:[...(Array.isArray(x.head)?x.head:[]),...x.lines],price:+x.price||null,link:CUR.link,pick:v.name||null})});
+  list.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{
+    const x=RES[+b.dataset.i];const v=view(x);
+    book({kind:CUR.kind,title:CUR.title,search:CUR.label,lines:[...(Array.isArray(x.head)?x.head:[]),...(x.lines||[])],price:+x.price||null,link:CUR.link,pick:v.name||null});
+  });
+  list.querySelectorAll('button[data-sv]').forEach(b=>b.onclick=()=>{
+    const idx=+b.dataset.sv;const x=RES[idx];const v=view(x);
+    const pos=SAVED.findIndex(s=>s._id===x._id);
+    if(pos>=0){SAVED.splice(pos,1);b.classList.remove('on');b.textContent='☆ השווה';$('#r-'+idx)?.classList.remove('saved')}
+    else{
+      if(SAVED.length>=3){say('אפשר לשמור עד 3 אפשרויות להשוואה');return}
+      SAVED.push({_id:x._id,name:v.name||CUR.title,price:+x.price||0,lines:v.lines});
+      b.classList.add('on');b.textContent='★ שמור להשוואה';$('#r-'+idx)?.classList.add('saved');
+    }
+    updateDock();
+  });
   $('#moreb')&&$('#moreb').remove();
   if(SHOWN<RES.length){list.insertAdjacentHTML('afterend',`<button class="more" id="moreb">עוד תוצאות (${nf(RES.length-SHOWN)})</button>`);$('#moreb').onclick=()=>{const n=SHOWN;more();const a=$('#r-'+n);a&&a.focus()}}
 }
 
-// ---------- booking ----------
+// ---------- Curated Destinations & Smart Matcher Engine ----------
+const DESTS=[
+  {id:'dubai',name:'דובאי',en:'Dubai',air:'DXB',flight:'3.5 שעות',tag:'יוקרה וריזורטים',cat:['luxury','family','kosher'],
+    who:['couple','family','friends','group'],vibe:['luxury','beach','kosher','city'],budget:['mid','high','vip'],dur:['short','week'],
+    range:'₪3,200–₪7,500 לאדם',grad:'linear-gradient(135deg,#0B1F3F 0%,#1E4E79 55%,#C78A28 100%)',
+    why:'מלונות 5★ מהטובים בעולם, קניונים, פארקי מים, אוכל כשר בשפע ומזג אוויר מושלם מאוקטובר עד אפריל.',
+    insider:'יתרון הסוכן: בדובאי פערי המחיר בין מערכות הסיטונאים לבוקינג במלונות 5★ הם מהגבוהים בעולם — שווה במיוחד לבדוק לפני הזמנה.'},
+  {id:'athens',name:'אתונה',en:'Athens',air:'ATH',flight:'2 שעות',tag:'קרוב וזול',cat:['short','city','kosher'],
+    who:['couple','friends','solo','family'],vibe:['city','kosher'],budget:['low','mid'],dur:['short'],
+    range:'₪1,600–₪3,200 לאדם',grad:'linear-gradient(135deg,#0C356A 0%,#1868AE 60%,#4BA3E3 100%)',
+    why:'סופ"ש קצר של טברנות, שווקים, שופינג ומלונות בוטיק במרכז העיר — שעתיים טיסה בלבד.',
+    insider:'יתרון הסוכן: בר מתאים מלונות במיקום מנצח (סינטגמה/מונסטיראקי) וחבילות סופ"ש עם טיסות נוחות.'},
+  {id:'rhodes',name:'רודוס / כרתים',en:'Greece Islands',air:'RHO',flight:'1.5 שעות',tag:'משפחות ובטן-גב',cat:['short','family','luxury'],
+    who:['family','couple','friends','group'],vibe:['beach','luxury'],budget:['low','mid','high'],dur:['short','week'],
+    range:'₪2,200–₪5,200 לאדם',grad:'linear-gradient(135deg,#0B4F6C 0%,#158A9B 60%,#38BDF8 100%)',
+    why:'ריזורטים "הכל כלול", פארקי מים לילדים וחופים צלולים במרחק טיסה קצרצרה.',
+    insider:'יתרון הסוכן: בחדרי משפחה ו-2 חדרים מחוברים בריזורטים ביוון, מחירי הסיטונאים חוסכים מאות עד אלפי שקלים.'},
+  {id:'prague',name:'פראג',en:'Prague',air:'PRG',flight:'4 שעות',tag:'קרוב וזול',cat:['short','city','kosher'],
+    who:['couple','friends','solo'],vibe:['city','kosher'],budget:['low','mid'],dur:['short','week'],
+    range:'₪2,000–₪3,800 לאדם',grad:'linear-gradient(135deg,#2C1E4A 0%,#5B3A70 55%,#B86B52 100%)',
+    why:'עיר אירופאית קלאסית, רומנטית, נגישה וזולה במיוחד למסעדות, קניות ובתי מלון מרכזיים.',
+    insider:'יתרון הסוכן: שילוב מלונות 4–5★ במרכז העיר העתיקה במחירים שנדיר למצוא באתרים רגילים.'},
+  {id:'budapest',name:'בודפשט',en:'Budapest',air:'BUD',flight:'3.5 שעות',tag:'קרוב וזול',cat:['short','city','kosher'],
+    who:['couple','friends','family','solo'],vibe:['city','kosher'],budget:['low','mid'],dur:['short'],
+    range:'₪1,800–₪3,400 לאדם',grad:'linear-gradient(135deg,#1B2845 0%,#3A506B 55%,#C07A38 100%)',
+    why:'מרחצאות חמים, רובע יהודי תוסס עם אוכל כשר מעולה, חיי לילה ומחירים נוחים מאוד.',
+    insider:'יתרון הסוכן: מלונות ספא ובוטיק באזור הרובע היהודי והדנובה במחיר סיטונאי.'},
+  {id:'rome',name:'רומא',en:'Rome',air:'ROM',flight:'3.5 שעות',tag:'עיר ואוכל',cat:['short','city'],
+    who:['couple','family','friends'],vibe:['city','luxury'],budget:['mid','high'],dur:['short','week'],
+    range:'₪2,600–₪5,000 לאדם',grad:'linear-gradient(135deg,#4A1C1C 0%,#8C3B2B 55%,#D4933E 100%)',
+    why:'אוכל איטלקי, היסטוריה בכל פינה ואווירה שאין בשום עיר אחרת באירופה.',
+    insider:'יתרון הסוכן: ברומא חשוב מאוד לבחור שכונה נכונה ומיזוג/מעלית — בר מסנן מלונות בעייתיים מראש.'},
+  {id:'barcelona',name:'ברצלונה ומדריד',en:'Spain & Football',air:'BCN',flight:'4.5 שעות',tag:'ספורט והופעות',cat:['sports','city'],
+    who:['friends','couple','family','group'],vibe:['sports','city'],budget:['mid','high'],dur:['short','week'],
+    range:'₪3,200–₪6,800 לאדם',grad:'linear-gradient(135deg,#11204A 0%,#1E40AF 50%,#B91C1C 100%)',
+    why:'כדורגל מהליגה הספרדית וליגת האלופות, הופעות ענק, שופינג וחופים.',
+    insider:'יתרון הסוכן: כרטיסים מאומתים למשחקים והופעות (בלי סיכון לזיופים!) בחבילה אחת עם טיסה ומלון.'},
+  {id:'london',name:'לונדון',en:'London',air:'LON',flight:'5 שעות',tag:'ספורט והופעות',cat:['sports','city','luxury'],
+    who:['couple','friends','family','solo'],vibe:['sports','city','luxury'],budget:['mid','high','vip'],dur:['short','week'],
+    range:'₪3,800–₪8,000 לאדם',grad:'linear-gradient(135deg,#111827 0%,#1F3A5F 55%,#7C2D12 100%)',
+    why:'פרמייר ליג, מחזות זמר בווסט אנד, שופינג ומסעדות ברמה עולמית.',
+    insider:'יתרון הסוכן: מלונות במרכז לונדון יקרים מאוד בבוקינג — כאן בדיקת מחיר סוכן חוסכת משמעותית.'},
+  {id:'thailand',name:'תאילנד (בנגקוק / פוקט / קוסמוי)',en:'Thailand',air:'BKK',flight:'11 שעות',tag:'רחוק ואקזוטי',cat:['exotic','luxury','family'],
+    who:['couple','family','friends','solo'],vibe:['beach','nature','luxury'],budget:['high','vip'],dur:['week','long'],
+    range:'₪6,500–₪13,000 לאדם',grad:'linear-gradient(135deg,#064E3B 0%,#0E7490 55%,#D97706 100%)',
+    why:'איים טרופיים, ריזורטים מפנקים עם בריכה פרטית, אוכל מדהים ותמורה אדירה לכסף.',
+    insider:'יתרון הסוכן: תכנון מסלול מרובה יעדים + ריזורטים 5★ בפוקט וקוסמוי במחירי סיטונאים.'},
+  {id:'alps',name:'וינה / אוסטריה / שווייץ',en:'Alps & Nature',air:'VIE',flight:'3.5 שעות',tag:'טבע וסקי',cat:['family','exotic'],
+    who:['family','couple','friends','group'],vibe:['nature','luxury'],budget:['mid','high','vip'],dur:['week','long'],
+    range:'₪3,600–₪8,500 לאדם',grad:'linear-gradient(135deg,#0F2942 0%,#1E5277 55%,#64A6BD 100%)',
+    why:'אגמים, הרים, סקי בחורף, פארקי טבע בקיץ וטיולי רכב משפחתיים חלומיים.',
+    insider:'יתרון הסוכן: סגירת רכב משפחתי גדול + מלונות אלפיניים מבוקשים בלי להיתקע בלי זמינות.'}
+];
+
+const M_CFG=[
+  {k:'who',t:'1. מי טס?',opts:[['couple','💑 זוג'],['family','👨‍👩‍👧‍👦 משפחה'],['friends','🎉 חברים'],['solo','🎒 סולו'],['group','👥 קבוצה / עבודה']]},
+  {k:'vibe',t:'2. מה הסגנון?',opts:[['beach','🏖️ בטן-גב וריזורט'],['city','🛍️ עיר ואוכל'],['luxury','✨ יוקרה ופינוק'],['sports','⚽ ספורט והופעות'],['nature','🏔️ טבע והרפתקה'],['kosher','✡️ כשר / מסורת']]},
+  {k:'budget',t:'3. תקציב משוער לאדם?',opts:[['low','עד ₪2,500'],['mid','₪2,500–₪4,500'],['high','₪4,500–₪8,000'],['vip','₪8,000+ פרימיום']]},
+  {k:'dur',t:'4. משך החופשה?',opts:[['short','סופ"ש (3–4 לילות)'],['week','שבוע (5–7 לילות)'],['long','ארוך (10+ ימים)']]}
+];
+const M_STATE={who:'couple',vibe:'luxury',budget:'mid',dur:'short'};
+
+function renderMatcher(){
+  $('#m-groups').innerHTML=M_CFG.map(g=>`
+    <div class="m-group">
+      <h3>${g.t}</h3>
+      <div class="m-pills">${g.opts.map(([v,l])=>`<button type="button" class="mpill" data-mk="${g.k}" data-mv="${v}" aria-pressed="${M_STATE[g.k]===v}">${l}</button>`).join('')}</div>
+    </div>`).join('');
+  $('#m-groups').querySelectorAll('.mpill').forEach(b=>b.onclick=()=>{
+    M_STATE[b.dataset.mk]=b.dataset.mv;renderMatcher();
+  });
+  const scored=DESTS.map(d=>{
+    let s=40;
+    if(d.who.includes(M_STATE.who))s+=18;
+    if(d.vibe.includes(M_STATE.vibe))s+=24;
+    if(d.budget.includes(M_STATE.budget))s+=10;
+    if(d.dur.includes(M_STATE.dur))s+=7;
+    return{d,s:Math.min(99,s)};
+  }).sort((a,b)=>b.s-a.s).slice(0,3);
+
+  const lbl=(k,v)=>(M_CFG.find(x=>x.k===k).opts.find(o=>o[0]===v)||['',v])[1].replace(/^[^\s]+\s/,'');
+  const summary=`${lbl('who',M_STATE.who)} · ${lbl('vibe',M_STATE.vibe)} · ${lbl('budget',M_STATE.budget)} · ${lbl('dur',M_STATE.dur)}`;
+  $('#m-out').innerHTML=`
+    <div class="m-out-head"><b>✦ 3 ההמלצות המובילות עבורכם</b><small>${esc(summary)}</small></div>
+    ${scored.map(({d,s})=>`
+      <div class="m-card">
+        <div class="m-card-top"><b>${esc(d.name)}</b><span class="m-badge">התאמה ${s}%</span></div>
+        <div class="m-meta">✈️ ${esc(d.flight)} מנתב"ג · טווח משוער: ${esc(d.range)}</div>
+        <div class="m-tip">${esc(d.insider)}</div>
+        <div class="m-card-act">
+          <button type="button" class="m-pri" data-mq="${d.id}">בקשו הצעה תפורה ל${esc(d.name)}</button>
+          <button type="button" class="m-sec" data-ms="${d.id}">חפשו ביעד</button>
+        </div>
+      </div>`).join('')}`;
+  $('#m-out').querySelectorAll('[data-mq]').forEach(b=>b.onclick=()=>{
+    const d=DESTS.find(x=>x.id===b.dataset.mq);
+    book({kind:'packages',title:`חופשה מותאמת ל${d.name}`,search:summary,lines:[`יעד מומלץ: ${d.name}`,`פרופיל: ${summary}`,`טווח תקציב: ${d.range}`],price:null,badge:'🧭 בקשה מהתאמת החופשה'});
+  });
+  $('#m-out').querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>jumpDest(b.dataset.ms));
+}
+
+// ---------- Curated Destinations Grid ----------
+const DFILT=[['all','הכל'],['short','קרוב וזול'],['luxury','יוקרה וריזורטים'],['family','משפחות'],['sports','ספורט והופעות'],['exotic','רחוק וטבע']];
+let DF='all';
+function renderDests(){
+  $('#dest-filters').innerHTML=DFILT.map(([k,l])=>`<button type="button" class="chip${DF===k?' on':''}" data-df="${k}" aria-pressed="${DF===k}">${l}</button>`).join('');
+  $('#dest-filters').querySelectorAll('button').forEach(b=>b.onclick=()=>{DF=b.dataset.df;renderDests()});
+  const list=DF==='all'?DESTS:DESTS.filter(d=>d.cat.includes(DF));
+  $('#dgrid').innerHTML=list.map(d=>`
+    <article class="dcard">
+      <div class="dcard-top" style="background:${d.grad}">
+        <span class="dtag">${esc(d.tag)}</span>
+        <h3><span>${esc(d.name)}</span><small>✈️ ${esc(d.flight)}</small></h3>
+      </div>
+      <div class="dcard-body">
+        <p class="dcard-why">${esc(d.why)}</p>
+        <div class="dcard-insider">${esc(d.insider)}</div>
+        <div class="dcard-foot">
+          <button type="button" class="b1" data-dq="${d.id}">הצעה אישית</button>
+          <button type="button" class="b2" data-ds="${d.id}">חפש ביעד</button>
+        </div>
+      </div>
+    </article>`).join('');
+  $('#dgrid').querySelectorAll('[data-dq]').forEach(b=>b.onclick=()=>{
+    const d=DESTS.find(x=>x.id===b.dataset.dq);
+    book({kind:'packages',title:`הצעה אישית ל${d.name}`,search:`טווח משוער: ${d.range}`,lines:[`יעד נבחר: ${d.name}`],price:null});
+  });
+  $('#dgrid').querySelectorAll('[data-ds]').forEach(b=>b.onclick=()=>jumpDest(b.dataset.ds));
+}
+
+function jumpDest(id){
+  const d=DESTS.find(x=>x.id===id);if(!d)return;
+  if(ONLINE){
+    STATE.flights.to=d.air;STATE.flights.toT=`${airName(d.air)} (${d.air})`;
+    goTab('flights',true);
+  }else{
+    RQ.pdest=d.name;RQ.dest=d.name;RQ.to=d.name;
+    goTab('packages',true);
+  }
+}
+
+// ---------- Booking Dialog ----------
 function book(o){
   const dlg=$('#dlg');
-  $('#dlgc').innerHTML=`<form id="bf" novalidate><h2 id="dlgh">${o.price?'בקשה להזמנה':'בקשת הצעה'}</h2>
-    ${o.free?'':`<div class="sum"><b>${esc(o.pick||o.title)}</b><br>${esc(o.search)}${o.price?`<br><b style="font-size:18px">₪${nf(o.price)}</b> <small>${esc(PRICE_NOTE[o.kind]||'')}</small>`:''}</div>`}
+  const k=o.kind==='beat'?'hotels':o.kind;
+  $('#dlgc').innerHTML=`<form id="bf" novalidate>
+    <h2 id="dlgh">${o.badge?esc(o.badge):(o.price?'בקשה להזמנה':'בקשת הצעת מחיר')}</h2>
+    ${o.free?'':`<div class="sum"><b>${esc(o.pick||o.title)}</b>${o.search?`<br>${esc(o.search)}`:''}${o.price?`<br><b style="font-size:18px">₪${nf(o.price)}</b> <small>${esc(PRICE_NOTE[k]||'')}</small>`:''}</div>`}
     ${field('שם מלא',`<input id="bn" autocomplete="name" required maxlength="80">`)}
     ${field('טלפון (וואטסאפ)',`<input id="bp" type="tel" inputmode="tel" dir="ltr" autocomplete="tel" required maxlength="30" placeholder="05X-XXXXXXX">`)}
     ${field('מייל (לא חובה)',`<input id="be" type="email" dir="ltr" autocomplete="email" maxlength="120">`)}
-    ${field(o.free?'מה מחפשים? (יעד, תאריכים, כמה אנשים, תקציב)':'הערות לבר',`<textarea id="bt" maxlength="1500" ${o.free?'required':''} placeholder="${o.free?'':'שמות הנוסעים, מזוודות, בקשות מיוחדות…'}"></textarea>`)}
-    <p class="note" style="font-size:14px">${o.price?'זו בקשה ולא הזמנה. המחיר נכון לרגע החיפוש ועשוי להשתנות; בר יבדוק זמינות ויחזור אליכם, ואין התחייבות שההזמנה תתבצע. אם תחליטו להזמין, התשלום נעשה ישירות מול ספק ההזמנות ולא דרך האתר. שום דבר לא מחויב עכשיו.':'בר יחזור אליכם עם הצעות מחיר. שום דבר לא מחויב עכשיו.'}</p>
-    <p class="note" style="font-size:13px">הפרטים נשלחים לבר רק כדי לטפל בבקשה. <a href="https://barusik.com/he/privacy/" target="_blank" rel="noopener">מדיניות פרטיות</a></p>
+    ${field(o.free?'מה מחפשים? (יעד, תאריכים, כמה אנשים, תקציב)':'הערות לבר (לא חובה)',`<textarea id="bt" maxlength="1500" ${o.free?'required':''} placeholder="${o.free?'למשל: זוג לדובאי ביוני, מלון 5 כוכבים, תקציב 7,000₪':'מזוודות, גילאי ילדים, דלת מקשרת, כשרות, שעות טיסה מועדפות…'}"></textarea>`)}
+    <p class="note" style="font-size:13.5px">${o.price?'זו בקשה ולא הזמנה. המחיר נכון לרגע החיפוש ועשוי להשתנות; בר יבדוק זמינות ויחזור אליכם. אם תחליטו להזמין, התשלום נעשה ישירות מול ספק ההזמנות ולא דרך האתר.':'הבדיקה חינם וללא התחייבות. בר יחזור אליכם בוואטסאפ עם הצעות מותאמות. התשלום מתבצע רק אם תאשרו, ישירות מול ספק ההזמנות.'}</p>
+    <p class="note" style="font-size:12.5px">הפרטים נשלחים לבר רק כדי לטפל בבקשה. <a href="https://barusik.com/he/privacy/" target="_blank" rel="noopener">מדיניות פרטיות</a></p>
     <p class="err" id="bx" role="alert"></p>
-    <button class="go">שליחת הבקשה לבר</button></form>`;
+    <button class="go">שליחת הבקשה לבר</button>
+  </form>`;
   dlg.showModal();setTimeout(()=>$('#bn').focus(),30);
-  $('#bf').onsubmit=async e=>{e.preventDefault();
+  $('#bf').onsubmit=async e=>{
+    e.preventDefault();
     const name=$('#bn').value.trim(),phone=$('#bp').value.trim(),email=$('#be').value.trim(),notes=$('#bt').value.trim();
     const er=name.length<2?'כתבו שם':phone.replace(/\D/g,'').length<9?'כתבו מספר טלפון תקין':email&&!/^\S+@\S+\.\S+$/.test(email)?'המייל לא תקין':o.free&&notes.length<3?'כתבו מה אתם מחפשים':'';
     $('#bx').textContent=er;if(er)return;
     const btn=e.target.querySelector('.go');btn.disabled=true;btn.textContent='שולח…';
     const details={title:o.pick?`${o.pick} · ${o.title}`:o.title,search:o.search,lines:(o.lines||[]).slice(0,40).map(l=>String(l).slice(0,160)),customer_price:o.price||null,link:o.link||null};
-    let error=null;try{const sb=await client();({error}=await sb.from('travel_requests').insert({kind:o.kind,details,name,phone,email:email||null,notes:notes||null,lang:'he'}))}catch(x){error=x}
-    const msg=`היי בר, שלחתי באתר בקשה:\n${details.title}${o.search?'\n'+o.search:''}${o.price?`\nמחיר: ₪${nf(o.price)}`:''}${o.free?'\n'+notes:''}\nשם: ${name}`;
+    let error=null;
+    try{const sb=await client();({error}=await sb.from('travel_requests').insert({kind:k,details,name,phone,email:email||null,notes:notes||null,lang:'he'}))}catch(x){error=x}
+    const msg=`היי בר, שלחתי באתר בקשה:\n${details.title}${o.search?'\n'+o.search:''}${o.price?`\nמחיר: ₪${nf(o.price)}`:''}${(o.lines&&o.lines.length&&!o.price)?'\n'+o.lines.slice(0,4).join('\n'):''}${notes?'\nהערות: '+notes:''}\nשם: ${name}`;
     const waL=`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`;
     $('#dlgc').innerHTML=error
       ?`<div class="okmsg"><h2 id="dlgh" tabindex="-1">משהו השתבש בשליחה</h2><p>הבקשה לא נשמרה. אפשר לשלוח אותה לבר ישירות בוואטסאפ — הכל כבר כתוב:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`
-      :`<div class="okmsg"><div style="font-size:44px" aria-hidden="true">✈️</div><h2 id="dlgh" tabindex="-1">הבקשה נשלחה לבר</h2><p>${o.price?'בר יבדוק זמינות ויחזור אליכם':'בר יחפש בשבילכם ויחזור אליכם עם הצעה'} למספר <span dir="ltr" style="white-space:nowrap">${esc(phone)}</span>. זו עדיין לא הזמנה.<br>רוצים לזרז? שלחו לו הודעה:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`;
+      :`<div class="okmsg"><div style="font-size:44px" aria-hidden="true">✈️</div><h2 id="dlgh" tabindex="-1">הבקשה נשלחה לבר!</h2><p>בר בודק עבורכם במערכות הסוכנים ויחזור למספר <span dir="ltr" style="white-space:nowrap">${esc(phone)}</span>. שום דבר אינו מחויב.<br>רוצים לקבל תשובה מהר יותר? שלחו לו הודעה מוכנה:</p><a class="wa" href="${waL}" target="_blank" rel="noopener">שליחה בוואטסאפ</a></div>`;
     $('#dlgh').focus();
   };
 }
 $('#dlgx').onclick=()=>$('#dlg').close();
 $('#dlg').addEventListener('click',e=>{if(e.target===$('#dlg'))$('#dlg').close()});
 
-// ---------- laptop status ----------
+// Hero & Nav shortcuts
+$('#hero-beat').onclick=()=>goTab('beat',true);
+$('#mb-beat').onclick=()=>goTab('beat',true);
+$('#nav-beat').onclick=e=>{e.preventDefault();goTab('beat',true)};
+
+// ---------- Live Server Health ----------
+function updatePill(){
+  const p=$('#live-pill'),t=$('#live-pill-t');
+  if(!p||!t)return;
+  if(ONLINE){p.classList.add('on');t.textContent='חיפוש חי פעיל'}
+  else{p.classList.remove('on');t.textContent='ייעוץ אישי זמין'}
+}
 async function health(){
-  ONLINE=await online();
-  // never pull a form from under someone who is typing: it switches on the next check
+  ONLINE=await online();updatePill();
   const a=document.activeElement,typing=(a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&$('#panel').contains(a))||$('#dlg').open;
-  if(ONLINE!==SHOWN_MODE&&!typing)panel();
+  if(ONLINE!==SHOWN_MODE&&!typing&&TAB!=='beat')panel();
   setTimeout(health,ONLINE?60000:15000);
 }
-tabs();panel();health();
+tabs();panel();renderMatcher();renderDests();health();
 })();
 </script>
-<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=1.0.0').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=2.0.0').catch(()=>{}));</script>
 <script src="/lib/app.js?v=1" data-app="tr" defer></script>
 </body>
 </html>
