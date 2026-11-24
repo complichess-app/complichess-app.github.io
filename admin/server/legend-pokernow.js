@@ -425,7 +425,9 @@
 #blg .bsp{display:flex;align-items:center;gap:6px;min-width:0}#blg .bsp small{font-size:11px;color:#a9b4ad;white-space:nowrap}
 #blg input[type=range]{flex:1;min-width:60px;accent-color:#f1c66b;height:24px;margin:0}
 #blg .bv{font-size:12px;white-space:nowrap;color:#f1c66b;min-width:70px;text-align:center;font-weight:600}
-#blg .bpre{grid-column:span 3;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer}
+#blg .bpre{grid-column:span 3;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:12px;cursor:pointer}
+#blg.smart .bopt{opacity:.35;pointer-events:none}
+#blg .bsw.sm.smart.on{background:#f1c66b}
 #blg .bnotes{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;margin-top:2px}#blg .bnotes:empty{display:none}
 #blg .bnote{display:flex;gap:6px;align-items:flex-start;background:rgba(255,120,60,.16);border:1px solid rgba(255,140,80,.5);border-radius:10px;padding:5px 8px;font-size:12px;line-height:1.35}
 #blg .bnote small{color:#a9b4ad;white-space:nowrap}#blg .bnote span{flex:1}#blg .bnote button{border:0;background:none;color:#f3efe4;cursor:pointer;font-size:14px;padding:0 2px}
@@ -440,12 +442,12 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   const bluffTxt = (v) => (Math.abs(v) < 0.01 ? 'רגיל' : `${fx(v)}× ${v > 0 ? 'יותר' : 'פחות'}`);
   const bar = document.createElement('div');
   bar.id = 'blg'; bar.className = 'hide';
-  const row = (k, lo, hi, txt, lab) => `<span class="bk2">${lab}</span><span class="bsp" dir="ltr"><small>${lo}</small><input type="range" data-k="${k}" min="-1" max="1" step="0.125" value="${CFG[k] || 0}" aria-label="${lab}"><small>${hi}</small></span><b class="bv" data-v="${k}">${txt(CFG[k] || 0)}</b>`;
+  const row = (k, lo, hi, txt, lab, cls = '') => `<span class="bk2 ${cls}">${lab}</span><span class="bsp ${cls}" dir="ltr"><small>${lo}</small><input type="range" data-k="${k}" min="-1" max="1" step="0.125" value="${CFG[k] || 0}" aria-label="${lab}"><small>${hi}</small></span><b class="bv ${cls}" data-v="${k}">${txt(CFG[k] || 0)}</b>`;
   bar.innerHTML = `<button type="button" class="bsw" role="switch" data-on aria-label="הבוט האגדי"><i></i></button>
     <span class="bl" title="הבוט האגדי · אפשר לגרור">🤖</span>${row('speed', 'איטי', 'מהיר', speedTxt, 'מהירות')}
-    <span></span><span></span><div class="bpre"><button type="button" class="bsw sm" role="switch" data-pre aria-label="רייזים לפני הפלופ"><i></i></button>רייזים לפני הפלופ<button type="button" class="bsw sm" role="switch" data-show aria-label="להראות קלפים בסוף יד" style="margin-inline-start:10px"><i></i></button>להראות קלפים</div>
-    <span></span><span></span>${row('size', 'קטן', 'גדול', sizeTxt, 'גודל הימור')}
-    <span></span><span></span>${row('bluff', 'פחות', 'יותר', bluffTxt, 'בלופים')}
+    <span></span><span></span><div class="bpre"><button type="button" class="bsw sm smart" role="switch" data-smart aria-label="מצב חכם"><i></i></button><b style="color:#f1c66b">🧠 מצב חכם</b><button type="button" class="bsw sm" role="switch" data-pre aria-label="רייזים לפני הפלופ" style="margin-inline-start:6px"><i></i></button>לפני פלופ<button type="button" class="bsw sm" role="switch" data-show aria-label="להראות קלפים בסוף יד" style="margin-inline-start:6px"><i></i></button>קלפים</div>
+    <span></span><span></span>${row('size', 'קטן', 'גדול', sizeTxt, 'גודל הימור', 'bopt')}
+    <span></span><span></span>${row('bluff', 'פחות', 'יותר', bluffTxt, 'בלופים', 'bopt')}
     <div class="bnotes" aria-live="polite"></div>`;
   document.body.appendChild(bar);
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -461,12 +463,17 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
   }
   drawNotes();
   const paint = () => {
-    const a = $('[data-on]', bar), b = $('[data-pre]', bar), c = $('[data-show]', bar);
+    const a = $('[data-on]', bar), b = $('[data-pre]', bar), c = $('[data-show]', bar), sm = $('[data-smart]', bar);
     c.classList.toggle('on', !!CFG.show); c.setAttribute('aria-checked', String(!!CFG.show));
     a.classList.toggle('on', CFG.on); a.setAttribute('aria-checked', String(CFG.on));
     b.classList.toggle('on', CFG.pre !== false); b.setAttribute('aria-checked', String(CFG.pre !== false));
+    sm.classList.toggle('on', !!CFG.smart); sm.setAttribute('aria-checked', String(!!CFG.smart));
+    bar.classList.toggle('smart', !!CFG.smart);
+    $('[data-v=size]', bar).textContent = CFG.smart ? 'אוטומטי' : sizeTxt(CFG.size || 0);
+    $('[data-v=bluff]', bar).textContent = CFG.smart ? 'אוטומטי' : bluffTxt(CFG.bluff || 0);
   };
   $('[data-on]', bar).onclick = () => { CFG.on = !CFG.on; save(); paint(); S.sig = ''; };
+  $('[data-smart]', bar).onclick = (e) => { e.preventDefault(); CFG.smart = !CFG.smart; save(); paint(); };
   $('[data-pre]', bar).onclick = (e) => { e.preventDefault(); CFG.pre = CFG.pre === false; save(); paint(); };
   $('[data-show]', bar).onclick = (e) => { e.preventDefault(); CFG.show = !CFG.show; save(); paint(); };
   $$('input[type=range]', bar).forEach((rg) => {
@@ -529,8 +536,10 @@ body.blg-alarm::after{content:"";position:fixed;inset:0;pointer-events:none;z-in
       let line = null;
       if (sp.board.length >= 3 && sp.names.length === 1) { await pullLog(S.at); try { line = handLine(sp.names[0], sp.hole); } catch (_e) { line = null; } }
       S.line = line;
-      // decide during the pause: the longer the pause, the more deals it runs (Omaha with 5 cards needs them)
-      const move = P.legend(sp.t, sp.seat, Math.max(250, Math.min(2500, wait * 0.6)), Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: Math.pow(X, CFG.bluff || 0) * oppBluff(sp.names), fold: foldRate(sp.names), line });
+      // decide during the pause: the longer the pause, the more deals it runs (Omaha with 5 cards needs them); smart mode uses extra CPU and ignores size/bluff sliders
+      const smart = !!CFG.smart;
+      const budget = smart ? Math.max(700, Math.min(3500, wait * 0.78)) : Math.max(250, Math.min(2500, wait * 0.6));
+      const move = P.legend(sp.t, sp.seat, budget, smart ? 1 : Math.pow(X, CFG.size || 0), { ...tableStyle(sp.names), noPre: CFG.pre === false, bluff: smart ? 1 : Math.pow(X, CFG.bluff || 0) * oppBluff(sp.names), fold: foldRate(sp.names), smart, line });
       while (Date.now() < until && CFG.on) {
         if (!lateAlready && extraTime()) { const took = Date.now() - S.at; if (took > 3000 && took < (CFG.turnMs || 15000)) { CFG.turnMs = took; save(); } break; }
         await sleep(200);

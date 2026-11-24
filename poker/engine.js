@@ -741,6 +741,78 @@
     }
     return sum / n;
   }
+  // Smart Mode (heads-up postflop): deeper Monte Carlo that tracks opponent hand rank on every sample so we can compute
+  // the exact Expected Value of check / half-pot / pot / call / raise against the opponent's line & fold tendencies.
+  function smartEval(t, seat, ms, wide, line, foldRate, reraised) {
+    const p = t.seats[seat], hole = p.cards, board = t.board, hc = hole.length;
+    const opps = t.inHand().filter((q) => q !== p);
+    if (opps.length !== 1 || board.length < 3 || hiLo(t.game)) return null;
+    const used = new Set([...hole, ...board]);
+    const d = []; for (let c = 0; c < 52; c++) if (!used.has(c)) d.push(c);
+    const need = 5 - board.length, bb = Math.max(1, t.bb || 1), late = board.length === 5;
+    const wf = Math.max(0.5, Math.min(2, wide || 1));
+    const k0 = Math.max(0.1, Math.min(0.92, 0.92 - 0.16 * Math.log2(Math.max(1, (opps[0].total || 0) / bb))));
+    const keep = Math.min(0.97, 1 - (1 - k0) / wf);
+    const randHand = (src) => { for (let i = 0; i < hc; i++) { const j = i + Math.floor(rand() * (src.length - i)); const x = src[i]; src[i] = src[j]; src[j] = x; } return src.slice(0, hc); };
+    const ranker = (b) => {
+      const xs = [], src = d.slice();
+      for (let k = 0; k < 280; k++) xs.push(value(randHand(src), b));
+      xs.sort((x, y) => x - y);
+      return (v) => { let lo = 0, hi = xs.length; while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; } let up = lo; while (up < xs.length && xs[up] === v) up++; return (lo + up) / 2 / xs.length; };
+    };
+    const lr = ranker(board);
+    let fits = null;
+    if (line && line.length) {
+      const rk = {};
+      for (const L of line) if (L.n >= 3 && L.n <= board.length && !rk[L.n]) rk[L.n] = L.n === board.length ? lr : ranker(board.slice(0, L.n));
+      const cand = [], src = d.slice();
+      for (let k = 0; k < 1600 && cand.length < 320; k++) {
+        const h = randHand(src);
+        let ok = true;
+        for (const L of line) { const f = rk[L.n]; if (!f) continue; const r = f(value(h, board.slice(0, L.n))); if ((L.min != null && r < L.min) || (L.max != null && r > L.max)) { ok = false; break; } }
+        if (ok) cand.push([h, lr(value(h, board))]);
+      }
+      if (cand.length >= 15) fits = cand;
+    }
+    // Opponent calling cutoffs on current street's board rank, calibrated from observed foldRate
+    const bf = Math.max(0.15, Math.min(0.65, foldRate ?? 0.38));
+    const cut50 = Math.max(0.15, Math.min(0.55, bf * 0.85));
+    const cut100 = Math.max(0.25, Math.min(0.68, bf * 1.25));
+    const cutR = reraised ? 0.86 : Math.max(0.45, Math.min(0.82, bf * 1.55));
+    const minIt = hc > 2 ? 260 : 500, maxIt = hc > 2 ? 1400 : 3500, t0 = Date.now();
+    let n = 0, sum = 0, pos = 0;
+    let c50 = 0, w50 = 0, c100 = 0, w100 = 0, cR = 0, wR = 0;
+    const take = () => { const j = pos + Math.floor(rand() * (d.length - pos)); const x = d[j]; d[j] = d[pos]; d[pos] = x; return d[pos++]; };
+    while (n < maxIt && (n < minIt || Date.now() - t0 < ms)) {
+      pos = 0;
+      let h, hr;
+      if (fits) {
+        const pick = fits[Math.floor(rand() * fits.length)];
+        h = pick[0]; hr = pick[1];
+      } else {
+        for (let tries = 0; ; tries++) {
+          const start = pos; h = []; for (let k = 0; k < hc; k++) h.push(take());
+          hr = lr(value(h, board));
+          if (tries >= 20 || hr >= 1 - keep || rand() < (late ? 0.04 : 0.18)) break;
+          pos = start;
+        }
+      }
+      const full = board.slice();
+      while (full.length < 5) { const c = take(); if (!h.includes(c)) full.push(c); }
+      const a = value(hole, full), b = value(h, full);
+      const win = a > b ? 1 : a === b ? 0.5 : 0;
+      sum += win; n++;
+      if (hr >= cut50) { c50++; w50 += win; }
+      if (hr >= cut100) { c100++; w100 += win; }
+      if (hr >= cutR) { cR++; wR += win; }
+    }
+    return {
+      eq: sum / n,
+      f50: 1 - c50 / n, eq50: c50 ? w50 / c50 : 1,
+      f100: 1 - c100 / n, eq100: c100 ? w100 / c100 : 1,
+      fR: 1 - cR / n, eqR: cR ? wR / cR : 1,
+    };
+  }
   // size: its owner's taste in bets, 1/3 (a third of the usual) to 3 (three times); all-in stays all-in.
   // opts.noPre: never raise before the flop (call, check or fold instead).
   // opts.aggr / opts.sizeF: the opponents' own style (1 = ordinary); the bot leans a third of the way toward it, so it plays like the table
@@ -750,12 +822,6 @@
     const omaha = p.cards.length > 2, street = t.board.length, bb = Math.max(1, t.bb || 1);
     const opps = t.inHand().length - 1;
     const pot = t.pot(), after = pot + o.toCall;
-    // opts.wide / opts.wideVsBet: how wide the opponents' range is, from what was learned about them (1 = as usual);
-    // wideVsBet is used when they bet or raised into us (a passive player who suddenly bets has it)
-    const eq = potShare(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1), opts.line);
-    const fair = 1 / (opps + 1), strength = eq / fair;
-    const price = o.toCall / (after || 1);
-    const r = rand();
     const behindStack = p.chips - o.call;
     const committed = behindStack < after * 0.3;      // so little left that folding later makes no sense
     // every raise is a round number: a multiple of twice the small blind (sb 100: 400 or 600, never 500); all-in is all-in
@@ -767,6 +833,58 @@
       return v;
     };
     const potRaise = (frac) => to(t.currentBet + Math.max(bb, after * frac));
+    // opts.wide / opts.wideVsBet: how wide the opponents' range is, from what was learned about them (1 = as usual);
+    // wideVsBet is used when they bet or raised into us (a passive player who suddenly bets has it)
+    // Smart Mode: ignore size/bluff sliders and choose the mathematically highest-EV action
+    if (opts.smart && street >= 3 && opps === 1 && !hiLo(t.game)) {
+      const river = street === 5, foldRate = opts.fold ?? 0.38;
+      const betFrac = o.toCall / Math.max(1, pot - o.toCall);
+      const small = o.toCall > 0 && betFrac <= 0.35, tiny = o.toCall > 0 && betFrac <= 0.2;
+      const reraised = (p.bet || 0) > 0 && o.toCall > 0;
+      const ev = smartEval(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1), opts.line, foldRate, reraised);
+      if (ev) {
+        const sRaise = (x) => (!o.raise ? (o.check ? { type: 'check' } : { type: 'call' }) : { type: 'raise', to: Math.max(o.minTo, Math.min(o.maxTo, x)) });
+        if (o.check) {
+          const evCheck = ev.eq * pot * (river ? 1.0 : 0.97);
+          let bestAct = { type: 'check' }, bestEV = evCheck;
+          if (o.raise) {
+            const to50 = potRaise(0.55), b50 = Math.max(1, to50 - t.currentBet);
+            const ev50 = ev.f50 * pot + (1 - ev.f50) * (ev.eq50 * (pot + 2 * b50) - b50);
+            const to100 = potRaise(0.95), b100 = Math.max(1, to100 - t.currentBet);
+            const ev100 = ev.f100 * pot + (1 - ev.f100) * (ev.eq100 * (pot + 2 * b100) - b100);
+            // require a small edge (+2% pot) to bet over checking to avoid spewing on noise
+            if (ev50 > bestEV + pot * 0.02) { bestEV = ev50; bestAct = sRaise(to50); }
+            if (ev100 > bestEV + pot * 0.01) { bestEV = ev100; bestAct = sRaise(to100); }
+          }
+          return bestAct;
+        }
+        // facing a bet or raise
+        let eqC = ev.eq;
+        if (small && opts.line) eqC = Math.max(ev.eq, 0.5 * ev.eq + 0.5 * potShare(t, seat, Math.max(50, ms * 0.25), opts.wide ?? 1, null));
+        const callEdge = small ? (tiny ? 0.14 : 0.06) : river ? (reraised ? -0.07 : -0.01) : 0.03;
+        const evFold = 0;
+        const evCall = (eqC + callEdge) * after - o.toCall;
+        let bestAct = evCall >= evFold ? { type: 'call' } : { type: 'fold' };
+        let bestEV = Math.max(evFold, evCall);
+        if (o.raise) {
+          const rTo = committed ? o.maxTo : to(Math.max(t.currentBet * 2.8, t.currentBet + after * 0.95));
+          const rAdd = Math.max(1, rTo - p.bet);
+          const extra = Math.max(0, rAdd - o.toCall);
+          // when already re-raised or facing a river pot-bet, only re-raise with genuine edge vs his calling range
+          const safeRaise = (!reraised || ev.eqR > 0.72) && (!(river && betFrac >= 0.75) || ev.eqR > 0.68);
+          if (safeRaise) {
+            const evRaise = ev.fR * pot + (1 - ev.fR) * (ev.eqR * (after + 2 * extra) - rAdd);
+            if (evRaise > bestEV + pot * 0.03) { bestEV = evRaise; bestAct = sRaise(rTo); }
+          }
+        }
+        return bestAct;
+      }
+    }
+
+    const eq = potShare(t, seat, ms, o.toCall > 0 ? (opts.wideVsBet ?? opts.wide ?? 1) : (opts.wide ?? 1), opts.line);
+    const fair = 1 / (opps + 1), strength = eq / fair;
+    const price = o.toCall / (after || 1);
+    const r = rand();
     const raise = (x) => (!o.raise || (opts.noPre && street === 0) ? (o.check ? { type: 'check' } : { type: 'call' }) : { type: 'raise', to: x >= o.maxTo || sz === 1 ? x : to(t.currentBet + (x - t.currentBet) * sz) });
     const callOrFold = (edge) => (o.check ? { type: 'check' } : eq + edge >= price ? { type: 'call' } : { type: 'fold' });
     const tight = omaha ? 0.82 : 1; // omaha hands run closer together
