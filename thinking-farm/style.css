@@ -49,8 +49,16 @@ main { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; padding
 .stop::after { content: ''; position: absolute; inset-inline: 6px; bottom: 5px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--cy), var(--mag)); transform-origin: right; transform: scaleX(var(--p, 0)); opacity: .9; }
 .stop.cur { border-color: rgba(255, 255, 255, .55); color: var(--ink); box-shadow: 0 0 0 3px rgba(123, 92, 255, .35), 0 0 22px rgba(255, 79, 216, .35); }
 .stop.solved { background: linear-gradient(160deg, rgba(255, 200, 87, .32), rgba(255, 79, 216, .22)); color: #fff; border-color: rgba(255, 200, 87, .6); }
-.stop.solved::after, .stop.gave::after { display: none; }
+.stop.miss { background: rgba(255, 107, 139, .12); color: var(--mute); border-color: rgba(255, 107, 139, .32); }
+.stop.solved::after, .stop.gave::after, .stop.miss::after { display: none; }
 .stop.gave { background: rgba(255, 255, 255, .03); color: var(--dim); text-decoration: line-through; }
+.tot { color: var(--gold); }
+.tier-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 12px; border-radius: 999px; font-weight: 700; font-size: 13.5px; background: rgba(255, 255, 255, .09); border: 1px solid var(--line); }
+.tier-pill.leg { color: #ff8ae2; border-color: rgba(255, 79, 216, .55); background: rgba(255, 79, 216, .18); }
+.tier-pill.rare { color: var(--gold); border-color: rgba(255, 200, 87, .55); background: rgba(255, 200, 87, .16); }
+.tier-pill.mid { color: var(--ok); border-color: rgba(124, 255, 178, .45); background: rgba(124, 255, 178, .12); }
+.tier-pill.com { color: var(--cy); border-color: rgba(63, 224, 255, .4); background: rgba(63, 224, 255, .1); }
+.best-hit { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 14px; margin: 10px 0 4px; border-radius: 14px; background: linear-gradient(135deg, rgba(123, 92, 255, .2), rgba(255, 79, 216, .16)); border: 1px solid rgba(255, 79, 216, .35); font-size: 15px; }
 
 .card { background: var(--glass); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 20px 60px -30px #000; }
 .card + .card { margin-top: 12px; }

@@ -105,7 +105,9 @@
     }
     return 'rgb(255,46,136)';
   };
-  const tier = (s) => (s == null ? 'לא ברשימה' : s >= 80 ? 'אגדי' : s >= 55 ? 'נדיר' : s >= 30 ? 'לא שגרתי' : 'נפוץ');
+  const tier = (s) => (s == null ? 'לא ברשימה' : s >= 80 ? 'אגדי ✨' : s >= 55 ? 'נדיר 🔥' : s >= 30 ? 'לא שגרתי' : 'נפוץ');
+  const tierClass = (s) => (s == null ? 'none' : s >= 80 ? 'leg' : s >= 55 ? 'rare' : s >= 30 ? 'mid' : 'com');
+  const totalPoints = () => (S && S.questions ? S.questions.reduce((a, q) => a + (q.best || 0), 0) : 0);
   const isList = (q) => q.kind === 'list';
   const timed = (q) => isList(q) && q.secs != null;          // topic questions against the clock (older servers: 3 answers)
   const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / (timed(q) ? 99 : 150)) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
@@ -180,8 +182,11 @@
   }
   function pathHTML() {
     return `<nav class="path" aria-label="עשר השאלות של היום">
-        ${S.questions.map((x, i) => `<button type="button" class="stop ${x.status} ${i === cur ? 'cur' : ''} ${isList(x) ? 'lst' : ''}" data-q="${i}" style="--p:${heatOf(x)}"
-          aria-label="שאלה ${i + 1}, ${isList(x) ? (x.status === 'solved' ? 'הסתיימה, ' + (x.best || 0) + ' נקודות' : 'שאלת רשימה') : x.status === 'solved' ? 'נמצאה' : x.status === 'gave' ? 'ויתרת' : x.best ? 'הכי קרוב ' + x.best : 'פתוחה'}" ${i === cur ? 'aria-current="step"' : ''}>${i + 1}</button>`).join('')}
+        ${S.questions.map((x, i) => {
+          const missed = isList(x) && x.status === 'solved' && !(x.best > 0);
+          return `<button type="button" class="stop ${missed ? 'miss' : x.status} ${i === cur ? 'cur' : ''} ${isList(x) ? 'lst' : ''}" data-q="${i}" style="--p:${heatOf(x)}"
+          aria-label="שאלה ${i + 1}, ${isList(x) ? (x.status === 'solved' ? 'הסתיימה, ' + (x.best || 0) + ' נקודות' : 'שאלת נושא') : x.status === 'solved' ? 'נמצאה' : x.status === 'gave' ? 'ויתרת' : x.best ? 'הכי קרוב ' + x.best : 'פתוחה'}" ${i === cur ? 'aria-current="step"' : ''}>${i + 1}</button>`;
+        }).join('')}
       </nav>`;
   }
   // a topic question: name things that belong; each right answer adds its points, rarer is worth more
@@ -222,15 +227,17 @@
   }
   function drawTimed(q) {
     const done = q.status !== 'open', running = !done && q.started, left = secsLeft(cur) ?? q.secs;
-    const right = (q.guesses || []).filter((g) => g.s != null).length;
+    const hit = (q.guesses || []).find((g) => g.s != null) || null;
+    const tot = totalPoints();
     app.innerHTML = `
       <section class="stage" aria-label="המצב בשאלה">
-        <div class="qnum">${S.practice ? 'אימון · ' : ''}שאלה <b>${cur + 1}</b> מתוך ${S.questions.length}</div>
+        <div class="qnum">${S.practice ? 'אימון · ' : ''}שאלה <b>${cur + 1}</b> מתוך ${S.questions.length}${tot ? ` · <b class="tot">${tot} נק׳</b>` : ''}</div>
         ${running ? `<div class="heat clock ${left <= 10 ? 'low' : ''}" id="clock" role="timer" aria-label="שניות שנותרו">${left}</div>
           <div class="tbar" aria-hidden="true"><i id="tbar" style="--w:${(100 * left) / q.secs}%"></i></div>
           <div class="heatlab">תשובה אחת · נדירה שווה יותר</div>`
-        : done ? `<div class="heat" style="color:${color(Math.min(99, (q.best || 0) / 3) || null)}">${q.best ? `<bdi dir="ltr">+${q.best}</bdi>` : '0'}</div><div class="heatlab">${(q.guesses || []).length ? (right ? tier((q.guesses.find((g) => g.s != null) || {}).s) : 'לא ברשימה') : 'הזמן נגמר'}</div>`
-        : `<div class="heat" style="color:var(--cy)">⏱ ${q.secs}</div><div class="heatlab">שניות לשאלה הזאת</div>`}
+        : done ? `<div class="heat" style="color:${color(q.best || null)}">${q.best ? `<bdi dir="ltr">+${q.best}</bdi>` : '0'}</div>
+          <div class="heatlab">${(q.guesses || []).length ? (hit ? `<span class="tier-pill ${tierClass(hit.s)}">${tier(hit.s)}</span>` : 'לא ברשימה') : 'נגמר הזמן'}</div>`
+        : `<div class="heat" style="color:var(--cy)">⏱ ${q.secs}</div><div class="heatlab">שניות לתשובה אחת · נדירה שווה יותר</div>`}
       </section>
       ${pathHTML()}
       <section class="card" aria-labelledby="qh">
@@ -408,19 +415,37 @@
   }
 
   let countdownTimer = 0;
+  function bestAnswerOfDay() {
+    let best = null;
+    for (const q of S.questions || []) {
+      if (!isList(q)) continue;
+      for (const g of q.guesses || []) {
+        if (g.s != null && (!best || g.s > best.s)) best = { w: g.f || g.w, s: g.s, prompt: q.prompt };
+      }
+    }
+    return best;
+  }
   function drawDone() {
     document.getElementById('dock')?.remove(); document.body.classList.remove('play');
     const r = S.result || {}, grid = r.grid || [];
+    const allTopic = S.questions.every(isList);
+    const pts = r.points ?? totalPoints();
+    const hits = S.questions.filter((q) => (q.best || 0) > 0).length;
+    const rares = S.questions.filter((q) => (q.best || 0) >= 55).length;
+    const topAns = bestAnswerOfDay();
     $('#dayLabel').textContent = (S.practice ? 'אימון · ' : '') + dayText(S.day);
     app.innerHTML = `
-      <section class="stage"><div class="solvedword">${r.points || 0} נקודות</div><div class="heatlab">סיימת את המשחק של היום</div></section>
+      <section class="stage"><div class="solvedword">${pts} נקודות</div><div class="heatlab">${S.title ? esc(S.title) + ' · ' : ''}סיימת את המשחק של היום</div></section>
       <section class="card done">
-        <h2>הפורטל של היום</h2>
-        <div class="kv"><div><b>${S.questions.filter((q) => !isList(q) && q.status === 'solved').length}/${S.questions.filter((q) => !isList(q)).length}</b><small>מילים סודיות שמצאת</small></div><div><b>${r.guesses ?? 0}</b><small>ניחושים</small></div><div><b>${r.points ?? 0}</b><small>נקודות</small></div></div>
-        <div class="grid10">${S.questions.map((q, i) => `<button type="button" class="cell ${q.status}" data-q="${i}"><b>${isList(q) ? `<bdi dir="ltr">+${q.best || 0}</bdi>` : esc(q.word || '?')}</b><small>${isList(q) ? esc(shortPrompt(q.prompt)) : q.status === 'solved' ? guessesText(grid[i]?.guesses) : 'ויתרת'}</small></button>`).join('')}</div>
+        <h2>הסיכום שלך היום</h2>
+        ${allTopic
+          ? `<div class="kv"><div><b>${hits}/${S.questions.length}</b><small>תשובות נכונות</small></div><div><b>${rares}</b><small>נדירות (55+)</small></div><div><b>${Math.round(pts / Math.max(1, S.questions.length))}</b><small>ממוצע לשאלה</small></div></div>`
+          : `<div class="kv"><div><b>${S.questions.filter((q) => !isList(q) && q.status === 'solved').length}/${S.questions.filter((q) => !isList(q)).length}</b><small>מילים סודיות שמצאת</small></div><div><b>${r.guesses ?? 0}</b><small>ניחושים</small></div><div><b>${pts}</b><small>נקודות</small></div></div>`}
+        ${topAns ? `<div class="best-hit"><span>הברקת היום: <b>${esc(topAns.w)}</b></span><span class="tier-pill ${tierClass(topAns.s)}"><bdi dir="ltr">+${topAns.s}</bdi> · ${tier(topAns.s)}</span></div>` : ''}
+        <div class="grid10">${S.questions.map((q, i) => `<button type="button" class="cell ${isList(q) ? ((q.best || 0) > 0 ? 'solved' : 'gave') : q.status}" data-q="${i}"><b>${isList(q) ? `<bdi dir="ltr" style="color:${color(q.best || null)}">${q.best ? '+' + q.best : '0'}</bdi>` : esc(q.word || '?')}</b><small>${isList(q) ? esc(shortPrompt(q.prompt)) : q.status === 'solved' ? guessesText(grid[i]?.guesses) : 'ויתרת'}</small></button>`).join('')}</div>
         <div class="row"><button class="btn main" type="button" id="shareBtn">שיתוף התוצאה</button><button class="btn" type="button" id="archBtn">משחקים קודמים</button><span id="stats" class="cat"></span></div>
       </section>
-      <section class="card"><h2>המשחק הבא בעוד</h2><div class="count" id="count">--:--:--</div><p class="cat">בחצות שעון ישראל נפתח משחק חדש, עם עשר מילים חדשות ופורטל חדש.</p></section>
+      <section class="card"><h2>המשחק הבא בעוד</h2><div class="count" id="count">--:--:--</div><p class="cat">בחצות שעון ישראל נפתח משחק חדש, עם עשר שאלות חשיבה חדשות ופורטל חדש.</p></section>
       <p class="foot-note">התוצאות נשמרות בחשבון. בקרוב הן יעזרו גם בחווה.</p>`;
     app.querySelectorAll('.cell').forEach((b) => b.addEventListener('click', () => review(+b.dataset.q)));
     $('#shareBtn').addEventListener('click', share);
@@ -598,8 +623,16 @@
   async function share() {
     const r = S.result || {};
     const [y, m, d] = S.day.split('-');
-    const line = S.questions.map((q) => (isList(q) ? ((q.best || 0) >= (timed(q) ? 55 : 120) ? '🟪' : (q.best || 0) > 0 ? '🟦' : '⬛') : q.status === 'solved' ? '🟨' : '⬛')).join('');
-    const text = `חוות חשיבה · ${+d}.${+m}\n🌀 ${r.points} נקודות\n${line}\nbarusik.com/thinking-farm`;
+    const pts = r.points ?? totalPoints();
+    const emoji = (q) => {
+      if (!isList(q)) return q.status === 'solved' ? '🟨' : '⬛';
+      const b = q.best || 0;
+      return b >= 80 ? '🟣' : b >= 55 ? '🔵' : b >= 30 ? '🟢' : b > 0 ? '🟡' : '⬛';
+    };
+    const line = S.questions.map(emoji).join('');
+    const top = bestAnswerOfDay();
+    const extraLine = top && top.s >= 55 ? `\n✨ הברקת היום: +${top.s}` : '';
+    const text = `חוות חשיבה · ${+d}.${+m}\n🌀 ${pts} נקודות\n${line}${extraLine}\nbarusik.com/thinking-farm`;
     try { if (navigator.share) { await navigator.share({ text }); return; } } catch { return; }
     try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); } catch { toast(text); }
   }
@@ -666,15 +699,13 @@
   /* ---------------------------------------------------------------- help and settings */
   function openHelp() {
     dialog(`<div class="help"><h2>איך משחקים</h2>
-      <ol><li>בכל יום יש <b>עשר שאלות</b>, אותן שאלות לכל השחקנים.</li>
-      <li><b>שאלת נושא</b>: לוחצים "מתחילים", מופיע נושא, ויש <b>כמה שניות</b> לתשובה <b>אחת</b>. ככל שהתשובה <b>נדירה</b> יותר, היא שווה יותר. שגיאת כתיב קטנה או מילה שלא נגמרה נחשבות.</li>
-      <li><b>מילה סודית</b>: כתבו מילה אחת בעברית ונגיד כמה היא <b>קרובה במשמעות</b> למילה הסודית, לא באותיות. ככל שמתקרבים, הפורטל נפתח. יש עד 3 רמזים, ואפשר לוותר.</li>
-      <li>אפשר לעבור בין השאלות בכל רגע.</li>
-      <li>משחקים פעם אחת ביום. בחצות שעון ישראל מחכה משחק חדש.</li></ol></div>
-      <p>במילה הסודית, הקרבה נמדדת כך:</p>
-      <div class="scale"><span><b style="color:${color(95)}">90–99</b> בוער: כמעט אותו דבר</span><span><b style="color:${color(80)}">75–89</b> חם מאוד: קשר חזק</span><span><b style="color:${color(60)}">55–74</b> חם: קשר ברור</span><span><b style="color:${color(40)}">35–54</b> פושר: אותו עולם</span><span><b style="color:${color(15)}">1–34</b> קריר: קשר רחוק</span><span><b style="color:${color(null)}">רחוק</b> אין קשר שנמצא</span></div>
-      <p>המספר שליד המילה (#12) הוא המקום שלה ברשימת המילים הקרובות.</p>
-      <p>כל משחק נכתב מחדש בכל ערב, יחד עם הפורטל שלו.</p>
+      <ol><li>בכל יום מחכות <b>עשר שאלות חשיבה</b>, אותן שאלות לכל השחקנים.</li>
+      <li>לוחצים <b>"מתחילים"</b>, הנושא נחשף, ויש לכם <b>20 שניות</b> לתשובה <b>אחת</b> בלבד.</li>
+      <li><b>תשובה נדירה שווה הרבה יותר:</b> תשובה שכולם אומרים נותנת מעט נקודות, ותשובה חכמה או מפתיעה קופצת עד 99 נקודות!</li>
+      <li>שגיאת כתיב קטנה, ו/י, גרשיים או מילה שלא הספקתם לסיים — נסלחים אוטומטית.</li>
+      <li>משחקים פעם אחת ביום (ואפשר תמיד לתרגל ב<b>ימים קודמים</b>). בחצות שעון ישראל נפתח משחק חדש ופורטל חדש.</li></ol></div>
+      <p>סולם הניקוד לפי נדירות:</p>
+      <div class="scale"><span><b style="color:${color(90)}">80–99</b> אגדי ✨ — הברקה אמיתית</span><span><b style="color:${color(68)}">55–79</b> נדיר 🔥 — תשובה חכמה ומקורית</span><span><b style="color:${color(42)}">30–54</b> לא שגרתי — יפה מאוד</span><span><b style="color:${color(15)}">1–29</b> נפוץ — מה שעולה לכולם ראשון</span></div>
       <div class="foot"><button class="btn main" value="ok">יאללה, משחקים</button></div>`);
     store.set('tf.seenHelp', true);
   }
@@ -741,6 +772,12 @@
       $('#retry').addEventListener('click', boot);
     }
   }
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(document.activeElement?.tagName || '')) return;
+    const start = $('#startBtn'), nxt = $('#nextBtn');
+    if (start) { e.preventDefault(); start.click(); }
+    else if (nxt) { e.preventDefault(); nxt.click(); }
+  });
   matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', () => { if (motionPref() === 'auto') { try { portal && portal.destroy(); } catch {} portal = null; loadPortal(); } });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && S && S.ready && S.day !== new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date())) boot(); });
   boot();
