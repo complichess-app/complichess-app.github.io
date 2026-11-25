@@ -244,12 +244,12 @@
         <div class="qhead"><span class="lvl ${q.level}">שאלת נושא · ${LEVEL[q.level] || ''}</span>
           <span class="qact">${done ? nextBtn() : ''}</span></div>
         ${!done && !running ? `<h2 id="qh">מוכנים?</h2>
-          <p class="cat">כשתתחילו יופיע נושא, ויהיו לכם <b>${q.secs} שניות</b> לתשובה <b>אחת</b>. תשובה נכונה ונדירה שווה הרבה יותר מתשובה שכולם חושבים עליה. שגיאת כתיב קטנה נסלחת.</p>
+          <p class="cat">כשתתחילו יופיע נושא, ויהיו לכם <b>${q.secs} שניות</b> לתשובה <b>אחת נכונה</b>. תשובה נדירה שווה הרבה יותר. תשובה לא נכונה לא סוגרת את השאלה — אפשר לנסות שוב עד שתתקבל תשובה או שנגמר הזמן!</p>
           <div class="row"><button class="btn main big" type="button" id="startBtn">▶ מתחילים</button></div>`
         : `<h2 class="prompt" id="qh">${esc(q.prompt || '')}</h2>
           ${q.examples && q.examples.length ? `<p class="cat">למשל: <b>${q.examples.map(esc).join(', ')}</b></p>` : ''}
           ${q.complete ? `<p class="cat">✓ רשימה מלאה: כל תשובה נכונה מתקבלת.</p>` : ''}
-          ${(q.guesses || []).length ? listRows(q, running) : `<p class="empty">${running ? 'תשובה אחת בלבד. כתבו ולחצו שלח!' : 'לא נכתבה תשובה בזמן.'}</p>`}
+          ${(q.guesses || []).length ? listRows(q, running) : `<p class="empty">${running ? 'כתבו תשובה נכונה ולחצו שלח — רק תשובה תקינה ננעלת!' : 'נגמר הזמן לפני שננעלה תשובה.'}</p>`}
           ${done && !S.practice && (q.guesses || []).length && q.guesses[0].s == null ? `<p class="acct"><button type="button" class="linkish" id="repLate">חושבים ש"${esc(q.guesses[0].w)}" נכונה? דווחו לנו</button></p>` : ''}`}
       </section>
       ${complainLink()}
@@ -315,45 +315,48 @@
   }
   function listAnswer(q, raw, w, input) {
     const i = cur;
-    if (q.guesses.length) return;                 // one answer per question
+    if (q.status !== 'open' || q._busy) return;
+    q._busy = true;
     input.value = '';
-    const g = { w, s: null, pending: true, n: q.guesses.length + 1 };
-    q.guesses.push(g); lastWord = w; draw(); input.focus({ preventScroll: true });
+    input.focus({ preventScroll: true });
+    msg(`<div class="info">בודק "${esc(w)}"…</div>`);
     chain = chain.then(async () => {
       try {
         let r;
         if (S.practice) {           // a past game: scored on the server, kept only on this screen
           r = await rpc('tf_practice_guess', { p_day: S.day, p_q: q.q, p_word: w });
-          q._hits = q._hits || new Set();
-          if (r.hit && q._hits.has(r.hit)) r = { dup: true, same: true, fix: r.hit };
-          else { if (r.hit) q._hits.add(r.hit); r.n = q.guesses.length; r.total = r.s || 0; }
+          r.n = q.guesses.length + 1; r.total = r.s || 0;
         } else r = await rpc('tf_guess', { p_day: S.day, p_q: i + 1, p_word: w });
+        if (r.ends_in != null) { const end = Date.now() + r.ends_in * 1000, mine = clocks.get(i); if (mine != null && Math.abs(mine - end) > 1500) clocks.set(i, end); }
         if (r.dup) {
-          q.guesses.splice(q.guesses.indexOf(g), 1); SND('dup');
-          if (i === cur) { draw(); msg(`<div class="info">${r.same ? `"${esc(w)}" זו אותה תשובה כמו ${r.fix ? `"${esc(r.fix)}"` : 'קודם'}.` : `כבר כתבת "${esc(w)}".`}</div>`); }
+          SND('dup');
+          if (i === cur) msg(`<div class="info">${r.same ? `"${esc(w)}" זו אותה תשובה כמו ${r.fix ? `"${esc(r.fix)}"` : 'קודם'}.` : `כבר ניסית "${esc(w)}".`}</div>`);
           return;
         }
-        Object.assign(g, { w: r.w, s: r.s, r: r.r, n: r.n, f: r.fix || null, pending: false });
-        q.best = r.s || 0;
-        if (r.ends_in != null) { const end = Date.now() + r.ends_in * 1000, mine = clocks.get(i); if (mine != null && Math.abs(mine - end) > 1500) clocks.set(i, end); }
-        if (r.s != null) { SND(r.fix ? 'fix' : 'good', r.s); P.heat(heatOf(q)); if (r.s >= 55) { P.solve(); flash(); } } else SND('bad');
-        if (i === cur && q.status === 'open') {
-          draw();
-          if (r.s == null) {
-            rejected = { raw: raw.trim(), w, q: i + 1 };
-            msg(`<div class="bad"><span>"${esc(w)}" לא ברשימה.</span><button type="button" id="repBtn">זו תשובה נכונה? דווחו</button></div>`);
+        // Wazari rule: wrong/unrecognized words NEVER close the question — shake and let the player try again!
+        if (r.s == null) {
+          SND('bad'); shake();
+          rejected = { raw: raw.trim(), w, q: i + 1 };
+          if (i === cur && q.status === 'open') {
+            msg(`<div class="bad"><span>"${esc(w)}" לא התקבלה — נסו תשובה אחרת!</span><button type="button" id="repBtn">חושבים שנכונה? דווחו</button></div>`);
             $('#repBtn')?.addEventListener('click', openReport);
-          } else msg(`<div class="info"><bdi dir="ltr">+${r.s}</bdi> · ${tier(r.s)}${r.fix ? ` · התכוונת ל"${esc(r.fix)}"? נחשב` : ''}</div>`);
+            $('#guess')?.focus({ preventScroll: true });
+          }
+          say(`${w}: לא התקבלה, נסו שוב`);
+          return;
         }
-        say(r.s == null ? `${w}: לא ברשימה` : `${w}: פלוס ${r.s}, ${tier(r.s)}`);
-        const msgNow = $('#msg') ? $('#msg').innerHTML : '';
+        const g = { w: r.w, s: r.s, r: r.r, n: r.n || 1, f: r.fix || null, pending: false };
+        q.guesses.push(g); lastWord = r.w;
+        q.best = r.s;
+        SND(r.fix ? 'fix' : 'good', r.s); P.heat(heatOf(q)); if (r.s >= 55) { P.solve(); flash(); }
+        const okHtml = `<div class="info"><bdi dir="ltr">+${r.s}</bdi> · ${tier(r.s)}${r.fix ? ` · התכוונת ל"${esc(r.fix)}"? נחשב!` : ''}</div>`;
+        say(`${w}: פלוס ${r.s}, ${tier(r.s)}`);
         closeList(i, q.best, r.result || null, false);
-        if (i === cur && msgNow) msg(msgNow);
+        if (i === cur) msg(okHtml);
       } catch (e) {
-        const k = q.guesses.indexOf(g); if (k >= 0 && g.pending) q.guesses.splice(k, 1);
         if (e.code === 'time_up') closeList(i, e.data && e.data.total, e.data && e.data.result, true);
         else { if (i === cur) draw(); onErr(e); }
-      }
+      } finally { q._busy = false; }
     });
   }
 
@@ -388,7 +391,7 @@
   function drawDock(q) {
     let dock = $('#dock');
     if (!dock) { dock = document.createElement('div'); dock.id = 'dock'; dock.className = 'dock'; document.body.appendChild(dock); }
-    if (!S.ready || S.finished || q.status !== 'open' || (timed(q) && ((!q.started && !q._starting) || q.guesses.length))) { dock.innerHTML = ''; dock.hidden = true; return; }
+    if (!S.ready || S.finished || q.status !== 'open' || (timed(q) && (!q.started && !q._starting))) { dock.innerHTML = ''; dock.hidden = true; return; }
     dock.hidden = false;
     if (!$('#guessForm')) {
       dock.innerHTML = `<div class="msg" id="msg" role="status"></div>
@@ -700,7 +703,8 @@
   function openHelp() {
     dialog(`<div class="help"><h2>איך משחקים</h2>
       <ol><li>בכל יום מחכות <b>עשר שאלות חשיבה</b>, אותן שאלות לכל השחקנים.</li>
-      <li>לוחצים <b>"מתחילים"</b>, הנושא נחשף, ויש לכם <b>20 שניות</b> לתשובה <b>אחת</b> בלבד.</li>
+      <li>לוחצים <b>"מתחילים"</b>, הנושא נחשף, ויש לכם <b>20 שניות</b> לנעול תשובה <b>אחת נכונה</b>.</li>
+      <li><b>כמו ווזארי:</b> תשובה לא נכונה לא סוגרת את השאלה — אפשר לנסות שוב ושוב עד שתתקבל תשובה נכונה (או שהזמן ייגמר).</li>
       <li><b>תשובה נדירה שווה הרבה יותר:</b> תשובה שכולם אומרים נותנת מעט נקודות, ותשובה חכמה או מפתיעה קופצת עד 99 נקודות!</li>
       <li>שגיאת כתיב קטנה, ו/י, גרשיים או מילה שלא הספקתם לסיים — נסלחים אוטומטית.</li>
       <li>משחקים פעם אחת ביום (ואפשר תמיד לתרגל ב<b>ימים קודמים</b>). בחצות שעון ישראל נפתח משחק חדש ופורטל חדש.</li></ol></div>
