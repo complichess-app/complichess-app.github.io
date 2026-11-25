@@ -54,11 +54,61 @@ main { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; padding
 .stop.gave { background: rgba(255, 255, 255, .03); color: var(--dim); text-decoration: line-through; }
 .tot { color: var(--gold); }
 .tier-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 12px; border-radius: 999px; font-weight: 700; font-size: 13.5px; background: rgba(255, 255, 255, .09); border: 1px solid var(--line); }
-.tier-pill.leg { color: #ff8ae2; border-color: rgba(255, 79, 216, .55); background: rgba(255, 79, 216, .18); }
+.tier-pill.leg { color: #ff8ae2; border-color: rgba(255, 79, 216, .65); background: rgba(255, 79, 216, .22); box-shadow: 0 0 18px rgba(255, 79, 216, .4); }
+.tier-pill.myth { color: #ff8b6b; border-color: rgba(255, 90, 60, .6); background: rgba(255, 90, 60, .2); box-shadow: 0 0 14px rgba(255, 90, 60, .3); }
 .tier-pill.rare { color: var(--gold); border-color: rgba(255, 200, 87, .55); background: rgba(255, 200, 87, .16); }
 .tier-pill.mid { color: var(--ok); border-color: rgba(124, 255, 178, .45); background: rgba(124, 255, 178, .12); }
 .tier-pill.com { color: var(--cy); border-color: rgba(63, 224, 255, .4); background: rgba(63, 224, 255, .1); }
 .best-hit { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 14px; margin: 10px 0 4px; border-radius: 14px; background: linear-gradient(135deg, rgba(123, 92, 255, .2), rgba(255, 79, 216, .16)); border: 1px solid rgba(255, 79, 216, .35); font-size: 15px; }
+
+/* single-tap next+start button */
+.next-row { margin-top: 12px; justify-content: center; }
+.btn.next-one { width: 100%; font-size: 18px; letter-spacing: .2px; }
+
+/* rarity spectrum graph */
+.rgraph { margin-top: 12px; padding: 10px 12px 12px; border-radius: 14px; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); }
+.rgraph-head { display: flex; justify-content: space-between; font-size: 11px; color: var(--mute); margin-bottom: 14px; }
+.rgraph-track { position: relative; display: flex; height: 10px; border-radius: 999px; overflow: visible; background: rgba(255, 255, 255, .08); }
+.rseg { display: block; height: 100%; opacity: .78; }
+.rseg:first-child { border-start-start-radius: 999px; border-end-start-radius: 999px; }
+.rseg:last-of-type { border-start-end-radius: 999px; border-end-end-radius: 999px; }
+.rseg.com { background: linear-gradient(90deg, #3d6bff, #3fe0ff); }
+.rseg.mid { background: linear-gradient(90deg, #3fe0ff, #7cffb2); }
+.rseg.rare { background: linear-gradient(90deg, #7cffb2, #ffc857); }
+.rseg.myth { background: linear-gradient(90deg, #ffc857, #ff5a3c); }
+.rseg.leg { background: linear-gradient(90deg, #ff5a3c, #ff4fd8); }
+.rpin { position: absolute; top: 50%; transform: translate(50%, -50%); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #140b38; border: 2px solid #fff; box-shadow: 0 0 18px currentColor; animation: pinPop .5s cubic-bezier(.2, 1.4, .4, 1); }
+.rpin b { font: 12px/1 var(--display); color: #fff; direction: ltr; }
+.rpin.com { color: #3fe0ff; border-color: #3fe0ff; }
+.rpin.mid { color: #7cffb2; border-color: #7cffb2; }
+.rpin.rare { color: #ffc857; border-color: #ffc857; }
+.rpin.myth { color: #ff5a3c; border-color: #ff5a3c; }
+.rpin.leg { color: #ff4fd8; border-color: #ff4fd8; box-shadow: 0 0 26px #ff4fd8, 0 0 8px #fff; }
+@keyframes pinPop { from { transform: translate(50%, -50%) scale(.2); opacity: 0; } }
+
+/* card glow by rarity */
+.card.hit-rare { border-color: rgba(255, 200, 87, .45); box-shadow: 0 0 40px -15px rgba(255, 200, 87, .45); }
+.card.hit-myth { border-color: rgba(255, 90, 60, .55); box-shadow: 0 0 50px -12px rgba(255, 90, 60, .55); }
+.card.hit-leg { border-color: rgba(255, 79, 216, .75); box-shadow: 0 0 65px -10px rgba(255, 79, 216, .75); }
+
+/* 5-tier cosmic celebrations */
+.cfx { position: fixed; inset: 0; z-index: 15; pointer-events: none; overflow: hidden; }
+.cfx .cring { position: absolute; left: 50%; top: 30%; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; border: 3px solid var(--c, #3fe0ff); opacity: 0; animation: cring 1.05s cubic-bezier(.15, .8, .3, 1) forwards; }
+.cfx .cring.r2 { animation-delay: .12s; border-width: 2px; }
+.cfx .cring.r3 { animation-delay: .26s; border-width: 2px; border-style: dashed; }
+.cfx .cp { position: absolute; left: 50%; top: 30%; width: var(--sz); height: var(--sz); margin: calc(var(--sz) / -2); border-radius: 50%; background: var(--c, #fff); box-shadow: 0 0 12px var(--c, #fff); opacity: 0; animation: cpart var(--dur) cubic-bezier(.15, .85, .35, 1) var(--del) forwards; }
+.cfx .cnova { position: absolute; inset: 0; background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, .95) 0%, rgba(255, 79, 216, .55) 22%, rgba(255, 200, 87, .35) 42%, rgba(63, 224, 255, .2) 62%, transparent 78%); animation: cnova 1.5s ease-out forwards; }
+.cfx-com { --c: #3fe0ff; --scale: 10; }
+.cfx-mid { --c: #7cffb2; --scale: 15; }
+.cfx-rare { --c: #ffc857; --scale: 22; }
+.cfx-myth { --c: #ff5a3c; --scale: 28; }
+.cfx-leg { --c: #ff4fd8; --scale: 38; }
+.cfx-leg .cp:nth-child(3n) { background: #ffc857; box-shadow: 0 0 16px #ffc857; }
+.cfx-leg .cp:nth-child(3n+1) { background: #3fe0ff; box-shadow: 0 0 16px #3fe0ff; }
+.cfx-myth .cp:nth-child(2n) { background: #a855f7; box-shadow: 0 0 14px #a855f7; }
+@keyframes cring { 0% { transform: scale(.5); opacity: .95; } 100% { transform: scale(var(--scale, 16)); opacity: 0; } }
+@keyframes cpart { 0% { transform: rotate(var(--ang)) translateX(0) scale(1.2); opacity: 1; } 75% { opacity: .95; } 100% { transform: rotate(var(--ang)) translateX(var(--dist)) scale(.1); opacity: 0; } }
+@keyframes cnova { 0% { opacity: 0; transform: scale(.6); } 18% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1.3); } }
 
 .card { background: var(--glass); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 20px 60px -30px #000; }
 .card + .card { margin-top: 12px; }

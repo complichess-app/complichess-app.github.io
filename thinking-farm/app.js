@@ -105,10 +105,60 @@
     }
     return 'rgb(255,46,136)';
   };
-  const tier = (s) => (s == null ? 'לא ברשימה' : s >= 80 ? 'אגדי ✨' : s >= 55 ? 'נדיר 🔥' : s >= 30 ? 'לא שגרתי' : 'נפוץ');
-  const tierClass = (s) => (s == null ? 'none' : s >= 80 ? 'leg' : s >= 55 ? 'rare' : s >= 30 ? 'mid' : 'com');
+  const TIERS = [
+    { id: 'com',  min: 1,  max: 29, name: 'נפוץ',      icon: '💧', col: '#3fe0ff' },
+    { id: 'mid',  min: 30, max: 54, name: 'לא שגרתי',  icon: '⚡', col: '#7cffb2' },
+    { id: 'rare', min: 55, max: 74, name: 'נדיר',      icon: '🔥', col: '#ffc857' },
+    { id: 'myth', min: 75, max: 89, name: 'מיתולוגי',  icon: '🌌', col: '#ff5a3c' },
+    { id: 'leg',  min: 90, max: 99, name: 'אגדי',      icon: '✨', col: '#ff4fd8' },
+  ];
+  const tierObj = (s) => (s == null ? null : TIERS.find((t) => s >= t.min && s <= t.max) || TIERS[TIERS.length - 1]);
+  const tier = (s) => { const t = tierObj(s); return t ? `${t.name} ${t.icon}` : 'לא ברשימה'; };
+  const tierClass = (s) => { const t = tierObj(s); return t ? t.id : 'none'; };
   const totalPoints = () => (S && S.questions ? S.questions.reduce((a, q) => a + (q.best || 0), 0) : 0);
   const isList = (q) => q.kind === 'list';
+
+  function rarityGraphHTML(score) {
+    if (score == null || score <= 0) return '';
+    const pct = Math.max(1, Math.min(99, score));
+    const t = tierObj(pct);
+    return `<div class="rgraph" aria-label="מד נדירות: ${pct} מתוך 99, ${t.name}">
+      <div class="rgraph-head"><span>נפוץ</span><span>לא שגרתי</span><span>נדיר</span><span>מיתולוגי</span><span>אגדי</span></div>
+      <div class="rgraph-track">
+        <i class="rseg com" style="width:29%"></i>
+        <i class="rseg mid" style="width:25%"></i>
+        <i class="rseg rare" style="width:20%"></i>
+        <i class="rseg myth" style="width:15%"></i>
+        <i class="rseg leg" style="width:11%"></i>
+        <span class="rpin ${t.id}" style="inset-inline-start:${pct}%"><b>${pct}</b></span>
+      </div>
+    </div>`;
+  }
+
+  function cosmicCelebrate(score) {
+    if (score == null || score <= 0 || document.body.classList.contains('less') || reduced()) return;
+    const t = tierObj(score);
+    const layer = document.createElement('div');
+    layer.className = `cfx cfx-${t.id}`;
+    layer.setAttribute('aria-hidden', 'true');
+    const counts = { com: 6, mid: 14, rare: 24, myth: 36, leg: 56 };
+    const n = counts[t.id] || 10;
+    let html = `<div class="cring r1"></div>`;
+    if (score >= 30) html += `<div class="cring r2"></div>`;
+    if (score >= 75) html += `<div class="cring r3"></div>`;
+    if (score >= 90) html += `<div class="cnova"></div>`;
+    for (let k = 0; k < n; k++) {
+      const ang = (360 / n) * k + (Math.random() * 14 - 7);
+      const dist = (score >= 90 ? 130 : score >= 75 ? 105 : score >= 55 ? 85 : 60) + Math.random() * 90;
+      const sz = (score >= 90 ? 5 : score >= 55 ? 4 : 3) + Math.random() * 4;
+      const dur = (score >= 90 ? 1.55 : score >= 75 ? 1.35 : 1.05) + Math.random() * 0.45;
+      const del = Math.random() * 0.14;
+      html += `<i class="cp" style="--ang:${ang.toFixed(1)}deg;--dist:${dist.toFixed(0)}px;--sz:${sz.toFixed(1)}px;--dur:${dur.toFixed(2)}s;--del:${del.toFixed(2)}s"></i>`;
+    }
+    layer.innerHTML = html;
+    document.body.appendChild(layer);
+    setTimeout(() => layer.remove(), score >= 90 ? 2200 : 1700);
+  }
   const timed = (q) => isList(q) && q.secs != null;          // topic questions against the clock (older servers: 3 answers)
   const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / (timed(q) ? 99 : 150)) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
   const label = (s) => (s == null ? 'רחוק' : s >= 100 ? 'מצאת!' : s >= 90 ? 'בוער' : s >= 75 ? 'חם מאוד' : s >= 55 ? 'חם' : s >= 35 ? 'פושר' : 'קריר');
@@ -240,9 +290,9 @@
         : `<div class="heat" style="color:var(--cy)">⏱ ${q.secs}</div><div class="heatlab">שניות לתשובה אחת · נדירה שווה יותר</div>`}
       </section>
       ${pathHTML()}
-      <section class="card" aria-labelledby="qh">
+      <section class="card ${done && hit ? 'hit-' + tierClass(hit.s) : ''}" aria-labelledby="qh">
         <div class="qhead"><span class="lvl ${q.level}">שאלת נושא · ${LEVEL[q.level] || ''}</span>
-          <span class="qact">${done ? nextBtn() : ''}</span></div>
+          <span class="qact"></span></div>
         ${!done && !running ? `<h2 id="qh">מוכנים?</h2>
           <p class="cat">כשתתחילו יופיע נושא, ויהיו לכם <b>${q.secs} שניות</b> לתשובה <b>אחת נכונה</b>. תשובה נדירה שווה הרבה יותר. תשובה לא נכונה לא סוגרת את השאלה — אפשר לנסות שוב עד שתתקבל תשובה או שנגמר הזמן!</p>
           <div class="row"><button class="btn main big" type="button" id="startBtn">▶ מתחילים</button></div>`
@@ -250,13 +300,25 @@
           ${q.examples && q.examples.length ? `<p class="cat">למשל: <b>${q.examples.map(esc).join(', ')}</b></p>` : ''}
           ${q.complete ? `<p class="cat">✓ רשימה מלאה: כל תשובה נכונה מתקבלת.</p>` : ''}
           ${(q.guesses || []).length ? listRows(q, running) : `<p class="empty">${running ? 'כתבו תשובה נכונה ולחצו שלח — רק תשובה תקינה ננעלת!' : 'נגמר הזמן לפני שננעלה תשובה.'}</p>`}
+          ${done && hit ? rarityGraphHTML(hit.s) : ''}
+          ${done && S.questions.some((x) => x.status === 'open') ? `<div class="row next-row"><button class="btn main big next-one" type="button" id="nextStartBtn">▶ לשאלה הבאה</button></div>` : ''}
           ${done && !S.practice && (q.guesses || []).length && q.guesses[0].s == null ? `<p class="acct"><button type="button" class="linkish" id="repLate">חושבים ש"${esc(q.guesses[0].w)}" נכונה? דווחו לנו</button></p>` : ''}`}
       </section>
       ${complainLink()}
       <p class="foot-note">המשחק נכתב מחדש בכל ערב · משחק חדש בחצות שעון ישראל</p>`;
     wireCard(q);
     $('#startBtn')?.addEventListener('click', startList);
+    $('#nextStartBtn')?.addEventListener('click', nextAndStart);
     $('#repLate')?.addEventListener('click', () => { rejected = { raw: q.guesses[0].w, w: q.guesses[0].w, q: cur + 1 }; openReport(); });
+  }
+  function nextAndStart() {
+    const ni = nextIndex();
+    if (ni === cur) return;
+    cur = ni; lastWord = null;
+    const q = Q();
+    P.question(cur, heatOf(q));
+    if (timed(q) && q.status === 'open' && !q.started) startList();
+    else { draw(); if (q.status === 'open') $('#guess')?.focus({ preventScroll: true }); }
   }
 
   /* ---------------------------------------------------------------- the clock of topic questions */
@@ -348,7 +410,7 @@
         const g = { w: r.w, s: r.s, r: r.r, n: r.n || 1, f: r.fix || null, pending: false };
         q.guesses.push(g); lastWord = r.w;
         q.best = r.s;
-        SND(r.fix ? 'fix' : 'good', r.s); P.heat(heatOf(q)); if (r.s >= 55) { P.solve(); flash(); }
+        SND(r.fix ? 'fix' : 'good', r.s); P.heat(heatOf(q)); if (r.s >= 55) P.solve(); cosmicCelebrate(r.s);
         const okHtml = `<div class="info"><bdi dir="ltr">+${r.s}</bdi> · ${tier(r.s)}${r.fix ? ` · התכוונת ל"${esc(r.fix)}"? נחשב!` : ''}</div>`;
         say(`${w}: פלוס ${r.s}, ${tier(r.s)}`);
         closeList(i, q.best, r.result || null, false);
@@ -708,8 +770,8 @@
       <li><b>תשובה נדירה שווה הרבה יותר:</b> תשובה שכולם אומרים נותנת מעט נקודות, ותשובה חכמה או מפתיעה קופצת עד 99 נקודות!</li>
       <li>שגיאת כתיב קטנה, ו/י, גרשיים או מילה שלא הספקתם לסיים — נסלחים אוטומטית.</li>
       <li>משחקים פעם אחת ביום (ואפשר תמיד לתרגל ב<b>ימים קודמים</b>). בחצות שעון ישראל נפתח משחק חדש ופורטל חדש.</li></ol></div>
-      <p>סולם הניקוד לפי נדירות:</p>
-      <div class="scale"><span><b style="color:${color(90)}">80–99</b> אגדי ✨ — הברקה אמיתית</span><span><b style="color:${color(68)}">55–79</b> נדיר 🔥 — תשובה חכמה ומקורית</span><span><b style="color:${color(42)}">30–54</b> לא שגרתי — יפה מאוד</span><span><b style="color:${color(15)}">1–29</b> נפוץ — מה שעולה לכולם ראשון</span></div>
+      <p>סולם הנדירות (לכל רמה אנימציה קוסמית משלה):</p>
+      <div class="scale"><span><b style="color:#ff4fd8">90–99</b> אגדי ✨ — סופרנובה! הברקה נישתית אמיתית</span><span><b style="color:#ff5a3c">75–89</b> מיתולוגי 🌌 — נדיר מאוד ומקורי</span><span><b style="color:#ffc857">55–74</b> נדיר 🔥 — חשיבה חכמה</span><span><b style="color:#7cffb2">30–54</b> לא שגרתי ⚡ — יפה מאוד</span><span><b style="color:#3fe0ff">1–29</b> נפוץ 💧 — מה שעולה ראשון</span></div>
       <div class="foot"><button class="btn main" value="ok">יאללה, משחקים</button></div>`);
     store.set('tf.seenHelp', true);
   }
@@ -778,8 +840,9 @@
   }
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(document.activeElement?.tagName || '')) return;
-    const start = $('#startBtn'), nxt = $('#nextBtn');
+    const start = $('#startBtn'), nxtStart = $('#nextStartBtn'), nxt = $('#nextBtn');
     if (start) { e.preventDefault(); start.click(); }
+    else if (nxtStart) { e.preventDefault(); nxtStart.click(); }
     else if (nxt) { e.preventDefault(); nxt.click(); }
   });
   matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', () => { if (motionPref() === 'auto') { try { portal && portal.destroy(); } catch {} portal = null; loadPortal(); } });
