@@ -110,7 +110,7 @@
     { id: 'mid',  min: 30, max: 54, name: 'לא שגרתי',  icon: '⚡', col: '#7cffb2' },
     { id: 'rare', min: 55, max: 74, name: 'נדיר',      icon: '🔥', col: '#ffc857' },
     { id: 'myth', min: 75, max: 89, name: 'מיתולוגי',  icon: '🌌', col: '#ff5a3c' },
-    { id: 'leg',  min: 90, max: 99, name: 'אגדי',      icon: '✨', col: '#ff4fd8' },
+    { id: 'leg',  min: 90, max: 100, name: 'אגדי',      icon: '✨', col: '#ff4fd8' },
   ];
   const tierObj = (s) => (s == null ? null : TIERS.find((t) => s >= t.min && s <= t.max) || TIERS[TIERS.length - 1]);
   const tier = (s) => { const t = tierObj(s); return t ? `${t.name} ${t.icon}` : 'לא ברשימה'; };
@@ -120,7 +120,7 @@
 
   function rarityGraphHTML(score) {
     if (score == null || score <= 0) return '';
-    const pct = Math.max(1, Math.min(99, score));
+    const pct = Math.max(1, Math.min(100, score));
     const t = tierObj(pct);
     return `<div class="rgraph" aria-label="מד נדירות: ${pct} מתוך 99, ${t.name}">
       <div class="rgraph-head"><span>נפוץ</span><span>לא שגרתי</span><span>נדיר</span><span>מיתולוגי</span><span>אגדי</span></div>
@@ -160,7 +160,7 @@
     setTimeout(() => layer.remove(), score >= 90 ? 2200 : 1700);
   }
   const timed = (q) => isList(q) && q.secs != null;          // topic questions against the clock (older servers: 3 answers)
-  const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / (timed(q) ? 99 : 150)) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
+  const heatOf = (q) => (isList(q) ? Math.min(1, (q.best || 0) / (timed(q) ? 100 : 150)) : (q.status === 'solved' ? 1 : (q.best || 0) / 100));
   const label = (s) => (s == null ? 'רחוק' : s >= 100 ? 'מצאת!' : s >= 90 ? 'בוער' : s >= 75 ? 'חם מאוד' : s >= 55 ? 'חם' : s >= 35 ? 'פושר' : 'קריר');
 
   /* ---------------------------------------------------------------- portal (optional, loaded later) */

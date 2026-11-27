@@ -385,6 +385,7 @@
         <div class="tablearea" id="felt"></div>
         <div class="dock" dir="ltr"><div class="chatdock hide" id="chatdock"></div><div class="botbar hide" id="botbar"></div><div class="acts" id="acts" aria-live="off"></div></div>
         <div class="banner" id="banner"></div>
+        <div class="bigh hide" id="bigh" dir="auto"></div>
       </div>`;
     const scrim = document.createElement('div'); scrim.className = 'scrim'; scrim.id = 'scrim';
     const side = document.createElement('aside'); side.className = 'drawer'; side.id = 'side'; side.dir = 'ltr';
@@ -696,6 +697,26 @@
       el.querySelectorAll('[data-ok]').forEach((b) => (b.onclick = () => { b.disabled = true; call('approve', { room: id, req: b.dataset.ok, ok: true }).catch(fail); }));
       el.querySelectorAll('[data-no]').forEach((b) => (b.onclick = () => { b.disabled = true; call('approve', { room: id, req: b.dataset.no, ok: false }).catch(fail); }));
     }
+    // the last big hand (full house or better, or a pot of a tenth of the chips): everyone's cards, the pot and who took it, for 3 hands
+    function drawBig() {
+      const el = $('#bigh'); if (!el) return;
+      const s = st(), b = s.big, left = b ? b.n + 3 - (s.handNo || 0) : -1;
+      if (!b || left < 0) { el.classList.add('hide'); el._key = ''; return; }
+      const key = b.n + ':' + left + ':' + (drawBig.shut === b.n) + ':' + (PT.prefs.bbs ? 1 : 0);
+      if (el._key === key) return; el._key = key;
+      if (el._n !== b.n) { el._n = b.n; if (left === 3) PT.sfx.bell(); }
+      const shut = drawBig.shut === b.n;
+      const wins = (b.win || []).map((w) => `<div class="bw">🏆 ${w.run ? `<small>${esc(fill(T.runN, { a: w.run }))}</small> ` : ''}<b>${esc((w.names || []).join(', '))}</b> +${num(w.a)}${w.cat != null || w.low ? ` · ${esc(w.low ? T.lowH : handName(w.cat))}` : ''}</div>`).join('');
+      const brd = (x) => (x && x.length ? `<div class="bb">${x.map((c) => PT.card(c, 'bk')).join('')}</div>` : '');
+      const rows = Object.entries(b.cards || {}).map(([seat, cs]) => {
+        const net = (b.net || {})[seat] || 0, f = (b.folded || []).includes(+seat);
+        return `<div class="br${f ? ' fold' : ''}"><bdi class="bn">${esc((b.names || {})[seat] || '?')}</bdi><span class="bc">${cs.map((c) => PT.card(c, 'bk')).join('')}</span><span class="bnet ${net > 0 ? 'up' : net < 0 ? 'dn' : ''}">${net > 0 ? '+' : net < 0 ? '−' : ''}${num(Math.abs(net))}</span>${f ? `<small>${esc(T.bigFold)}</small>` : ''}</div>`;
+      }).join('');
+      el.classList.remove('hide');
+      el.innerHTML = `<button class="bh" type="button" aria-expanded="${!shut}"><span>🔥 ${esc(fill(T.bigT, { n: b.n }))} · ${esc(T.bigPot)} ${num(b.pot)}</span><small>${esc(left > 0 ? fill(T.bigLeft, { a: left }) : T.bigLast)} ${shut ? '▸' : '▾'}</small></button>`
+        + (shut ? '' : `<div class="bbody">${wins}${brd(b.board)}${brd(b.board2)}${rows}</div>`);
+      el.querySelector('.bh').onclick = () => { drawBig.shut = shut ? null : b.n; drawBig(); };
+    }
     const share = async () => { const url = `${location.origin}/poker/?r=${id}`; try { if (navigator.share && phone()) await navigator.share({ title: T.title, text: T.shareText, url }); else { await navigator.clipboard.writeText(url); toast(T.copied); } } catch {} };
     function drawBar() {
       const s = st(), ms = mySeat(), me = ms >= 0 ? s.seats[ms] : null;
@@ -840,7 +861,7 @@
     function draw() {
       if (!alive || !room || !$('#felt')) return;
       const v = view(), s = st();
-      drawBar(); drawBanner(); drawChatDock(); drawBotBar();
+      drawBar(); drawBanner(); drawChatDock(); drawBotBar(); try { drawBig(); } catch (e) { console.warn(e); }
       // a big pot: the screen's edges blink red, only for whoever has the legendary bot
       { const lv = s.live, inHand = lv && lv.stage !== 'done' && lv.stage !== 'idle';
         const n = inHand ? Object.values(lv.players || {}).filter((p) => p && !p.out).length : 0;

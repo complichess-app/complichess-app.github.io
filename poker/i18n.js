@@ -260,3 +260,16 @@ window.POKER_T = {
     Object.assign(t, rest); t.err = Object.assign(t.err || {}, err);
   }
 })();
+
+/* The last big hand (full house or better, or a big pot), shown for three hands. */
+(function () {
+  const G = {
+    he: { bigT: 'יד גדולה #{n}', bigPot: 'קופה', bigLeft: 'עוד {a} ידיים', bigLast: 'יד אחרונה', bigFold: 'פולד' },
+    en: { bigT: 'Big hand #{n}', bigPot: 'Pot', bigLeft: '{a} more hands', bigLast: 'last hand', bigFold: 'folded' },
+    ar: { bigT: 'يد كبيرة #{n}', bigPot: 'الرهان', bigLeft: '{a} أيادٍ أخرى', bigLast: 'آخر يد', bigFold: 'انسحب' },
+    ru: { bigT: 'Большая раздача #{n}', bigPot: 'Банк', bigLeft: 'ещё {a} раздачи', bigLast: 'последняя раздача', bigFold: 'фолд' },
+    es: { bigT: 'Mano grande #{n}', bigPot: 'Bote', bigLeft: '{a} manos más', bigLast: 'última mano', bigFold: 'se retiró' },
+    fr: { bigT: 'Grosse main #{n}', bigPot: 'Pot', bigLeft: 'encore {a} mains', bigLast: 'dernière main', bigFold: 'couché' },
+  };
+  for (const k in G) if (window.POKER_T[k]) Object.assign(window.POKER_T[k], G[k]);
+})();
